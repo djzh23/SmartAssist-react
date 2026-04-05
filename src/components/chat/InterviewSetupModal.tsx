@@ -198,7 +198,7 @@ export default function InterviewSetupModal({
             />
 
             <div className="mt-2 flex items-center justify-between gap-2">
-              <p className="text-[11px] text-slate-500">Analyse läuft lokal im Browser. Es werden nur technische Inhalte übernommen.</p>
+              <p className="text-[11px] text-slate-500">Analyse läuft lokal im Browser. Es wird nur beruflich relevanter, anonymisierter Kontext übernommen.</p>
               <button
                 onClick={handleAnalyze}
                 disabled={isParsingPdf || isAnalyzing}
