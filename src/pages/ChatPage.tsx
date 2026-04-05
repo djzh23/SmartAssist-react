@@ -48,45 +48,6 @@ function compactLines(text: string, maxLines: number, maxChars: number): string 
   return out.join('\n')
 }
 
-function extractReportSection(report: string, heading: string, maxLines: number): string[] {
-  const lines = report.replace(/\r\n?/g, '\n').split('\n')
-  const start = lines.findIndex(line => line.trim().toUpperCase() === heading.toUpperCase())
-  if (start < 0) return []
-
-  const out: string[] = []
-  for (let index = start + 1; index < lines.length; index += 1) {
-    const line = lines[index].trim()
-    if (!line) {
-      if (out.length > 0) break
-      continue
-    }
-    if (/^[A-ZÄÖÜ][A-ZÄÖÜ\s-]+:$/.test(line)) break
-    if (!line.startsWith('-')) continue
-    out.push(line.replace(/^-\s*/, '').trim())
-    if (out.length >= maxLines) break
-  }
-
-  return out
-}
-
-function compactMatchReport(report: string, score: number | null): string {
-  const scoreLine = score !== null
-    ? `MATCH SCORE: ${score}/100`
-    : (report.match(/MATCH SCORE:\s*\d+\/100/i)?.[0] ?? '')
-
-  const strengths = extractReportSection(report, 'STÄRKEN:', 2)
-  const gaps = extractReportSection(report, 'LÜCKEN:', 2)
-  const steps = extractReportSection(report, 'NÄCHSTE SCHRITTE:', 2)
-
-  const block = [
-    scoreLine,
-    strengths.length > 0 ? `STÄRKEN: ${strengths.join(' | ')}` : '',
-    gaps.length > 0 ? `LÜCKEN: ${gaps.join(' | ')}` : '',
-    steps.length > 0 ? `NÄCHSTE SCHRITTE: ${steps.join(' | ')}` : '',
-  ].filter(Boolean).join('\n')
-
-  return block.slice(0, 760)
-}
 
 function normalizeInterviewSetup(input?: Partial<InterviewSetupData> | null): InterviewSetupData {
   return {
@@ -95,8 +56,6 @@ function normalizeInterviewSetup(input?: Partial<InterviewSetupData> | null): In
     cvText: sanitizeTechnicalContext(input?.cvText ?? '').slice(0, 2200),
     jobUrl: (input?.jobUrl ?? '').trim().slice(0, 300),
     jobText: compactLines((input?.jobText ?? '').trim(), 14, 1700),
-    matchScore: typeof input?.matchScore === 'number' ? input.matchScore : null,
-    matchReport: (input?.matchReport ?? '').trim().slice(0, 2200),
   }
 }
 
@@ -161,17 +120,15 @@ function buildInterviewPrompt(userMessage: string, language: string, setup: Inte
     remaining = INTERVIEW_PROMPT_LIMIT - (base.length + safeUser.length + 120)
   }
 
-  const cvMax = Math.max(280, Math.floor(remaining * 0.42))
-  const jobMax = Math.max(220, Math.floor(remaining * 0.32))
-  const matchMax = Math.max(180, remaining - cvMax - jobMax)
+  const cvMax = Math.max(280, Math.floor(remaining * 0.52))
+  const jobMax = Math.max(220, remaining - cvMax)
 
-  const cvText = compactLines(sanitizeTechnicalContext(setup.cvText), 18, cvMax)
-  const jobText = compactLines(setup.jobText, 10, jobMax)
-  const matchSummary = compactMatchReport(setup.matchReport, setup.matchScore).slice(0, matchMax)
+  const cvText = compactLines(sanitizeTechnicalContext(setup.cvText), 20, cvMax)
+  const jobText = compactLines(setup.jobText, 12, jobMax)
 
   const cvBlock = cvText ? `\nCANDIDATE PROFILE:\n${cvText}` : ''
-  const roleBlock = (jobText || jobUrl || matchSummary)
-    ? `\nTARGET ROLE CONTEXT:\n${jobUrl ? `URL: ${jobUrl}\n` : ''}${jobText ? `JOB DETAILS:\n${jobText}\n` : ''}${matchSummary ? `MATCH SUMMARY:\n${matchSummary}\n` : ''}`
+  const roleBlock = (jobText || jobUrl)
+    ? `\nTARGET ROLE CONTEXT:\n${jobUrl ? `URL: ${jobUrl}\n` : ''}${jobText ? `JOB DETAILS:\n${jobText}\n` : ''}`
     : ''
 
   const prompt = `${base}${cvBlock}${roleBlock}\nUser: ${safeUser}`
@@ -240,12 +197,11 @@ export default function ChatPage() {
 
     const hasCv = normalized.cvText.trim().length > 0
     const hasJob = normalized.jobText.trim().length > 0 || normalized.jobUrl.trim().length > 0
-    const scoreText = typeof normalized.matchScore === 'number' ? ` Match Score: ${normalized.matchScore}/100.` : ''
 
     store.addMessage(setupSessionId, {
       isUser: false,
       text: hasCv || hasJob
-        ? `Interview-Setup gespeichert.${scoreText}\nStarte direkt mit: "Was soll ich für meinen Lebenslauf verbessern?" oder "Gib mir die Top 3 Interviewfragen für diese Stelle."`
+        ? `Interview-Setup gespeichert.\nStarte direkt mit: "Was soll ich für mein Profil verbessern?" oder "Gib mir die Top 3 Interviewfragen für diese Stelle."`
         : 'Interview-Setup gespeichert. Sprache und Alias gelten nur für diesen Chat.',
     })
 
@@ -377,12 +333,6 @@ export default function ChatPage() {
               {activeInterviewContext.cvText.trim() && (
                 <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
                   CV aktiv{activeInterviewContext.alias ? ` | ${activeInterviewContext.alias}` : ''}
-                </span>
-              )}
-
-              {typeof activeInterviewContext.matchScore === 'number' && (
-                <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">
-                  Match {activeInterviewContext.matchScore}/100
                 </span>
               )}
 

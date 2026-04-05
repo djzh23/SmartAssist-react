@@ -3,6 +3,8 @@ import MainLayout from './components/layout/MainLayout'
 import HomePage from './pages/HomePage'
 import ChatPage from './pages/ChatPage'
 import ToolsPage from './pages/ToolsPage'
+import PricingPage from './pages/PricingPage'
+import ProfilePage from './pages/ProfilePage'
 
 export default function App() {
   return (
@@ -12,6 +14,8 @@ export default function App() {
           <Route index element={<HomePage />} />
           <Route path="chat" element={<ChatPage />} />
           <Route path="tools" element={<ToolsPage />} />
+          <Route path="pricing" element={<PricingPage />} />
+          <Route path="profile" element={<ProfilePage />} />
         </Route>
       </Routes>
     </BrowserRouter>

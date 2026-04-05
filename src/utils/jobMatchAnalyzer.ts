@@ -171,8 +171,21 @@ function extractRequirementLines(jobText: string): RequirementLine[] {
   }).filter(line => line.tokens.length > 0)
 }
 
-function scoreRequirement(req: RequirementLine, cvTokenSet: Set<string>): RequirementMatch & { coverage: number; weight: number } {
-  const matchedTerms = req.tokens.filter(token => cvTokenSet.has(token))
+/** Returns true if cvTokenSet has an exact or prefix match for `token`. */
+function tokenMatches(token: string, cvTokenSet: Set<string>, cvTokens: string[]): boolean {
+  if (cvTokenSet.has(token)) return true
+  // Handle tech-term variations: "react.js" matches "react", "node.js" matches "node", etc.
+  const dotBase = token.includes('.') ? token.split('.')[0] : null
+  if (dotBase && dotBase.length >= 3 && cvTokenSet.has(dotBase)) return true
+  // Reverse: CV has "react.js", job requires "react"
+  if (token.length >= 4) {
+    return cvTokens.some(cv => cv.startsWith(token) && cv.length <= token.length + 4)
+  }
+  return false
+}
+
+function scoreRequirement(req: RequirementLine, cvTokenSet: Set<string>, cvTokens: string[]): RequirementMatch & { coverage: number; weight: number } {
+  const matchedTerms = req.tokens.filter(token => tokenMatches(token, cvTokenSet, cvTokens))
   const coverage = req.tokens.length > 0 ? matchedTerms.length / req.tokens.length : 0
 
   let strength: MatchStrength = 'none'
@@ -253,7 +266,7 @@ export function analyzeCvJobMatch({ cvProfile, jobText, jobUrl }: MatchInput): J
   const cvTokenSet = new Set(cvTokens)
   const requirementLines = extractRequirementLines(jobText)
 
-  const requirementMatches = requirementLines.map(line => scoreRequirement(line, cvTokenSet))
+  const requirementMatches = requirementLines.map(line => scoreRequirement(line, cvTokenSet, cvTokens))
 
   const weightedTotal = requirementMatches.reduce((sum, item) => sum + item.weight, 0)
   const weightedMatched = requirementMatches.reduce((sum, item) => {
@@ -279,8 +292,8 @@ export function analyzeCvJobMatch({ cvProfile, jobText, jobUrl }: MatchInput): J
     : 0
 
   const jobKeywords = topKeywords(tokenize(jobText), 30)
-  const matchedKeywords = jobKeywords.filter(token => cvTokenSet.has(token))
-  const missingKeywords = jobKeywords.filter(token => !cvTokenSet.has(token))
+  const matchedKeywords = jobKeywords.filter(token => tokenMatches(token, cvTokenSet, cvTokens))
+  const missingKeywords = jobKeywords.filter(token => !tokenMatches(token, cvTokenSet, cvTokens))
   const keywordCoverage = jobKeywords.length > 0 ? matchedKeywords.length / jobKeywords.length : 0
 
   const hasWeakCv = cvTokens.length < 55 || /\bn\/a\b/i.test(cvProfile)

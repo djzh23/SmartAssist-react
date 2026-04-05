@@ -1,21 +1,17 @@
-﻿import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { ChangeEvent } from 'react'
 import {
-  AlertTriangle,
   Briefcase,
   CheckCircle2,
   FileText,
-  Gauge,
   Link2,
   Loader2,
-  Sparkles,
   Upload,
   X,
 } from 'lucide-react'
 import { INTERVIEW_LANGS } from '../../types'
 import { askAgent } from '../../api/client'
 import { buildTechnicalCvContext, sanitizeTechnicalContext } from '../../utils/cvTechnicalContext'
-import { analyzeCvJobMatch } from '../../utils/jobMatchAnalyzer'
 import { extractTextFromPdf } from '../../utils/pdfParser'
 
 export interface InterviewSetupData {
@@ -24,8 +20,6 @@ export interface InterviewSetupData {
   cvText: string
   jobUrl: string
   jobText: string
-  matchScore: number | null
-  matchReport: string
 }
 
 interface Props {
@@ -34,21 +28,6 @@ interface Props {
   initialData: InterviewSetupData
   onClose: () => void
   onSave: (data: InterviewSetupData) => void
-}
-
-type ScoreBreakdown = {
-  essentials: number
-  requirements: number
-  evidence: number
-  keywords: number
-}
-
-type RequirementItem = {
-  text: string
-  essential: boolean
-  matched: boolean
-  strength: 'none' | 'low' | 'medium' | 'high'
-  matchedTerms: string[]
 }
 
 function compactLines(text: string, maxLines: number, maxChars: number): string {
@@ -73,59 +52,6 @@ function compactLines(text: string, maxLines: number, maxChars: number): string 
   return out.join('\n')
 }
 
-function parseBreakdownFromReport(report: string): ScoreBreakdown | null {
-  const essentials = report.match(/Muss-Anforderungen:\s*(\d+)\/100/i)
-  const requirements = report.match(/Gesamtanforderungen:\s*(\d+)\/100/i)
-  const evidence = report.match(/Nachweis im Lebenslauf:\s*(\d+)\/100/i)
-  const keywords = report.match(/Schl(?:ü|ue)sselbegriffe:\s*(\d+)\/100/i)
-
-  if (!essentials || !requirements || !evidence || !keywords) return null
-
-  return {
-    essentials: Number(essentials[1]),
-    requirements: Number(requirements[1]),
-    evidence: Number(evidence[1]),
-    keywords: Number(keywords[1]),
-  }
-}
-
-function getScoreTheme(score: number): { label: string; card: string; border: string; accent: string; bar: string } {
-  if (score >= 75) {
-    return {
-      label: 'Sehr gute Übereinstimmung',
-      card: 'bg-emerald-50',
-      border: 'border-emerald-200',
-      accent: 'text-emerald-700',
-      bar: 'bg-emerald-500',
-    }
-  }
-
-  if (score >= 50) {
-    return {
-      label: 'Teilweise Übereinstimmung',
-      card: 'bg-amber-50',
-      border: 'border-amber-200',
-      accent: 'text-amber-700',
-      bar: 'bg-amber-500',
-    }
-  }
-
-  return {
-    label: 'Niedrige Übereinstimmung',
-    card: 'bg-rose-50',
-    border: 'border-rose-200',
-    accent: 'text-rose-700',
-    bar: 'bg-rose-500',
-  }
-}
-
-function strengthLabel(level: RequirementItem['strength']): string {
-  if (level === 'high') return 'stark'
-  if (level === 'medium') return 'solide'
-  if (level === 'low') return 'schwach'
-  return 'kein Treffer'
-}
-
 export default function InterviewSetupModal({
   isOpen,
   sessionId,
@@ -142,15 +68,10 @@ export default function InterviewSetupModal({
 
   const [jobUrl, setJobUrl] = useState(initialData.jobUrl)
   const [jobText, setJobText] = useState(initialData.jobText)
-  const [resolvedJobText, setResolvedJobText] = useState('')
 
   const [cvAnalysis, setCvAnalysis] = useState(initialData.cvText)
-  const [matchScore, setMatchScore] = useState<number | null>(initialData.matchScore)
-  const [matchReport, setMatchReport] = useState(initialData.matchReport)
-  const [breakdown, setBreakdown] = useState<ScoreBreakdown | null>(() => parseBreakdownFromReport(initialData.matchReport))
-  const [requirementMatches, setRequirementMatches] = useState<RequirementItem[]>([])
-  const [matchedKeywords, setMatchedKeywords] = useState<string[]>([])
-  const [missingKeywords, setMissingKeywords] = useState<string[]>([])
+  const [resolvedJobText, setResolvedJobText] = useState('')
+  const [analysisReady, setAnalysisReady] = useState(false)
 
   const [isParsingPdf, setIsParsingPdf] = useState(false)
   const [isResolvingJob, setIsResolvingJob] = useState(false)
@@ -167,17 +88,12 @@ export default function InterviewSetupModal({
     setJobUrl(initialData.jobUrl || '')
     setJobText(initialData.jobText || '')
     setCvAnalysis(initialData.cvText || '')
-    setMatchScore(initialData.matchScore ?? null)
-    setMatchReport(initialData.matchReport || '')
-    setBreakdown(parseBreakdownFromReport(initialData.matchReport || ''))
-    setRequirementMatches([])
-    setMatchedKeywords([])
-    setMissingKeywords([])
+    setResolvedJobText('')
+    setAnalysisReady(false)
 
     setManualCvInput('')
     setUploadedCvRawText(null)
     setUploadedCvFileName(null)
-    setResolvedJobText('')
 
     setError(null)
     setIsParsingPdf(false)
@@ -227,7 +143,15 @@ export default function InterviewSetupModal({
         ].join('\n'),
       })
 
-      return compactLines(res.reply?.trim() ?? '', 12, 1400)
+      const text = res.reply?.trim() ?? ''
+
+      const isRefusal =
+        text.length < 80 ||
+        /\b(cannot|can't|unable|kein zugriff|kann nicht|nicht zugreifen|leider|sorry|no access|not able)\b/i.test(text)
+
+      if (isRefusal) throw new Error('URL_UNRESOLVABLE')
+
+      return compactLines(text, 12, 1400)
     } finally {
       setIsResolvingJob(false)
     }
@@ -235,6 +159,7 @@ export default function InterviewSetupModal({
 
   const handleAnalyze = async () => {
     setError(null)
+    setAnalysisReady(false)
 
     const cvSource = uploadedCvRawText?.trim() || manualCvInput.trim() || cvAnalysis.trim()
     if (!cvSource) {
@@ -242,20 +167,20 @@ export default function InterviewSetupModal({
       return
     }
 
-    let effectiveJobText = compactLines(jobText.trim(), 14, 1700)
     const normalizedJobUrl = jobUrl.trim()
+    let effectiveJobText = compactLines(jobText.trim(), 14, 1700)
 
     if (!effectiveJobText && normalizedJobUrl) {
       try {
         effectiveJobText = await resolveJobTextFromUrl(normalizedJobUrl)
         setResolvedJobText(effectiveJobText)
       } catch {
-        setError('Die Stelle konnte über den Link nicht geladen werden. Bitte füge den Stellentext manuell ein.')
+        setError('Der Job-Link konnte nicht ausgewertet werden. Bitte kopiere den Text der Stellenanzeige direkt in das Feld darunter.')
         return
       }
     }
 
-    if (!effectiveJobText) {
+    if (!effectiveJobText && !normalizedJobUrl) {
       setError('Bitte füge entweder einen Job-Link oder den Text der Stellenanzeige ein.')
       return
     }
@@ -266,56 +191,38 @@ export default function InterviewSetupModal({
         ? sanitizeTechnicalContext(cvSource).slice(0, 1800)
         : buildTechnicalCvContext(cvSource).slice(0, 1800)
 
-      const sanitizedRaw = sanitizeTechnicalContext(cvSource).slice(0, 2600)
-      const effectiveCvContext = [
-        structuredCv,
-        '',
-        'ADDITIONAL PROFILE CONTEXT:',
-        compactLines(sanitizedRaw, 28, 2200),
-      ].join('\n')
-
-      const match = analyzeCvJobMatch({
-        cvProfile: effectiveCvContext,
-        jobText: effectiveJobText,
-        jobUrl: normalizedJobUrl || undefined,
-      })
-
       setCvAnalysis(structuredCv)
-      setMatchScore(match.score)
-      setMatchReport(match.report)
-      setBreakdown(match.breakdown)
-      setRequirementMatches(match.requirementMatches)
-      setMatchedKeywords(match.matchedKeywords.slice(0, 12))
-      setMissingKeywords(match.missingKeywords.slice(0, 12))
+      setAnalysisReady(true)
     } finally {
       setIsAnalyzing(false)
     }
   }
 
   const handleSave = () => {
+    const effectiveJobText = compactLines(jobText.trim() || resolvedJobText.trim(), 14, 1700)
+
     onSave({
       language,
       alias: alias.trim().slice(0, 40),
       cvText: cvAnalysis.trim().slice(0, 2200),
       jobUrl: jobUrl.trim(),
-      jobText: compactLines(jobText.trim() || resolvedJobText.trim(), 14, 1700),
-      matchScore,
-      matchReport: matchReport.trim().slice(0, 2200),
+      jobText: effectiveJobText,
     })
   }
 
-  const scoreTheme = matchScore !== null ? getScoreTheme(matchScore) : null
+  const isBusy = isParsingPdf || isResolvingJob || isAnalyzing
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-fade-in" onClick={onClose}>
       <div
-        className="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl animate-slide-up"
+        className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl animate-slide-up"
         onClick={e => e.stopPropagation()}
       >
+        {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
           <div>
             <h2 className="text-lg font-bold text-slate-800">Interview Setup</h2>
-            <p className="text-xs text-slate-500">Konfiguriere Sprache, Alias, Lebenslauf und Stellenziel für diesen Chat.</p>
+            <p className="text-xs text-slate-500">Sprache, Alias, Lebenslauf und Stelle für diesen Chat.</p>
           </div>
           <button
             onClick={onClose}
@@ -326,7 +233,9 @@ export default function InterviewSetupModal({
           </button>
         </div>
 
+        {/* Body */}
         <div className="space-y-4 overflow-y-auto px-5 py-4">
+          {/* Language + Alias */}
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             <div>
               <p className="mb-2 text-xs font-medium text-slate-700">Interview-Sprache</p>
@@ -361,12 +270,15 @@ export default function InterviewSetupModal({
             </div>
           </div>
 
+          {/* CV */}
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
             <div className="mb-2 flex items-center gap-1.5 text-slate-700">
               <FileText size={14} className="text-indigo-500" />
               <p className="text-xs font-medium">Lebenslauf-Quelle</p>
               {uploadedCvFileName && (
-                <span className="ml-auto rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] text-emerald-700">{uploadedCvFileName}</span>
+                <span className="ml-auto rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] text-emerald-700">
+                  {uploadedCvFileName}
+                </span>
               )}
             </div>
 
@@ -374,7 +286,7 @@ export default function InterviewSetupModal({
 
             <button
               onClick={() => fileInputRef.current?.click()}
-              disabled={isParsingPdf || isAnalyzing}
+              disabled={isBusy}
               className="mb-2 inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600 hover:border-primary hover:text-primary disabled:opacity-60"
             >
               {isParsingPdf ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
@@ -390,6 +302,7 @@ export default function InterviewSetupModal({
             />
           </div>
 
+          {/* Job */}
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
             <div className="mb-2 flex items-center gap-1.5 text-slate-700">
               <Briefcase size={14} className="text-amber-600" />
@@ -417,149 +330,40 @@ export default function InterviewSetupModal({
             />
           </div>
 
+          {/* Analyse trigger */}
           <div className="flex items-center justify-between gap-2 rounded-xl border border-indigo-100 bg-indigo-50 px-3 py-2">
             <p className="text-[11px] leading-relaxed text-indigo-700">
-              Analyse läuft lokal mit anonymisiertem Profil. Bei Job-Links wird nur Stellenkontext geladen.
+              Lebenslauf wird lokal aufbereitet. Bei Job-Links wird nur der Stellenkontext geladen.
             </p>
             <button
               onClick={handleAnalyze}
-              disabled={isParsingPdf || isResolvingJob || isAnalyzing}
+              disabled={isBusy}
               className="whitespace-nowrap rounded-lg bg-indigo-600 px-3 py-2 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-60"
             >
-              {(isAnalyzing || isResolvingJob) ? 'Analysiere...' : 'Analyse starten'}
+              {isBusy ? (
+                <span className="inline-flex items-center gap-1">
+                  <Loader2 size={12} className="animate-spin" />
+                  {isResolvingJob ? 'Stelle laden…' : 'Aufbereiten…'}
+                </span>
+              ) : 'Kontext aufbereiten'}
             </button>
           </div>
 
           {error && (
-            <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{error}</div>
+            <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+              {error}
+            </div>
           )}
 
-          {matchScore !== null && scoreTheme && (
-            <div className={`space-y-3 rounded-xl border p-4 ${scoreTheme.card} ${scoreTheme.border}`}>
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className={`flex items-center gap-1.5 text-xs font-semibold ${scoreTheme.accent}`}>
-                  <Gauge size={14} /> Match-Analyse
-                </div>
-                <div className={`rounded-full border bg-white px-2.5 py-1 text-sm font-bold ${scoreTheme.accent} ${scoreTheme.border}`}>
-                  {matchScore}/100
-                </div>
-              </div>
-
-              <div>
-                <div className="h-2 w-full overflow-hidden rounded-full bg-white/80">
-                  <div
-                    className={`h-full rounded-full transition-all duration-500 ${scoreTheme.bar}`}
-                    style={{ width: `${Math.max(4, Math.min(100, matchScore))}%` }}
-                  />
-                </div>
-                <p className={`mt-1 text-[11px] font-medium ${scoreTheme.accent}`}>{scoreTheme.label}</p>
-              </div>
-
-              {breakdown && (
-                <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-                  {[
-                    { label: 'Muss', value: breakdown.essentials, tone: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
-                    { label: 'Gesamt', value: breakdown.requirements, tone: 'bg-cyan-50 text-cyan-700 border-cyan-200' },
-                    { label: 'Nachweis', value: breakdown.evidence, tone: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-                    { label: 'Keywords', value: breakdown.keywords, tone: 'bg-amber-50 text-amber-700 border-amber-200' },
-                  ].map(item => (
-                    <div key={item.label} className={`rounded-lg border p-2 ${item.tone}`}>
-                      <p className="text-[10px] font-semibold uppercase tracking-wide">{item.label}</p>
-                      <p className="text-base font-bold">{item.value}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                <div className="rounded-lg border border-emerald-200 bg-white p-3">
-                  <p className="mb-2 text-[11px] font-semibold text-emerald-700">Trefferbegriffe</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {matchedKeywords.map(term => (
-                      <span key={term} className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] text-emerald-700">
-                        {term}
-                      </span>
-                    ))}
-                    {matchedKeywords.length === 0 && (
-                      <span className="text-[11px] text-slate-500">Noch keine Treffer ermittelt.</span>
-                    )}
-                  </div>
-                </div>
-
-                <div className="rounded-lg border border-rose-200 bg-white p-3">
-                  <p className="mb-2 text-[11px] font-semibold text-rose-700">Fehlende Punkte</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {missingKeywords.map(term => (
-                      <span key={term} className="rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[10px] text-rose-700">
-                        {term}
-                      </span>
-                    ))}
-                    {missingKeywords.length === 0 && (
-                      <span className="text-[11px] text-slate-500">Keine kritischen Lücken erkannt.</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {requirementMatches.length > 0 && (
-                <div className="rounded-lg border border-slate-200 bg-white p-3">
-                  <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-slate-700">
-                    <Sparkles size={13} className="text-indigo-500" />
-                    Anforderungen im Detail
-                  </div>
-
-                  <div className="max-h-[210px] space-y-2 overflow-y-auto pr-1">
-                    {requirementMatches.map(item => (
-                      <div
-                        key={item.text}
-                        className={[
-                          'rounded-md border px-2.5 py-2 text-xs',
-                          item.matched
-                            ? 'border-emerald-200 bg-emerald-50/40'
-                            : 'border-rose-200 bg-rose-50/40',
-                        ].join(' ')}
-                      >
-                        <div className="mb-1 flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-1.5 text-slate-700">
-                            {item.matched ? (
-                              <CheckCircle2 size={13} className="text-emerald-600" />
-                            ) : (
-                              <AlertTriangle size={13} className="text-rose-600" />
-                            )}
-                            <span className="font-medium">{item.text}</span>
-                          </div>
-                          <span
-                            className={[
-                              'rounded-full px-2 py-0.5 text-[10px] font-semibold',
-                              item.essential
-                                ? 'bg-indigo-100 text-indigo-700'
-                                : 'bg-slate-100 text-slate-600',
-                            ].join(' ')}
-                          >
-                            {item.essential ? 'Muss' : 'Optional'}
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-slate-600">Trefferstärke: {strengthLabel(item.strength)}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <details className="rounded-lg border border-slate-200 bg-white p-3">
-                <summary className="cursor-pointer text-xs font-semibold text-slate-700">Vollständigen Analysebericht anzeigen</summary>
-                <pre className="mt-2 max-h-[220px] overflow-y-auto whitespace-pre-wrap rounded-lg border border-slate-100 bg-slate-50 p-3 text-[11px] leading-relaxed text-slate-700">
-                  {matchReport}
-                </pre>
-              </details>
-
-              <p className="text-[11px] text-slate-500">
-                Hinweis: Beim Speichern wird eine kompakte Version in den aktuellen Chat übernommen.
-              </p>
+          {analysisReady && (
+            <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
+              <CheckCircle2 size={14} />
+              Kontext aufbereitet — bereit zum Speichern.
             </div>
           )}
         </div>
 
+        {/* Footer */}
         <div className="flex gap-2 border-t border-slate-200 px-5 py-4">
           <button
             onClick={onClose}
@@ -569,7 +373,7 @@ export default function InterviewSetupModal({
           </button>
           <button
             onClick={handleSave}
-            disabled={isParsingPdf || isResolvingJob || isAnalyzing}
+            disabled={isBusy}
             className="flex-1 rounded-lg bg-primary py-2.5 text-sm font-semibold text-white hover:bg-primary-hover disabled:opacity-60"
           >
             Für diesen Chat speichern
