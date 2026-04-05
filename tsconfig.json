@@ -17,7 +17,9 @@
     "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "@clerk/clerk-react": ["./node_modules/@clerk/clerk-react/dist/index.d.ts"],
+      "@clerk/clerk-react/*": ["./node_modules/@clerk/clerk-react/dist/*"]
     }
   },
   "include": ["src"]
