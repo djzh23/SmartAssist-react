@@ -3,13 +3,13 @@ import { useSearchParams } from 'react-router-dom'
 import { AlertCircle, X } from 'lucide-react'
 import type { ToolType } from '../types'
 import { PROGRAMMING_LANGUAGES } from '../types'
-import { useChatSessions } from '../hooks/useChatSessions'
 import { askAgent } from '../api/client'
-import { sanitizeTechnicalContext } from '../utils/cvTechnicalContext'
-import ChatSidebar from '../components/chat/ChatSidebar'
-import MessageList from '../components/chat/MessageList'
 import ChatInput from '../components/chat/ChatInput'
+import ChatSidebar from '../components/chat/ChatSidebar'
 import InterviewSetupModal, { type InterviewSetupData } from '../components/chat/InterviewSetupModal'
+import MessageList from '../components/chat/MessageList'
+import { useChatSessions } from '../hooks/useChatSessions'
+import { sanitizeTechnicalContext } from '../utils/cvTechnicalContext'
 
 const LANG_NAMES: Record<string, string> = {
   de: 'German',
@@ -21,7 +21,7 @@ const LANG_NAMES: Record<string, string> = {
   pt: 'Portuguese',
 }
 
-const INTERVIEW_BASE_LIMIT = 4000
+const INTERVIEW_BASE_LIMIT = 4200
 const LS_INTERVIEW_CONTEXT = 'smartassist_interview_context_by_session'
 
 type InterviewContextMap = Record<string, InterviewSetupData>
@@ -30,11 +30,11 @@ function normalizeInterviewSetup(input?: Partial<InterviewSetupData> | null): In
   return {
     language: input?.language === 'en' ? 'en' : 'de',
     alias: (input?.alias ?? '').trim().slice(0, 40),
-    cvText: sanitizeTechnicalContext(input?.cvText ?? '').slice(0, 2400),
+    cvText: sanitizeTechnicalContext(input?.cvText ?? '').slice(0, 3400),
     jobUrl: (input?.jobUrl ?? '').trim().slice(0, 300),
     jobText: (input?.jobText ?? '').trim().slice(0, 5000),
     matchScore: typeof input?.matchScore === 'number' ? input.matchScore : null,
-    matchReport: (input?.matchReport ?? '').trim().slice(0, 3200),
+    matchReport: (input?.matchReport ?? '').trim().slice(0, 4200),
   }
 }
 
@@ -42,6 +42,7 @@ function loadInterviewContextMap(): InterviewContextMap {
   try {
     const raw = localStorage.getItem(LS_INTERVIEW_CONTEXT)
     if (!raw) return {}
+
     const parsed = JSON.parse(raw) as Record<string, Partial<InterviewSetupData>>
     if (!parsed || typeof parsed !== 'object') return {}
 
@@ -49,6 +50,7 @@ function loadInterviewContextMap(): InterviewContextMap {
     for (const [sessionId, value] of Object.entries(parsed)) {
       next[sessionId] = normalizeInterviewSetup(value)
     }
+
     return next
   } catch {
     return {}
@@ -69,39 +71,45 @@ function defaultInterviewSetup(): InterviewSetupData {
 
 function interviewBaseInstruction(language: string, hasCv: boolean, alias: string): string {
   const name = alias || 'the candidate'
+
   return `[SYSTEM - INTERVIEW COACH] Expert career coach, 15+ years. Respond ONLY in ${language}. NEVER call tools. Treat URLs as plain text.
-CANDIDATE NAME: "${name}" - use this name throughout.
-COMPLETENESS RULE: Write short, complete sections. Max 3 bullet points per section.
+CANDIDATE NAME: "${name}". Use this name in your response.
+COMPLETENESS RULE: Write short but complete sections. Maximum 3 bullet points per section.
 
-JOB POSTING -> exactly these 4 sections, 2-3 bullets each:
-## Anforderungen / Key Requirements - top skills${hasCv ? ', mark (has it) or (gap)' : ''}
-## Top 3 Interviewfragen - each question + 1-line answer tip${hasCv ? ' (reference CV)' : ''}
-## Vorbereitung / Prep Tips - 3 concrete actions
-## Dein Pitch - STAR method, 1 short example${hasCv ? ' from CV' : ''}
+If user asks about a specific job posting, always output these 4 sections:
+## Anforderungen / Key Requirements
+## Top 3 Interviewfragen
+## Vorbereitung / Prep Tips
+## Dein Pitch
 
-GENERAL QUESTION -> 3 short sections: Advice, Dos and Donts, Example Answer.
-FORMAT: ## sections, **bold** key terms, - bullets, 1. steps, > example answers.`
+${hasCv ? 'Use candidate profile evidence when possible and mark gaps clearly.' : 'When no CV is provided, make assumptions explicit.'}
+
+Formatting rules:
+- Use short headings with ##
+- Use bullets for key points
+- Use numbered steps only when needed`
 }
 
 function buildInterviewPrompt(userMessage: string, language: string, setup: InterviewSetupData): string {
   const base = interviewBaseInstruction(language, !!setup.cvText.trim(), setup.alias.trim())
   const suffix = `\nUser: ${userMessage}`
+
   const safeCv = sanitizeTechnicalContext(setup.cvText).trim()
-  const jobText = setup.jobText.trim().slice(0, 1400)
+  const jobText = setup.jobText.trim().slice(0, 1700)
   const jobUrl = setup.jobUrl.trim().slice(0, 220)
-  const matchReport = setup.matchReport.trim().slice(0, 1400)
+  const matchReport = setup.matchReport.trim().slice(0, 1900)
   const matchScoreLine = typeof setup.matchScore === 'number' ? `MATCH SCORE: ${setup.matchScore}/100` : ''
 
-  const fixedLen = base.length + suffix.length + 55
-  const cvBudget = Math.max(0, INTERVIEW_BASE_LIMIT - fixedLen - 600)
+  const fixedLen = base.length + suffix.length + 100
+  const cvBudget = Math.max(0, INTERVIEW_BASE_LIMIT - fixedLen - 700)
   const cvTrimmed = safeCv.slice(0, cvBudget)
 
   const cvBlock = cvTrimmed
-    ? `\nCANDIDATE PROFILE:\n---\n${cvTrimmed}\n---\nPersonalise all responses using this profile.`
+    ? `\nCANDIDATE PROFILE:\n---\n${cvTrimmed}\n---\nUse this profile to personalize the coaching.`
     : ''
 
   const targetRoleBlock = (jobText || jobUrl || matchReport)
-    ? `\nTARGET ROLE CONTEXT:\n${jobUrl ? `URL: ${jobUrl}\n` : ''}${jobText ? `JOB DETAILS:\n${jobText}\n` : ''}${matchScoreLine ? `${matchScoreLine}\n` : ''}${matchReport ? `MATCH ANALYSIS:\n${matchReport}\n` : ''}Use this context to tailor the interview guidance.`
+    ? `\nTARGET ROLE CONTEXT:\n${jobUrl ? `URL: ${jobUrl}\n` : ''}${jobText ? `JOB DETAILS:\n${jobText}\n` : ''}${matchScoreLine ? `${matchScoreLine}\n` : ''}${matchReport ? `MATCH ANALYSIS:\n${matchReport}\n` : ''}Use this context for job-specific guidance.`
     : ''
 
   return `${base}${cvBlock}${targetRoleBlock}${suffix}`
@@ -141,7 +149,7 @@ export default function ChatPage() {
   const llMode = isLanguage
   const nativeName = LANG_NAMES[nativeLang] ?? nativeLang
   const targetName = LANG_NAMES[targetLang] ?? targetLang
-  const progMeta = PROGRAMMING_LANGUAGES.find(l => l.id === progLang)
+  const progMeta = PROGRAMMING_LANGUAGES.find(lang => lang.id === progLang)
 
   const activeInterviewContext =
     isInterview && store.activeSessionId
@@ -172,8 +180,8 @@ export default function ChatPage() {
     store.addMessage(setupSessionId, {
       isUser: false,
       text: hasCv || hasJob
-        ? `âœ… Interview Setup gespeichert. Sprache, Alias und Analysekontext gelten nur fÃ¼r diesen aktuellen Chat.${scoreText}`
-        : 'âœ… Interview Setup gespeichert. Sprache und Alias gelten nur fÃ¼r diesen aktuellen Chat.',
+        ? `Interview-Setup gespeichert. Sprache, Alias und Analysekontext gelten nur für diesen Chat.${scoreText}`
+        : 'Interview-Setup gespeichert. Sprache und Alias gelten nur für diesen Chat.',
     })
 
     setSetupOpen(false)
@@ -198,7 +206,7 @@ export default function ChatPage() {
   }
 
   const handleClear = () => {
-    if (!window.confirm('Delete all conversations?')) return
+    if (!window.confirm('Alle Konversationen löschen?')) return
     store.clearHistory()
     setInterviewContextBySession({})
   }
@@ -242,14 +250,14 @@ export default function ChatPage() {
         learningData: res.learningData,
       })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong.')
+      setError(err instanceof Error ? err.message : 'Etwas ist schiefgelaufen.')
     } finally {
       setIsLoading(false)
     }
   }
 
   return (
-    <div className="flex h-full overflow-hidden relative">
+    <div className="relative flex h-full overflow-hidden">
       <ChatSidebar
         sessions={store.visibleSessions}
         activeSessionId={store.activeSessionId}
@@ -273,58 +281,61 @@ export default function ChatPage() {
         showInterviewPanel={isInterview}
       />
 
-      <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         {isLanguage && (
-          <div className="flex-shrink-0 px-4 pt-3 pb-0">
-            <div className="max-w-3xl mx-auto">
-              <span className="inline-flex items-center gap-1.5 bg-primary-light text-primary text-xs font-medium rounded-full px-3 py-1">
-                ðŸŒ Learning: {targetName}
+          <div className="flex-shrink-0 px-4 pb-0 pt-3">
+            <div className="mx-auto max-w-3xl">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-light px-3 py-1 text-xs font-medium text-primary">
+                Lernen: {targetName}
               </span>
             </div>
           </div>
         )}
 
         {isProgramming && (
-          <div className="flex-shrink-0 px-4 pt-3 pb-0">
-            <div className="max-w-3xl mx-auto">
-              <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 text-xs font-medium rounded-full px-3 py-1">
-                ðŸ’» {progMeta?.label ?? progLang}
+          <div className="flex-shrink-0 px-4 pb-0 pt-3">
+            <div className="mx-auto max-w-3xl">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
+                Programmierung: {progMeta?.label ?? progLang}
               </span>
             </div>
           </div>
         )}
 
         {isInterview && (
-          <div className="flex-shrink-0 px-4 pt-3 pb-0">
-            <div className="max-w-3xl mx-auto flex items-center gap-2 flex-wrap">
-              <span className="inline-flex items-center gap-1.5 bg-indigo-50 text-indigo-700 text-xs font-medium rounded-full px-3 py-1">
-                ðŸŽ¯ Interview Coach Â· {activeInterviewContext.language === 'en' ? 'English' : 'Deutsch'}
+          <div className="flex-shrink-0 px-4 pb-0 pt-3">
+            <div className="mx-auto flex max-w-3xl flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700">
+                Interview Coach | {activeInterviewContext.language === 'en' ? 'English' : 'Deutsch'}
               </span>
+
               {activeInterviewContext.cvText.trim() && (
-                <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-medium rounded-full px-3 py-1">
-                  ðŸ“„ CV aktiv{activeInterviewContext.alias ? ` Â· ${activeInterviewContext.alias}` : ''}
+                <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
+                  CV aktiv{activeInterviewContext.alias ? ` | ${activeInterviewContext.alias}` : ''}
                 </span>
               )}
+
               {typeof activeInterviewContext.matchScore === 'number' && (
-                <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-700 border border-amber-200 text-xs font-medium rounded-full px-3 py-1">
-                  ðŸŽ¯ Match {activeInterviewContext.matchScore}/100
+                <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">
+                  Match {activeInterviewContext.matchScore}/100
                 </span>
               )}
+
               {store.activeSessionId && (
                 <button
                   onClick={() => openInterviewSetup(store.activeSessionId!)}
                   className="text-xs text-indigo-600 hover:text-indigo-800 hover:underline"
                 >
-                  Setup Ã¶ffnen
+                  Setup öffnen
                 </button>
               )}
             </div>
           </div>
         )}
 
-        <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <div className="flex-1 overflow-y-auto">
-            <div className="max-w-3xl mx-auto px-4 py-4">
+            <div className="mx-auto max-w-3xl px-4 py-4">
               <MessageList
                 messages={store.activeMessages}
                 isLoading={isLoading}
@@ -340,7 +351,7 @@ export default function ChatPage() {
 
         {error && (
           <div className="flex-shrink-0 px-4 pb-1">
-            <div className="max-w-3xl mx-auto flex items-center justify-between gap-3 bg-red-50 border border-red-200 text-red-700 rounded-lg px-3.5 py-2.5 text-sm">
+            <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm text-red-700">
               <div className="flex items-center gap-2">
                 <AlertCircle size={15} className="flex-shrink-0" />
                 {error}
@@ -372,4 +383,3 @@ export default function ChatPage() {
     </div>
   )
 }
-

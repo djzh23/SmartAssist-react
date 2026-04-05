@@ -1,193 +1,351 @@
-import { useState } from 'react'
+﻿import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import type { ToolMeta } from '../types'
+import {
+  ArrowRight,
+  ArrowUpRight,
+  Briefcase,
+  Code2,
+  Globe2,
+  MessageCircle,
+  Target,
+  X,
+} from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
+import type { ToolType } from '../types'
 
-const TOOLS: ToolMeta[] = [
-  {
-    id: 'interview',
-    name: 'Interview Coach',
-    chatParam: 'interview',
-    shortDescription: 'Übe Bewerbungsgespräche mit klaren, konkreten Antworten.',
-    fullDescription:
-      'Du bekommst realistische Fragen, strukturierte Antwortideen und hilfreiche Formulierungen für dein nächstes Gespräch.',
-    examples: [
-      'Stell mir typische Fragen für eine Backend Entwickler Stelle',
-      'Wie antworte ich gut auf: Was ist Ihre größte Schwäche?',
-      'Gib mir ein STAR Beispiel für eine Teamkonflikt Frage',
-      'Bereite mich auf ein Interview für diese Stellenanzeige vor',
-    ],
-    icon: '🎯',
-    iconBg: '#EEF2FF',
-    featured: true,
-  },
+type ToolCategory = 'career' | 'general'
+
+interface ToolCardMeta {
+  id: ToolType
+  chatParam: ToolType
+  category: ToolCategory
+  name: string
+  shortDescription: string
+  fullDescription: string
+  examples: string[]
+  icon: LucideIcon
+  badge: string
+  accent: {
+    soft: string
+    ring: string
+    text: string
+    chip: string
+  }
+  preview: Array<{
+    title: string
+    subtitle: string
+    line: string
+  }>
+}
+
+const TOOLS: ToolCardMeta[] = [
   {
     id: 'jobanalyzer',
-    name: 'Job Analyzer',
     chatParam: 'jobanalyzer',
-    shortDescription: 'Lies zwischen den Zeilen einer Stellenanzeige.',
-    fullDescription:
-      'Füge den Text oder Link einer Stellenanzeige ein und erhalte eine klare Übersicht zu Anforderungen, Schlüsselbegriffen und passenden Schwerpunkten für deinen Lebenslauf.',
+    category: 'career',
+    name: 'Job Analyser',
+    shortDescription: 'Analysiert Stellenanzeigen präzise und zeigt dir, worauf es im Lebenslauf wirklich ankommt.',
+    fullDescription: 'Füge den Stellentext oder einen Link ein. Du bekommst eine klare Struktur zu Muss-Kriterien, Soft Skills und den besten Schwerpunkten für deine Bewerbung.',
     examples: [
-      'Analysiere diese Stelle: [Text einfügen]',
-      'Analysiere diese Anzeige: https://jobs.example.com/123',
-      'Welche Fähigkeiten sollte ich in meiner Bewerbung hervorheben?',
+      'Analysiere diese Stelle und markiere die Muss-Anforderungen.',
+      'Welche Begriffe sollte ich im Lebenslauf stärker zeigen?',
+      'Wo fehlen mir noch sichtbare Nachweise für diese Position?',
     ],
-    icon: '💼',
-    iconBg: '#FFF8F0',
-    featured: true,
+    icon: Briefcase,
+    badge: 'Career',
+    accent: {
+      soft: 'bg-emerald-50',
+      ring: 'border-emerald-200 text-emerald-700',
+      text: 'text-emerald-700',
+      chip: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+    },
+    preview: [
+      { title: 'Muss-Kriterien', subtitle: 'Kompetenz-Match sofort sichtbar', line: 'bg-emerald-500' },
+      { title: 'Lebenslauf-Fokus', subtitle: 'Stärken und Lücken klar sortiert', line: 'bg-cyan-500' },
+    ],
+  },
+  {
+    id: 'interview',
+    chatParam: 'interview',
+    category: 'career',
+    name: 'Interview Coach',
+    shortDescription: 'Trainiere Antworten mit Struktur, Tiefgang und passender Sprache für dein Zielprofil.',
+    fullDescription: 'Der Interview Coach erstellt realistische Fragen, gibt Antwortleitfäden und hilft dir, starke Beispiele aus deiner eigenen Erfahrung zu nutzen.',
+    examples: [
+      'Gib mir 5 typische Fragen für diese Rolle.',
+      'Baue mit mir eine starke Antwort auf die Frage nach meinen Schwächen.',
+      'Lass uns mein persönliches Pitch-Statement verbessern.',
+    ],
+    icon: Target,
+    badge: 'Career',
+    accent: {
+      soft: 'bg-violet-50',
+      ring: 'border-violet-200 text-violet-700',
+      text: 'text-violet-700',
+      chip: 'border-violet-200 bg-violet-50 text-violet-700',
+    },
+    preview: [
+      { title: 'Fragenkatalog', subtitle: 'Fachlich und verhaltensorientiert', line: 'bg-violet-500' },
+      { title: 'Antwortstruktur', subtitle: 'STAR, Klarheit, rote Linie', line: 'bg-fuchsia-500' },
+    ],
   },
   {
     id: 'general',
-    name: 'General Chat',
     chatParam: 'general',
-    shortDescription: 'Freier Chat für alles, was du gerade klären möchtest.',
-    fullDescription:
-      'Nutze den allgemeinen Chat für Fragen, die nicht in eine spezielle Kategorie fallen, zum Beispiel Karrierefragen, Formulierungen oder spontane Ideen.',
+    category: 'general',
+    name: 'General Chat',
+    shortDescription: 'Freier Arbeitsraum für Karrierefragen, Formulierungen und schnelle Entscheidungen.',
+    fullDescription: 'Nutze den allgemeinen Chat für alles, was nicht in eine spezielle Kategorie fällt. Von Lebenslauf-Formulierungen bis zu Strategiefragen.',
     examples: [
-      'Wie kann ich mein LinkedIn Profil klarer schreiben?',
-      'Welche Fragen sollte ich am Ende eines Interviews stellen?',
-      'Hilf mir, eine kurze professionelle Selbstvorstellung zu schreiben',
+      'Hilf mir bei einer kurzen, professionellen Selbstvorstellung.',
+      'Welche Fragen sollte ich am Ende eines Gesprächs stellen?',
+      'Formuliere diese Passage klarer und natürlicher.',
     ],
-    icon: '💬',
-    iconBg: '#F8FAFC',
-    featured: false,
+    icon: MessageCircle,
+    badge: 'Flex',
+    accent: {
+      soft: 'bg-slate-100',
+      ring: 'border-slate-200 text-slate-700',
+      text: 'text-slate-700',
+      chip: 'border-slate-200 bg-slate-100 text-slate-700',
+    },
+    preview: [
+      { title: 'Schnelle Klärung', subtitle: 'Direkt zur nächsten Entscheidung', line: 'bg-slate-500' },
+      { title: 'Textoptimierung', subtitle: 'Klar, präzise, professionell', line: 'bg-zinc-500' },
+    ],
   },
   {
     id: 'programming',
-    name: 'Programming',
     chatParam: 'programming',
-    shortDescription: 'Technische Fragen zu Code, Architektur und DSA.',
-    fullDescription:
-      'Arbeite an Algorithmen, Datenstrukturen, Clean Code und Architektur. Du erhältst verständliche Erklärungen und Beispiele, die du direkt nutzen kannst.',
+    category: 'general',
+    name: 'Programming',
+    shortDescription: 'Technisches Training mit Fokus auf Architektur, Codequalität und Interviewfragen.',
+    fullDescription: 'Lerne und übe mit konkreten Beispielen zu Algorithmen, Datenstrukturen, Systemdesign und sauberem Code für reale Interviewsituationen.',
     examples: [
-      'Erkläre Binary Search mit einem Java Beispiel',
-      'Was ist der Unterschied zwischen Stack und Queue?',
-      'Zeig mir ein sauberes Beispiel für das Singleton Pattern in C#',
-      'Wie funktioniert React Reconciliation?',
+      'Erkläre Binary Search mit einem C# Beispiel.',
+      'Wann nutze ich Queue statt Stack?',
+      'Zeig mir ein sauberes Pattern für modulare API-Services.',
     ],
-    icon: '💻',
-    iconBg: '#F0FDF4',
-    featured: false,
+    icon: Code2,
+    badge: 'Tech',
+    accent: {
+      soft: 'bg-indigo-50',
+      ring: 'border-indigo-200 text-indigo-700',
+      text: 'text-indigo-700',
+      chip: 'border-indigo-200 bg-indigo-50 text-indigo-700',
+    },
+    preview: [
+      { title: 'Code & DSA', subtitle: 'Verständlich und praxisnah', line: 'bg-indigo-500' },
+      { title: 'Architektur', subtitle: 'Klarer Aufbau, starke Argumentation', line: 'bg-blue-500' },
+    ],
   },
   {
     id: 'language',
-    name: 'Language',
     chatParam: 'language',
-    shortDescription: 'Sprachtraining für Job, Alltag und Bewerbung.',
-    fullDescription:
-      'Trainiere gezielt eine Zielsprache für Bewerbungsgespräche, Mails oder berufliche Alltagssituationen. Du bekommst korrigierte und natürlichere Formulierungen.',
+    category: 'general',
+    name: 'Language',
+    shortDescription: 'Sprachtraining für Bewerbung, Alltag und professionelle Kommunikation.',
+    fullDescription: 'Trainiere aktiv in deiner Zielsprache. Du bekommst Korrekturen, Alternativen und natürlichere Formulierungen für berufliche Situationen.',
     examples: [
-      'Wie sage ich auf Englisch: Ich habe drei Jahre Berufserfahrung?',
-      'Hilf mir, eine höfliche Absage auf Deutsch zu formulieren',
-      'Lass uns ein kurzes Interview auf Spanisch üben',
+      'Korrigiere meinen Satz auf Englisch und erkläre den Unterschied.',
+      'Hilf mir bei einer höflichen Antwort auf Deutsch.',
+      'Übe mit mir eine kurze Vorstellungsrunde auf Spanisch.',
     ],
-    icon: '🌍',
-    iconBg: '#E8FEF0',
-    featured: false,
+    icon: Globe2,
+    badge: 'Language',
+    accent: {
+      soft: 'bg-amber-50',
+      ring: 'border-amber-200 text-amber-700',
+      text: 'text-amber-700',
+      chip: 'border-amber-200 bg-amber-50 text-amber-700',
+    },
+    preview: [
+      { title: 'Korrektur in Kontext', subtitle: 'Nicht nur Grammatik, auch Wirkung', line: 'bg-amber-500' },
+      { title: 'Sprechpraxis', subtitle: 'Natürlichere Formulierungen', line: 'bg-orange-500' },
+    ],
   },
 ]
 
-const CAREER_TOOL_ORDER: ToolMeta['id'][] = ['jobanalyzer', 'interview']
-const CAREER_TOOL_IDS = new Set(CAREER_TOOL_ORDER)
-
 export default function ToolsPage() {
   const navigate = useNavigate()
-  const [selected, setSelected] = useState<ToolMeta | null>(null)
+  const [selected, setSelected] = useState<ToolCardMeta | null>(null)
 
-  const careerTools = CAREER_TOOL_ORDER
-    .map(id => TOOLS.find(tool => tool.id === id))
-    .filter((tool): tool is ToolMeta => Boolean(tool))
-  const otherTools = TOOLS.filter(tool => !CAREER_TOOL_IDS.has(tool.id))
+  const careerTools = useMemo(
+    () => TOOLS.filter(tool => tool.category === 'career'),
+    [],
+  )
 
-  const renderToolGrid = (items: ToolMeta[]) => (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      {items.map(tool => (
-        <button
-          key={tool.id}
-          onClick={() => setSelected(tool)}
-          className={[
-            'text-left p-5 rounded-2xl border transition-all duration-150 group',
-            'hover:shadow-card hover:-translate-y-0.5',
-            tool.featured
-              ? 'border-primary/30 bg-primary-light'
-              : 'border-slate-200 bg-white hover:border-primary/40',
-          ].join(' ')}
-        >
-          <div className="flex items-start justify-between mb-3">
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl" style={{ background: tool.iconBg }}>
-              {tool.icon}
-            </div>
-            {tool.featured && (
-              <span className="text-[9px] font-bold tracking-widest bg-primary text-white rounded-full px-2 py-0.5 uppercase">
-                Empfohlen
+  const otherTools = useMemo(
+    () => TOOLS.filter(tool => tool.category === 'general'),
+    [],
+  )
+
+  const renderCards = (items: ToolCardMeta[]) => (
+    <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+      {items.map(tool => {
+        const Icon = tool.icon
+
+        return (
+          <button
+            key={tool.id}
+            onClick={() => setSelected(tool)}
+            className="group relative overflow-hidden rounded-3xl border border-slate-200/90 bg-white/90 p-5 text-left shadow-[0_10px_34px_rgba(15,23,42,0.08)] backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_44px_rgba(15,23,42,0.12)]"
+          >
+            <div className="pointer-events-none absolute inset-0 opacity-80" style={{
+              backgroundImage: 'radial-gradient(circle at 88% 0%, rgba(124,58,237,0.08), transparent 48%)',
+            }} />
+
+            <div className="relative flex items-start justify-between gap-3">
+              <div className={`flex h-11 w-11 items-center justify-center rounded-2xl border ${tool.accent.soft} ${tool.accent.ring}`}>
+                <Icon size={18} strokeWidth={2} />
+              </div>
+              <span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-semibold ${tool.accent.chip}`}>
+                {tool.badge}
               </span>
-            )}
-          </div>
-          <h3 className="font-semibold text-slate-800 text-sm mb-1">{tool.name}</h3>
-          <p className="text-slate-500 text-xs leading-relaxed">{tool.shortDescription}</p>
-          <p className="text-primary text-xs font-medium mt-3 group-hover:underline">Mehr erfahren {'->'}</p>
-        </button>
-      ))}
+            </div>
+
+            <h3 className="relative mt-4 text-base font-semibold text-slate-800">{tool.name}</h3>
+            <p className="relative mt-1 text-sm leading-relaxed text-slate-500">{tool.shortDescription}</p>
+
+            <div className="relative mt-4 space-y-2 rounded-2xl border border-slate-100 bg-white/85 p-3">
+              {tool.preview.map(item => (
+                <div key={item.title} className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50/85 px-3 py-2">
+                  <span className={`h-7 w-1 rounded-full ${item.line}`} />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-xs font-semibold text-slate-700">{item.title}</p>
+                    <p className="truncate text-[11px] text-slate-500">{item.subtitle}</p>
+                  </div>
+                  <ArrowUpRight size={14} className="text-slate-300 transition-colors group-hover:text-slate-500" />
+                </div>
+              ))}
+            </div>
+
+            <p className={`relative mt-3 inline-flex items-center gap-1 text-xs font-semibold ${tool.accent.text}`}>
+              Details öffnen
+              <ArrowRight size={13} />
+            </p>
+          </button>
+        )
+      })}
     </div>
   )
 
   return (
-    <div className="overflow-y-auto h-full">
-      <div className="max-w-2xl mx-auto px-6 py-10">
-        <h1 className="text-2xl font-bold text-slate-800 mb-1">Tools für deine Vorbereitung</h1>
-        <p className="text-slate-400 text-sm mb-8">Wähle das passende Tool für den nächsten sinnvollen Schritt.</p>
+    <div className="relative h-full overflow-y-auto bg-[#f5f6fb]">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div
+          className="absolute inset-0 opacity-55"
+          style={{
+            backgroundImage: 'linear-gradient(to right, rgba(100,116,139,0.09) 1px, transparent 1px), linear-gradient(to bottom, rgba(100,116,139,0.09) 1px, transparent 1px)',
+            backgroundSize: '28px 28px',
+          }}
+        />
+        <div className="absolute -right-28 top-0 h-80 w-80 rounded-full bg-violet-200/45 blur-3xl" />
+        <div className="absolute -left-28 bottom-0 h-96 w-96 rounded-full bg-cyan-200/45 blur-3xl" />
+        <div className="absolute left-1/2 top-14 h-44 w-44 -translate-x-1/2 rotate-45 rounded-[34px] border border-violet-200/45" />
+        <div className="absolute right-10 top-52 h-28 w-28 rotate-12 rounded-2xl border border-slate-300/70 bg-white/40" />
+      </div>
+
+      <div className="relative mx-auto max-w-6xl px-6 py-10 md:py-12">
+        <div className="mb-10 rounded-3xl border border-slate-200/80 bg-white/85 p-6 shadow-[0_14px_38px_rgba(15,23,42,0.10)] backdrop-blur">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-violet-500">SmartAssist Workspace</p>
+          <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-800 md:text-3xl">Tools für deine Vorbereitung</h1>
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-500">
+            Wähle das passende Tool für deinen nächsten Schritt. Alle Bereiche sind auf Fokus, Übersicht und schnelle Umsetzung ausgerichtet.
+          </p>
+        </div>
 
         <section className="mb-10">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Career Tools</h2>
-          {renderToolGrid(careerTools)}
+          <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.15em] text-slate-400">Karriere Tools</h2>
+          {renderCards(careerTools)}
         </section>
 
         <section>
-          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Weitere Tools</h2>
-          {renderToolGrid(otherTools)}
+          <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.15em] text-slate-400">Weitere Tools</h2>
+          {renderCards(otherTools)}
         </section>
       </div>
 
       {selected && (
         <div
-          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4 animate-fade-in"
           onClick={() => setSelected(null)}
         >
           <div
-            className="bg-white rounded-2xl max-w-md w-full p-6 flex flex-col gap-4 shadow-2xl animate-slide-up"
-            onClick={e => e.stopPropagation()}
+            className="w-full max-w-2xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl animate-slide-up"
+            onClick={event => event.stopPropagation()}
           >
-            <div className="flex justify-center">
-              <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl" style={{ background: selected.iconBg }}>
-                {selected.icon}
-              </div>
-            </div>
-
-            <h2 className="text-xl font-bold text-center text-slate-800">{selected.name}</h2>
-            <p className="text-slate-500 text-sm text-center leading-relaxed">{selected.fullDescription}</p>
-
-            <div className="bg-slate-50 rounded-xl p-4 flex flex-col gap-2">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Beispielfragen</p>
-              {selected.examples.map((example, i) => (
-                <div key={i} className="text-sm text-slate-700 bg-white border border-slate-200 rounded-lg px-3 py-2 leading-snug">
-                  💬 {example}
-                </div>
-              ))}
-            </div>
-
-            <div className="flex gap-2 mt-1">
-              <button
-                onClick={() => navigate(`/chat?tool=${selected.chatParam}`)}
-                className="flex-1 bg-primary hover:bg-primary-hover text-white rounded-xl py-3 text-sm font-semibold transition-colors"
-              >
-                Im Chat öffnen
-              </button>
+            <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+              <p className="text-sm font-semibold text-slate-700">Tool Vorschau</p>
               <button
                 onClick={() => setSelected(null)}
-                className="flex-1 border border-slate-200 hover:border-slate-300 text-slate-500 hover:text-slate-700 rounded-xl py-3 text-sm font-medium transition-colors"
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+                aria-label="Schließen"
               >
-                Schließen
+                <X size={16} />
               </button>
+            </div>
+
+            <div className="grid grid-cols-1 gap-5 p-6 md:grid-cols-[1.1fr_0.9fr]">
+              <div>
+                <div className="flex items-center gap-3">
+                  <div className={`flex h-12 w-12 items-center justify-center rounded-2xl border ${selected.accent.soft} ${selected.accent.ring}`}>
+                    <selected.icon size={20} />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-800">{selected.name}</h3>
+                    <span className={`mt-1 inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${selected.accent.chip}`}>
+                      {selected.badge}
+                    </span>
+                  </div>
+                </div>
+
+                <p className="mt-4 text-sm leading-relaxed text-slate-600">{selected.fullDescription}</p>
+
+                <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">Beispielprompts</p>
+                  <div className="mt-2 space-y-2">
+                    {selected.examples.map(example => (
+                      <div key={example} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">
+                        {example}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <p className="text-sm font-semibold text-slate-700">Direkt starten</p>
+                <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                  Öffne das Tool im Chat und arbeite direkt mit deinem konkreten Kontext.
+                </p>
+
+                <div className="mt-4 space-y-2">
+                  {selected.preview.map(row => (
+                    <div key={row.title} className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2">
+                      <span className={`h-6 w-1 rounded-full ${row.line}`} />
+                      <div>
+                        <p className="text-xs font-semibold text-slate-700">{row.title}</p>
+                        <p className="text-[11px] text-slate-500">{row.subtitle}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  onClick={() => navigate(`/chat?tool=${selected.chatParam}`)}
+                  className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-hover"
+                >
+                  Im Chat öffnen
+                  <ArrowRight size={15} />
+                </button>
+                <button
+                  onClick={() => setSelected(null)}
+                  className="mt-2 inline-flex w-full items-center justify-center rounded-xl border border-slate-200 px-4 py-3 text-sm font-medium text-slate-600 transition-colors hover:border-slate-300"
+                >
+                  Schließen
+                </button>
+              </div>
             </div>
           </div>
         </div>

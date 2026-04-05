@@ -4,87 +4,183 @@ interface MatchInput {
   jobUrl?: string
 }
 
+type MatchStrength = 'none' | 'low' | 'medium' | 'high'
+
+interface RequirementMatch {
+  text: string
+  essential: boolean
+  matched: boolean
+  strength: MatchStrength
+  matchedTerms: string[]
+}
+
+interface MatchBreakdown {
+  essentials: number
+  requirements: number
+  evidence: number
+  keywords: number
+}
+
 export interface JobMatchResult {
   score: number
   report: string
   matchedKeywords: string[]
   missingKeywords: string[]
+  breakdown: MatchBreakdown
+  requirementMatches: RequirementMatch[]
+}
+
+interface RequirementLine {
+  text: string
+  tokens: string[]
+  essential: boolean
+  weight: number
 }
 
 const STOPWORDS = new Set([
-  'the', 'and', 'for', 'with', 'that', 'this', 'from', 'into', 'your', 'you', 'our', 'are', 'was', 'were', 'have', 'has',
-  'will', 'can', 'all', 'not', 'but', 'der', 'die', 'das', 'und', 'mit', 'für', 'auf', 'von', 'eine', 'einer', 'einem',
-  'ein', 'ist', 'sind', 'war', 'wir', 'ihr', 'sie', 'als', 'auch', 'bei', 'zum', 'zur', 'im', 'in', 'an', 'zu', 'den',
-  'dem', 'des', 'oder', 'durch', 'über', 'unter', 'nach', 'vor', 'sowie', 'mehr', 'weniger', 'sehr', 'noch', 'nur',
-  'job', 'stelle', 'position', 'role', 'team', 'unternehmen', 'company', 'candidate', 'profil',
+  'the', 'and', 'or', 'for', 'with', 'that', 'this', 'these', 'those', 'from', 'into', 'your', 'you', 'our', 'their',
+  'are', 'was', 'were', 'have', 'has', 'had', 'will', 'can', 'all', 'not', 'but', 'per', 'via', 'very', 'more', 'less',
+  'der', 'die', 'das', 'und', 'oder', 'mit', 'fuer', 'für', 'auf', 'von', 'eine', 'einer', 'einem', 'ein', 'ist',
+  'sind', 'war', 'wir', 'ihr', 'sie', 'als', 'auch', 'bei', 'zum', 'zur', 'im', 'in', 'an', 'zu', 'den', 'dem', 'des',
+  'durch', 'ueber', 'über', 'unter', 'nach', 'vor', 'sowie', 'noch', 'nur', 'mehr', 'weniger', 'job', 'stelle',
+  'position', 'role', 'team', 'unternehmen', 'company', 'candidate', 'profil', 'mwd', 'wmd',
 ])
 
-const PRIORITY_HINTS = [
-  'must', 'required', 'requirement', 'mandatory', 'essential', 'minimum',
-  'anforderung', 'erforderlich', 'muss', 'zwingend', 'voraussetzung',
+const MUST_HAVE_HINTS = [
+  'must', 'required', 'requirement', 'mandatory', 'essential', 'minimum', 'need to',
+  'anforderung', 'anforderungen', 'erforderlich', 'muss', 'zwingend', 'voraussetzung', 'unbedingt',
 ]
 
 function normalize(text: string): string {
   return text
     .toLowerCase()
     .replace(/\r\n?/g, '\n')
-    .replace(/[^a-z0-9äöüß+.#\-\s]/gi, ' ')
+    .replace(/ä/g, 'ae')
+    .replace(/ö/g, 'oe')
+    .replace(/ü/g, 'ue')
+    .replace(/ß/g, 'ss')
+    .replace(/[^a-z0-9+.#/\-\s]/g, ' ')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+}
+
+function cleanLine(line: string): string {
+  return line
+    .replace(/^[-*•\u2022\s]+/, '')
     .replace(/\s{2,}/g, ' ')
     .trim()
 }
 
 function tokenize(text: string): string[] {
-  const raw = normalize(text).split(/\s+/).filter(Boolean)
-  return raw
-    .filter(token => token.length >= 3)
+  const prepared = normalize(text)
+  if (!prepared) return []
+
+  return prepared
+    .split(/\s+/)
+    .filter(Boolean)
+    .filter(token => token.length >= 2 && token.length <= 32)
+    .filter(token => !/^\d+$/.test(token))
     .filter(token => !STOPWORDS.has(token))
 }
 
-function topKeywords(tokens: string[], limit = 30): string[] {
+function unique(values: string[]): string[] {
+  return [...new Set(values)]
+}
+
+function topKeywords(tokens: string[], limit: number): string[] {
   const freq = new Map<string, number>()
   for (const token of tokens) {
     freq.set(token, (freq.get(token) ?? 0) + 1)
   }
 
   return [...freq.entries()]
-    .sort((a, b) => b[1] - a[1])
+    .sort((a, b) => {
+      if (b[1] !== a[1]) return b[1] - a[1]
+      return b[0].length - a[0].length
+    })
     .map(([token]) => token)
     .slice(0, limit)
 }
 
-function pickPriorityLines(jobText: string): string[] {
-  return jobText
-    .split(/\n+/)
-    .map(line => line.trim())
-    .filter(Boolean)
-    .filter(line => PRIORITY_HINTS.some(h => line.toLowerCase().includes(h)))
+function detectEssentialLine(line: string): boolean {
+  const normalized = normalize(line)
+  return MUST_HAVE_HINTS.some(hint => normalized.includes(normalize(hint)))
 }
 
-function extractSectionLines(cvProfile: string, section: 'EXPERIENCE' | 'PROJECTS' | 'EDUCATION'): string[] {
-  const lines = cvProfile.split(/\n+/)
-  let current = ''
-  const out: string[] = []
+function splitLines(text: string): string[] {
+  return text
+    .replace(/[;|]+/g, '\n')
+    .replace(/\r\n?/g, '\n')
+    .split(/\n+/)
+    .map(cleanLine)
+    .filter(Boolean)
+}
 
-  for (const line of lines) {
-    const trimmed = line.trim()
-    if (!trimmed) continue
-    if (/^SKILLS:/i.test(trimmed)) current = 'SKILLS'
-    else if (/^EXPERIENCE:/i.test(trimmed)) current = 'EXPERIENCE'
-    else if (/^PROJECTS:/i.test(trimmed)) current = 'PROJECTS'
-    else if (/^EDUCATION:/i.test(trimmed)) current = 'EDUCATION'
-    else if (current === section) out.push(trimmed.replace(/^[-*•]\s*/, '').trim())
+function extractRequirementLines(jobText: string): RequirementLine[] {
+  const rawLines = splitLines(jobText)
+    .filter(line => line.length >= 8)
+    .filter(line => /[A-Za-zÄÖÜäöüß]/.test(line))
+
+  const deduped = unique(rawLines)
+  const candidates = deduped.length > 0 ? deduped : [jobText]
+
+  const picked = candidates
+    .sort((a, b) => tokenize(b).length - tokenize(a).length)
+    .slice(0, 14)
+
+  return picked.map(line => {
+    const tokens = unique(tokenize(line)).slice(0, 12)
+    const essential = detectEssentialLine(line)
+    const weight = essential ? 1.9 : 1.1
+    return { text: line, tokens, essential, weight }
+  }).filter(line => line.tokens.length > 0)
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value))
+}
+
+function toPercent(value: number): number {
+  return Math.round(clamp(value, 0, 1) * 100)
+}
+
+function scoreRequirement(req: RequirementLine, cvTokenSet: Set<string>): RequirementMatch & { coverage: number; weight: number } {
+  const matchedTerms = req.tokens.filter(token => cvTokenSet.has(token))
+  const coverage = req.tokens.length > 0 ? matchedTerms.length / req.tokens.length : 0
+
+  let strength: MatchStrength = 'none'
+  if (coverage >= 0.6 || matchedTerms.length >= 4) strength = 'high'
+  else if (coverage >= 0.35 || matchedTerms.length >= 2) strength = 'medium'
+  else if (matchedTerms.length > 0) strength = 'low'
+
+  const matched = strength === 'medium' || strength === 'high'
+
+  return {
+    text: req.text,
+    essential: req.essential,
+    matched,
+    strength,
+    matchedTerms: matchedTerms.slice(0, 5),
+    coverage,
+    weight: req.weight,
   }
-
-  return out
 }
 
 function formatKeyword(token: string): string {
-  if (/^[a-z]+$/i.test(token) && token.length <= 4) return token.toUpperCase()
+  if (token.length <= 4) return token.toUpperCase()
   return token.charAt(0).toUpperCase() + token.slice(1)
+}
+
+function formatCoverageLabel(value: number): string {
+  if (value >= 0.75) return 'stark'
+  if (value >= 0.5) return 'solide'
+  if (value >= 0.35) return 'teilweise'
+  return 'niedrig'
 }
 
 function buildReport(args: {
   score: number
+  breakdown: MatchBreakdown
   matchedKeywords: string[]
   missingKeywords: string[]
   strengths: string[]
@@ -92,75 +188,128 @@ function buildReport(args: {
   recommendations: string[]
   jobUrl?: string
 }): string {
-  const matched = args.matchedKeywords.slice(0, 10).map(formatKeyword)
-  const missing = args.missingKeywords.slice(0, 10).map(formatKeyword)
-
   return [
     `MATCH SCORE: ${args.score}/100`,
-    args.jobUrl ? `TARGET URL: ${args.jobUrl}` : null,
+    args.jobUrl ? `STELLEN-LINK: ${args.jobUrl}` : null,
     '',
-    'MATCHED KEYWORDS:',
-    matched.length > 0 ? matched.map(v => `- ${v}`).join('\n') : '- n/a',
+    'DETAILBEWERTUNG:',
+    `- Muss-Anforderungen: ${args.breakdown.essentials}/100`,
+    `- Gesamtanforderungen: ${args.breakdown.requirements}/100`,
+    `- Nachweis im Lebenslauf: ${args.breakdown.evidence}/100`,
+    `- Schlüsselbegriffe: ${args.breakdown.keywords}/100`,
     '',
-    'MISSING PRIORITY KEYWORDS:',
-    missing.length > 0 ? missing.map(v => `- ${v}`).join('\n') : '- n/a',
+    'STÄRKEN:',
+    args.strengths.length > 0 ? args.strengths.map(line => `- ${line}`).join('\n') : '- n/a',
     '',
-    'STRENGTHS:',
-    args.strengths.length > 0 ? args.strengths.map(v => `- ${v}`).join('\n') : '- n/a',
+    'LÜCKEN:',
+    args.gaps.length > 0 ? args.gaps.map(line => `- ${line}`).join('\n') : '- n/a',
     '',
-    'GAPS:',
-    args.gaps.length > 0 ? args.gaps.map(v => `- ${v}`).join('\n') : '- n/a',
+    'TREFFER-BEGRIFFE:',
+    args.matchedKeywords.length > 0
+      ? args.matchedKeywords.slice(0, 10).map(token => `- ${formatKeyword(token)}`).join('\n')
+      : '- n/a',
     '',
-    'NEXT STEPS:',
-    args.recommendations.length > 0 ? args.recommendations.map(v => `- ${v}`).join('\n') : '- n/a',
+    'FEHLENDE BEGRIFFE:',
+    args.missingKeywords.length > 0
+      ? args.missingKeywords.slice(0, 10).map(token => `- ${formatKeyword(token)}`).join('\n')
+      : '- n/a',
+    '',
+    'NÄCHSTE SCHRITTE:',
+    args.recommendations.length > 0 ? args.recommendations.map(line => `- ${line}`).join('\n') : '- n/a',
   ].filter(Boolean).join('\n')
 }
 
 export function analyzeCvJobMatch({ cvProfile, jobText, jobUrl }: MatchInput): JobMatchResult {
-  const jobTokens = tokenize(jobText)
   const cvTokens = tokenize(cvProfile)
+  const cvTokenSet = new Set(cvTokens)
+  const requirementLines = extractRequirementLines(jobText)
 
-  const jobKeywords = topKeywords(jobTokens, 35)
-  const cvKeywordSet = new Set(cvTokens)
+  const requirementMatches = requirementLines.map(line => scoreRequirement(line, cvTokenSet))
 
-  const matchedKeywords = jobKeywords.filter(k => cvKeywordSet.has(k))
-  const missingKeywords = jobKeywords.filter(k => !cvKeywordSet.has(k))
+  const weightedTotal = requirementMatches.reduce((sum, item) => sum + item.weight, 0)
+  const weightedMatched = requirementMatches.reduce((sum, item) => {
+    if (!item.matched) return sum
+    const multiplier = item.strength === 'high' ? 1 : item.strength === 'medium' ? 0.7 : 0.35
+    return sum + item.weight * multiplier
+  }, 0)
 
+  const essentials = requirementMatches.filter(item => item.essential)
+  const essentialsTotal = essentials.reduce((sum, item) => sum + item.weight, 0)
+  const essentialsMatched = essentials.reduce((sum, item) => {
+    if (!item.matched) return sum
+    const multiplier = item.strength === 'high' ? 1 : 0.7
+    return sum + item.weight * multiplier
+  }, 0)
+
+  const essentialCoverage = essentialsTotal > 0
+    ? essentialsMatched / essentialsTotal
+    : (weightedTotal > 0 ? weightedMatched / weightedTotal : 0)
+
+  const requirementCoverage = weightedTotal > 0 ? weightedMatched / weightedTotal : 0
+  const evidenceCoverage = requirementMatches.length > 0
+    ? requirementMatches.filter(item => item.strength !== 'none').length / requirementMatches.length
+    : 0
+
+  const jobKeywords = topKeywords(tokenize(jobText), 28)
+  const matchedKeywords = jobKeywords.filter(token => cvTokenSet.has(token))
+  const missingKeywords = jobKeywords.filter(token => !cvTokenSet.has(token))
   const keywordCoverage = jobKeywords.length > 0 ? matchedKeywords.length / jobKeywords.length : 0
 
-  const priorityLines = pickPriorityLines(jobText)
-  const priorityKeywords = topKeywords(tokenize(priorityLines.join(' ')), 20)
-  const matchedPriority = priorityKeywords.filter(k => cvKeywordSet.has(k))
-  const priorityCoverage = priorityKeywords.length > 0 ? matchedPriority.length / priorityKeywords.length : keywordCoverage
+  const hasWeakCv = cvTokens.length < 45 || /\bn\/a\b/i.test(cvProfile)
+  const cvPenalty = hasWeakCv ? 0.72 : cvTokens.length < 90 ? 0.86 : 1
 
-  const cvHasNAs = /\bn\/a\b/i.test(cvProfile)
-  const completenessFactor = cvHasNAs ? 0.65 : 1
+  const missingEssentialCount = essentials.filter(item => !item.matched).length
+  const essentialPenalty = clamp(missingEssentialCount * 0.04, 0, 0.18)
 
-  let score = Math.round((keywordCoverage * 0.55 + priorityCoverage * 0.45) * 100 * completenessFactor)
-  if (score < 20 && matchedKeywords.length > 0) score = 20
-  if (score > 95) score = 95
+  const rawScore =
+    essentialCoverage * 52 +
+    requirementCoverage * 24 +
+    evidenceCoverage * 14 +
+    keywordCoverage * 10
 
-  const expLines = extractSectionLines(cvProfile, 'EXPERIENCE').slice(0, 2)
-  const projectLines = extractSectionLines(cvProfile, 'PROJECTS').slice(0, 2)
+  const score = Math.round(clamp(rawScore * cvPenalty * (1 - essentialPenalty), 0, 98))
 
   const strengths = [
-    ...(matchedKeywords.slice(0, 3).map(k => `Passende Kompetenz im Profil: ${formatKeyword(k)}`)),
-    ...expLines.map(line => `Erfahrungspunkt: ${line}`),
+    ...requirementMatches
+      .filter(item => item.matched)
+      .sort((a, b) => b.coverage - a.coverage)
+      .slice(0, 3)
+      .map(item => `Treffer auf Anforderung (${formatCoverageLabel(item.coverage)}): ${item.text}`),
+    ...(matchedKeywords.length > 0
+      ? [`Passende Kernbegriffe: ${matchedKeywords.slice(0, 5).map(formatKeyword).join(', ')}`]
+      : []),
   ].slice(0, 4)
 
   const gaps = [
-    ...missingKeywords.slice(0, 4).map(k => `Wichtiger Punkt aus der Stelle fehlt oder ist zu schwach sichtbar: ${formatKeyword(k)}`),
-  ].slice(0, 4)
+    ...essentials
+      .filter(item => !item.matched)
+      .slice(0, 2)
+      .map(item => `Wichtige Muss-Anforderung noch unklar im Lebenslauf: ${item.text}`),
+    ...missingKeywords
+      .slice(0, 3)
+      .map(token => `Fehlender oder zu schwacher Schlüsselbegriff: ${formatKeyword(token)}`),
+  ].slice(0, 5)
 
   const recommendations = [
-    'Lebenslauf auf die wichtigsten Anforderungen der Stelle zuschneiden und gleiche Begriffe verwenden.',
-    'Zwei bis drei messbare Erfolge ergänzen, die direkt zur Zielrolle passen.',
-    ...(missingKeywords.length > 0 ? [`Fehlende Schlüsselwörter sichtbar in Erfahrung oder Projekten ergänzen: ${missingKeywords.slice(0, 3).map(formatKeyword).join(', ')}.`] : []),
-    ...(projectLines.length > 0 ? ['Im Interview ein Projektbeispiel mit Problem, Vorgehen und Ergebnis klar vorbereiten.'] : []),
-  ].slice(0, 4)
+    missingKeywords.length > 0
+      ? `Ergänze im Lebenslauf konkrete Nachweise für diese Punkte: ${missingKeywords.slice(0, 4).map(formatKeyword).join(', ')}.`
+      : 'Hebe deine wichtigsten Treffer als messbare Ergebnisse hervor, damit Recruiter sie schneller erkennen.',
+    missingEssentialCount > 0
+      ? 'Spiegle Muss-Anforderungen aus der Stellenanzeige in deinen Erfahrungs- und Projektpunkten mit denselben Begriffen.'
+      : 'Muss-Anforderungen sind gut abgedeckt. Optimiere jetzt auf Wirkung mit messbaren Erfolgen.',
+    'Nutze pro Station aktive Verben plus Ergebnis, zum Beispiel optimiert, gesteigert, reduziert, inklusive Zahl oder Prozentwert.',
+  ].slice(0, 3)
+
+  const breakdown: MatchBreakdown = {
+    essentials: toPercent(essentialCoverage),
+    requirements: toPercent(requirementCoverage),
+    evidence: toPercent(evidenceCoverage),
+    keywords: toPercent(keywordCoverage),
+  }
 
   const report = buildReport({
     score,
+    breakdown,
     matchedKeywords,
     missingKeywords,
     strengths,
@@ -174,5 +323,13 @@ export function analyzeCvJobMatch({ cvProfile, jobText, jobUrl }: MatchInput): J
     report,
     matchedKeywords,
     missingKeywords,
+    breakdown,
+    requirementMatches: requirementMatches.slice(0, 10).map(item => ({
+      text: item.text,
+      essential: item.essential,
+      matched: item.matched,
+      strength: item.strength,
+      matchedTerms: item.matchedTerms,
+    })),
   }
 }
