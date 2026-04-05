@@ -170,7 +170,7 @@ export default function ChatSidebar({
           <div className="px-3 py-2.5 border-t border-slate-200 flex-shrink-0">
             <p className="text-xs font-medium text-slate-700">🎤 Interview Setup</p>
             <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
-              Klicke auf New Chat, um Sprache, Alias und CV für den neuen Interview Chat festzulegen.
+              Klicke auf New Chat, um Sprache, Alias, CV und Stellenziel für den neuen Interview Chat festzulegen.
             </p>
           </div>
         )}

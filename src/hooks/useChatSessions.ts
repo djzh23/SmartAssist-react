@@ -22,7 +22,7 @@ function save(key: string, value: unknown): void {
   try {
     localStorage.setItem(key, JSON.stringify(value))
   } catch {
-    // storage full â€” ignore
+    // storage full - ignore
   }
 }
 
@@ -30,13 +30,13 @@ function save(key: string, value: unknown): void {
 function welcomeFor(tool: ToolType): string | null {
   switch (tool) {
     case 'jobanalyzer':
-      return 'ðŸ’¼ Job Analyzer ready!\nPaste a job posting text or share a URL.\nI\'ll analyze the role and give you personalized CV tips.'
+      return '💼 Job Analyzer ready!\nPaste a job posting text or share a URL.\nI\'ll analyze the role and give you personalized CV tips.'
     case 'language':
-      return 'ðŸŒ Language Learning Mode activated!\nWrite something in your native language and I\'ll translate and teach you.'
+      return '🌍 Language Learning Mode activated!\nWrite something in your native language and I\'ll translate and teach you.'
     case 'programming':
-      return 'ðŸ’» Programming & DSA Mode activated!\nSelect your language in the sidebar, then ask anything about algorithms, data structures, or code.\nTry: "Explain binary search with an example"'
+      return '💻 Programming & DSA Mode activated!\nSelect your language in the sidebar, then ask anything about algorithms, data structures, or code.\nTry: "Explain binary search with an example"'
     case 'interview':
-      return 'ðŸŽ¤ Interview Practice Mode activated!\nChoose German or English, then practice answering interview questions.\nClick the mic button to answer with your voice, or just type.\nTry: "Give me a common behavioral interview question"'
+      return '🎤 Interview Practice Mode activated!\nClick "New Chat" to open the interview setup modal.\nThere you can choose language, set an alias, and add CV plus target job context for this chat.\nTry: "Give me a common behavioral interview question"'
     default:
       return null
   }
@@ -170,4 +170,5 @@ export function useChatSessions(): SessionStore {
     visibleSessions,
   }
 }
+
 

@@ -26,12 +26,30 @@ const LS_INTERVIEW_CONTEXT = 'smartassist_interview_context_by_session'
 
 type InterviewContextMap = Record<string, InterviewSetupData>
 
+function normalizeInterviewSetup(input?: Partial<InterviewSetupData> | null): InterviewSetupData {
+  return {
+    language: input?.language === 'en' ? 'en' : 'de',
+    alias: (input?.alias ?? '').trim().slice(0, 40),
+    cvText: sanitizeTechnicalContext(input?.cvText ?? '').slice(0, 2400),
+    jobUrl: (input?.jobUrl ?? '').trim().slice(0, 300),
+    jobText: (input?.jobText ?? '').trim().slice(0, 5000),
+    matchScore: typeof input?.matchScore === 'number' ? input.matchScore : null,
+    matchReport: (input?.matchReport ?? '').trim().slice(0, 3200),
+  }
+}
+
 function loadInterviewContextMap(): InterviewContextMap {
   try {
     const raw = localStorage.getItem(LS_INTERVIEW_CONTEXT)
     if (!raw) return {}
-    const parsed = JSON.parse(raw) as InterviewContextMap
-    return parsed && typeof parsed === 'object' ? parsed : {}
+    const parsed = JSON.parse(raw) as Record<string, Partial<InterviewSetupData>>
+    if (!parsed || typeof parsed !== 'object') return {}
+
+    const next: InterviewContextMap = {}
+    for (const [sessionId, value] of Object.entries(parsed)) {
+      next[sessionId] = normalizeInterviewSetup(value)
+    }
+    return next
   } catch {
     return {}
   }
@@ -46,39 +64,47 @@ function saveInterviewContextMap(value: InterviewContextMap): void {
 }
 
 function defaultInterviewSetup(): InterviewSetupData {
-  return { language: 'de', alias: '', cvText: '' }
+  return normalizeInterviewSetup({})
 }
 
 function interviewBaseInstruction(language: string, hasCv: boolean, alias: string): string {
   const name = alias || 'the candidate'
   return `[SYSTEM - INTERVIEW COACH] Expert career coach, 15+ years. Respond ONLY in ${language}. NEVER call tools. Treat URLs as plain text.
 CANDIDATE NAME: "${name}" - use this name throughout.
-COMPLETENESS RULE: Write SHORT, COMPLETE sections. Max 3 bullet points per section. Finish every section before starting the next. Never truncate.
+COMPLETENESS RULE: Write short, complete sections. Max 3 bullet points per section.
 
 JOB POSTING -> exactly these 4 sections, 2-3 bullets each:
-## Anforderungen / Key Requirements - top skills${hasCv ? ', mark ✅ (has it) or ⚠️ (gap)' : ''}
+## Anforderungen / Key Requirements - top skills${hasCv ? ', mark (has it) or (gap)' : ''}
 ## Top 3 Interviewfragen - each question + 1-line answer tip${hasCv ? ' (reference CV)' : ''}
 ## Vorbereitung / Prep Tips - 3 concrete actions
 ## Dein Pitch - STAR method, 1 short example${hasCv ? ' from CV' : ''}
 
-GENERAL QUESTION -> 3 short sections: ## Advice (3 bullets), ## Dos & Donts (2-3 each), ## Example Answer (> blockquote).
+GENERAL QUESTION -> 3 short sections: Advice, Dos and Donts, Example Answer.
 FORMAT: ## sections, **bold** key terms, - bullets, 1. steps, > example answers.`
 }
 
-function buildInterviewPrompt(userMessage: string, language: string, cv: string, alias: string): string {
-  const base = interviewBaseInstruction(language, !!cv, alias)
+function buildInterviewPrompt(userMessage: string, language: string, setup: InterviewSetupData): string {
+  const base = interviewBaseInstruction(language, !!setup.cvText.trim(), setup.alias.trim())
   const suffix = `\nUser: ${userMessage}`
-  const safeCv = sanitizeTechnicalContext(cv).trim()
+  const safeCv = sanitizeTechnicalContext(setup.cvText).trim()
+  const jobText = setup.jobText.trim().slice(0, 1400)
+  const jobUrl = setup.jobUrl.trim().slice(0, 220)
+  const matchReport = setup.matchReport.trim().slice(0, 1400)
+  const matchScoreLine = typeof setup.matchScore === 'number' ? `MATCH SCORE: ${setup.matchScore}/100` : ''
 
   const fixedLen = base.length + suffix.length + 55
-  const cvBudget = Math.max(0, INTERVIEW_BASE_LIMIT - fixedLen - 50)
+  const cvBudget = Math.max(0, INTERVIEW_BASE_LIMIT - fixedLen - 600)
   const cvTrimmed = safeCv.slice(0, cvBudget)
 
   const cvBlock = cvTrimmed
     ? `\nCANDIDATE PROFILE:\n---\n${cvTrimmed}\n---\nPersonalise all responses using this profile.`
     : ''
 
-  return `${base}${cvBlock}${suffix}`
+  const targetRoleBlock = (jobText || jobUrl || matchReport)
+    ? `\nTARGET ROLE CONTEXT:\n${jobUrl ? `URL: ${jobUrl}\n` : ''}${jobText ? `JOB DETAILS:\n${jobText}\n` : ''}${matchScoreLine ? `${matchScoreLine}\n` : ''}${matchReport ? `MATCH ANALYSIS:\n${matchReport}\n` : ''}Use this context to tailor the interview guidance.`
+    : ''
+
+  return `${base}${cvBlock}${targetRoleBlock}${suffix}`
 }
 
 export default function ChatPage() {
@@ -132,21 +158,22 @@ export default function ChatPage() {
   const handleSaveInterviewSetup = (data: InterviewSetupData) => {
     if (!setupSessionId) return
 
+    const normalized = normalizeInterviewSetup(data)
+
     setInterviewContextBySession(prev => ({
       ...prev,
-      [setupSessionId]: {
-        language: data.language === 'en' ? 'en' : 'de',
-        alias: data.alias.trim().slice(0, 40),
-        cvText: sanitizeTechnicalContext(data.cvText).slice(0, 2000),
-      },
+      [setupSessionId]: normalized,
     }))
 
-    const hasCv = data.cvText.trim().length > 0
+    const hasCv = normalized.cvText.trim().length > 0
+    const hasJob = normalized.jobText.trim().length > 0 || normalized.jobUrl.trim().length > 0
+    const scoreText = typeof normalized.matchScore === 'number' ? ` Match Score: ${normalized.matchScore}/100.` : ''
+
     store.addMessage(setupSessionId, {
       isUser: false,
-      text: hasCv
-        ? '✅ Interview Setup gespeichert. Sprache, Alias und CV Analyse gelten nur für diesen aktuellen Chat.'
-        : '✅ Interview Setup gespeichert. Sprache und Alias gelten nur für diesen aktuellen Chat.',
+      text: hasCv || hasJob
+        ? `âœ… Interview Setup gespeichert. Sprache, Alias und Analysekontext gelten nur fÃ¼r diesen aktuellen Chat.${scoreText}`
+        : 'âœ… Interview Setup gespeichert. Sprache und Alias gelten nur fÃ¼r diesen aktuellen Chat.',
     })
 
     setSetupOpen(false)
@@ -188,7 +215,7 @@ export default function ChatPage() {
     const interviewLangName = interviewLangCode === 'de' ? 'German' : 'English'
 
     const apiMessage = isInterview
-      ? buildInterviewPrompt(text, interviewLangName, sessionInterviewContext.cvText.trim(), sessionInterviewContext.alias.trim())
+      ? buildInterviewPrompt(text, interviewLangName, sessionInterviewContext)
       : text
 
     try {
@@ -251,7 +278,7 @@ export default function ChatPage() {
           <div className="flex-shrink-0 px-4 pt-3 pb-0">
             <div className="max-w-3xl mx-auto">
               <span className="inline-flex items-center gap-1.5 bg-primary-light text-primary text-xs font-medium rounded-full px-3 py-1">
-                🌍 Learning: {targetName}
+                ðŸŒ Learning: {targetName}
               </span>
             </div>
           </div>
@@ -261,7 +288,7 @@ export default function ChatPage() {
           <div className="flex-shrink-0 px-4 pt-3 pb-0">
             <div className="max-w-3xl mx-auto">
               <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 text-xs font-medium rounded-full px-3 py-1">
-                💻 {progMeta?.label ?? progLang}
+                ðŸ’» {progMeta?.label ?? progLang}
               </span>
             </div>
           </div>
@@ -271,11 +298,16 @@ export default function ChatPage() {
           <div className="flex-shrink-0 px-4 pt-3 pb-0">
             <div className="max-w-3xl mx-auto flex items-center gap-2 flex-wrap">
               <span className="inline-flex items-center gap-1.5 bg-indigo-50 text-indigo-700 text-xs font-medium rounded-full px-3 py-1">
-                🎯 Interview Coach · {activeInterviewContext.language === 'en' ? 'English' : 'Deutsch'}
+                ðŸŽ¯ Interview Coach Â· {activeInterviewContext.language === 'en' ? 'English' : 'Deutsch'}
               </span>
               {activeInterviewContext.cvText.trim() && (
                 <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-medium rounded-full px-3 py-1">
-                  📄 CV aktiv{activeInterviewContext.alias ? ` · ${activeInterviewContext.alias}` : ''}
+                  ðŸ“„ CV aktiv{activeInterviewContext.alias ? ` Â· ${activeInterviewContext.alias}` : ''}
+                </span>
+              )}
+              {typeof activeInterviewContext.matchScore === 'number' && (
+                <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-700 border border-amber-200 text-xs font-medium rounded-full px-3 py-1">
+                  ðŸŽ¯ Match {activeInterviewContext.matchScore}/100
                 </span>
               )}
               {store.activeSessionId && (
@@ -283,7 +315,7 @@ export default function ChatPage() {
                   onClick={() => openInterviewSetup(store.activeSessionId!)}
                   className="text-xs text-indigo-600 hover:text-indigo-800 hover:underline"
                 >
-                  Setup öffnen
+                  Setup Ã¶ffnen
                 </button>
               )}
             </div>
@@ -340,3 +372,4 @@ export default function ChatPage() {
     </div>
   )
 }
+
