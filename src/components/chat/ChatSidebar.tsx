@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import { Plus, Trash2, X, ChevronRight, FileText, Check, Upload, Loader2, UserCheck, Pencil } from 'lucide-react'
 import { extractTextFromPdf } from '../../utils/pdfParser'
-import { summarizeCvText } from '../../api/client'
+import { buildTechnicalCvContext } from '../../utils/cvTechnicalContext'
 
 // ── CV Summary Display ─────────────────────────────────────
 interface CvSections { skills: string[]; experience: string[]; projects: string[]; education: string[] }
@@ -183,9 +183,9 @@ export default function ChatSidebar({
         return
       }
 
-      // Step 2: send raw text to AI to extract only relevant professional data
+      // Step 2: local profiling only (no CV data sent to API)
       setPdfParseStep('analysing')
-      const summary = await summarizeCvText(rawText)
+      const summary = buildTechnicalCvContext(rawText)
       setCvDraft(summary.slice(0, 2000))
       setCvEditing(true) // show in edit mode so user can review before saving
     } catch {
@@ -376,7 +376,7 @@ export default function ChatSidebar({
                 ].join(' ')}
               >
                 {pdfParsing
-                  ? <><Loader2 size={13} className="animate-spin" /> {pdfParseStep === 'analysing' ? 'Analysiere CV…' : 'Lese PDF…'}</>
+                  ? <><Loader2 size={13} className="animate-spin" /> {pdfParseStep === 'analysing' ? 'Analysiere lokal…' : 'Lese PDF…'}</>
                   : pdfFileName
                     ? <><Check size={13} /> {pdfFileName.length > 22 ? pdfFileName.slice(0, 22) + '…' : pdfFileName}</>
                     : <><Upload size={13} /> PDF hochladen</>
@@ -395,7 +395,7 @@ export default function ChatSidebar({
                 ) : (
                   <>
                     <p className="text-[10px] text-slate-400 mb-1">
-                      {pdfFileName ? 'KI-Zusammenfassung (bearbeitbar):' : 'Profil manuell eingeben:'}
+                      {pdfFileName ? 'Lokale technische Zusammenfassung (bearbeitbar):' : 'Profil manuell eingeben:'}
                     </p>
                     <textarea
                       value={cvDraft}
@@ -456,7 +456,7 @@ export default function ChatSidebar({
                 </button>
               </div>
               <p className="text-[10px] text-slate-400 italic mt-1.5 leading-snug">
-                🔒 Nur Skills/Erfahrungen werden analysiert — Name, Adresse und Kontaktdaten werden automatisch entfernt.
+                🔒 PDF-Auslesen und Profilbildung laufen lokal im Browser. Sensible Angaben werden bestmoeglich reduziert.
               </p>
             </div>
           </div>
@@ -524,3 +524,4 @@ export default function ChatSidebar({
     </>
   )
 }
+

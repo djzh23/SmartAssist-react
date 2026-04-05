@@ -4,6 +4,7 @@ import type { ToolType } from '../types'
 import { PROGRAMMING_LANGUAGES } from '../types'
 import { useChatSessions } from '../hooks/useChatSessions'
 import { askAgent } from '../api/client'
+import { sanitizeTechnicalContext } from '../utils/cvTechnicalContext'
 import ChatSidebar from '../components/chat/ChatSidebar'
 import MessageList from '../components/chat/MessageList'
 import ChatInput from '../components/chat/ChatInput'
@@ -35,10 +36,11 @@ FORMAT: ## sections, **bold** key terms, - bullets, 1. steps, > example answers.
 function buildInterviewPrompt(userMessage: string, language: string, cv: string, alias: string): string {
   const base = interviewBaseInstruction(language, !!cv, alias)
   const suffix = `\nUser: ${userMessage}`
+  const safeCv = sanitizeTechnicalContext(cv).trim()
 
   const fixedLen = base.length + suffix.length + 55
   const cvBudget = Math.max(0, INTERVIEW_BASE_LIMIT - fixedLen - 50)
-  const cvTrimmed = cv.slice(0, cvBudget)
+  const cvTrimmed = safeCv.slice(0, cvBudget)
 
   const cvBlock = cvTrimmed
     ? `\nCANDIDATE PROFILE:\n---\n${cvTrimmed}\n---\nPersonalise all responses using this profile.`
@@ -69,7 +71,7 @@ export default function ChatPage() {
   const [cvAlias, setCvAlias] = useState(() => localStorage.getItem('smartassist_interview_alias') ?? '')
 
   const handleCvChange = (text: string) => {
-    const v = text.slice(0, 2000)
+    const v = sanitizeTechnicalContext(text).slice(0, 2000)
     setCvText(v)
     if (v.trim()) localStorage.setItem('smartassist_interview_cv', v)
     else localStorage.removeItem('smartassist_interview_cv')
