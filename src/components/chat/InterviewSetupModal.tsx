@@ -356,9 +356,35 @@ export default function InterviewSetupModal({
           )}
 
           {analysisReady && (
-            <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
-              <CheckCircle2 size={14} />
-              Kontext aufbereitet — bereit zum Speichern.
+            <div className="space-y-3 rounded-xl border border-emerald-200 bg-emerald-50/60 p-3">
+              <div className="flex items-center gap-2 text-xs font-semibold text-emerald-700">
+                <CheckCircle2 size={14} />
+                Kontext aufbereitet — bereit zum Speichern
+              </div>
+
+              {/* CV preview */}
+              {cvAnalysis && (
+                <div className="rounded-lg border border-emerald-200 bg-white p-3">
+                  <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wide text-emerald-600">
+                    Lebenslauf-Kontext (aufbereitet)
+                  </p>
+                  <pre className="max-h-32 overflow-y-auto whitespace-pre-wrap text-[11px] leading-relaxed text-slate-700">
+                    {cvAnalysis.slice(0, 600)}{cvAnalysis.length > 600 ? '…' : ''}
+                  </pre>
+                </div>
+              )}
+
+              {/* Job preview */}
+              {(resolvedJobText || jobText.trim()) && (
+                <div className="rounded-lg border border-cyan-200 bg-white p-3">
+                  <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wide text-cyan-600">
+                    Stellenkontext {resolvedJobText ? '(via Link geladen)' : ''}
+                  </p>
+                  <pre className="max-h-32 overflow-y-auto whitespace-pre-wrap text-[11px] leading-relaxed text-slate-700">
+                    {(resolvedJobText || jobText).slice(0, 400)}{(resolvedJobText || jobText).length > 400 ? '…' : ''}
+                  </pre>
+                </div>
+              )}
             </div>
           )}
         </div>

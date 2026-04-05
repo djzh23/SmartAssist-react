@@ -3,6 +3,8 @@ import JobAnalysisCard from './JobAnalysisCard'
 import LearningResponse from './LearningResponse'
 import ProgrammingResponse from './ProgrammingResponse'
 import InterviewResponse from './InterviewResponse'
+import CodeBlock from './CodeBlock'
+import { parseSegments } from '../../utils/markdownRenderer'
 
 interface Props {
   msg: ChatMessage
@@ -67,28 +69,41 @@ export default function MessageBubble({
     )
   }
 
-  // Standard bubble
+  // Standard bubble — with code-fence support for assistant messages
+  if (!msg.isUser) {
+    const segments = parseSegments(msg.text)
+    const hasCode = segments.some(s => s.type === 'code')
+
+    return (
+      <div className="self-start animate-slide-up flex flex-col gap-1 max-w-[85%]">
+        <div className="bg-slate-100 text-slate-800 rounded-[4px_18px_18px_18px] px-3.5 py-2.5 text-sm leading-relaxed break-words">
+          {hasCode
+            ? segments.map((seg, i) =>
+                seg.type === 'code'
+                  ? <CodeBlock key={i} code={seg.content} language={seg.language} />
+                  : <span key={i} className="whitespace-pre-wrap">{seg.content}</span>
+              )
+            : <span className="whitespace-pre-wrap">{msg.text}</span>}
+        </div>
+        <div className="flex items-center gap-2 px-1">
+          {msg.toolUsed && msg.toolUsed !== 'analyze_job' && (
+            <span className="text-[11px] bg-violet-50 text-violet-600 border border-violet-200 rounded-full px-2.5 py-0.5 font-medium">
+              ⚙ {msg.toolUsed.replace(/_/g, ' ')}
+            </span>
+          )}
+          <span className="text-[11px] text-slate-400">{time}</span>
+        </div>
+      </div>
+    )
+  }
+
+  // User bubble
   return (
-    <div className={`flex flex-col gap-1 animate-slide-up max-w-[72%] ${msg.isUser ? 'self-end items-end' : 'self-start items-start'}`}>
-      <div
-        className={[
-          'px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap break-words',
-          msg.isUser
-            ? 'bg-primary text-white rounded-[18px_18px_4px_18px]'
-            : 'bg-slate-100 text-slate-800 rounded-[18px_18px_18px_4px]',
-        ].join(' ')}
-      >
+    <div className="flex flex-col gap-1 animate-slide-up max-w-[72%] self-end items-end">
+      <div className="px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap break-words bg-primary text-white rounded-[18px_18px_4px_18px]">
         {msg.text}
       </div>
-
-      <div className="flex items-center gap-2 px-1">
-        {msg.toolUsed && msg.toolUsed !== 'analyze_job' && (
-          <span className="text-[11px] bg-violet-50 text-violet-600 border border-violet-200 rounded-full px-2.5 py-0.5 font-medium">
-            ⚙ {msg.toolUsed.replace(/_/g, ' ')}
-          </span>
-        )}
-        <span className="text-[11px] text-slate-400">{time}</span>
-      </div>
+      <span className="text-[11px] text-slate-400 px-1">{time}</span>
     </div>
   )
 }

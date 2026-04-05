@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom'
-import { ClerkProvider } from '@clerk/clerk-react'
+import { ClerkProvider, useAuth } from '@clerk/clerk-react'
+import { Loader2 } from 'lucide-react'
 import MainLayout from './components/layout/MainLayout'
 import HomePage from './pages/HomePage'
 import ChatPage from './pages/ChatPage'
@@ -24,19 +25,35 @@ function ClerkProviderWithRouter({ children }: { children: React.ReactNode }) {
   )
 }
 
+function AppRoutes() {
+  const { isLoaded } = useAuth()
+
+  if (!isLoaded) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-[#f5f6fb]">
+        <Loader2 size={28} className="animate-spin text-primary" />
+      </div>
+    )
+  }
+
+  return (
+    <Routes>
+      <Route element={<MainLayout />}>
+        <Route index element={<HomePage />} />
+        <Route path="chat" element={<ChatPage />} />
+        <Route path="tools" element={<ToolsPage />} />
+        <Route path="pricing" element={<PricingPage />} />
+        <Route path="profile" element={<ProfilePage />} />
+      </Route>
+    </Routes>
+  )
+}
+
 export default function App() {
   return (
     <BrowserRouter>
       <ClerkProviderWithRouter>
-        <Routes>
-          <Route element={<MainLayout />}>
-            <Route index element={<HomePage />} />
-            <Route path="chat" element={<ChatPage />} />
-            <Route path="tools" element={<ToolsPage />} />
-            <Route path="pricing" element={<PricingPage />} />
-            <Route path="profile" element={<ProfilePage />} />
-          </Route>
-        </Routes>
+        <AppRoutes />
       </ClerkProviderWithRouter>
     </BrowserRouter>
   )

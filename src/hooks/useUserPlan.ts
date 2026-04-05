@@ -1,4 +1,7 @@
+import { useEffect, useState } from 'react'
 import { useUser, useAuth } from '@clerk/clerk-react'
+
+const USAGE_EVENT = 'smartassist_usage_updated'
 
 export type PlanType = 'anonymous' | 'free' | 'premium' | 'pro'
 
@@ -111,14 +114,32 @@ export function useUserPlan(): UserPlanState {
 
   const userId = user?.id ?? null
   const plan = readPlan(isSignedIn ? userId : null)
-  const usageToday = readUsageToday(isSignedIn ? userId : null)
   const dailyLimit = dailyLimitFor(plan)
+
+  const storageKey = isSignedIn ? userId : null
+  const [usageToday, setUsageToday] = useState(() => readUsageToday(storageKey))
+
+  // Sync when user identity changes (sign-in / sign-out)
+  useEffect(() => {
+    setUsageToday(readUsageToday(isSignedIn ? userId : null))
+  }, [userId, isSignedIn])
+
+  // Listen for usage increments from any component instance
+  useEffect(() => {
+    const sync = () => setUsageToday(readUsageToday(isSignedIn ? userId : null))
+    window.addEventListener(USAGE_EVENT, sync)
+    return () => window.removeEventListener(USAGE_EVENT, sync)
+  }, [userId, isSignedIn])
+
   const responsesLeft = dailyLimit === Infinity ? Infinity : Math.max(0, dailyLimit - usageToday)
   const isAtLimit = usageToday >= dailyLimit
 
   const incrementUsage = () => {
     const key = isSignedIn ? userId : null
-    writeUsageToday(key, readUsageToday(key) + 1)
+    const next = readUsageToday(key) + 1
+    writeUsageToday(key, next)
+    setUsageToday(next)
+    window.dispatchEvent(new Event(USAGE_EVENT))
   }
 
   const planColorMap: Record<PlanType, string> = {

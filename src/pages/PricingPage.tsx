@@ -1,6 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Check, X, ChevronDown, ChevronUp, Zap, Crown, Sparkles } from 'lucide-react'
+import { Check, X, ChevronDown, ChevronUp, Zap, Crown, Sparkles, Clock } from 'lucide-react'
 
 interface Feature {
   text: string
@@ -123,7 +122,13 @@ function FaqItem({ q, a }: { q: string; a: string }) {
 }
 
 export default function PricingPage() {
-  const navigate = useNavigate()
+  const [toast, setToast] = useState<string | null>(null)
+
+  const handlePlanClick = (planId: string) => {
+    if (planId === 'free') return
+    setToast('Zahlungsintegration folgt in Kürze. Bleib dran! 🚀')
+    setTimeout(() => setToast(null), 3500)
+  }
 
   return (
     <div
@@ -142,6 +147,13 @@ export default function PricingPage() {
         <div className="absolute left-1/2 top-14 h-44 w-44 -translate-x-1/2 rotate-45 rounded-[34px] border border-violet-200/45" />
         <div className="absolute right-10 top-52 h-28 w-28 rotate-12 rounded-2xl border border-slate-300/70 bg-white/40" />
       </div>
+
+      {/* Toast */}
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 animate-slide-up rounded-2xl border border-violet-200 bg-white px-5 py-3 shadow-xl">
+          <p className="text-sm font-medium text-slate-700">{toast}</p>
+        </div>
+      )}
 
       <div className="relative z-10 mx-auto max-w-5xl px-6 py-12">
         {/* Header */}
@@ -207,10 +219,15 @@ export default function PricingPage() {
               {/* CTA */}
               <div className="relative px-5 pb-5">
                 <button
-                  onClick={() => navigate('/')}
+                  onClick={() => handlePlanClick(plan.id)}
                   className={`w-full rounded-xl py-2.5 text-sm font-semibold transition-colors ${plan.buttonStyle}`}
                 >
-                  {plan.buttonLabel}
+                  {plan.id !== 'free' ? (
+                    <span className="inline-flex items-center justify-center gap-1.5">
+                      <Clock size={13} />
+                      {plan.buttonLabel}
+                    </span>
+                  ) : plan.buttonLabel}
                 </button>
               </div>
             </div>

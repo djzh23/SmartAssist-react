@@ -65,15 +65,34 @@ export function parseBlocks(text: string): Block[] {
   return blocks
 }
 
+/** Normalize language tags to syntax-highlighter IDs */
+function normalizeLang(lang: string, fallback: string): string {
+  const l = lang.trim().toLowerCase()
+  if (!l) return fallback
+  const MAP: Record<string, string> = {
+    'c#': 'csharp', 'c++': 'cpp', 'c': 'c',
+    'js': 'javascript', 'ts': 'typescript',
+    'tsx': 'tsx', 'jsx': 'jsx',
+    'py': 'python', 'rb': 'ruby', 'sh': 'bash',
+    'yml': 'yaml', 'md': 'markdown',
+  }
+  return MAP[l] ?? l
+}
+
 export function parseSegments(text: string, fallbackLang = 'text'): Segment[] {
   const segments: Segment[] = []
-  const re = /```(\w*)\n?([\s\S]*?)```/g
+  // Capture full language tag line (allows C#, C++, etc.)
+  const re = /```([^\n`]*)\n([\s\S]*?)```/g
   let last = 0
   let m: RegExpExecArray | null
 
   while ((m = re.exec(text)) !== null) {
     if (m.index > last) segments.push({ type: 'text', content: text.slice(last, m.index), language: '' })
-    segments.push({ type: 'code', content: m[2].trimEnd(), language: m[1].trim() || fallbackLang })
+    segments.push({
+      type: 'code',
+      content: m[2].trimEnd(),
+      language: normalizeLang(m[1], fallbackLang),
+    })
     last = re.lastIndex
   }
 
