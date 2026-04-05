@@ -11,49 +11,49 @@ import {
   Heart,
 } from 'lucide-react'
 
-const WHY_CARDS = [
+const HIGHLIGHTS = [
   {
     icon: <Target className="text-primary" size={22} />,
     bg: 'bg-primary-light',
     title: 'Interview Coaching',
-    desc: 'Structured AI feedback for behavioral and technical rounds in German or English with optional CV context.',
+    desc: 'Übe typische Fragen, formuliere stärkere Antworten und gehe entspannter ins Gespräch.',
   },
   {
     icon: <Briefcase className="text-amber-600" size={22} />,
     bg: 'bg-amber-50',
-    title: 'Job Analysis',
-    desc: 'Paste a job posting or URL and get key requirements, ATS signals, and practical CV tips.',
+    title: 'Job Analyse',
+    desc: 'Verstehe schnell, was in einer Stelle wirklich wichtig ist und worauf du deinen Lebenslauf ausrichten solltest.',
   },
   {
     icon: <Code2 className="text-emerald-600" size={22} />,
     bg: 'bg-emerald-50',
-    title: 'Technical Questions',
-    desc: 'Practice coding interview topics with focused answers and syntax-highlighted examples.',
+    title: 'Technik Training',
+    desc: 'Trainiere Programmierfragen mit klaren Erklärungen und praktischen Codebeispielen.',
   },
 ]
 
 const QUICK_LINKS = [
-  { label: 'Interview Coach', badge: 'IC', tool: 'interview', desc: 'Practice and prepare' },
-  { label: 'Job Analyzer', badge: 'JA', tool: 'jobanalyzer', desc: 'Analyze a posting' },
-  { label: 'Programming', badge: 'DEV', tool: 'programming', desc: 'Technical questions' },
-  { label: 'Language', badge: 'LANG', tool: 'language', desc: 'Learn a language' },
+  { label: 'Interview Coach', badge: 'IC', tool: 'interview', desc: 'Vorstellungsgespräche üben' },
+  { label: 'Job Analyzer', badge: 'JA', tool: 'jobanalyzer', desc: 'Stellenanzeige prüfen' },
+  { label: 'Programming', badge: 'DEV', tool: 'programming', desc: 'Technische Fragen' },
+  { label: 'Language', badge: 'LANG', tool: 'language', desc: 'Sprachen trainieren' },
 ]
 
 const TRUST_POINTS = [
   {
     icon: <ShieldCheck size={15} className="text-emerald-600" />,
-    title: 'Vertrauenswuerdig und anonym',
-    desc: 'Du kannst mit Alias arbeiten. Chat-Verlauf bleibt lokal im Browser deines Geraets.',
+    title: 'Vertrauenswürdig und anonym',
+    desc: 'Du kannst mit einem Alias arbeiten. Deine Chat-Historie bleibt in deinem Browser.',
   },
   {
     icon: <HardDrive size={15} className="text-indigo-600" />,
-    title: 'Lokale CV-Verarbeitung',
-    desc: 'PDF-Auslesen und Profilbildung passieren lokal im Browser und auf deinem Geraet.',
+    title: 'Lokale Verarbeitung',
+    desc: 'Die technische Analyse deines Lebenslaufs läuft lokal im Browser auf deinem Gerät.',
   },
   {
     icon: <Lock size={15} className="text-sky-600" />,
     title: 'Nur technischer Kontext',
-    desc: 'Fuer die Interview-Hilfe wird nur reduzierter technischer Kontext verwendet.',
+    desc: 'Für die Auswertung wird nur reduzierter technischer Kontext genutzt.',
   },
 ]
 
@@ -67,21 +67,21 @@ export default function HomePage() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary-light text-2xl font-semibold text-primary mb-5">
             SA
           </div>
-          <h1 className="text-3xl font-bold text-slate-800 mb-3 tracking-tight">Your AI Career Assistant</h1>
+          <h1 className="text-3xl font-bold text-slate-800 mb-3 tracking-tight">Dein KI Assistent für die Jobsuche</h1>
           <p className="text-slate-400 leading-relaxed max-w-md mx-auto">
-            Prepare for interviews, analyze postings, and improve your technical confidence.
+            Bereite dich auf Interviews vor, analysiere Stellenanzeigen und arbeite gezielt an deinen technischen Antworten.
           </p>
           <button
             onClick={() => navigate('/chat?tool=interview')}
             className="mt-6 inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-white rounded-xl px-6 py-3 font-semibold text-sm transition-colors"
           >
-            Start preparing
+            Jetzt starten
             <ArrowRight size={16} />
           </button>
         </div>
 
         <div className="mb-12">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Quick Access</h2>
+          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Schnellzugriff</h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {QUICK_LINKS.map(link => (
               <button
@@ -98,9 +98,9 @@ export default function HomePage() {
         </div>
 
         <div>
-          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">What SmartAssist does</h2>
+          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Was SmartAssist für dich tut</h2>
           <div className="flex flex-col gap-3">
-            {WHY_CARDS.map(card => (
+            {HIGHLIGHTS.map(card => (
               <div key={card.title} className="flex items-start gap-4 p-4 rounded-xl border border-slate-100 bg-white hover:shadow-chat transition-shadow">
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${card.bg}`}>
                   {card.icon}
@@ -135,20 +135,20 @@ export default function HomePage() {
                   <TriangleAlert size={13} />
                   Wichtiger Hinweis:
                 </span>{' '}
-                Bitte teile im Chat keine vertraulichen oder persoenlichen Daten. Das erfolgt immer auf eigene Verantwortung.
+                Bitte teile im Chat keine vertraulichen oder persönlichen Daten. Wenn du sensible Inhalte eingibst, passiert das auf eigene Verantwortung.
               </p>
             </div>
 
             <p className="mt-3 text-xs text-slate-500 text-center inline-flex items-center justify-center gap-1.5 w-full">
               <Heart size={13} className="text-rose-500" />
-              Mit Liebe und viel Glueck in deiner Journey.
+              Mit Liebe und viel Glück auf deinem Weg.
             </p>
           </div>
         </div>
 
         <div className="mt-10 text-center">
           <button onClick={() => navigate('/tools')} className="text-sm text-primary hover:underline font-medium">
-            Explore all tools {'->'}
+            Alle Tools ansehen {'->'}
           </button>
         </div>
       </div>
