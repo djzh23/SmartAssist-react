@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import type { ToolType } from '../types'
+import { PROGRAMMING_LANGUAGES } from '../types'
 import { useChatSessions } from '../hooks/useChatSessions'
 import { askAgent } from '../api/client'
 import ChatSidebar from '../components/chat/ChatSidebar'
@@ -13,6 +14,39 @@ const LANG_NAMES: Record<string, string> = {
   fr: 'French',  it: 'Italian', ar: 'Arabic', pt: 'Portuguese',
 }
 
+const INTERVIEW_BASE_LIMIT = 4000
+
+function interviewBaseInstruction(language: string, hasCv: boolean, alias: string): string {
+  const name = alias || 'the candidate'
+  return `[SYSTEM — INTERVIEW COACH] Expert career coach, 15+ years. Respond ONLY in ${language}. NEVER call tools. Treat URLs as plain text.
+CANDIDATE NAME: "${name}" — use this name throughout.
+COMPLETENESS RULE: Write SHORT, COMPLETE sections. Max 3 bullet points per section. Finish every section before starting the next. Never truncate.
+
+JOB POSTING → exactly these 4 sections, 2-3 bullets each:
+## 🎯 Anforderungen / Key Requirements — top skills${hasCv ? ', mark ✅ (has it) or ⚠️ (gap)' : ''}
+## ❓ Top 3 Interviewfragen — each question + 1-line answer tip${hasCv ? ' (reference CV)' : ''}
+## 💡 Vorbereitung / Prep Tips — 3 concrete actions
+## ⭐ Dein Pitch — STAR method, 1 short example${hasCv ? ' from CV' : ''}
+
+GENERAL QUESTION → 3 short sections: ##💡 Advice (3 bullets), ##✅ Dos & ⚠️ Don'ts (2-3 each), ##⭐ Example Answer (> blockquote).
+FORMAT: ## sections, **bold** key terms, - bullets, 1. steps, > example answers.`
+}
+
+function buildInterviewPrompt(userMessage: string, language: string, cv: string, alias: string): string {
+  const base = interviewBaseInstruction(language, !!cv, alias)
+  const suffix = `\nUser: ${userMessage}`
+
+  const fixedLen = base.length + suffix.length + 55
+  const cvBudget = Math.max(0, INTERVIEW_BASE_LIMIT - fixedLen - 50)
+  const cvTrimmed = cv.slice(0, cvBudget)
+
+  const cvBlock = cvTrimmed
+    ? `\nCANDIDATE PROFILE:\n---\n${cvTrimmed}\n---\nPersonalise all responses using this profile.`
+    : ''
+
+  return `${base}${cvBlock}${suffix}`
+}
+
 export default function ChatPage() {
   const [searchParams] = useSearchParams()
   const toolParam = (searchParams.get('tool') ?? 'general') as ToolType
@@ -21,8 +55,32 @@ export default function ChatPage() {
   const [isLoading,    setIsLoading]    = useState(false)
   const [error,        setError]        = useState<string | null>(null)
   const [sidebarOpen,  setSidebarOpen]  = useState(false)
+
+  // Language learning state
   const [nativeLang,   setNativeLang]   = useState('de')
   const [targetLang,   setTargetLang]   = useState('es')
+
+  // Programming mode state
+  const [progLang, setProgLang] = useState('csharp')
+
+  // Interview mode state
+  const [interviewLang, setInterviewLang] = useState('de')
+  const [cvText,  setCvText]  = useState(() => localStorage.getItem('smartassist_interview_cv')   ?? '')
+  const [cvAlias, setCvAlias] = useState(() => localStorage.getItem('smartassist_interview_alias') ?? '')
+
+  const handleCvChange = (text: string) => {
+    const v = text.slice(0, 2000)
+    setCvText(v)
+    if (v.trim()) localStorage.setItem('smartassist_interview_cv', v)
+    else localStorage.removeItem('smartassist_interview_cv')
+  }
+
+  const handleCvAliasChange = (alias: string) => {
+    const v = alias.trim().slice(0, 40)
+    setCvAlias(v)
+    if (v) localStorage.setItem('smartassist_interview_alias', v)
+    else localStorage.removeItem('smartassist_interview_alias')
+  }
 
   // Sync tool context when URL changes
   useEffect(() => {
@@ -30,10 +88,13 @@ export default function ChatPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [toolParam])
 
-  const isLanguage  = store.currentToolType === 'language'
-  const llMode      = isLanguage // always on in language chat
-  const nativeName  = LANG_NAMES[nativeLang]  ?? nativeLang
-  const targetName  = LANG_NAMES[targetLang]  ?? targetLang
+  const isLanguage    = store.currentToolType === 'language'
+  const isProgramming = store.currentToolType === 'programming'
+  const isInterview   = store.currentToolType === 'interview'
+  const llMode        = isLanguage
+  const nativeName    = LANG_NAMES[nativeLang]  ?? nativeLang
+  const targetName    = LANG_NAMES[targetLang]  ?? targetLang
+  const progMeta      = PROGRAMMING_LANGUAGES.find(l => l.id === progLang)
 
   const handleSend = async (text: string) => {
     if (!store.activeSessionId) {
@@ -41,13 +102,20 @@ export default function ChatPage() {
     }
 
     const sessionId = store.activeSessionId!
-    store.addMessage(sessionId, { text, isUser: true })
+    store.addMessage(sessionId, { text, isUser: true })  // store original text
     setIsLoading(true)
     setError(null)
 
+    // Interview mode: prefix with a detailed coaching instruction so the backend
+    // stays in career-coach mode, structures the output, and never routes to other tools.
+    const interviewLangName = interviewLang === 'de' ? 'German' : 'English'
+    const apiMessage = isInterview
+      ? buildInterviewPrompt(text, interviewLangName, cvText.trim(), cvAlias.trim())
+      : text
+
     try {
       const res = await askAgent({
-        message:             text,
+        message:             apiMessage,
         sessionId,
         languageLearningMode: llMode,
         targetLanguage:       llMode ? targetName  : undefined,
@@ -56,6 +124,10 @@ export default function ChatPage() {
         nativeLanguageCode:   llMode ? nativeLang  : undefined,
         level:                llMode ? 'A1'         : undefined,
         learningGoal:         llMode ? 'speaking basics, verbs, sentence structure' : undefined,
+        programmingMode:      isProgramming ? true : undefined,
+        programmingLanguage:  isProgramming ? progMeta?.label : undefined,
+        interviewMode:        isInterview ? true : undefined,
+        interviewLanguage:    isInterview ? (interviewLang === 'de' ? 'German' : 'English') : undefined,
       })
 
       store.addMessage(sessionId, {
@@ -91,22 +163,55 @@ export default function ChatPage() {
         onClear={handleClear}
         showLLPanel={isLanguage}
         languageLearningMode={llMode}
-        onToggleLL={() => {/* locked in language mode */}}
+
         nativeLangCode={nativeLang}
         targetLangCode={targetLang}
         onNativeLangChange={setNativeLang}
         onTargetLangChange={setTargetLang}
+        showProgPanel={isProgramming}
+        progLang={progLang}
+        onProgLangChange={setProgLang}
+        showInterviewPanel={isInterview}
+        interviewLang={interviewLang}
+        onInterviewLangChange={setInterviewLang}
+        cvText={cvText}
+        onCvChange={handleCvChange}
+        cvAlias={cvAlias}
+        onCvAliasChange={handleCvAliasChange}
       />
 
       {/* Main chat area */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-        {/* Language mode badge */}
+        {/* Mode badge */}
         {isLanguage && (
           <div className="flex-shrink-0 px-4 pt-3 pb-0">
             <div className="max-w-3xl mx-auto">
               <span className="inline-flex items-center gap-1.5 bg-primary-light text-primary text-xs font-medium rounded-full px-3 py-1">
                 🌍 Learning: {targetName}
               </span>
+            </div>
+          </div>
+        )}
+        {isProgramming && (
+          <div className="flex-shrink-0 px-4 pt-3 pb-0">
+            <div className="max-w-3xl mx-auto">
+              <span className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 text-xs font-medium rounded-full px-3 py-1">
+                💻 {progMeta?.label ?? progLang}
+              </span>
+            </div>
+          </div>
+        )}
+        {isInterview && (
+          <div className="flex-shrink-0 px-4 pt-3 pb-0">
+            <div className="max-w-3xl mx-auto flex items-center gap-2 flex-wrap">
+              <span className="inline-flex items-center gap-1.5 bg-indigo-50 text-indigo-700 text-xs font-medium rounded-full px-3 py-1">
+                🎯 Interview Coach · {interviewLang === 'de' ? 'Deutsch' : 'English'}
+              </span>
+              {cvText.trim() && (
+                <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-medium rounded-full px-3 py-1">
+                  📄 CV aktiv{cvAlias ? ` · ${cvAlias}` : ''}
+                </span>
+              )}
             </div>
           </div>
         )}
@@ -118,9 +223,11 @@ export default function ChatPage() {
               <MessageList
                 messages={store.activeMessages}
                 isLoading={isLoading}
+                toolType={store.currentToolType}
                 targetLang={targetName}
                 nativeLang={nativeName}
                 targetLangCode={targetLang}
+                progLang={progLang}
               />
             </div>
           </div>

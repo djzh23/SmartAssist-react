@@ -29,14 +29,14 @@ function save(key: string, value: unknown): void {
 // Welcome messages per tool
 function welcomeFor(tool: ToolType): string | null {
   switch (tool) {
-    case 'weather':
-      return '🌤️ Weather Assistant activated!\nAsk me about weather in any city.\nTry: "Wie ist das Wetter in Berlin?"'
     case 'jobanalyzer':
       return '💼 Job Analyzer ready!\nPaste a job posting text or share a URL.\nI\'ll analyze the role and give you personalized CV tips.'
-    case 'jokes':
-      return '😄 Joke mode on! Ask me for a joke anytime.\nTry: "Tell me a programming joke"'
     case 'language':
       return '🌍 Language Learning Mode activated!\nWrite something in your native language and I\'ll translate and teach you.'
+    case 'programming':
+      return '💻 Programming & DSA Mode activated!\nSelect your language in the sidebar, then ask anything about algorithms, data structures, or code.\nTry: "Explain binary search with an example"'
+    case 'interview':
+      return '🎤 Interview Practice Mode activated!\nChoose German or English, then practice answering interview questions.\nClick the mic button to answer with your voice, or just type.\nTry: "Give me a common behavioral interview question"'
     default:
       return null
   }

@@ -1,15 +1,26 @@
-import type { ChatMessage } from '../../types'
+import type { ChatMessage, ToolType } from '../../types'
 import JobAnalysisCard from './JobAnalysisCard'
 import LearningResponse from './LearningResponse'
+import ProgrammingResponse from './ProgrammingResponse'
+import InterviewResponse from './InterviewResponse'
 
 interface Props {
   msg: ChatMessage
+  toolType?: ToolType
   targetLang?: string
   nativeLang?: string
   targetLangCode?: string
+  progLang?: string
 }
 
-export default function MessageBubble({ msg, targetLang = 'Spanish', nativeLang = 'German', targetLangCode = 'es' }: Props) {
+export default function MessageBubble({
+  msg,
+  toolType,
+  targetLang = 'Spanish',
+  nativeLang = 'German',
+  targetLangCode = 'es',
+  progLang = 'csharp',
+}: Props) {
   const time = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 
   // Language learning response
@@ -32,6 +43,27 @@ export default function MessageBubble({ msg, targetLang = 'Spanish', nativeLang 
         <JobAnalysisCard text={msg.text} />
         <span className="text-[11px] text-slate-400 pl-1">{time}</span>
       </div>
+    )
+  }
+
+  // Programming mode — syntax-highlighted code blocks
+  if (!msg.isUser && toolType === 'programming') {
+    return (
+      <ProgrammingResponse
+        text={msg.text}
+        progLang={progLang}
+        timestamp={msg.timestamp}
+      />
+    )
+  }
+
+  // Interview mode — professional structured response
+  if (!msg.isUser && toolType === 'interview') {
+    return (
+      <InterviewResponse
+        text={msg.text}
+        timestamp={msg.timestamp}
+      />
     )
   }
 

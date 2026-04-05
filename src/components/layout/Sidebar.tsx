@@ -1,5 +1,5 @@
 import { NavLink, useNavigate, useLocation } from 'react-router-dom'
-import { Home, Wrench, MessageCircle, Cloud, Briefcase, Laugh, Globe } from 'lucide-react'
+import { Home, Wrench, MessageCircle, Briefcase, Globe, Code2, Target } from 'lucide-react'
 
 interface Props {
   onNavClick?: () => void
@@ -13,23 +13,22 @@ interface NavItem {
 }
 
 const mainLinks: NavItem[] = [
-  { label: 'Home',  icon: <Home  size={15} />, to: '/',      exact: true },
+  { label: 'Home',  icon: <Home   size={15} />, to: '/',      exact: true },
   { label: 'Tools', icon: <Wrench size={15} />, to: '/tools' },
 ]
 
 const chatLinks: NavItem[] = [
-  { label: 'General Chat',  icon: <MessageCircle size={15} />, to: '/chat' },
-  { label: 'Weather',       icon: <Cloud         size={15} />, to: '/chat?tool=weather' },
-  { label: 'Job Analyzer',  icon: <Briefcase     size={15} />, to: '/chat?tool=jobanalyzer' },
-  { label: 'Jokes',         icon: <Laugh         size={15} />, to: '/chat?tool=jokes' },
-  { label: 'Language',      icon: <Globe         size={15} />, to: '/chat?tool=language' },
+  { label: 'General Chat',    icon: <MessageCircle size={15} />, to: '/chat' },
+  { label: 'Job Analyzer',    icon: <Briefcase     size={15} />, to: '/chat?tool=jobanalyzer' },
+  { label: 'Interview Coach', icon: <Target        size={15} />, to: '/chat?tool=interview' },
+  { label: 'Programming',     icon: <Code2         size={15} />, to: '/chat?tool=programming' },
+  { label: 'Language',        icon: <Globe         size={15} />, to: '/chat?tool=language' },
 ]
 
 function SidebarLink({ item, onClick }: { item: NavItem; onClick?: () => void }) {
   const navigate   = useNavigate()
   const location   = useLocation()
 
-  // For chat links we need to compare full path+search
   const isChatLink = item.to.includes('?')
   const isActive   = isChatLink
     ? location.pathname === '/chat' && location.search === `?tool=${new URLSearchParams(item.to.split('?')[1]).get('tool')}`
@@ -76,7 +75,7 @@ export default function Sidebar({ onNavClick }: Props) {
     <div className="h-full flex flex-col overflow-y-auto overflow-x-hidden">
       {/* Brand */}
       <div className="flex items-center gap-2.5 px-4 py-5 flex-shrink-0">
-        <span className="text-xl leading-none">⚡</span>
+        <span className="text-xl leading-none">🎯</span>
         <span className="text-white font-bold text-[15px] tracking-wide">SmartAssist</span>
       </div>
 
@@ -91,9 +90,9 @@ export default function Sidebar({ onNavClick }: Props) {
           <SidebarLink key={l.to} item={l} onClick={onNavClick} />
         ))}
 
-        {/* MY CHATS */}
+        {/* CAREER TOOLS */}
         <p className="text-[10px] font-bold uppercase tracking-[1.5px] text-slate-500 px-3 pt-5 pb-1.5">
-          My Chats
+          Career Tools
         </p>
         {chatLinks.map(l => (
           <SidebarLink key={l.to} item={l} onClick={onNavClick} />

@@ -4,10 +4,10 @@ import type { ToolType } from '../../types'
 
 const PLACEHOLDERS: Record<ToolType, string> = {
   general:     'Type a message…',
-  weather:     'Ask about weather in any city… e.g. "What\'s the weather in Berlin?"',
   jobanalyzer: 'Paste a job posting or URL to analyze…',
-  jokes:       'Ask for a joke… e.g. "Tell me a programming joke"',
   language:    'Write something and I\'ll translate it for you…',
+  programming: 'Ask about algorithms, data structures, or code…',
+  interview:   'Paste a job posting / URL, or ask anything about interview preparation…',
 }
 
 interface Props {
@@ -21,7 +21,6 @@ export default function ChatInput({ toolType, isLoading, onSend }: Props) {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const near = text.length > 3500
 
-  // Auto-resize textarea
   useEffect(() => {
     const el = textareaRef.current
     if (!el) return
@@ -34,15 +33,11 @@ export default function ChatInput({ toolType, isLoading, onSend }: Props) {
     if (!trimmed || isLoading) return
     onSend(trimmed)
     setText('')
-    // Reset height
     if (textareaRef.current) textareaRef.current.style.height = 'auto'
   }
 
   const handleKey = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      handleSend()
-    }
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() }
   }
 
   return (

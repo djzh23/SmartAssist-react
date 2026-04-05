@@ -1,32 +1,32 @@
 import { useNavigate } from 'react-router-dom'
-import { Zap, Briefcase, Globe, ArrowRight } from 'lucide-react'
+import { Target, Code2, Briefcase, ArrowRight } from 'lucide-react'
 
 const WHY_CARDS = [
   {
-    icon: <Zap className="text-primary" size={22} />,
+    icon: <Target className="text-primary" size={22} />,
     bg: 'bg-primary-light',
-    title: 'AI-Powered',
-    desc: 'Claude (Anthropic) handles all conversations — fast, accurate, context-aware.',
+    title: 'Interview Coaching',
+    desc: 'Structured AI feedback for behavioral and technical rounds — in German or English, with optional CV upload for personalized answers.',
   },
   {
     icon: <Briefcase className="text-amber-600" size={22} />,
     bg: 'bg-amber-50',
-    title: 'Specialized Tools',
-    desc: 'Weather, Job Analyzer, Jokes, Language Learning — each with its own focused mode.',
+    title: 'Job Analysis',
+    desc: 'Paste any job posting or URL. Get a breakdown of key requirements, ATS keywords, and tailored CV tips in seconds.',
   },
   {
-    icon: <Globe className="text-emerald-600" size={22} />,
+    icon: <Code2 className="text-emerald-600" size={22} />,
     bg: 'bg-emerald-50',
-    title: 'Learn While You Chat',
-    desc: 'The Language Learning mode translates messages live and teaches vocabulary as you go.',
+    title: 'Technical Questions',
+    desc: 'Ace coding interviews with syntax-highlighted examples in C#, Java, React, and more — plus design patterns and system design.',
   },
 ]
 
 const QUICK_LINKS = [
-  { label: 'Job Analyzer', emoji: '💼', tool: 'jobanalyzer', desc: 'Analyze a job posting' },
-  { label: 'Weather',      emoji: '🌤️', tool: 'weather',     desc: 'Check any city' },
-  { label: 'Language',     emoji: '🌍', tool: 'language',    desc: 'Learn a new language' },
-  { label: 'Jokes',        emoji: '😄', tool: 'jokes',       desc: 'Get a laugh' },
+  { label: 'Interview Coach', emoji: '🎯', tool: 'interview',   desc: 'Practice & prepare' },
+  { label: 'Job Analyzer',    emoji: '💼', tool: 'jobanalyzer', desc: 'Analyze a posting' },
+  { label: 'Programming',     emoji: '💻', tool: 'programming', desc: 'Technical questions' },
+  { label: 'Language',        emoji: '🌍', tool: 'language',    desc: 'Learn a language' },
 ]
 
 export default function HomePage() {
@@ -39,19 +39,19 @@ export default function HomePage() {
         {/* Hero */}
         <div className="mb-12 text-center">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary-light text-3xl mb-5">
-            ⚡
+            🎯
           </div>
           <h1 className="text-3xl font-bold text-slate-800 mb-3 tracking-tight">
-            Welcome to SmartAssist
+            Your AI Career Assistant
           </h1>
           <p className="text-slate-400 leading-relaxed max-w-md mx-auto">
-            Your AI-powered assistant for weather, job analysis, language learning, and more.
+            Prepare for job interviews, analyze postings, and master technical questions — powered by Claude (Anthropic).
           </p>
           <button
-            onClick={() => navigate('/chat')}
+            onClick={() => navigate('/chat?tool=interview')}
             className="mt-6 inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-white rounded-xl px-6 py-3 font-semibold text-sm transition-colors"
           >
-            Start chatting
+            Start preparing
             <ArrowRight size={16} />
           </button>
         </div>
@@ -76,7 +76,7 @@ export default function HomePage() {
 
         {/* Why SmartAssist */}
         <div>
-          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Why SmartAssist?</h2>
+          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">What SmartAssist does</h2>
           <div className="flex flex-col gap-3">
             {WHY_CARDS.map(c => (
               <div key={c.title} className="flex items-start gap-4 p-4 rounded-xl border border-slate-100 bg-white hover:shadow-chat transition-shadow">
@@ -100,6 +100,7 @@ export default function HomePage() {
             Explore all tools →
           </button>
         </div>
+
       </div>
     </div>
   )

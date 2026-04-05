@@ -1,14 +1,16 @@
 import { useEffect, useRef } from 'react'
-import type { ChatMessage } from '../../types'
+import type { ChatMessage, ToolType } from '../../types'
 import MessageBubble from './MessageBubble'
 import { MessageCircle } from 'lucide-react'
 
 interface Props {
   messages: ChatMessage[]
   isLoading: boolean
+  toolType?: ToolType
   targetLang?: string
   nativeLang?: string
   targetLangCode?: string
+  progLang?: string
 }
 
 function TypingDots() {
@@ -25,7 +27,10 @@ function TypingDots() {
   )
 }
 
-export default function MessageList({ messages, isLoading, targetLang, nativeLang, targetLangCode }: Props) {
+export default function MessageList({
+  messages, isLoading, toolType,
+  targetLang, nativeLang, targetLangCode, progLang,
+}: Props) {
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -48,9 +53,11 @@ export default function MessageList({ messages, isLoading, targetLang, nativeLan
         <MessageBubble
           key={msg.id}
           msg={msg}
+          toolType={toolType}
           targetLang={targetLang}
           nativeLang={nativeLang}
           targetLangCode={targetLangCode}
+          progLang={progLang}
         />
       ))}
       {isLoading && <TypingDots />}

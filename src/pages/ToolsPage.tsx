@@ -4,32 +4,61 @@ import type { ToolMeta } from '../types'
 
 const TOOLS: ToolMeta[] = [
   {
-    id: 'weather', name: 'Weather Assistant', chatParam: 'weather',
-    shortDescription: 'Get real-time weather for any city worldwide.',
-    fullDescription: 'Ask about weather in any city. SmartAssist uses live weather data to give you current conditions, temperature, wind, and helpful tips.',
-    examples: ['Wie ist das Wetter in Berlin?', 'What is the weather in Tokyo?', 'Is it raining in London today?'],
-    icon: '🌤️', iconBg: '#EBF5FF',
+    id: 'interview', name: 'Interview Coach', chatParam: 'interview',
+    shortDescription: 'Practice job interviews in German or English with an AI career coach.',
+    fullDescription: 'Prepare for your next interview with a structured AI coach. Paste a job posting or describe a role and get tailored questions, STAR-method answer tips, and a personalized pitch — all based on your CV.',
+    examples: [
+      'Stell mir typische Fragen für eine Backend-Entwickler Stelle',
+      'How should I answer "What is your greatest weakness?"',
+      'Give me a STAR-method example for a leadership question',
+      'Analyze this job posting and prepare me for the interview',
+    ],
+    icon: '🎯', iconBg: '#EEF2FF', featured: true,
   },
   {
     id: 'jobanalyzer', name: 'Job Analyzer', chatParam: 'jobanalyzer',
-    shortDescription: 'Paste a job posting — get instant CV tips.',
+    shortDescription: 'Paste a job posting — get instant requirements breakdown and CV tips.',
     fullDescription: 'Paste a job posting text or share a URL. SmartAssist analyzes the role, uncovers what they really want, and gives you personalized CV optimization tips with ATS keywords.',
-    examples: ['Analyze this job: [paste job text here]', 'Analyze this job: https://jobs.example.com/123'],
+    examples: [
+      'Analyze this job: [paste job text here]',
+      'Analyze this job: https://jobs.example.com/123',
+      'What skills should I highlight for this role?',
+    ],
     icon: '💼', iconBg: '#FFF8F0', featured: true,
   },
   {
-    id: 'jokes', name: 'Joke Generator', chatParam: 'jokes',
-    shortDescription: 'Get a random joke to brighten your day.',
-    fullDescription: 'Need a laugh? Ask for a joke anytime — programming jokes, wordplay, puns, and more.',
-    examples: ['Tell me a programming joke', 'Erzähl mir einen Witz', 'Give me a funny joke about dogs'],
-    icon: '😄', iconBg: '#F5F0FF',
+    id: 'programming', name: 'Programming & DSA', chatParam: 'programming',
+    shortDescription: 'Ace technical interviews — algorithms, data structures, and code.',
+    fullDescription: 'Choose your language (C#, Java, React, and more) and ask anything about programming, design patterns, algorithms, or system design. All code examples are syntax-highlighted with line numbers and a copy button.',
+    examples: [
+      'Explain binary search with an example in Java',
+      'What is the difference between Stack and Queue?',
+      'Explain the Singleton design pattern with code',
+      'How does React reconciliation work?',
+    ],
+    icon: '💻', iconBg: '#F0FDF4', featured: true,
   },
   {
     id: 'language', name: 'Language Learning', chatParam: 'language',
-    shortDescription: 'Chat and learn a new language simultaneously.',
-    fullDescription: 'Activate a target language and start chatting. SmartAssist translates your messages and responds in your target language — perfect for learners at any level.',
-    examples: ['Guten Morgen — practice Spanish every day', 'Hallo wie geht es dir?'],
-    icon: '🌍', iconBg: '#E8FEF0', featured: true,
+    shortDescription: 'Improve your language skills for international job applications.',
+    fullDescription: 'Activate a target language and start chatting. SmartAssist translates your messages and responds in your target language with vocabulary tips — ideal for preparing cover letters or interviews in a foreign language.',
+    examples: [
+      'Wie schreibe ich ein Bewerbungsschreiben auf Englisch?',
+      'How do I say "I have 3 years of experience" in German?',
+      'Help me practice professional phrases in Spanish',
+    ],
+    icon: '🌍', iconBg: '#E8FEF0', featured: false,
+  },
+  {
+    id: 'general', name: 'General Chat', chatParam: 'general',
+    shortDescription: 'Ask anything — open-ended AI conversation for any question.',
+    fullDescription: 'Use the general chat for any question not covered by the specialized tools. Career advice, writing help, research, or just thinking out loud.',
+    examples: [
+      'How do I negotiate a salary offer?',
+      'What should I include in a LinkedIn headline?',
+      'Help me write a professional bio',
+    ],
+    icon: '💬', iconBg: '#F8FAFC', featured: false,
   },
 ]
 
@@ -40,8 +69,8 @@ export default function ToolsPage() {
   return (
     <div className="overflow-y-auto h-full">
       <div className="max-w-2xl mx-auto px-6 py-10">
-        <h1 className="text-2xl font-bold text-slate-800 mb-1">Available Tools</h1>
-        <p className="text-slate-400 text-sm mb-8">Click any card to learn more and try it in chat.</p>
+        <h1 className="text-2xl font-bold text-slate-800 mb-1">Career & Tech Tools</h1>
+        <p className="text-slate-400 text-sm mb-8">Specialized AI modes to help you land your next job.</p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {TOOLS.map(tool => (
