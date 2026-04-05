@@ -8,7 +8,9 @@ import ChatInput from '../components/chat/ChatInput'
 import ChatSidebar from '../components/chat/ChatSidebar'
 import InterviewSetupModal, { type InterviewSetupData } from '../components/chat/InterviewSetupModal'
 import MessageList from '../components/chat/MessageList'
+import UsageLimitModal from '../components/ui/UsageLimitModal'
 import { useChatSessions } from '../hooks/useChatSessions'
+import { useUserPlan } from '../hooks/useUserPlan'
 import { sanitizeTechnicalContext } from '../utils/cvTechnicalContext'
 
 const LANG_NAMES: Record<string, string> = {
@@ -154,6 +156,9 @@ export default function ChatPage() {
   const [setupOpen, setSetupOpen] = useState(false)
   const [setupSessionId, setSetupSessionId] = useState<string | null>(null)
   const [setupInitialData, setSetupInitialData] = useState<InterviewSetupData>(defaultInterviewSetup())
+  const [showLimitModal, setShowLimitModal] = useState(false)
+
+  const { isAtLimit, incrementUsage, isSignedIn } = useUserPlan()
 
   useEffect(() => {
     saveInterviewContextMap(interviewContextBySession)
@@ -233,6 +238,11 @@ export default function ChatPage() {
   }
 
   const handleSend = async (text: string) => {
+    if (isAtLimit) {
+      setShowLimitModal(true)
+      return
+    }
+
     const sessionId = store.activeSessionId ?? store.newSession(store.currentToolType)
 
     store.addMessage(sessionId, { text, isUser: true })
@@ -270,6 +280,7 @@ export default function ChatPage() {
         toolUsed: res.toolUsed,
         learningData: res.learningData,
       })
+      incrementUsage()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Etwas ist schiefgelaufen.')
     } finally {
@@ -394,6 +405,12 @@ export default function ChatPage() {
           setSetupSessionId(null)
         }}
         onSave={handleSaveInterviewSetup}
+      />
+
+      <UsageLimitModal
+        isOpen={showLimitModal}
+        isLoggedIn={isSignedIn}
+        onClose={() => setShowLimitModal(false)}
       />
     </div>
   )

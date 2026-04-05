@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { X } from 'lucide-react'
+import { SignInButton } from '@clerk/clerk-react'
 
 interface Props {
   isOpen: boolean
@@ -65,9 +66,11 @@ export default function UsageLimitModal({ isOpen, isLoggedIn, onClose }: Props) 
               </li>
             </ul>
             {!isLoggedIn && (
-              <button className="w-full rounded-xl border border-slate-300 bg-white py-2 text-xs font-semibold text-slate-700 transition-colors hover:border-slate-400">
-                Sign in with Google
-              </button>
+              <SignInButton mode="modal" fallbackRedirectUrl="/chat">
+                <button className="w-full rounded-xl border border-slate-300 bg-white py-2 text-xs font-semibold text-slate-700 transition-colors hover:border-slate-400">
+                  Sign in with Google
+                </button>
+              </SignInButton>
             )}
           </div>
 

@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { BarChart2, Calendar, Star, Zap, Sparkles, Crown, ArrowRight } from 'lucide-react'
+import { BarChart2, Calendar, Star, Zap, Sparkles, Crown, ArrowRight, Loader2 } from 'lucide-react'
 import { useUserPlan, getPlanLabel, getPlanColors } from '../hooks/useUserPlan'
 
 // Mock 7-day usage history (Mon–Sun)
@@ -49,13 +49,15 @@ export default function ProfilePage() {
   const planColors = getPlanColors(user.plan)
   const planLabel = getPlanLabel(user.plan)
 
-  const initials = user.name
-    ? user.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
-    : user.email
-      ? user.email.slice(0, 2).toUpperCase()
-      : '?'
-
   const PlanIcon = user.plan === 'pro' ? Crown : user.plan === 'premium' ? Sparkles : Zap
+
+  if (!user.isLoaded) {
+    return (
+      <div className="flex h-full items-center justify-center bg-[#f5f6fb]">
+        <Loader2 size={22} className="animate-spin text-slate-400" />
+      </div>
+    )
+  }
 
   return (
     <div
@@ -89,12 +91,12 @@ export default function ProfilePage() {
           }} />
           <div className="relative flex items-center gap-4">
             <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl border border-violet-200 bg-violet-50 text-xl font-bold text-violet-700">
-              {initials}
+              {user.initials}
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
                 <p className="font-semibold text-slate-800 truncate">
-                  {user.name ?? user.email ?? 'Guest User'}
+                  {user.firstName ? `${user.firstName} ${user.lastName ?? ''}`.trim() : user.email ?? 'Guest User'}
                 </p>
                 <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold ${planColors.badge}`}>
                   <PlanIcon size={10} />
@@ -104,10 +106,10 @@ export default function ProfilePage() {
               {user.email && (
                 <p className="mt-0.5 text-xs text-slate-500 truncate">{user.email}</p>
               )}
-              {user.memberSince && (
+              {user.isSignedIn && (
                 <p className="mt-0.5 flex items-center gap-1 text-xs text-slate-400">
                   <Calendar size={11} />
-                  Mitglied seit {user.memberSince}
+                  {user.email}
                 </p>
               )}
             </div>
