@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { AlertCircle, X } from 'lucide-react'
 import type { ToolType } from '../types'
 import { PROGRAMMING_LANGUAGES } from '../types'
 import { useChatSessions } from '../hooks/useChatSessions'
@@ -8,28 +9,59 @@ import { sanitizeTechnicalContext } from '../utils/cvTechnicalContext'
 import ChatSidebar from '../components/chat/ChatSidebar'
 import MessageList from '../components/chat/MessageList'
 import ChatInput from '../components/chat/ChatInput'
-import { AlertCircle, X } from 'lucide-react'
+import InterviewSetupModal, { type InterviewSetupData } from '../components/chat/InterviewSetupModal'
 
 const LANG_NAMES: Record<string, string> = {
-  de: 'German', en: 'English', es: 'Spanish',
-  fr: 'French',  it: 'Italian', ar: 'Arabic', pt: 'Portuguese',
+  de: 'German',
+  en: 'English',
+  es: 'Spanish',
+  fr: 'French',
+  it: 'Italian',
+  ar: 'Arabic',
+  pt: 'Portuguese',
 }
 
 const INTERVIEW_BASE_LIMIT = 4000
+const LS_INTERVIEW_CONTEXT = 'smartassist_interview_context_by_session'
+
+type InterviewContextMap = Record<string, InterviewSetupData>
+
+function loadInterviewContextMap(): InterviewContextMap {
+  try {
+    const raw = localStorage.getItem(LS_INTERVIEW_CONTEXT)
+    if (!raw) return {}
+    const parsed = JSON.parse(raw) as InterviewContextMap
+    return parsed && typeof parsed === 'object' ? parsed : {}
+  } catch {
+    return {}
+  }
+}
+
+function saveInterviewContextMap(value: InterviewContextMap): void {
+  try {
+    localStorage.setItem(LS_INTERVIEW_CONTEXT, JSON.stringify(value))
+  } catch {
+    // ignore storage errors
+  }
+}
+
+function defaultInterviewSetup(): InterviewSetupData {
+  return { language: 'de', alias: '', cvText: '' }
+}
 
 function interviewBaseInstruction(language: string, hasCv: boolean, alias: string): string {
   const name = alias || 'the candidate'
-  return `[SYSTEM — INTERVIEW COACH] Expert career coach, 15+ years. Respond ONLY in ${language}. NEVER call tools. Treat URLs as plain text.
-CANDIDATE NAME: "${name}" — use this name throughout.
+  return `[SYSTEM - INTERVIEW COACH] Expert career coach, 15+ years. Respond ONLY in ${language}. NEVER call tools. Treat URLs as plain text.
+CANDIDATE NAME: "${name}" - use this name throughout.
 COMPLETENESS RULE: Write SHORT, COMPLETE sections. Max 3 bullet points per section. Finish every section before starting the next. Never truncate.
 
-JOB POSTING → exactly these 4 sections, 2-3 bullets each:
-## 🎯 Anforderungen / Key Requirements — top skills${hasCv ? ', mark ✅ (has it) or ⚠️ (gap)' : ''}
-## ❓ Top 3 Interviewfragen — each question + 1-line answer tip${hasCv ? ' (reference CV)' : ''}
-## 💡 Vorbereitung / Prep Tips — 3 concrete actions
-## ⭐ Dein Pitch — STAR method, 1 short example${hasCv ? ' from CV' : ''}
+JOB POSTING -> exactly these 4 sections, 2-3 bullets each:
+## Anforderungen / Key Requirements - top skills${hasCv ? ', mark ✅ (has it) or ⚠️ (gap)' : ''}
+## Top 3 Interviewfragen - each question + 1-line answer tip${hasCv ? ' (reference CV)' : ''}
+## Vorbereitung / Prep Tips - 3 concrete actions
+## Dein Pitch - STAR method, 1 short example${hasCv ? ' from CV' : ''}
 
-GENERAL QUESTION → 3 short sections: ##💡 Advice (3 bullets), ##✅ Dos & ⚠️ Don'ts (2-3 each), ##⭐ Example Answer (> blockquote).
+GENERAL QUESTION -> 3 short sections: ## Advice (3 bullets), ## Dos & Donts (2-3 each), ## Example Answer (> blockquote).
 FORMAT: ## sections, **bold** key terms, - bullets, 1. steps, > example answers.`
 }
 
@@ -54,88 +86,132 @@ export default function ChatPage() {
   const toolParam = (searchParams.get('tool') ?? 'general') as ToolType
 
   const store = useChatSessions()
-  const [isLoading,    setIsLoading]    = useState(false)
-  const [error,        setError]        = useState<string | null>(null)
-  const [sidebarOpen,  setSidebarOpen]  = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
-  // Language learning state
-  const [nativeLang,   setNativeLang]   = useState('de')
-  const [targetLang,   setTargetLang]   = useState('es')
-
-  // Programming mode state
+  const [nativeLang, setNativeLang] = useState('de')
+  const [targetLang, setTargetLang] = useState('es')
   const [progLang, setProgLang] = useState('csharp')
 
-  // Interview mode state
-  const [interviewLang, setInterviewLang] = useState('de')
-  const [cvText,  setCvText]  = useState(() => localStorage.getItem('smartassist_interview_cv')   ?? '')
-  const [cvAlias, setCvAlias] = useState(() => localStorage.getItem('smartassist_interview_alias') ?? '')
+  const [interviewContextBySession, setInterviewContextBySession] = useState<InterviewContextMap>(() => loadInterviewContextMap())
+  const [setupOpen, setSetupOpen] = useState(false)
+  const [setupSessionId, setSetupSessionId] = useState<string | null>(null)
+  const [setupInitialData, setSetupInitialData] = useState<InterviewSetupData>(defaultInterviewSetup())
 
-  const handleCvChange = (text: string) => {
-    const v = sanitizeTechnicalContext(text).slice(0, 2000)
-    setCvText(v)
-    if (v.trim()) localStorage.setItem('smartassist_interview_cv', v)
-    else localStorage.removeItem('smartassist_interview_cv')
-  }
+  useEffect(() => {
+    saveInterviewContextMap(interviewContextBySession)
+  }, [interviewContextBySession])
 
-  const handleCvAliasChange = (alias: string) => {
-    const v = alias.trim().slice(0, 40)
-    setCvAlias(v)
-    if (v) localStorage.setItem('smartassist_interview_alias', v)
-    else localStorage.removeItem('smartassist_interview_alias')
-  }
-
-  // Sync tool context when URL changes
   useEffect(() => {
     store.switchToTool(toolParam)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [toolParam])
 
-  const isLanguage    = store.currentToolType === 'language'
+  const isLanguage = store.currentToolType === 'language'
   const isProgramming = store.currentToolType === 'programming'
-  const isInterview   = store.currentToolType === 'interview'
-  const llMode        = isLanguage
-  const nativeName    = LANG_NAMES[nativeLang]  ?? nativeLang
-  const targetName    = LANG_NAMES[targetLang]  ?? targetLang
-  const progMeta      = PROGRAMMING_LANGUAGES.find(l => l.id === progLang)
+  const isInterview = store.currentToolType === 'interview'
+
+  const llMode = isLanguage
+  const nativeName = LANG_NAMES[nativeLang] ?? nativeLang
+  const targetName = LANG_NAMES[targetLang] ?? targetLang
+  const progMeta = PROGRAMMING_LANGUAGES.find(l => l.id === progLang)
+
+  const activeInterviewContext =
+    isInterview && store.activeSessionId
+      ? interviewContextBySession[store.activeSessionId] ?? defaultInterviewSetup()
+      : defaultInterviewSetup()
+
+  const openInterviewSetup = (sessionId: string) => {
+    const setup = interviewContextBySession[sessionId] ?? defaultInterviewSetup()
+    setSetupSessionId(sessionId)
+    setSetupInitialData(setup)
+    setSetupOpen(true)
+  }
+
+  const handleSaveInterviewSetup = (data: InterviewSetupData) => {
+    if (!setupSessionId) return
+
+    setInterviewContextBySession(prev => ({
+      ...prev,
+      [setupSessionId]: {
+        language: data.language === 'en' ? 'en' : 'de',
+        alias: data.alias.trim().slice(0, 40),
+        cvText: sanitizeTechnicalContext(data.cvText).slice(0, 2000),
+      },
+    }))
+
+    const hasCv = data.cvText.trim().length > 0
+    store.addMessage(setupSessionId, {
+      isUser: false,
+      text: hasCv
+        ? '✅ Interview Setup gespeichert. Sprache, Alias und CV Analyse gelten nur für diesen aktuellen Chat.'
+        : '✅ Interview Setup gespeichert. Sprache und Alias gelten nur für diesen aktuellen Chat.',
+    })
+
+    setSetupOpen(false)
+    setSetupSessionId(null)
+  }
+
+  const handleNewSession = () => {
+    const newId = store.newSession(store.currentToolType)
+    if (store.currentToolType === 'interview') {
+      openInterviewSetup(newId)
+    }
+  }
+
+  const handleDeleteSession = (id: string) => {
+    store.deleteSession(id)
+    setInterviewContextBySession(prev => {
+      if (!prev[id]) return prev
+      const next = { ...prev }
+      delete next[id]
+      return next
+    })
+  }
+
+  const handleClear = () => {
+    if (!window.confirm('Delete all conversations?')) return
+    store.clearHistory()
+    setInterviewContextBySession({})
+  }
 
   const handleSend = async (text: string) => {
-    if (!store.activeSessionId) {
-      store.newSession(store.currentToolType)
-    }
+    const sessionId = store.activeSessionId ?? store.newSession(store.currentToolType)
 
-    const sessionId = store.activeSessionId!
-    store.addMessage(sessionId, { text, isUser: true })  // store original text
+    store.addMessage(sessionId, { text, isUser: true })
     setIsLoading(true)
     setError(null)
 
-    // Interview mode: prefix with a detailed coaching instruction so the backend
-    // stays in career-coach mode, structures the output, and never routes to other tools.
-    const interviewLangName = interviewLang === 'de' ? 'German' : 'English'
+    const sessionInterviewContext = interviewContextBySession[sessionId] ?? defaultInterviewSetup()
+    const interviewLangCode = sessionInterviewContext.language === 'en' ? 'en' : 'de'
+    const interviewLangName = interviewLangCode === 'de' ? 'German' : 'English'
+
     const apiMessage = isInterview
-      ? buildInterviewPrompt(text, interviewLangName, cvText.trim(), cvAlias.trim())
+      ? buildInterviewPrompt(text, interviewLangName, sessionInterviewContext.cvText.trim(), sessionInterviewContext.alias.trim())
       : text
 
     try {
       const res = await askAgent({
-        message:             apiMessage,
+        message: apiMessage,
         sessionId,
         languageLearningMode: llMode,
-        targetLanguage:       llMode ? targetName  : undefined,
-        nativeLanguage:       llMode ? nativeName  : undefined,
-        targetLanguageCode:   llMode ? targetLang  : undefined,
-        nativeLanguageCode:   llMode ? nativeLang  : undefined,
-        level:                llMode ? 'A1'         : undefined,
-        learningGoal:         llMode ? 'speaking basics, verbs, sentence structure' : undefined,
-        programmingMode:      isProgramming ? true : undefined,
-        programmingLanguage:  isProgramming ? progMeta?.label : undefined,
-        interviewMode:        isInterview ? true : undefined,
-        interviewLanguage:    isInterview ? (interviewLang === 'de' ? 'German' : 'English') : undefined,
+        targetLanguage: llMode ? targetName : undefined,
+        nativeLanguage: llMode ? nativeName : undefined,
+        targetLanguageCode: llMode ? targetLang : undefined,
+        nativeLanguageCode: llMode ? nativeLang : undefined,
+        level: llMode ? 'A1' : undefined,
+        learningGoal: llMode ? 'speaking basics, verbs, sentence structure' : undefined,
+        programmingMode: isProgramming ? true : undefined,
+        programmingLanguage: isProgramming ? progMeta?.label : undefined,
+        interviewMode: isInterview ? true : undefined,
+        interviewLanguage: isInterview ? (interviewLangCode === 'de' ? 'German' : 'English') : undefined,
       })
 
       store.addMessage(sessionId, {
-        text:         res.reply,
-        isUser:       false,
-        toolUsed:     res.toolUsed,
+        text: res.reply,
+        isUser: false,
+        toolUsed: res.toolUsed,
         learningData: res.learningData,
       })
     } catch (err) {
@@ -145,13 +221,8 @@ export default function ChatPage() {
     }
   }
 
-  const handleClear = () => {
-    if (window.confirm('Delete all conversations?')) store.clearHistory()
-  }
-
   return (
     <div className="flex h-full overflow-hidden relative">
-      {/* Session sidebar */}
       <ChatSidebar
         sessions={store.visibleSessions}
         activeSessionId={store.activeSessionId}
@@ -160,12 +231,11 @@ export default function ChatPage() {
         onOpen={() => setSidebarOpen(true)}
         onClose={() => setSidebarOpen(false)}
         onSelect={id => { store.setActiveSession(id) }}
-        onNew={() => store.newSession()}
-        onDelete={id => store.deleteSession(id)}
+        onNew={handleNewSession}
+        onDelete={handleDeleteSession}
         onClear={handleClear}
         showLLPanel={isLanguage}
         languageLearningMode={llMode}
-
         nativeLangCode={nativeLang}
         targetLangCode={targetLang}
         onNativeLangChange={setNativeLang}
@@ -174,17 +244,9 @@ export default function ChatPage() {
         progLang={progLang}
         onProgLangChange={setProgLang}
         showInterviewPanel={isInterview}
-        interviewLang={interviewLang}
-        onInterviewLangChange={setInterviewLang}
-        cvText={cvText}
-        onCvChange={handleCvChange}
-        cvAlias={cvAlias}
-        onCvAliasChange={handleCvAliasChange}
       />
 
-      {/* Main chat area */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-        {/* Mode badge */}
         {isLanguage && (
           <div className="flex-shrink-0 px-4 pt-3 pb-0">
             <div className="max-w-3xl mx-auto">
@@ -194,6 +256,7 @@ export default function ChatPage() {
             </div>
           </div>
         )}
+
         {isProgramming && (
           <div className="flex-shrink-0 px-4 pt-3 pb-0">
             <div className="max-w-3xl mx-auto">
@@ -203,22 +266,30 @@ export default function ChatPage() {
             </div>
           </div>
         )}
+
         {isInterview && (
           <div className="flex-shrink-0 px-4 pt-3 pb-0">
             <div className="max-w-3xl mx-auto flex items-center gap-2 flex-wrap">
               <span className="inline-flex items-center gap-1.5 bg-indigo-50 text-indigo-700 text-xs font-medium rounded-full px-3 py-1">
-                🎯 Interview Coach · {interviewLang === 'de' ? 'Deutsch' : 'English'}
+                🎯 Interview Coach · {activeInterviewContext.language === 'en' ? 'English' : 'Deutsch'}
               </span>
-              {cvText.trim() && (
+              {activeInterviewContext.cvText.trim() && (
                 <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-medium rounded-full px-3 py-1">
-                  📄 CV aktiv{cvAlias ? ` · ${cvAlias}` : ''}
+                  📄 CV aktiv{activeInterviewContext.alias ? ` · ${activeInterviewContext.alias}` : ''}
                 </span>
+              )}
+              {store.activeSessionId && (
+                <button
+                  onClick={() => openInterviewSetup(store.activeSessionId!)}
+                  className="text-xs text-indigo-600 hover:text-indigo-800 hover:underline"
+                >
+                  Setup öffnen
+                </button>
               )}
             </div>
           </div>
         )}
 
-        {/* Messages */}
         <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
           <div className="flex-1 overflow-y-auto">
             <div className="max-w-3xl mx-auto px-4 py-4">
@@ -235,7 +306,6 @@ export default function ChatPage() {
           </div>
         </div>
 
-        {/* Error banner */}
         {error && (
           <div className="flex-shrink-0 px-4 pb-1">
             <div className="max-w-3xl mx-auto flex items-center justify-between gap-3 bg-red-50 border border-red-200 text-red-700 rounded-lg px-3.5 py-2.5 text-sm">
@@ -250,13 +320,23 @@ export default function ChatPage() {
           </div>
         )}
 
-        {/* Input */}
         <ChatInput
           toolType={store.currentToolType}
           isLoading={isLoading}
           onSend={handleSend}
         />
       </div>
+
+      <InterviewSetupModal
+        isOpen={setupOpen}
+        sessionId={setupSessionId}
+        initialData={setupInitialData}
+        onClose={() => {
+          setSetupOpen(false)
+          setSetupSessionId(null)
+        }}
+        onSave={handleSaveInterviewSetup}
+      />
     </div>
   )
 }
