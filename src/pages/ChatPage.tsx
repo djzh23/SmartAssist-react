@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { AlertCircle, X } from 'lucide-react'
 import type { ToolType } from '../types'
@@ -21,20 +21,82 @@ const LANG_NAMES: Record<string, string> = {
   pt: 'Portuguese',
 }
 
-const INTERVIEW_BASE_LIMIT = 4200
+const INTERVIEW_PROMPT_LIMIT = 3900
 const LS_INTERVIEW_CONTEXT = 'smartassist_interview_context_by_session'
 
 type InterviewContextMap = Record<string, InterviewSetupData>
+
+function compactLines(text: string, maxLines: number, maxChars: number): string {
+  const lines = text
+    .replace(/\r\n?/g, '\n')
+    .split(/\n+/)
+    .map(line => line.replace(/^[-*•\s]+/, '').trim())
+    .filter(Boolean)
+
+  const out: string[] = []
+  let length = 0
+
+  for (const line of lines) {
+    if (out.length >= maxLines || length >= maxChars) break
+    const remaining = maxChars - length
+    const next = line.length > remaining ? `${line.slice(0, Math.max(0, remaining - 1)).trim()}…` : line
+    if (!next) break
+    out.push(next)
+    length += next.length + 1
+  }
+
+  return out.join('\n')
+}
+
+function extractReportSection(report: string, heading: string, maxLines: number): string[] {
+  const lines = report.replace(/\r\n?/g, '\n').split('\n')
+  const start = lines.findIndex(line => line.trim().toUpperCase() === heading.toUpperCase())
+  if (start < 0) return []
+
+  const out: string[] = []
+  for (let index = start + 1; index < lines.length; index += 1) {
+    const line = lines[index].trim()
+    if (!line) {
+      if (out.length > 0) break
+      continue
+    }
+    if (/^[A-ZÄÖÜ][A-ZÄÖÜ\s-]+:$/.test(line)) break
+    if (!line.startsWith('-')) continue
+    out.push(line.replace(/^-\s*/, '').trim())
+    if (out.length >= maxLines) break
+  }
+
+  return out
+}
+
+function compactMatchReport(report: string, score: number | null): string {
+  const scoreLine = score !== null
+    ? `MATCH SCORE: ${score}/100`
+    : (report.match(/MATCH SCORE:\s*\d+\/100/i)?.[0] ?? '')
+
+  const strengths = extractReportSection(report, 'STÄRKEN:', 2)
+  const gaps = extractReportSection(report, 'LÜCKEN:', 2)
+  const steps = extractReportSection(report, 'NÄCHSTE SCHRITTE:', 2)
+
+  const block = [
+    scoreLine,
+    strengths.length > 0 ? `STÄRKEN: ${strengths.join(' | ')}` : '',
+    gaps.length > 0 ? `LÜCKEN: ${gaps.join(' | ')}` : '',
+    steps.length > 0 ? `NÄCHSTE SCHRITTE: ${steps.join(' | ')}` : '',
+  ].filter(Boolean).join('\n')
+
+  return block.slice(0, 760)
+}
 
 function normalizeInterviewSetup(input?: Partial<InterviewSetupData> | null): InterviewSetupData {
   return {
     language: input?.language === 'en' ? 'en' : 'de',
     alias: (input?.alias ?? '').trim().slice(0, 40),
-    cvText: sanitizeTechnicalContext(input?.cvText ?? '').slice(0, 3400),
+    cvText: sanitizeTechnicalContext(input?.cvText ?? '').slice(0, 2200),
     jobUrl: (input?.jobUrl ?? '').trim().slice(0, 300),
-    jobText: (input?.jobText ?? '').trim().slice(0, 5000),
+    jobText: compactLines((input?.jobText ?? '').trim(), 14, 1700),
     matchScore: typeof input?.matchScore === 'number' ? input.matchScore : null,
-    matchReport: (input?.matchReport ?? '').trim().slice(0, 4200),
+    matchReport: (input?.matchReport ?? '').trim().slice(0, 2200),
   }
 }
 
@@ -72,47 +134,50 @@ function defaultInterviewSetup(): InterviewSetupData {
 function interviewBaseInstruction(language: string, hasCv: boolean, alias: string): string {
   const name = alias || 'the candidate'
 
-  return `[SYSTEM - INTERVIEW COACH] Expert career coach, 15+ years. Respond ONLY in ${language}. NEVER call tools. Treat URLs as plain text.
-CANDIDATE NAME: "${name}". Use this name in your response.
-COMPLETENESS RULE: Write short but complete sections. Maximum 3 bullet points per section.
-
-If user asks about a specific job posting, always output these 4 sections:
-## Anforderungen / Key Requirements
-## Top 3 Interviewfragen
-## Vorbereitung / Prep Tips
-## Dein Pitch
-
-${hasCv ? 'Use candidate profile evidence when possible and mark gaps clearly.' : 'When no CV is provided, make assumptions explicit.'}
-
-Formatting rules:
-- Use short headings with ##
-- Use bullets for key points
-- Use numbered steps only when needed`
+  return [
+    `[SYSTEM - INTERVIEW COACH] Respond ONLY in ${language}. Never call tools.`,
+    `Candidate name: "${name}".`,
+    hasCv
+      ? 'Use candidate profile evidence and be explicit about gaps.'
+      : 'If profile data is missing, make assumptions explicit.',
+    'If a target role exists, use exactly these sections:',
+    '## Anforderungen / Key Requirements',
+    '## Top 3 Interviewfragen',
+    '## Vorbereitung / Prep Tips',
+    '## Dein Pitch',
+    'Keep answers concise, practical, and job-specific.',
+  ].join('\n')
 }
 
 function buildInterviewPrompt(userMessage: string, language: string, setup: InterviewSetupData): string {
   const base = interviewBaseInstruction(language, !!setup.cvText.trim(), setup.alias.trim())
-  const suffix = `\nUser: ${userMessage}`
-
-  const safeCv = sanitizeTechnicalContext(setup.cvText).trim()
-  const jobText = setup.jobText.trim().slice(0, 1700)
   const jobUrl = setup.jobUrl.trim().slice(0, 220)
-  const matchReport = setup.matchReport.trim().slice(0, 1900)
-  const matchScoreLine = typeof setup.matchScore === 'number' ? `MATCH SCORE: ${setup.matchScore}/100` : ''
 
-  const fixedLen = base.length + suffix.length + 100
-  const cvBudget = Math.max(0, INTERVIEW_BASE_LIMIT - fixedLen - 700)
-  const cvTrimmed = safeCv.slice(0, cvBudget)
+  let safeUser = userMessage.trim().slice(0, 1400)
+  let remaining = INTERVIEW_PROMPT_LIMIT - (base.length + safeUser.length + 120)
 
-  const cvBlock = cvTrimmed
-    ? `\nCANDIDATE PROFILE:\n---\n${cvTrimmed}\n---\nUse this profile to personalize the coaching.`
+  if (remaining < 900) {
+    safeUser = safeUser.slice(0, Math.max(280, safeUser.length - (900 - remaining)))
+    remaining = INTERVIEW_PROMPT_LIMIT - (base.length + safeUser.length + 120)
+  }
+
+  const cvMax = Math.max(280, Math.floor(remaining * 0.42))
+  const jobMax = Math.max(220, Math.floor(remaining * 0.32))
+  const matchMax = Math.max(180, remaining - cvMax - jobMax)
+
+  const cvText = compactLines(sanitizeTechnicalContext(setup.cvText), 18, cvMax)
+  const jobText = compactLines(setup.jobText, 10, jobMax)
+  const matchSummary = compactMatchReport(setup.matchReport, setup.matchScore).slice(0, matchMax)
+
+  const cvBlock = cvText ? `\nCANDIDATE PROFILE:\n${cvText}` : ''
+  const roleBlock = (jobText || jobUrl || matchSummary)
+    ? `\nTARGET ROLE CONTEXT:\n${jobUrl ? `URL: ${jobUrl}\n` : ''}${jobText ? `JOB DETAILS:\n${jobText}\n` : ''}${matchSummary ? `MATCH SUMMARY:\n${matchSummary}\n` : ''}`
     : ''
 
-  const targetRoleBlock = (jobText || jobUrl || matchReport)
-    ? `\nTARGET ROLE CONTEXT:\n${jobUrl ? `URL: ${jobUrl}\n` : ''}${jobText ? `JOB DETAILS:\n${jobText}\n` : ''}${matchScoreLine ? `${matchScoreLine}\n` : ''}${matchReport ? `MATCH ANALYSIS:\n${matchReport}\n` : ''}Use this context for job-specific guidance.`
-    : ''
-
-  return `${base}${cvBlock}${targetRoleBlock}${suffix}`
+  const prompt = `${base}${cvBlock}${roleBlock}\nUser: ${safeUser}`
+  return prompt.length <= INTERVIEW_PROMPT_LIMIT
+    ? prompt
+    : prompt.slice(0, INTERVIEW_PROMPT_LIMIT - 1)
 }
 
 export default function ChatPage() {
@@ -180,7 +245,7 @@ export default function ChatPage() {
     store.addMessage(setupSessionId, {
       isUser: false,
       text: hasCv || hasJob
-        ? `Interview-Setup gespeichert. Sprache, Alias und Analysekontext gelten nur für diesen Chat.${scoreText}`
+        ? `Interview-Setup gespeichert.${scoreText}\nStarte direkt mit: "Was soll ich für meinen Lebenslauf verbessern?" oder "Gib mir die Top 3 Interviewfragen für diese Stelle."`
         : 'Interview-Setup gespeichert. Sprache und Alias gelten nur für diesen Chat.',
     })
 

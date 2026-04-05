@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+﻿import { useEffect, useRef, useState } from 'react'
 import type { ChangeEvent } from 'react'
 import {
   AlertTriangle,
@@ -51,11 +51,33 @@ type RequirementItem = {
   matchedTerms: string[]
 }
 
+function compactLines(text: string, maxLines: number, maxChars: number): string {
+  const lines = text
+    .replace(/\r\n?/g, '\n')
+    .split(/\n+/)
+    .map(line => line.replace(/^[-*•\s]+/, '').trim())
+    .filter(Boolean)
+
+  const out: string[] = []
+  let length = 0
+
+  for (const line of lines) {
+    if (out.length >= maxLines || length >= maxChars) break
+    const room = maxChars - length
+    const normalized = line.length > room ? `${line.slice(0, Math.max(0, room - 1)).trim()}…` : line
+    if (!normalized) break
+    out.push(normalized)
+    length += normalized.length + 1
+  }
+
+  return out.join('\n')
+}
+
 function parseBreakdownFromReport(report: string): ScoreBreakdown | null {
   const essentials = report.match(/Muss-Anforderungen:\s*(\d+)\/100/i)
   const requirements = report.match(/Gesamtanforderungen:\s*(\d+)\/100/i)
   const evidence = report.match(/Nachweis im Lebenslauf:\s*(\d+)\/100/i)
-  const keywords = report.match(/Schlüsselbegriffe:\s*(\d+)\/100/i)
+  const keywords = report.match(/Schl(?:ü|ue)sselbegriffe:\s*(\d+)\/100/i)
 
   if (!essentials || !requirements || !evidence || !keywords) return null
 
@@ -197,9 +219,15 @@ export default function InterviewSetupModal({
     try {
       const res = await askAgent({
         sessionId: `setup-job-${Date.now()}`,
-        message: `Extract the job requirements from this URL as bullet points. Focus on must-haves, responsibilities, tools, and soft skills. Max 14 bullets. URL: ${url}`,
+        message: [
+          'Extrahiere aus diesem Job-Link nur die expliziten Anforderungen und Aufgaben.',
+          'Format: kurze Bullet-Points ohne Einleitung, maximal 12 Zeilen.',
+          'Fokus: Muss-Kriterien, Aufgaben, Tools, Soft Skills.',
+          `URL: ${url}`,
+        ].join('\n'),
       })
-      return res.reply?.trim() ?? ''
+
+      return compactLines(res.reply?.trim() ?? '', 12, 1400)
     } finally {
       setIsResolvingJob(false)
     }
@@ -214,7 +242,7 @@ export default function InterviewSetupModal({
       return
     }
 
-    let effectiveJobText = jobText.trim()
+    let effectiveJobText = compactLines(jobText.trim(), 14, 1700)
     const normalizedJobUrl = jobUrl.trim()
 
     if (!effectiveJobText && normalizedJobUrl) {
@@ -235,15 +263,15 @@ export default function InterviewSetupModal({
     setIsAnalyzing(true)
     try {
       const structuredCv = /^SKILLS:/im.test(cvSource)
-        ? sanitizeTechnicalContext(cvSource).slice(0, 2500)
-        : buildTechnicalCvContext(cvSource).slice(0, 2500)
+        ? sanitizeTechnicalContext(cvSource).slice(0, 1800)
+        : buildTechnicalCvContext(cvSource).slice(0, 1800)
 
-      const sanitizedRaw = sanitizeTechnicalContext(cvSource).slice(0, 3600)
+      const sanitizedRaw = sanitizeTechnicalContext(cvSource).slice(0, 2600)
       const effectiveCvContext = [
         structuredCv,
         '',
         'ADDITIONAL PROFILE CONTEXT:',
-        sanitizedRaw,
+        compactLines(sanitizedRaw, 28, 2200),
       ].join('\n')
 
       const match = analyzeCvJobMatch({
@@ -252,7 +280,7 @@ export default function InterviewSetupModal({
         jobUrl: normalizedJobUrl || undefined,
       })
 
-      setCvAnalysis(effectiveCvContext)
+      setCvAnalysis(structuredCv)
       setMatchScore(match.score)
       setMatchReport(match.report)
       setBreakdown(match.breakdown)
@@ -268,11 +296,11 @@ export default function InterviewSetupModal({
     onSave({
       language,
       alias: alias.trim().slice(0, 40),
-      cvText: cvAnalysis.trim(),
+      cvText: cvAnalysis.trim().slice(0, 2200),
       jobUrl: jobUrl.trim(),
-      jobText: (jobText.trim() || resolvedJobText.trim()).slice(0, 5000),
+      jobText: compactLines(jobText.trim() || resolvedJobText.trim(), 14, 1700),
       matchScore,
-      matchReport: matchReport.trim(),
+      matchReport: matchReport.trim().slice(0, 2200),
     })
   }
 
@@ -342,13 +370,7 @@ export default function InterviewSetupModal({
               )}
             </div>
 
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".pdf"
-              className="hidden"
-              onChange={handleUploadPdf}
-            />
+            <input ref={fileInputRef} type="file" accept=".pdf" className="hidden" onChange={handleUploadPdf} />
 
             <button
               onClick={() => fileInputRef.current?.click()}
@@ -409,9 +431,7 @@ export default function InterviewSetupModal({
           </div>
 
           {error && (
-            <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
-              {error}
-            </div>
+            <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{error}</div>
           )}
 
           {matchScore !== null && scoreTheme && (
@@ -455,9 +475,6 @@ export default function InterviewSetupModal({
                 <div className="rounded-lg border border-emerald-200 bg-white p-3">
                   <p className="mb-2 text-[11px] font-semibold text-emerald-700">Trefferbegriffe</p>
                   <div className="flex flex-wrap gap-1.5">
-                    {matchReport && requirementMatches.length === 0 && (
-                      <span className="text-[11px] text-slate-500">Nach dem nächsten Analyse-Lauf werden Details angezeigt.</span>
-                    )}
                     {matchedKeywords.map(term => (
                       <span key={term} className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] text-emerald-700">
                         {term}
@@ -473,10 +490,10 @@ export default function InterviewSetupModal({
                   <p className="mb-2 text-[11px] font-semibold text-rose-700">Fehlende Punkte</p>
                   <div className="flex flex-wrap gap-1.5">
                     {missingKeywords.map(term => (
-                        <span key={term} className="rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[10px] text-rose-700">
-                          {term}
-                        </span>
-                      ))}
+                      <span key={term} className="rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[10px] text-rose-700">
+                        {term}
+                      </span>
+                    ))}
                     {missingKeywords.length === 0 && (
                       <span className="text-[11px] text-slate-500">Keine kritischen Lücken erkannt.</span>
                     )}
@@ -511,12 +528,14 @@ export default function InterviewSetupModal({
                             )}
                             <span className="font-medium">{item.text}</span>
                           </div>
-                          <span className={[
-                            'rounded-full px-2 py-0.5 text-[10px] font-semibold',
-                            item.essential
-                              ? 'bg-indigo-100 text-indigo-700'
-                              : 'bg-slate-100 text-slate-600',
-                          ].join(' ')}>
+                          <span
+                            className={[
+                              'rounded-full px-2 py-0.5 text-[10px] font-semibold',
+                              item.essential
+                                ? 'bg-indigo-100 text-indigo-700'
+                                : 'bg-slate-100 text-slate-600',
+                            ].join(' ')}
+                          >
                             {item.essential ? 'Muss' : 'Optional'}
                           </span>
                         </div>
@@ -535,7 +554,7 @@ export default function InterviewSetupModal({
               </details>
 
               <p className="text-[11px] text-slate-500">
-                Hinweis: Beim Speichern wird die Analyse nur diesem aktuellen Chat zugeordnet.
+                Hinweis: Beim Speichern wird eine kompakte Version in den aktuellen Chat übernommen.
               </p>
             </div>
           )}
