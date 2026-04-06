@@ -77,15 +77,33 @@ export interface UsageStatus {
   plan: string
 }
 
-export async function getAgentUsage(token?: string): Promise<UsageStatus | null> {
+async function readApiError(response: Response, fallback: string): Promise<string> {
   try {
-    const res = await fetch(`${BASE}/api/agent/usage`, {
-      headers: token ? { 'Authorization': `Bearer ${token}` } : {},
-    })
-    if (!res.ok) return null
-    return res.json() as Promise<UsageStatus>
+    const payload = await response.json() as { error?: string; message?: string }
+    return payload.error ?? payload.message ?? fallback
   } catch {
-    return null
+    return fallback
+  }
+}
+
+export async function getAgentUsage(token?: string): Promise<UsageStatus> {
+  const res = await fetch(`${BASE}/api/agent/usage`, {
+    headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+  })
+
+  if (!res.ok) {
+    throw new Error(await readApiError(res, `Failed to fetch usage (${res.status})`))
+  }
+
+  const data = await res.json() as Partial<UsageStatus>
+  if (typeof data.usageToday !== 'number' || typeof data.dailyLimit !== 'number' || typeof data.plan !== 'string') {
+    throw new Error('Invalid usage payload from backend')
+  }
+
+  return {
+    usageToday: data.usageToday,
+    dailyLimit: data.dailyLimit,
+    plan: data.plan,
   }
 }
 

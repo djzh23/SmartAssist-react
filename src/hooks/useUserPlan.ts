@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useUser, useAuth } from '@clerk/clerk-react'
 import { getAgentUsage } from '../api/client'
 
@@ -26,7 +26,8 @@ function readUsageToday(userId: string | null): number {
       return 0
     }
     return data.count ?? 0
-  } catch {
+  } catch (error) {
+    console.warn('[useUserPlan] Failed to read usage from localStorage', error)
     return 0
   }
 }
@@ -34,8 +35,8 @@ function readUsageToday(userId: string | null): number {
 function writeUsageToday(userId: string | null, count: number): void {
   try {
     localStorage.setItem(usageKey(userId), JSON.stringify({ date: TODAY(), count }))
-  } catch {
-    // ignore
+  } catch (error) {
+    console.warn('[useUserPlan] Failed to write usage to localStorage', error)
   }
 }
 
@@ -44,7 +45,8 @@ function readPlan(userId: string | null): PlanType {
   try {
     const stored = localStorage.getItem(planKey(userId)) as PlanType | null
     return stored ?? 'free'
-  } catch {
+  } catch (error) {
+    console.warn('[useUserPlan] Failed to read plan from localStorage', error)
     return 'free'
   }
 }
@@ -96,8 +98,14 @@ export function dispatchServerUsage(usageToday: number): void {
   try {
     // We don't have userId here, so write to a temp key and let the hook pick it up
     localStorage.setItem('smartassist_server_usage', String(usageToday))
-  } catch { /* ignore */ }
+  } catch (error) {
+    console.warn('[useUserPlan] Failed to store server usage value', error)
+  }
   window.dispatchEvent(new Event(USAGE_EVENT))
+}
+
+function wait(ms: number): Promise<void> {
+  return new Promise(resolve => window.setTimeout(resolve, ms))
 }
 
 export interface UserPlanState {
@@ -122,6 +130,9 @@ export interface UserPlanState {
   favoriteTool: string | null
   incrementUsage: () => void
   getToken: ReturnType<typeof useAuth>['getToken']
+  syncError: string | null
+  isSyncingUsage: boolean
+  refreshUsage: (options?: { retries?: number; retryDelayMs?: number }) => Promise<PlanType>
 }
 
 export function useUserPlan(): UserPlanState {
@@ -131,6 +142,8 @@ export function useUserPlan(): UserPlanState {
   const userId = user?.id ?? null
   const [plan, setPlan] = useState<PlanType>(() => readPlan(isSignedIn ? userId : null))
   const dailyLimit = dailyLimitFor(plan)
+  const [syncError, setSyncError] = useState<string | null>(null)
+  const [isSyncingUsage, setIsSyncingUsage] = useState(false)
 
   const storageKey = isSignedIn ? userId : null
   const [usageToday, setUsageToday] = useState(() => readUsageToday(storageKey))
@@ -139,6 +152,7 @@ export function useUserPlan(): UserPlanState {
   useEffect(() => {
     setUsageToday(readUsageToday(isSignedIn ? userId : null))
     setPlan(readPlan(isSignedIn ? userId : null))
+    setSyncError(null)
   }, [userId, isSignedIn])
 
   // Listen for usage increments from any component instance
@@ -162,33 +176,67 @@ export function useUserPlan(): UserPlanState {
     return () => window.removeEventListener(USAGE_EVENT, sync)
   }, [userId, isSignedIn])
 
-  // Sync real usage from server on load (after Clerk resolves)
-  useEffect(() => {
-    if (!isLoaded) return
-    let cancelled = false
-
-    const sync = async () => {
-      try {
-        const token = await getToken()
-        const status = await getAgentUsage(token ?? undefined)
-        if (!status || cancelled) return
-
-        const key = isSignedIn ? userId : null
-        writeUsageToday(key, status.usageToday)
-        if (key) {
-          const nextPlan = normalizePlan(status.plan, true)
-          localStorage.setItem(planKey(key), nextPlan)
-          if (!cancelled) setPlan(nextPlan)
-        }
-        if (!cancelled) setUsageToday(status.usageToday)
-      } catch { /* backend may not have the endpoint yet; silently ignore */ }
+  const refreshUsage = useCallback(async (options?: { retries?: number; retryDelayMs?: number }): Promise<PlanType> => {
+    if (!isLoaded) {
+      throw new Error('Authentication is not loaded yet. Usage sync is not available.')
     }
 
-    void sync()
-    return () => { cancelled = true }
-  // Only run once per user identity load
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoaded, userId])
+    const retries = Math.max(0, options?.retries ?? 0)
+    const retryDelayMs = Math.max(300, options?.retryDelayMs ?? 1200)
+    setIsSyncingUsage(true)
+
+    let lastError: Error | null = null
+
+    try {
+      for (let attempt = 0; attempt <= retries; attempt++) {
+        try {
+          const token = await getToken()
+          if (isSignedIn && !token) {
+            throw new Error('Missing auth token while signed in. Cannot sync usage.')
+          }
+
+          const status = await getAgentUsage(token ?? undefined)
+          const key = isSignedIn ? userId : null
+
+          writeUsageToday(key, status.usageToday)
+          setUsageToday(status.usageToday)
+
+          if (key) {
+            const nextPlan = normalizePlan(status.plan, true)
+            localStorage.setItem(planKey(key), nextPlan)
+            setPlan(nextPlan)
+            setSyncError(null)
+            return nextPlan
+          }
+
+          setPlan('anonymous')
+          setSyncError(null)
+          return 'anonymous'
+        } catch (error) {
+          lastError = error instanceof Error ? error : new Error('Usage sync failed')
+          if (attempt < retries) {
+            await wait(retryDelayMs * (attempt + 1))
+          }
+        }
+      }
+
+      throw lastError ?? new Error('Usage sync failed')
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Usage sync failed'
+      setSyncError(message)
+      throw error instanceof Error ? error : new Error(message)
+    } finally {
+      setIsSyncingUsage(false)
+    }
+  }, [getToken, isLoaded, isSignedIn, userId])
+
+  // Sync real usage from server on load and when user identity changes
+  useEffect(() => {
+    if (!isLoaded) return
+    void refreshUsage({ retries: 1, retryDelayMs: 900 }).catch(error => {
+      console.warn('[useUserPlan] Initial usage sync failed', error)
+    })
+  }, [isLoaded, userId, refreshUsage])
 
   const responsesLeft = dailyLimit === Infinity ? Infinity : Math.max(0, dailyLimit - usageToday)
   const isAtLimit = usageToday >= dailyLimit
@@ -225,7 +273,9 @@ export function useUserPlan(): UserPlanState {
       daysActive = s.days ?? 1
       favoriteTool = s.fav ?? null
     }
-  } catch { /* ignore */ }
+  } catch (error) {
+    console.warn('[useUserPlan] Failed to read profile stats from localStorage', error)
+  }
 
   return {
     isLoaded,
@@ -248,5 +298,8 @@ export function useUserPlan(): UserPlanState {
     favoriteTool,
     incrementUsage,
     getToken,
+    syncError,
+    isSyncingUsage,
+    refreshUsage,
   }
 }

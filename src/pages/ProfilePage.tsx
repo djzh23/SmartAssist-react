@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowRight, BarChart2, Calendar, Crown, Loader2, Sparkles, Star, Zap } from 'lucide-react'
 import { useUserPlan, getPlanColors, getPlanLabel } from '../hooks/useUserPlan'
@@ -46,11 +46,13 @@ export default function ProfilePage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const user = useUserPlan()
+  const { refreshUsage, syncError, isSyncingUsage } = user
   const planColors = getPlanColors(user.plan)
   const planLabel = getPlanLabel(user.plan)
 
   const [portalLoading, setPortalLoading] = useState(false)
   const [portalError, setPortalError] = useState<string | null>(null)
+  const [upgradeSyncNotice, setUpgradeSyncNotice] = useState<string | null>(null)
 
   const justUpgraded = (searchParams.get('upgraded') ?? '').toLowerCase() === 'true'
   const PlanIcon = user.plan === 'pro' ? Crown : user.plan === 'premium' ? Sparkles : Zap
@@ -67,6 +69,54 @@ export default function ProfilePage() {
       setPortalLoading(false)
     }
   }
+
+  const handleRetryUsageSync = async () => {
+    try {
+      await refreshUsage({ retries: 1, retryDelayMs: 1000 })
+      setUpgradeSyncNotice(null)
+    } catch (error) {
+      setUpgradeSyncNotice(error instanceof Error ? error.message : 'Usage sync failed')
+    }
+  }
+
+  useEffect(() => {
+    if (!justUpgraded) return
+
+    let cancelled = false
+
+    const syncAfterUpgrade = async () => {
+      setUpgradeSyncNotice('Synchronizing your upgraded plan with the server...')
+
+      for (let attempt = 0; attempt < 6; attempt++) {
+        try {
+          const nextPlan = await refreshUsage({ retries: 0 })
+          if (cancelled) return
+
+          if (nextPlan === 'premium' || nextPlan === 'pro') {
+            setUpgradeSyncNotice(null)
+            return
+          }
+        } catch (error) {
+          if (!cancelled) {
+            setUpgradeSyncNotice(error instanceof Error ? error.message : 'Usage sync failed')
+          }
+        }
+
+        await new Promise(resolve => window.setTimeout(resolve, 2000))
+        if (cancelled) return
+      }
+
+      if (!cancelled) {
+        setUpgradeSyncNotice('Payment completed, but plan sync is still pending. Please retry in a few seconds.')
+      }
+    }
+
+    void syncAfterUpgrade()
+
+    return () => {
+      cancelled = true
+    }
+  }, [justUpgraded, refreshUsage])
 
   if (!user.isLoaded) {
     return (
@@ -114,6 +164,32 @@ export default function ProfilePage() {
             }}
           >
             🎉 Welcome to Premium! Your plan has been upgraded.
+          </div>
+        )}
+
+        {upgradeSyncNotice && (
+          <div className="flex items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            <span>{upgradeSyncNotice}</span>
+            <button
+              onClick={() => void handleRetryUsageSync()}
+              disabled={isSyncingUsage}
+              className="rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-xs font-semibold text-amber-800 disabled:opacity-60"
+            >
+              {isSyncingUsage ? 'Syncing...' : 'Sync now'}
+            </button>
+          </div>
+        )}
+
+        {syncError && (
+          <div className="flex items-center justify-between gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+            <span>Usage sync error: {syncError}</span>
+            <button
+              onClick={() => void handleRetryUsageSync()}
+              disabled={isSyncingUsage}
+              className="rounded-lg border border-rose-300 bg-white px-3 py-1.5 text-xs font-semibold text-rose-700 disabled:opacity-60"
+            >
+              {isSyncingUsage ? 'Retrying...' : 'Retry sync'}
+            </button>
           </div>
         )}
 

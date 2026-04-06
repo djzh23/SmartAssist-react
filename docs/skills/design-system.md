@@ -1,4 +1,4 @@
-# Design System — SmartAssist React
+# Design System - SmartAssist React
 
 ## Typography
 
@@ -48,7 +48,7 @@ Use Tailwind's default scale. Common patterns:
 // Tool card
 <div className="p-5 rounded-2xl border border-slate-200 bg-white hover:shadow-card hover:-translate-y-0.5 transition-all">
 
-// Info card  
+// Info card
 <div className="p-4 rounded-xl border border-slate-100 bg-white hover:shadow-chat transition-shadow">
 ```
 
@@ -74,3 +74,19 @@ See `src/utils/jobMarkdown.ts` for the color map.
 ## Icons
 
 Always use `lucide-react`. Size `size={15}` for nav, `size={16-18}` for buttons, `size={20-24}` for illustrations.
+
+## Error Handling Philosophy: Fail Loud, Never Fake
+
+Prefer a visible failure over a silent fallback.
+
+- Never silently swallow errors to keep things "working."
+  Surface the error. Don't substitute placeholder data.
+- Fallbacks are acceptable only when disclosed. Show a
+  banner, log a warning, annotate the output.
+- Design for debuggability, not cosmetic stability.
+
+Priority order:
+1. Works correctly with real data
+2. Falls back visibly - clearly signals degraded mode
+3. Fails with a clear error message
+4. Silently degrades to look "fine" - never do this
