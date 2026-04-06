@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { AlertCircle, X } from 'lucide-react'
 import type { ToolType } from '../types'
@@ -159,7 +159,7 @@ export default function ChatPage() {
   const [setupInitialData, setSetupInitialData] = useState<InterviewSetupData>(defaultInterviewSetup())
   const [showLimitModal, setShowLimitModal] = useState(false)
 
-  const { isAtLimit, incrementUsage, isSignedIn, getToken } = useUserPlan()
+  const { isAtLimit, incrementUsage, isSignedIn, email, getToken } = useUserPlan()
 
   useEffect(() => {
     saveInterviewContextMap(interviewContextBySession)
@@ -422,6 +422,7 @@ export default function ChatPage() {
       <UsageLimitModal
         isOpen={showLimitModal}
         isLoggedIn={isSignedIn}
+        userEmail={email}
         onClose={() => setShowLimitModal(false)}
       />
     </div>

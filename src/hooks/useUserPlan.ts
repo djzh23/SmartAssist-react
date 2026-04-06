@@ -49,6 +49,12 @@ function readPlan(userId: string | null): PlanType {
   }
 }
 
+function normalizePlan(value: string | null | undefined, signedIn: boolean): PlanType {
+  if (!signedIn) return 'anonymous'
+  if (value === 'premium' || value === 'pro' || value === 'free') return value
+  return 'free'
+}
+
 function dailyLimitFor(plan: PlanType): number {
   switch (plan) {
     case 'anonymous': return 2
@@ -123,7 +129,7 @@ export function useUserPlan(): UserPlanState {
   const { getToken } = useAuth()
 
   const userId = user?.id ?? null
-  const plan = readPlan(isSignedIn ? userId : null)
+  const [plan, setPlan] = useState<PlanType>(() => readPlan(isSignedIn ? userId : null))
   const dailyLimit = dailyLimitFor(plan)
 
   const storageKey = isSignedIn ? userId : null
@@ -132,6 +138,7 @@ export function useUserPlan(): UserPlanState {
   // Sync when user identity changes (sign-in / sign-out)
   useEffect(() => {
     setUsageToday(readUsageToday(isSignedIn ? userId : null))
+    setPlan(readPlan(isSignedIn ? userId : null))
   }, [userId, isSignedIn])
 
   // Listen for usage increments from any component instance
@@ -168,8 +175,13 @@ export function useUserPlan(): UserPlanState {
 
         const key = isSignedIn ? userId : null
         writeUsageToday(key, status.usageToday)
+        if (key) {
+          const nextPlan = normalizePlan(status.plan, true)
+          localStorage.setItem(planKey(key), nextPlan)
+          if (!cancelled) setPlan(nextPlan)
+        }
         if (!cancelled) setUsageToday(status.usageToday)
-      } catch { /* backend may not have the endpoint yet — silently ignore */ }
+      } catch { /* backend may not have the endpoint yet; silently ignore */ }
     }
 
     void sync()

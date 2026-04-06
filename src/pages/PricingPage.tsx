@@ -1,5 +1,8 @@
-import { useState } from 'react'
-import { Check, X, ChevronDown, ChevronUp, Zap, Crown, Sparkles, Clock } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useClerk, useUser } from '@clerk/clerk-react'
+import { Check, ChevronDown, ChevronUp, Clock, Crown, Sparkles, X, Zap } from 'lucide-react'
+import { createCheckoutSession } from '../services/StripeService'
 
 interface Feature {
   text: string
@@ -26,7 +29,7 @@ const PLANS: Plan[] = [
   {
     id: 'free',
     name: 'Free',
-    price: '0€',
+    price: '0 €',
     period: '/forever',
     icon: <Zap size={18} className="text-slate-500" />,
     accentBorder: 'border-slate-200',
@@ -46,7 +49,7 @@ const PLANS: Plan[] = [
   {
     id: 'premium',
     name: 'Premium',
-    price: '4,99€',
+    price: '4,99 €',
     period: '/month',
     icon: <Sparkles size={18} className="text-violet-600" />,
     accentBorder: 'border-violet-400',
@@ -68,7 +71,7 @@ const PLANS: Plan[] = [
   {
     id: 'pro',
     name: 'Pro',
-    price: '9,99€',
+    price: '9,99 €',
     period: '/month',
     icon: <Crown size={18} className="text-amber-600" />,
     accentBorder: 'border-amber-400',
@@ -106,7 +109,7 @@ function FaqItem({ q, a }: { q: string; a: string }) {
   return (
     <button
       onClick={() => setOpen(prev => !prev)}
-      className="w-full text-left rounded-2xl border border-slate-200/90 bg-white/90 px-5 py-4 shadow-[0_4px_12px_rgba(15,23,42,0.06)] backdrop-blur transition-all duration-200 hover:shadow-[0_8px_20px_rgba(15,23,42,0.09)]"
+      className="w-full rounded-2xl border border-slate-200/90 bg-white/90 px-5 py-4 text-left shadow-[0_4px_12px_rgba(15,23,42,0.06)] backdrop-blur transition-all duration-200 hover:shadow-[0_8px_20px_rgba(15,23,42,0.09)]"
     >
       <div className="flex items-center justify-between gap-3">
         <span className="text-sm font-semibold text-slate-800">{q}</span>
@@ -122,12 +125,58 @@ function FaqItem({ q, a }: { q: string; a: string }) {
 }
 
 export default function PricingPage() {
+  const navigate = useNavigate()
+  const { openSignIn } = useClerk()
+  const { user, isSignedIn, isLoaded } = useUser()
+
+  const [loadingPlan, setLoadingPlan] = useState<'premium' | 'pro' | null>(null)
+  const [error, setError] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
 
-  const handlePlanClick = (planId: string) => {
-    if (planId === 'free') return
-    setToast('Zahlungsintegration folgt in Kürze. Bleib dran! 🚀')
-    setTimeout(() => setToast(null), 3500)
+  const email = useMemo(
+    () => user?.primaryEmailAddress?.emailAddress ?? user?.emailAddresses?.[0]?.emailAddress ?? null,
+    [user],
+  )
+
+  const handleUpgrade = async (plan: 'premium' | 'pro') => {
+    if (!isSignedIn) {
+      try {
+        await openSignIn()
+      } catch {
+        alert('Please sign in first to upgrade')
+      }
+      return
+    }
+
+    setLoadingPlan(plan)
+    setError(null)
+
+    try {
+      if (!email) {
+        throw new Error('Please add an email address to your Clerk profile first.')
+      }
+
+      const checkoutUrl = await createCheckoutSession(plan, email)
+      window.location.href = checkoutUrl
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create checkout')
+    } finally {
+      setLoadingPlan(null)
+    }
+  }
+
+  const handleFreeClick = () => {
+    navigate('/chat')
+    setToast('Free plan selected. You can start directly in the chat.')
+    window.setTimeout(() => setToast(null), 3000)
+  }
+
+  if (!isLoaded) {
+    return (
+      <div className="flex h-full items-center justify-center bg-[#f5f6fb]">
+        <Clock size={22} className="animate-pulse text-slate-400" />
+      </div>
+    )
   }
 
   return (
@@ -140,7 +189,6 @@ export default function PricingPage() {
         backgroundSize: '28px 28px',
       }}
     >
-      {/* Decorative blobs */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden" style={{ zIndex: 0 }}>
         <div className="absolute -right-28 top-0 h-80 w-80 rounded-full bg-violet-200/45 blur-3xl" />
         <div className="absolute -left-28 bottom-0 h-96 w-96 rounded-full bg-cyan-200/45 blur-3xl" />
@@ -148,7 +196,6 @@ export default function PricingPage() {
         <div className="absolute right-10 top-52 h-28 w-28 rotate-12 rounded-2xl border border-slate-300/70 bg-white/40" />
       </div>
 
-      {/* Toast */}
       {toast && (
         <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 animate-slide-up rounded-2xl border border-violet-200 bg-white px-5 py-3 shadow-xl">
           <p className="text-sm font-medium text-slate-700">{toast}</p>
@@ -156,7 +203,6 @@ export default function PricingPage() {
       )}
 
       <div className="relative z-10 mx-auto max-w-5xl px-6 py-12">
-        {/* Header */}
         <div className="mb-10 text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-violet-500">Preise & Pläne</p>
           <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-800 md:text-4xl">
@@ -167,7 +213,12 @@ export default function PricingPage() {
           </p>
         </div>
 
-        {/* Plan cards */}
+        {error && (
+          <p style={{ color: 'red', textAlign: 'center', marginTop: '16px', fontSize: '14px' }}>
+            {error}
+          </p>
+        )}
+
         <div className="mb-14 grid grid-cols-1 gap-5 md:grid-cols-3 md:items-start">
           {PLANS.map(plan => (
             <div
@@ -178,12 +229,13 @@ export default function PricingPage() {
                 plan.scale ? 'md:scale-[1.03] md:shadow-[0_18px_44px_rgba(124,58,237,0.18)]' : '',
               ].join(' ')}
             >
-              {/* Radial glow */}
-              <div className="pointer-events-none absolute inset-0 opacity-80" style={{
-                backgroundImage: 'radial-gradient(circle at 88% 0%, rgba(124,58,237,0.07), transparent 50%)',
-              }} />
+              <div
+                className="pointer-events-none absolute inset-0 opacity-80"
+                style={{
+                  backgroundImage: 'radial-gradient(circle at 88% 0%, rgba(124,58,237,0.07), transparent 50%)',
+                }}
+              />
 
-              {/* Header */}
               <div className={`relative px-5 pt-5 pb-4 ${plan.accentHeader}`}>
                 {plan.badgeText && (
                   <span className={`mb-2 inline-block rounded-full px-2.5 py-0.5 text-[10px] font-bold tracking-wide ${plan.badgeStyle}`}>
@@ -202,7 +254,6 @@ export default function PricingPage() {
                 </div>
               </div>
 
-              {/* Features */}
               <div className="relative space-y-2.5 px-5 py-4">
                 {plan.features.map(f => (
                   <div key={f.text} className="flex items-start gap-2.5">
@@ -216,25 +267,27 @@ export default function PricingPage() {
                 ))}
               </div>
 
-              {/* CTA */}
               <div className="relative px-5 pb-5">
                 <button
-                  onClick={() => handlePlanClick(plan.id)}
-                  className={`w-full rounded-xl py-2.5 text-sm font-semibold transition-colors ${plan.buttonStyle}`}
+                  onClick={() => {
+                    if (plan.id === 'free') {
+                      handleFreeClick()
+                      return
+                    }
+                    void handleUpgrade(plan.id)
+                  }}
+                  disabled={loadingPlan === plan.id}
+                  className={`w-full rounded-xl py-2.5 text-sm font-semibold transition-colors disabled:opacity-60 ${plan.buttonStyle}`}
                 >
-                  {plan.id !== 'free' ? (
-                    <span className="inline-flex items-center justify-center gap-1.5">
-                      <Clock size={13} />
-                      {plan.buttonLabel}
-                    </span>
-                  ) : plan.buttonLabel}
+                  {plan.id === 'premium' && (loadingPlan === 'premium' ? 'Redirecting...' : 'Start Premium')}
+                  {plan.id === 'pro' && (loadingPlan === 'pro' ? 'Redirecting...' : 'Go Pro')}
+                  {plan.id === 'free' && plan.buttonLabel}
                 </button>
               </div>
             </div>
           ))}
         </div>
 
-        {/* FAQ */}
         <div className="mx-auto max-w-2xl">
           <h2 className="mb-4 text-xs font-bold uppercase tracking-[0.15em] text-slate-400">
             Häufige Fragen
