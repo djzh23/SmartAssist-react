@@ -6,10 +6,13 @@ const BASE = import.meta.env.VITE_API_BASE_URL
   ? `${import.meta.env.VITE_API_BASE_URL}`
   : ''
 
-async function post<T>(path: string, body: unknown): Promise<T> {
+async function post<T>(path: string, body: unknown, token?: string): Promise<T> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (token) headers['Authorization'] = `Bearer ${token}`
+
   const res = await fetch(`${BASE}${path}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify(body),
   })
 
@@ -28,8 +31,8 @@ async function post<T>(path: string, body: unknown): Promise<T> {
 }
 
 // Agent API
-export async function askAgent(request: AgentRequest): Promise<AgentResponse> {
-  return post<AgentResponse>('/api/agent/ask', request)
+export async function askAgent(request: AgentRequest, token?: string): Promise<AgentResponse> {
+  return post<AgentResponse>('/api/agent/ask', request, token)
 }
 
 // Speech API

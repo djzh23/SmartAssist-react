@@ -158,7 +158,7 @@ export default function ChatPage() {
   const [setupInitialData, setSetupInitialData] = useState<InterviewSetupData>(defaultInterviewSetup())
   const [showLimitModal, setShowLimitModal] = useState(false)
 
-  const { isAtLimit, incrementUsage, isSignedIn } = useUserPlan()
+  const { isAtLimit, incrementUsage, isSignedIn, getToken } = useUserPlan()
 
   useEffect(() => {
     saveInterviewContextMap(interviewContextBySession)
@@ -258,6 +258,7 @@ export default function ChatPage() {
       : text
 
     try {
+      const token = await getToken()
       const res = await askAgent({
         message: apiMessage,
         sessionId,
@@ -272,7 +273,7 @@ export default function ChatPage() {
         programmingLanguage: isProgramming ? progMeta?.label : undefined,
         interviewMode: isInterview ? true : undefined,
         interviewLanguage: isInterview ? (interviewLangCode === 'de' ? 'German' : 'English') : undefined,
-      })
+      }, token ?? undefined)
 
       store.addMessage(sessionId, {
         text: res.reply,
