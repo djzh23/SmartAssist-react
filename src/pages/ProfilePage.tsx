@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useAuth } from '@clerk/clerk-react'
 import { ArrowRight, BarChart2, Calendar, Crown, Loader2, Sparkles, Star, Zap } from 'lucide-react'
 import { useUserPlan, getPlanColors, getPlanLabel } from '../hooks/useUserPlan'
 import { createPortalSession } from '../services/StripeService'
@@ -44,9 +45,10 @@ function UsageBar({ used, limit }: { used: number; limit: number }) {
 
 export default function ProfilePage() {
   const navigate = useNavigate()
+  const { getToken } = useAuth()
   const [searchParams] = useSearchParams()
   const user = useUserPlan()
-  const { refreshUsage, syncError, isSyncingUsage } = user
+  const { refreshUsage, syncError, isSyncingUsage, isUpgradePending, pendingUpgradePlan, markUpgradePending } = user
   const planColors = getPlanColors(user.plan)
   const planLabel = getPlanLabel(user.plan)
 
@@ -61,7 +63,19 @@ export default function ProfilePage() {
     try {
       setPortalLoading(true)
       setPortalError(null)
-      const portalUrl = await createPortalSession()
+
+      const token = await getToken()
+      if (!token) {
+        throw new Error('Could not open portal without authentication token. Please sign in again.')
+      }
+      if (!user.userId) {
+        throw new Error('Missing user profile ID. Please reload and try again.')
+      }
+
+      const portalUrl = await createPortalSession({
+        token,
+        userId: user.userId,
+      })
       window.location.href = portalUrl
     } catch (err) {
       setPortalError(err instanceof Error ? err.message : 'Portal error')
@@ -85,7 +99,13 @@ export default function ProfilePage() {
     let cancelled = false
 
     const syncAfterUpgrade = async () => {
-      setUpgradeSyncNotice('Synchronizing your upgraded plan with the server...')
+      try {
+        markUpgradePending('premium', 30)
+      } catch (error) {
+        console.warn('[ProfilePage] Could not mark pending upgrade state', error)
+      }
+
+      setUpgradeSyncNotice('Payment received. Temporary Premium access is active while server confirmation is syncing...')
 
       for (let attempt = 0; attempt < 6; attempt++) {
         try {
@@ -107,7 +127,7 @@ export default function ProfilePage() {
       }
 
       if (!cancelled) {
-        setUpgradeSyncNotice('Payment completed, but plan sync is still pending. Please retry in a few seconds.')
+        setUpgradeSyncNotice('Server confirmation is still pending. Temporary Premium access remains active. Please retry sync in a few seconds.')
       }
     }
 
@@ -116,7 +136,7 @@ export default function ProfilePage() {
     return () => {
       cancelled = true
     }
-  }, [justUpgraded, refreshUsage])
+  }, [justUpgraded, markUpgradePending, refreshUsage])
 
   if (!user.isLoaded) {
     return (
@@ -164,6 +184,12 @@ export default function ProfilePage() {
             }}
           >
             🎉 Welcome to Premium! Your plan has been upgraded.
+          </div>
+        )}
+
+        {isUpgradePending && (
+          <div className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-800">
+            Temporary {pendingUpgradePlan === 'pro' ? 'Pro' : 'Premium'} access is active while backend confirmation is pending.
           </div>
         )}
 

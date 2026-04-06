@@ -16,6 +16,15 @@ function planKey(userId: string): string {
   return `smartassist_plan_${userId}`
 }
 
+function pendingUpgradeKey(userId: string): string {
+  return `smartassist_pending_upgrade_${userId}`
+}
+
+interface PendingUpgradeState {
+  plan: Extract<PlanType, 'premium' | 'pro'>
+  expiresAt: number
+}
+
 function readUsageToday(userId: string | null): number {
   try {
     const raw = localStorage.getItem(usageKey(userId))
@@ -43,11 +52,59 @@ function writeUsageToday(userId: string | null, count: number): void {
 function readPlan(userId: string | null): PlanType {
   if (!userId) return 'anonymous'
   try {
+    const pending = readPendingUpgrade(userId)
+    if (pending) return pending.plan
+
     const stored = localStorage.getItem(planKey(userId)) as PlanType | null
     return stored ?? 'free'
   } catch (error) {
     console.warn('[useUserPlan] Failed to read plan from localStorage', error)
     return 'free'
+  }
+}
+
+function readPendingUpgrade(userId: string | null): PendingUpgradeState | null {
+  if (!userId) return null
+  try {
+    const raw = localStorage.getItem(pendingUpgradeKey(userId))
+    if (!raw) return null
+
+    const parsed = JSON.parse(raw) as Partial<PendingUpgradeState>
+    const plan = parsed.plan
+    const expiresAt = Number(parsed.expiresAt)
+
+    if ((plan !== 'premium' && plan !== 'pro') || !Number.isFinite(expiresAt)) {
+      localStorage.removeItem(pendingUpgradeKey(userId))
+      return null
+    }
+
+    if (Date.now() >= expiresAt) {
+      localStorage.removeItem(pendingUpgradeKey(userId))
+      return null
+    }
+
+    return { plan, expiresAt }
+  } catch (error) {
+    console.warn('[useUserPlan] Failed to read pending upgrade state', error)
+    return null
+  }
+}
+
+function writePendingUpgrade(userId: string, plan: Extract<PlanType, 'premium' | 'pro'>, ttlMs: number): void {
+  try {
+    const expiresAt = Date.now() + ttlMs
+    localStorage.setItem(pendingUpgradeKey(userId), JSON.stringify({ plan, expiresAt }))
+  } catch (error) {
+    console.warn('[useUserPlan] Failed to write pending upgrade state', error)
+  }
+}
+
+function clearPendingUpgrade(userId: string | null): void {
+  if (!userId) return
+  try {
+    localStorage.removeItem(pendingUpgradeKey(userId))
+  } catch (error) {
+    console.warn('[useUserPlan] Failed to clear pending upgrade state', error)
   }
 }
 
@@ -132,7 +189,10 @@ export interface UserPlanState {
   getToken: ReturnType<typeof useAuth>['getToken']
   syncError: string | null
   isSyncingUsage: boolean
+  isUpgradePending: boolean
+  pendingUpgradePlan: Extract<PlanType, 'premium' | 'pro'> | null
   refreshUsage: (options?: { retries?: number; retryDelayMs?: number }) => Promise<PlanType>
+  markUpgradePending: (plan: Extract<PlanType, 'premium' | 'pro'>, ttlMinutes?: number) => void
 }
 
 export function useUserPlan(): UserPlanState {
@@ -140,6 +200,7 @@ export function useUserPlan(): UserPlanState {
   const { getToken } = useAuth()
 
   const userId = user?.id ?? null
+  const [pendingUpgrade, setPendingUpgrade] = useState<PendingUpgradeState | null>(() => readPendingUpgrade(isSignedIn ? userId : null))
   const [plan, setPlan] = useState<PlanType>(() => readPlan(isSignedIn ? userId : null))
   const dailyLimit = dailyLimitFor(plan)
   const [syncError, setSyncError] = useState<string | null>(null)
@@ -151,6 +212,7 @@ export function useUserPlan(): UserPlanState {
   // Sync when user identity changes (sign-in / sign-out)
   useEffect(() => {
     setUsageToday(readUsageToday(isSignedIn ? userId : null))
+    setPendingUpgrade(readPendingUpgrade(isSignedIn ? userId : null))
     setPlan(readPlan(isSignedIn ? userId : null))
     setSyncError(null)
   }, [userId, isSignedIn])
@@ -175,6 +237,42 @@ export function useUserPlan(): UserPlanState {
     window.addEventListener(USAGE_EVENT, sync)
     return () => window.removeEventListener(USAGE_EVENT, sync)
   }, [userId, isSignedIn])
+
+  useEffect(() => {
+    if (!isSignedIn || !userId) return
+    if (!pendingUpgrade) return
+
+    const msUntilExpiry = pendingUpgrade.expiresAt - Date.now()
+    if (msUntilExpiry <= 0) {
+      clearPendingUpgrade(userId)
+      setPendingUpgrade(null)
+      setPlan(readPlan(userId))
+      return
+    }
+
+    const timer = window.setTimeout(() => {
+      clearPendingUpgrade(userId)
+      setPendingUpgrade(null)
+      setPlan(readPlan(userId))
+    }, msUntilExpiry + 100)
+
+    return () => window.clearTimeout(timer)
+  }, [isSignedIn, userId, pendingUpgrade])
+
+  const markUpgradePending = useCallback(
+    (nextPlan: Extract<PlanType, 'premium' | 'pro'>, ttlMinutes = 30) => {
+      if (!isSignedIn || !userId) {
+        throw new Error('Cannot mark pending upgrade without signed-in user')
+      }
+      const ttlMs = Math.max(1, ttlMinutes) * 60 * 1000
+      writePendingUpgrade(userId, nextPlan, ttlMs)
+      const pending = readPendingUpgrade(userId)
+      setPendingUpgrade(pending)
+      setPlan(nextPlan)
+      setSyncError(null)
+    },
+    [isSignedIn, userId],
+  )
 
   const refreshUsage = useCallback(async (options?: { retries?: number; retryDelayMs?: number }): Promise<PlanType> => {
     if (!isLoaded) {
@@ -204,7 +302,15 @@ export function useUserPlan(): UserPlanState {
           if (key) {
             const nextPlan = normalizePlan(status.plan, true)
             localStorage.setItem(planKey(key), nextPlan)
-            setPlan(nextPlan)
+            if (nextPlan === 'premium' || nextPlan === 'pro') {
+              clearPendingUpgrade(key)
+              setPendingUpgrade(null)
+              setPlan(nextPlan)
+            } else {
+              const stillPending = readPendingUpgrade(key)
+              setPendingUpgrade(stillPending)
+              setPlan(stillPending?.plan ?? nextPlan)
+            }
             setSyncError(null)
             return nextPlan
           }
@@ -300,6 +406,9 @@ export function useUserPlan(): UserPlanState {
     getToken,
     syncError,
     isSyncingUsage,
+    isUpgradePending: pendingUpgrade !== null,
+    pendingUpgradePlan: pendingUpgrade?.plan ?? null,
     refreshUsage,
+    markUpgradePending,
   }
 }

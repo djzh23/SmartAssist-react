@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { SignInButton } from '@clerk/clerk-react'
+import { SignInButton, useAuth, useUser } from '@clerk/clerk-react'
 import { X } from 'lucide-react'
 import { createCheckoutSession } from '../../services/StripeService'
 
@@ -11,6 +11,8 @@ interface Props {
 }
 
 export default function UsageLimitModal({ isOpen, isLoggedIn, userEmail, onClose }: Props) {
+  const { getToken } = useAuth()
+  const { user } = useUser()
   const [isUpgrading, setIsUpgrading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -23,7 +25,18 @@ export default function UsageLimitModal({ isOpen, isLoggedIn, userEmail, onClose
     try {
       setIsUpgrading(true)
       setError(null)
-      const url = await createCheckoutSession('premium', userEmail ?? undefined)
+      const token = await getToken()
+      if (!token) {
+        throw new Error('Could not create authenticated checkout session. Please sign in again.')
+      }
+      if (!user?.id) {
+        throw new Error('Missing user profile ID. Please reload and try again.')
+      }
+
+      const url = await createCheckoutSession('premium', userEmail ?? user?.primaryEmailAddress?.emailAddress, {
+        token,
+        userId: user.id,
+      })
       window.location.href = url
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create checkout')

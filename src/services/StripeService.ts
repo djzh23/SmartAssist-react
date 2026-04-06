@@ -1,9 +1,12 @@
-import { getAuthToken } from './AuthService'
-
 const API_URL =
   import.meta.env.VITE_API_URL ||
   import.meta.env.VITE_API_BASE_URL ||
   ''
+
+export interface StripeAuthContext {
+  token: string
+  userId: string
+}
 
 async function readErrorMessage(response: Response, fallback: string): Promise<string> {
   try {
@@ -14,16 +17,22 @@ async function readErrorMessage(response: Response, fallback: string): Promise<s
   }
 }
 
-export const createCheckoutSession = async (plan: string, email?: string | null): Promise<string> => {
-  const token = await getAuthToken()
+export const createCheckoutSession = async (
+  plan: string,
+  email: string | null | undefined,
+  auth: StripeAuthContext,
+): Promise<string> => {
+  if (!auth.token) throw new Error('Missing auth token for checkout')
+  if (!auth.userId) throw new Error('Missing user ID for checkout')
+  if (!email) throw new Error('Missing email for checkout')
 
   const response = await fetch(`${API_URL}/api/stripe/checkout`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      Authorization: `Bearer ${auth.token}`,
     },
-    body: JSON.stringify({ plan, email }),
+    body: JSON.stringify({ plan, email, userId: auth.userId }),
   })
 
   if (!response.ok) {
@@ -35,15 +44,17 @@ export const createCheckoutSession = async (plan: string, email?: string | null)
   return data.url
 }
 
-export const createPortalSession = async (): Promise<string> => {
-  const token = await getAuthToken()
+export const createPortalSession = async (auth: StripeAuthContext): Promise<string> => {
+  if (!auth.token) throw new Error('Missing auth token for customer portal')
+  if (!auth.userId) throw new Error('Missing user ID for customer portal')
 
   const response = await fetch(`${API_URL}/api/stripe/portal`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      Authorization: `Bearer ${auth.token}`,
     },
+    body: JSON.stringify({ userId: auth.userId }),
   })
 
   if (!response.ok) {

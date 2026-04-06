@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { useClerk, useUser } from '@clerk/clerk-react'
+import { useAuth, useClerk, useUser } from '@clerk/clerk-react'
 import { Check, ChevronDown, ChevronUp, Clock, Crown, Sparkles, X, Zap } from 'lucide-react'
 import { createCheckoutSession } from '../services/StripeService'
 
@@ -128,6 +128,7 @@ export default function PricingPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const { openSignIn } = useClerk()
+  const { getToken } = useAuth()
   const { user, isSignedIn, isLoaded } = useUser()
 
   const [loadingPlan, setLoadingPlan] = useState<'premium' | 'pro' | null>(null)
@@ -158,7 +159,19 @@ export default function PricingPage() {
         throw new Error('Please add an email address to your Clerk profile first.')
       }
 
-      const checkoutUrl = await createCheckoutSession(plan, email)
+      const token = await getToken()
+      if (!token) {
+        throw new Error('Could not create authenticated checkout session. Please sign in again.')
+      }
+
+      if (!user?.id) {
+        throw new Error('Missing user profile ID. Please reload and try again.')
+      }
+
+      const checkoutUrl = await createCheckoutSession(plan, email, {
+        token,
+        userId: user.id,
+      })
       window.location.href = checkoutUrl
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create checkout')
