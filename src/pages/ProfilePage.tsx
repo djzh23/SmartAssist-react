@@ -87,6 +87,18 @@ export default function ProfilePage() {
 
   const handleRetryUsageSync = async () => {
     try {
+      // Try session-based confirmation first if session_id is in the URL
+      if (checkoutSessionId) {
+        const token = await getToken()
+        if (token) {
+          const result = await confirmPlanFromSession(checkoutSessionId, token)
+          if (result.plan === 'premium' || result.plan === 'pro') {
+            await refreshUsage({ retries: 0 })
+            setUpgradeSyncNotice(null)
+            return
+          }
+        }
+      }
       await refreshUsage({ retries: 1, retryDelayMs: 1000 })
       setUpgradeSyncNotice(null)
     } catch (error) {
@@ -206,7 +218,7 @@ export default function ProfilePage() {
           </div>
         )}
 
-        {isUpgradePending && (
+        {isUpgradePending && !upgradeSyncNotice && (
           <div className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-800">
             Temporary {pendingUpgradePlan === 'pro' ? 'Pro' : 'Premium'} access is active while backend confirmation is pending.
           </div>
