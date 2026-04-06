@@ -52,7 +52,7 @@ export default function ProfilePage() {
   const [portalLoading, setPortalLoading] = useState(false)
   const [portalError, setPortalError] = useState<string | null>(null)
 
-  const justUpgraded = searchParams.get('upgraded') === 'true'
+  const justUpgraded = (searchParams.get('upgraded') ?? '').toLowerCase() === 'true'
   const PlanIcon = user.plan === 'pro' ? Crown : user.plan === 'premium' ? Sparkles : Zap
 
   const handleManageSubscription = async () => {
@@ -116,6 +116,15 @@ export default function ProfilePage() {
             🎉 Welcome to Premium! Your plan has been upgraded.
           </div>
         )}
+
+        <div className="flex justify-end">
+          <button
+            onClick={() => navigate('/chat')}
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:border-slate-400"
+          >
+            Go to Chat
+          </button>
+        </div>
 
         <div className="relative overflow-hidden rounded-3xl border border-slate-200/90 bg-white/90 p-5 shadow-[0_10px_34px_rgba(15,23,42,0.08)] backdrop-blur">
           <div

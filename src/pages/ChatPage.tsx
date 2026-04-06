@@ -158,6 +158,7 @@ export default function ChatPage() {
   const [setupSessionId, setSetupSessionId] = useState<string | null>(null)
   const [setupInitialData, setSetupInitialData] = useState<InterviewSetupData>(defaultInterviewSetup())
   const [showLimitModal, setShowLimitModal] = useState(false)
+  const [checkoutBanner, setCheckoutBanner] = useState<{ type: 'success' | 'info'; text: string } | null>(null)
 
   const { isAtLimit, incrementUsage, isSignedIn, email, getToken } = useUserPlan()
 
@@ -169,6 +170,25 @@ export default function ChatPage() {
     store.switchToTool(toolParam)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [toolParam])
+
+  useEffect(() => {
+    const upgraded = (searchParams.get('upgraded') ?? '').toLowerCase() === 'true'
+    const cancelled = (searchParams.get('cancelled') ?? '').toLowerCase() === 'true'
+
+    if (!upgraded && !cancelled) {
+      setCheckoutBanner(null)
+      return
+    }
+
+    setCheckoutBanner(
+      upgraded
+        ? { type: 'success', text: 'Upgrade successful. Your plan has been updated.' }
+        : { type: 'info', text: 'Checkout was cancelled.' },
+    )
+
+    const timer = window.setTimeout(() => setCheckoutBanner(null), 7000)
+    return () => window.clearTimeout(timer)
+  }, [searchParams])
 
   const isLanguage = store.currentToolType === 'language'
   const isProgramming = store.currentToolType === 'programming'
@@ -326,6 +346,29 @@ export default function ChatPage() {
       />
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        {checkoutBanner && (
+          <div className="flex-shrink-0 px-4 pb-0 pt-3">
+            <div
+              className={`mx-auto flex max-w-3xl items-center justify-between gap-3 rounded-lg border px-3.5 py-2.5 text-sm ${
+                checkoutBanner.type === 'success'
+                  ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                  : 'border-amber-200 bg-amber-50 text-amber-800'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <AlertCircle size={15} className="flex-shrink-0" />
+                {checkoutBanner.text}
+              </div>
+              <button
+                onClick={() => setCheckoutBanner(null)}
+                className={checkoutBanner.type === 'success' ? 'text-emerald-600 hover:text-emerald-800' : 'text-amber-600 hover:text-amber-800'}
+              >
+                <X size={15} />
+              </button>
+            </div>
+          </div>
+        )}
+
         {isLanguage && (
           <div className="flex-shrink-0 px-4 pb-0 pt-3">
             <div className="mx-auto max-w-3xl">

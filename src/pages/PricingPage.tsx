@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useClerk, useUser } from '@clerk/clerk-react'
 import { Check, ChevronDown, ChevronUp, Clock, Crown, Sparkles, X, Zap } from 'lucide-react'
 import { createCheckoutSession } from '../services/StripeService'
@@ -126,6 +126,7 @@ function FaqItem({ q, a }: { q: string; a: string }) {
 
 export default function PricingPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { openSignIn } = useClerk()
   const { user, isSignedIn, isLoaded } = useUser()
 
@@ -137,6 +138,7 @@ export default function PricingPage() {
     () => user?.primaryEmailAddress?.emailAddress ?? user?.emailAddresses?.[0]?.emailAddress ?? null,
     [user],
   )
+  const checkoutCancelled = (searchParams.get('cancelled') ?? '').toLowerCase() === 'true'
 
   const handleUpgrade = async (plan: 'premium' | 'pro') => {
     if (!isSignedIn) {
@@ -212,6 +214,12 @@ export default function PricingPage() {
             Starte kostenlos und upgrade wenn du bereit bist. Kein Abo-Trick, keine versteckten Kosten.
           </p>
         </div>
+
+        {checkoutCancelled && (
+          <div className="mx-auto mb-6 max-w-2xl rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            Checkout was cancelled.
+          </div>
+        )}
 
         {error && (
           <p style={{ color: 'red', textAlign: 'center', marginTop: '16px', fontSize: '14px' }}>
