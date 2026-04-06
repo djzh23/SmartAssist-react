@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@clerk/clerk-react'
 import { ArrowRight, BarChart2, Calendar, Crown, Loader2, Sparkles, Star, Zap } from 'lucide-react'
 import { useUserPlan, getPlanColors, getPlanLabel } from '../hooks/useUserPlan'
-import { createPortalSession } from '../services/StripeService'
+import { confirmPlanFromSession, createPortalSession } from '../services/StripeService'
 
 const WEEK_HISTORY = [
   { day: 'Mo', count: 4 },
@@ -57,6 +57,7 @@ export default function ProfilePage() {
   const [upgradeSyncNotice, setUpgradeSyncNotice] = useState<string | null>(null)
 
   const justUpgraded = (searchParams.get('upgraded') ?? '').toLowerCase() === 'true'
+  const checkoutSessionId = searchParams.get('session_id') ?? null
   const PlanIcon = user.plan === 'pro' ? Crown : user.plan === 'premium' ? Sparkles : Zap
 
   const handleManageSubscription = async () => {
@@ -100,14 +101,33 @@ export default function ProfilePage() {
 
     const syncAfterUpgrade = async () => {
       try {
-        markUpgradePending('premium', 30)
+        markUpgradePending('premium', 120)
       } catch (error) {
         console.warn('[ProfilePage] Could not mark pending upgrade state', error)
       }
 
       setUpgradeSyncNotice('Payment received. Temporary Premium access is active while server confirmation is syncing...')
 
+      // Fast path: confirm plan directly via checkout session ID (avoids waiting for webhook)
+      if (checkoutSessionId) {
+        try {
+          const token = await getToken()
+          if (token) {
+            const result = await confirmPlanFromSession(checkoutSessionId, token)
+            if (!cancelled && (result.plan === 'premium' || result.plan === 'pro')) {
+              await refreshUsage({ retries: 0 })
+              if (!cancelled) setUpgradeSyncNotice(null)
+              return
+            }
+          }
+        } catch (error) {
+          console.warn('[ProfilePage] Session-based plan confirmation failed, falling back to poll', error)
+        }
+      }
+
+      // Fallback: poll usage endpoint until backend confirms (webhook may take a few seconds)
       for (let attempt = 0; attempt < 6; attempt++) {
+        if (cancelled) return
         try {
           const nextPlan = await refreshUsage({ retries: 0 })
           if (cancelled) return
@@ -123,7 +143,6 @@ export default function ProfilePage() {
         }
 
         await new Promise(resolve => window.setTimeout(resolve, 2000))
-        if (cancelled) return
       }
 
       if (!cancelled) {
@@ -136,7 +155,7 @@ export default function ProfilePage() {
     return () => {
       cancelled = true
     }
-  }, [justUpgraded, markUpgradePending, refreshUsage])
+  }, [justUpgraded, checkoutSessionId, getToken, markUpgradePending, refreshUsage])
 
   if (!user.isLoaded) {
     return (

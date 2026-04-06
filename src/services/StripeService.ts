@@ -44,6 +44,30 @@ export const createCheckoutSession = async (
   return data.url
 }
 
+export interface ConfirmPlanResult {
+  plan: string
+  confirmed: boolean
+}
+
+export const confirmPlanFromSession = async (
+  sessionId: string,
+  token: string,
+): Promise<ConfirmPlanResult> => {
+  if (!token) throw new Error('Missing auth token for plan confirmation')
+  if (!sessionId) throw new Error('Missing session ID for plan confirmation')
+
+  const response = await fetch(
+    `${API_URL}/api/stripe/confirm-plan?session_id=${encodeURIComponent(sessionId)}`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  )
+
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, 'Failed to confirm plan'))
+  }
+
+  return response.json() as Promise<ConfirmPlanResult>
+}
+
 export const createPortalSession = async (auth: StripeAuthContext): Promise<string> => {
   if (!auth.token) throw new Error('Missing auth token for customer portal')
   if (!auth.userId) throw new Error('Missing user ID for customer portal')
