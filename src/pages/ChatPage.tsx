@@ -10,7 +10,8 @@ import InterviewSetupModal, { type InterviewSetupData } from '../components/chat
 import MessageList from '../components/chat/MessageList'
 import UsageLimitModal from '../components/ui/UsageLimitModal'
 import { useChatSessions } from '../hooks/useChatSessions'
-import { useUserPlan } from '../hooks/useUserPlan'
+import { useUserPlan, dispatchServerUsage } from '../hooks/useUserPlan'
+import { UsageLimitError } from '../api/client'
 import { sanitizeTechnicalContext } from '../utils/cvTechnicalContext'
 
 const LANG_NAMES: Record<string, string> = {
@@ -281,9 +282,19 @@ export default function ChatPage() {
         toolUsed: res.toolUsed,
         learningData: res.learningData,
       })
-      incrementUsage()
+
+      // Prefer server-authoritative usage count; fall back to local increment
+      if (typeof res.serverUsageToday === 'number') {
+        dispatchServerUsage(res.serverUsageToday)
+      } else {
+        incrementUsage()
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Etwas ist schiefgelaufen.')
+      if (err instanceof UsageLimitError) {
+        setShowLimitModal(true)
+      } else {
+        setError(err instanceof Error ? err.message : 'Etwas ist schiefgelaufen.')
+      }
     } finally {
       setIsLoading(false)
     }

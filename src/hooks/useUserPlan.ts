@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useUser, useAuth } from '@clerk/clerk-react'
+import { getAgentUsage } from '../api/client'
 
 const USAGE_EVENT = 'smartassist_usage_updated'
 
@@ -84,6 +85,15 @@ export function getPlanColors(plan: PlanType): { badge: string; border: string; 
   }
 }
 
+/** Call this with server values from X-Usage-Today/X-Usage-Limit headers */
+export function dispatchServerUsage(usageToday: number): void {
+  try {
+    // We don't have userId here, so write to a temp key and let the hook pick it up
+    localStorage.setItem('smartassist_server_usage', String(usageToday))
+  } catch { /* ignore */ }
+  window.dispatchEvent(new Event(USAGE_EVENT))
+}
+
 export interface UserPlanState {
   isLoaded: boolean
   isSignedIn: boolean
@@ -126,10 +136,47 @@ export function useUserPlan(): UserPlanState {
 
   // Listen for usage increments from any component instance
   useEffect(() => {
-    const sync = () => setUsageToday(readUsageToday(isSignedIn ? userId : null))
+    const sync = () => {
+      // Check if server sent a real usage value
+      const serverVal = localStorage.getItem('smartassist_server_usage')
+      if (serverVal !== null) {
+        const parsed = Number(serverVal)
+        if (!Number.isNaN(parsed)) {
+          const key = isSignedIn ? userId : null
+          writeUsageToday(key, parsed)
+          setUsageToday(parsed)
+          localStorage.removeItem('smartassist_server_usage')
+          return
+        }
+      }
+      setUsageToday(readUsageToday(isSignedIn ? userId : null))
+    }
     window.addEventListener(USAGE_EVENT, sync)
     return () => window.removeEventListener(USAGE_EVENT, sync)
   }, [userId, isSignedIn])
+
+  // Sync real usage from server on load (after Clerk resolves)
+  useEffect(() => {
+    if (!isLoaded) return
+    let cancelled = false
+
+    const sync = async () => {
+      try {
+        const token = await getToken()
+        const status = await getAgentUsage(token ?? undefined)
+        if (!status || cancelled) return
+
+        const key = isSignedIn ? userId : null
+        writeUsageToday(key, status.usageToday)
+        if (!cancelled) setUsageToday(status.usageToday)
+      } catch { /* backend may not have the endpoint yet — silently ignore */ }
+    }
+
+    void sync()
+    return () => { cancelled = true }
+  // Only run once per user identity load
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoaded, userId])
 
   const responsesLeft = dailyLimit === Infinity ? Infinity : Math.max(0, dailyLimit - usageToday)
   const isAtLimit = usageToday >= dailyLimit
