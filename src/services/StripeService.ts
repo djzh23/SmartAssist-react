@@ -3,7 +3,7 @@ import { getAuthToken } from './AuthService'
 const API_URL =
   import.meta.env.VITE_API_URL ||
   import.meta.env.VITE_API_BASE_URL ||
-  'http://localhost:8080'
+  ''
 
 async function readErrorMessage(response: Response, fallback: string): Promise<string> {
   try {
