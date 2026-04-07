@@ -1,18 +1,18 @@
-﻿import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { SignInButton, SignUpButton, useUser } from '@clerk/clerk-react'
 import { Check, Play, Send } from 'lucide-react'
 import { askAgent } from '../api/client'
 import '../styles/landing.css'
 
-// â”€â”€ Navbar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Navbar ───────────────────────────────────────────────────────────────────
 
 function LandingNav() {
   return (
     <nav className="fixed left-0 right-0 top-0 z-[100] h-16 border-b border-slate-200/80 bg-white/95 backdrop-blur-sm">
       <div className="flex h-full max-w-[1200px] items-center justify-between mx-auto px-6">
         <div className="flex items-center gap-2">
-          <span className="text-xl">âš¡</span>
+          <span className="text-xl">⚡</span>
           <span className="text-lg font-bold text-slate-800">SmartAssist</span>
         </div>
 
@@ -39,7 +39,7 @@ function LandingNav() {
   )
 }
 
-// â”€â”€ Chat Mockup (decorative) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Chat Mockup (decorative) ──────────────────────────────────────────────────
 
 function ChatMockup() {
   const [showTyping, setShowTyping] = useState(true)
@@ -57,7 +57,7 @@ function ChatMockup() {
       >
         {/* Header */}
         <div className="flex items-center justify-between bg-primary px-4 py-3">
-          <span className="text-sm font-bold text-white">âš¡ SmartAssist</span>
+          <span className="text-sm font-bold text-white">⚡ SmartAssist</span>
           <div className="flex items-center gap-1.5">
             <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
             <span className="text-xs text-white/80">Online</span>
@@ -68,10 +68,10 @@ function ChatMockup() {
         <div className="space-y-3 bg-slate-50 p-4">
           <div className="flex gap-2">
             <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-primary text-xs text-white">
-              âš¡
+              ⚡
             </div>
             <div className="max-w-[200px] rounded-[12px_12px_12px_4px] bg-white px-3 py-2 text-xs text-slate-700 shadow-sm">
-              Â¡Hola! Ich sehe du lernst Spanisch ðŸŒ
+              ¡Hola! Ich sehe du lernst Spanisch 🌍
             </div>
           </div>
 
@@ -83,13 +83,13 @@ function ChatMockup() {
 
           <div className="flex gap-2">
             <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-primary text-xs text-white">
-              âš¡
+              ⚡
             </div>
             <div className="max-w-[200px] rounded-[12px_12px_12px_4px] border-l-[3px] border-l-primary bg-white px-3 py-2 text-xs shadow-sm">
-              <p className="font-semibold text-slate-800">ðŸŒ Buenos dÃ­as</p>
-              <p className="text-slate-600">ðŸ‡©ðŸ‡ª Guten Morgen</p>
+              <p className="font-semibold text-slate-800">🌍 Buenos días</p>
+              <p className="text-slate-600">🇩🇪 Guten Morgen</p>
               <p className="mt-1 text-[10px] text-cyan-600">
-                ðŸ’¡ "buenos" = gut, "dÃ­as" = Tage
+                💡 "buenos" = gut, "días" = Tage
               </p>
             </div>
           </div>
@@ -97,7 +97,7 @@ function ChatMockup() {
           {showTyping && (
             <div className="flex gap-2">
               <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-primary text-xs text-white">
-                âš¡
+                ⚡
               </div>
               <div className="rounded-[12px_12px_12px_4px] bg-white px-3 py-3 shadow-sm">
                 <span className="typing-dot" />
@@ -121,17 +121,17 @@ function ChatMockup() {
 
       {/* Floating weather card */}
       <div className="absolute -bottom-8 right-0 rotate-2 rounded-2xl bg-white px-3 py-2.5 shadow-[0_8px_24px_rgba(0,0,0,0.12)] flex items-center gap-2.5">
-        <span className="text-2xl">ðŸŒ¤ï¸</span>
+        <span className="text-2xl">🌤️</span>
         <div>
           <p className="text-xs font-semibold text-slate-800">Hamburg</p>
-          <p className="text-[10px] text-slate-500">14Â°C Â· Regnerisch</p>
+          <p className="text-[10px] text-slate-500">14°C · Regnerisch</p>
         </div>
       </div>
     </div>
   )
 }
 
-// â”€â”€ Hero Section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Hero Section ──────────────────────────────────────────────────────────────
 
 function HeroSection() {
   return (
@@ -149,7 +149,7 @@ function HeroSection() {
         {/* Left: copy */}
         <div>
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-cyan-200 bg-cyan-50 px-4 py-1.5 text-xs font-semibold text-cyan-700">
-            âœ¨ Powered by Claude AI
+            ✨ Powered by Claude AI
           </div>
 
           <h1 className="mb-4 text-[clamp(36px,5vw,56px)] font-bold leading-[1.1] text-slate-800">
@@ -162,14 +162,14 @@ function HeroSection() {
           </h1>
 
           <p className="mb-8 max-w-[480px] text-lg leading-relaxed text-slate-500">
-            SmartAssist combines powerful AI tools â€” weather, language learning,
-            job analysis, and more â€” into one beautiful chat experience.
+            SmartAssist combines powerful AI tools — weather, language learning,
+            job analysis, and more — into one beautiful chat experience.
           </p>
 
           <div className="mb-6 flex flex-wrap items-center gap-4">
             <SignUpButton mode="modal" fallbackRedirectUrl="/chat">
               <button className="flex h-12 items-center gap-2 rounded-xl bg-primary px-7 text-base font-semibold text-white shadow-lg shadow-cyan-200/60 transition-colors hover:bg-primary-hover">
-                Get started free â†’
+                Get started free →
               </button>
             </SignUpButton>
             <a
@@ -182,7 +182,7 @@ function HeroSection() {
           </div>
 
           <p className="text-sm text-slate-400">
-            â˜…â˜…â˜…â˜…â˜…&nbsp;&nbsp;Trusted by developers Â· Free to start Â· No credit card
+            ★★★★★&nbsp;&nbsp;Trusted by developers · Free to start · No credit card
           </p>
         </div>
 
@@ -195,28 +195,28 @@ function HeroSection() {
   )
 }
 
-// â”€â”€ Features Section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Features Section ──────────────────────────────────────────────────────────
 
 const FEATURES = [
   {
-    icon: 'ðŸŒ¤ï¸',
+    icon: '🌤️',
     iconBg: 'bg-blue-50',
     title: 'Real-time Weather',
-    desc: 'Get accurate weather for any city worldwide. Ask naturally â€” no commands needed.',
+    desc: 'Get accurate weather for any city worldwide. Ask naturally — no commands needed.',
     chip: 'Wie ist das Wetter in Casablanca?',
     highlight: false,
   },
   {
-    icon: 'ðŸŒ',
+    icon: '🌍',
     iconBg: 'bg-cyan-50',
     title: 'Language Learning Mode',
     desc: 'Chat in your language, learn a new one. AI translates and corrects you naturally.',
-    chip: 'Hallo â†’ Â¡Hola! + grammar tip',
+    chip: 'Hallo → ¡Hola! + grammar tip',
     highlight: true,
     badge: 'Most Popular',
   },
   {
-    icon: 'ðŸ’¼',
+    icon: '💼',
     iconBg: 'bg-emerald-50',
     title: 'Job Analyzer',
     desc: 'Paste any job posting and get a clear summary, CV tips, and keywords to stand out.',
@@ -224,7 +224,7 @@ const FEATURES = [
     highlight: false,
   },
   {
-    icon: 'ðŸ“',
+    icon: '📝',
     iconBg: 'bg-amber-50',
     title: 'Smart Summaries',
     desc: 'Summarize any text in seconds. Perfect for long articles, emails, or documents.',
@@ -278,7 +278,7 @@ function FeaturesSection() {
   )
 }
 
-// â”€â”€ Live Demo Section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Live Demo Section ─────────────────────────────────────────────────────────
 
 interface DemoMessage {
   role: 'user' | 'assistant'
@@ -286,10 +286,10 @@ interface DemoMessage {
 }
 
 const DEMO_CHIPS = [
-  { emoji: 'ðŸŒ¤ï¸', label: 'Weather in Berlin?' },
-  { emoji: 'ðŸŒ', label: 'Teach me Spanish' },
-  { emoji: 'ðŸ’¼', label: 'Analyze a job posting' },
-  { emoji: 'ðŸ˜„', label: 'Tell me a joke' },
+  { emoji: '🌤️', label: 'Weather in Berlin?' },
+  { emoji: '🌍', label: 'Teach me Spanish' },
+  { emoji: '💼', label: 'Analyze a job posting' },
+  { emoji: '😄', label: 'Tell me a joke' },
 ] as const
 
 function LiveDemoSection() {
@@ -339,7 +339,7 @@ function LiveDemoSection() {
         <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-lg">
           {/* Header */}
           <div className="flex items-center border-b border-slate-100 px-5 py-4">
-            <span className="font-bold text-slate-800">âš¡ Live Demo</span>
+            <span className="font-bold text-slate-800">⚡ Live Demo</span>
             <div className="ml-auto flex items-center gap-1.5">
               <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
               <span className="text-xs text-slate-400">Active</span>
@@ -399,7 +399,7 @@ function LiveDemoSection() {
           {atLimit ? (
             <div className="border-t border-slate-100 px-5 py-5 text-center">
               <p className="mb-3 text-sm text-slate-600">
-                You've used your 2 demo messages! Sign up free to get 20 messages/day â†’
+                You've used your 2 demo messages! Sign up free to get 20 messages/day →
               </p>
               <SignUpButton mode="modal" fallbackRedirectUrl="/chat">
                 <button className="rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-hover">
@@ -435,24 +435,24 @@ function LiveDemoSection() {
   )
 }
 
-// â”€â”€ How It Works Section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── How It Works Section ──────────────────────────────────────────────────────
 
 const STEPS = [
   {
     num: '1',
-    icon: 'ðŸ”‘',
+    icon: '🔑',
     title: 'Create free account',
     text: 'Sign up with Google in one click. No credit card required.',
   },
   {
     num: '2',
-    icon: 'ðŸ’¬',
+    icon: '💬',
     title: 'Choose your tool',
     text: 'Pick from Weather, Language Learning, Job Analyzer, and more.',
   },
   {
     num: '3',
-    icon: 'âœ¨',
+    icon: '✨',
     title: 'Get smart answers',
     text: 'The AI uses the right tool automatically. Just chat naturally.',
   },
@@ -486,15 +486,15 @@ function HowItWorksSection() {
   )
 }
 
-// â”€â”€ Pricing Preview Section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Pricing Preview Section ───────────────────────────────────────────────────
 
 const PREVIEW_PLANS = [
   {
     id: 'free',
     name: 'Free',
-    price: '0 â‚¬',
+    price: '0 €',
     period: '/forever',
-    icon: 'âš¡',
+    icon: '⚡',
     borderClass: 'border-slate-200',
     headerBg: 'bg-slate-50',
     features: [
@@ -511,9 +511,9 @@ const PREVIEW_PLANS = [
   {
     id: 'premium',
     name: 'Premium',
-    price: '4,99 â‚¬',
+    price: '4,99 €',
     period: '/month',
-    icon: 'âœ¨',
+    icon: '✨',
     borderClass: 'border-primary border-2',
     headerBg: 'bg-cyan-50',
     badge: 'MOST POPULAR',
@@ -533,9 +533,9 @@ const PREVIEW_PLANS = [
   {
     id: 'pro',
     name: 'Pro',
-    price: '9,99 â‚¬',
+    price: '9,99 €',
     period: '/month',
-    icon: 'ðŸ‘‘',
+    icon: '👑',
     borderClass: 'border-amber-400',
     headerBg: 'bg-amber-50',
     features: [
@@ -629,7 +629,7 @@ function PricingPreviewSection() {
   )
 }
 
-// â”€â”€ Final CTA Section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Final CTA Section ─────────────────────────────────────────────────────────
 
 function FinalCtaSection() {
   return (
@@ -638,14 +638,14 @@ function FinalCtaSection() {
       style={{ background: 'linear-gradient(135deg, #06B6D4, #0E7490)' }}
     >
       <div className="mx-auto max-w-[600px]">
-        <div className="mb-6 text-6xl">âš¡</div>
+        <div className="mb-6 text-6xl">⚡</div>
         <h2 className="mb-4 text-3xl font-bold">Start chatting smarter today</h2>
         <p className="mb-8 text-lg text-white/80">
           Join thousands of users who save time with SmartAssist
         </p>
         <SignUpButton mode="modal" fallbackRedirectUrl="/chat">
           <button className="rounded-xl bg-white px-8 py-3.5 text-base font-bold text-primary shadow-xl transition-colors hover:bg-slate-100">
-            Get started free â€” it's free forever
+            Get started free — it's free forever
           </button>
         </SignUpButton>
       </div>
@@ -653,7 +653,7 @@ function FinalCtaSection() {
   )
 }
 
-// â”€â”€ Footer Section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Footer Section ────────────────────────────────────────────────────────────
 
 function FooterSection() {
   return (
@@ -662,7 +662,7 @@ function FooterSection() {
         <div className="mb-6 flex flex-col items-center justify-between gap-6 md:flex-row">
           <div>
             <div className="mb-1 flex items-center gap-2">
-              <span className="text-xl">âš¡</span>
+              <span className="text-xl">⚡</span>
               <span className="text-lg font-bold text-white">SmartAssist</span>
             </div>
             <p className="text-sm text-slate-400">AI tools for everyone</p>
@@ -675,16 +675,16 @@ function FooterSection() {
         </div>
         <div className="border-t border-white/10 pt-6 text-center">
           <p className="mb-1 text-xs text-slate-500">
-            Built with â™¥ using .NET 9 Â· React Â· Claude AI
+            Built with ♥ using .NET 9 · React · Claude AI
           </p>
-          <p className="text-xs text-slate-600">Â© 2025 SmartAssist. All rights reserved.</p>
+          <p className="text-xs text-slate-600">© 2025 SmartAssist. All rights reserved.</p>
         </div>
       </div>
     </footer>
   )
 }
 
-// â”€â”€ Landing Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Landing Page ──────────────────────────────────────────────────────────────
 
 export default function LandingPage() {
   const { isSignedIn, isLoaded } = useUser()

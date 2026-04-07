@@ -15,6 +15,7 @@ interface Props {
   nativeLang?: string
   targetLangCode?: string
   progLang?: string
+  useLanguageCard?: boolean
 }
 
 export default function MessageBubble({
@@ -24,11 +25,12 @@ export default function MessageBubble({
   nativeLang = 'German',
   targetLangCode = 'es',
   progLang = 'csharp',
+  useLanguageCard = false,
 }: Props) {
   const time = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   const isJobAnalyzerReply = !msg.isUser && (toolType === 'jobanalyzer' || msg.toolUsed === 'analyze_job')
 
-  if (!msg.isUser && toolType === 'language') {
+  if (!msg.isUser && toolType === 'language' && useLanguageCard) {
     if (msg.learningData) {
       return (
         <LearningResponse

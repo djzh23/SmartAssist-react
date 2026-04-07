@@ -120,24 +120,12 @@ export default function ChatSidebar({
 
         {showLLPanel && (
           <div className="flex-shrink-0 border-t border-slate-200 px-3 py-2.5">
-            <label className="flex cursor-pointer select-none items-center justify-between">
-              <span className="text-xs font-medium text-slate-700">Sprachlernen</span>
-              <button
-                className={[
-                  'relative h-5 w-9 cursor-default rounded-full',
-                  languageLearningMode ? 'bg-primary' : 'bg-slate-300',
-                ].join(' ')}
-                disabled
-                aria-label="Sprachlernen ist in diesem Tool immer aktiv"
-              >
-                <span
-                  className={[
-                    'absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform duration-200',
-                    languageLearningMode ? 'translate-x-4' : 'translate-x-0.5',
-                  ].join(' ')}
-                />
-              </button>
-            </label>
+            <div className="mb-2.5 flex items-center justify-between rounded-lg border border-cyan-200 bg-cyan-50 px-2.5 py-2">
+              <span className="text-xs font-semibold text-slate-700">Sprachlernen</span>
+              <span className="inline-flex items-center rounded-full border border-cyan-300 bg-white px-2 py-0.5 text-[10px] font-semibold text-cyan-700">
+                {languageLearningMode ? 'Aktiv' : 'Inaktiv'}
+              </span>
+            </div>
 
             {languageLearningMode && (
               <div className="mt-2 flex flex-col gap-1.5">

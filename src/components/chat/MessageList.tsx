@@ -49,17 +49,27 @@ export default function MessageList({
 
   return (
     <div className="flex-1 overflow-y-auto px-4 py-6 flex flex-col gap-4">
-      {messages.map(msg => (
-        <MessageBubble
-          key={msg.id}
-          msg={msg}
-          toolType={toolType}
-          targetLang={targetLang}
-          nativeLang={nativeLang}
-          targetLangCode={targetLangCode}
-          progLang={progLang}
-        />
-      ))}
+      {(() => {
+        let userSeen = false
+
+        return messages.map(msg => {
+          const useLanguageCard = toolType === 'language' && !msg.isUser && userSeen
+          if (msg.isUser) userSeen = true
+
+          return (
+            <MessageBubble
+              key={msg.id}
+              msg={msg}
+              toolType={toolType}
+              targetLang={targetLang}
+              nativeLang={nativeLang}
+              targetLangCode={targetLangCode}
+              progLang={progLang}
+              useLanguageCard={useLanguageCard}
+            />
+          )
+        })
+      })()}
       {isLoading && <TypingDots />}
       <div ref={bottomRef} />
     </div>
