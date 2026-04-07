@@ -23,7 +23,7 @@ const mainLinks: NavItem[] = [
 const chatLinks: NavItem[] = [
   { label: 'General Chat',    icon: <MessageCircle size={15} />, to: '/chat' },
   { label: 'Job Analyzer',    icon: <Briefcase     size={15} />, to: '/chat?tool=jobanalyzer' },
-  { label: 'Interview Coach', icon: <Target        size={15} />, to: '/chat?tool=interview' },
+  { label: 'Interview Coach', icon: <Target        size={15} />, to: '/chat?tool=interviewprep' },
   { label: 'Programming',     icon: <Code2         size={15} />, to: '/chat?tool=programming' },
   { label: 'Language',        icon: <Globe         size={15} />, to: '/chat?tool=language' },
 ]
@@ -33,8 +33,17 @@ function SidebarLink({ item, onClick }: { item: NavItem; onClick?: () => void })
   const location  = useLocation()
 
   const isChatLink = item.to.includes('?')
+  const targetTool = isChatLink ? new URLSearchParams(item.to.split('?')[1]).get('tool') : null
+  const currentTool = location.pathname === '/chat'
+    ? new URLSearchParams(location.search).get('tool') ?? 'general'
+    : null
+
   const isActive   = isChatLink
-    ? location.pathname === '/chat' && location.search === `?tool=${new URLSearchParams(item.to.split('?')[1]).get('tool')}`
+    ? location.pathname === '/chat' && (
+      location.search === `?tool=${targetTool}` ||
+      (targetTool === 'interviewprep' && currentTool === 'interview') ||
+      (targetTool === 'interview' && currentTool === 'interviewprep')
+    )
     : item.exact
       ? location.pathname === '/'
       : location.pathname.startsWith(item.to) && item.to !== '/'

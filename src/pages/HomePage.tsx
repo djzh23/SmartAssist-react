@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom'
+﻿import { useNavigate } from 'react-router-dom'
 import {
   Target,
   Code2,
@@ -17,7 +17,7 @@ const HIGHLIGHTS = [
     icon: Target,
     accent: { soft: 'bg-violet-50', ring: 'border-violet-200', text: 'text-violet-700' },
     title: 'Interview Coaching',
-    desc: 'Übe typische Fragen, formuliere stärkere Antworten und gehe entspannter ins Gespräch.',
+    desc: 'Ãœbe typische Fragen, formuliere stÃ¤rkere Antworten und gehe entspannter ins GesprÃ¤ch.',
     line: 'bg-violet-500',
   },
   {
@@ -31,14 +31,14 @@ const HIGHLIGHTS = [
     icon: Code2,
     accent: { soft: 'bg-indigo-50', ring: 'border-indigo-200', text: 'text-indigo-700' },
     title: 'Technik Training',
-    desc: 'Trainiere Programmierfragen mit klaren Erklärungen und praktischen Codebeispielen.',
+    desc: 'Trainiere Programmierfragen mit klaren ErklÃ¤rungen und praktischen Codebeispielen.',
     line: 'bg-indigo-500',
   },
 ]
 
 const QUICK_LINKS = [
-  { icon: Target, tool: 'interview', label: 'Interview Coach', desc: 'Vorstellungsgespräche üben', accent: { soft: 'bg-violet-50', ring: 'border-violet-200', text: 'text-violet-700' } },
-  { icon: Briefcase, tool: 'jobanalyzer', label: 'Job Analyzer', desc: 'Stellenanzeige prüfen', accent: { soft: 'bg-emerald-50', ring: 'border-emerald-200', text: 'text-emerald-700' } },
+  { icon: Target, tool: 'interviewprep', label: 'Interview Coach', desc: 'VorstellungsgesprÃ¤che Ã¼ben', accent: { soft: 'bg-violet-50', ring: 'border-violet-200', text: 'text-violet-700' } },
+  { icon: Briefcase, tool: 'jobanalyzer', label: 'Job Analyzer', desc: 'Stellenanzeige prÃ¼fen', accent: { soft: 'bg-emerald-50', ring: 'border-emerald-200', text: 'text-emerald-700' } },
   { icon: Code2, tool: 'programming', label: 'Programming', desc: 'Technische Fragen', accent: { soft: 'bg-indigo-50', ring: 'border-indigo-200', text: 'text-indigo-700' } },
   { icon: Globe2, tool: 'language', label: 'Language', desc: 'Sprachen trainieren', accent: { soft: 'bg-amber-50', ring: 'border-amber-200', text: 'text-amber-700' } },
 ]
@@ -47,20 +47,20 @@ const TRUST_POINTS = [
   {
     icon: ShieldCheck,
     color: 'text-emerald-600',
-    title: 'Vertrauenswürdig und anonym',
+    title: 'VertrauenswÃ¼rdig und anonym',
     desc: 'Du kannst mit einem Alias arbeiten. Deine Chat-Historie bleibt in deinem Browser.',
   },
   {
     icon: HardDrive,
     color: 'text-indigo-600',
     title: 'Lokale Verarbeitung',
-    desc: 'Die technische Analyse deines Lebenslaufs läuft lokal im Browser auf deinem Gerät.',
+    desc: 'Die technische Analyse deines Lebenslaufs lÃ¤uft lokal im Browser auf deinem GerÃ¤t.',
   },
   {
     icon: Lock,
     color: 'text-sky-600',
     title: 'Nur technischer Kontext',
-    desc: 'Für die Auswertung wird nur reduzierter technischer Kontext genutzt.',
+    desc: 'FÃ¼r die Auswertung wird nur reduzierter technischer Kontext genutzt.',
   },
 ]
 
@@ -77,7 +77,7 @@ export default function HomePage() {
         backgroundSize: '28px 28px',
       }}
     >
-      {/* Decorative blobs — fixed so they stay visible regardless of scroll depth */}
+      {/* Decorative blobs â€” fixed so they stay visible regardless of scroll depth */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden" style={{ zIndex: 0 }}>
         <div className="absolute -right-28 top-0 h-80 w-80 rounded-full bg-violet-200/45 blur-3xl" />
         <div className="absolute -left-28 bottom-0 h-96 w-96 rounded-full bg-cyan-200/45 blur-3xl" />
@@ -97,13 +97,13 @@ export default function HomePage() {
             SA
           </div>
           <h1 className="relative text-3xl font-bold tracking-tight text-slate-800 mb-3">
-            Dein KI Assistent für die Jobsuche
+            Dein KI Assistent fÃ¼r die Jobsuche
           </h1>
           <p className="relative text-sm text-slate-500 leading-relaxed max-w-md mx-auto">
             Bereite dich auf Interviews vor, analysiere Stellenanzeigen und arbeite gezielt an deinen technischen Antworten.
           </p>
           <button
-            onClick={() => navigate('/chat?tool=interview')}
+            onClick={() => navigate('/chat?tool=interviewprep')}
             className="relative mt-6 inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-white rounded-xl px-6 py-3 font-semibold text-sm transition-colors shadow-sm"
           >
             Jetzt starten
@@ -139,7 +139,7 @@ export default function HomePage() {
 
         {/* Highlights */}
         <div className="mb-8">
-          <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.15em] text-slate-400">Was SmartAssist für dich tut</h2>
+          <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.15em] text-slate-400">Was SmartAssist fÃ¼r dich tut</h2>
           <div className="flex flex-col gap-3">
             {HIGHLIGHTS.map(card => {
               const Icon = card.icon
@@ -192,13 +192,13 @@ export default function HomePage() {
                   <TriangleAlert size={13} />
                   Wichtiger Hinweis:
                 </span>{' '}
-                Bitte teile im Chat keine vertraulichen oder persönlichen Daten. Wenn du sensible Inhalte eingibst, passiert das auf eigene Verantwortung.
+                Bitte teile im Chat keine vertraulichen oder persÃ¶nlichen Daten. Wenn du sensible Inhalte eingibst, passiert das auf eigene Verantwortung.
               </p>
             </div>
 
             <p className="mt-3 text-xs text-slate-500 text-center inline-flex items-center justify-center gap-1.5 w-full">
               <Heart size={13} className="text-rose-500" />
-              Mit Liebe und viel Glück auf deinem Weg.
+              Mit Liebe und viel GlÃ¼ck auf deinem Weg.
             </p>
           </div>
         </div>
@@ -216,3 +216,5 @@ export default function HomePage() {
     </div>
   )
 }
+
+

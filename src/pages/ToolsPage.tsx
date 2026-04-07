@@ -17,7 +17,7 @@ type ToolCategory = 'career' | 'general'
 
 interface ToolCardMeta {
   id: ToolType
-  chatParam: ToolType
+  chatParam: string
   category: ToolCategory
   name: string
   shortDescription: string
@@ -66,7 +66,7 @@ const TOOLS: ToolCardMeta[] = [
   },
   {
     id: 'interview',
-    chatParam: 'interview',
+    chatParam: 'interviewprep',
     category: 'career',
     name: 'Interview Coach',
     shortDescription: 'Trainiere Antworten mit Struktur, Tiefgang und passender Sprache für dein Zielprofil.',
