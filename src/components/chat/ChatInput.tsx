@@ -3,11 +3,11 @@ import { Send, Loader2 } from 'lucide-react'
 import type { ToolType } from '../../types'
 
 const PLACEHOLDERS: Record<ToolType, string> = {
-  general:     'Type a message…',
-  jobanalyzer: 'Paste a job posting or URL to analyze…',
-  language:    'Write something and I\'ll translate it for you…',
-  programming: 'Ask about algorithms, data structures, or code…',
-  interview:   'Paste a job posting / URL, or ask anything about interview preparation…',
+  general:     'Schreib eine Nachricht…',
+  jobanalyzer: 'Stellenbeschreibung oder Link einfügen…',
+  language:    'Schreib etwas, ich helfe dir beim Übersetzen und Üben…',
+  programming: 'Fragen zu Algorithmen, Datenstrukturen oder Code…',
+  interview:   'Stellenausschreibung oder URL einfügen, oder Fragen zur Vorbereitung…',
 }
 
 interface Props {
@@ -25,7 +25,7 @@ export default function ChatInput({ toolType, isLoading, onSend }: Props) {
     const el = textareaRef.current
     if (!el) return
     el.style.height = 'auto'
-    el.style.height = `${Math.min(el.scrollHeight, 160)}px`
+    el.style.height = `${Math.min(el.scrollHeight, 120)}px`
   }, [text])
 
   const handleSend = () => {
@@ -60,10 +60,10 @@ export default function ChatInput({ toolType, isLoading, onSend }: Props) {
             maxLength={4000}
             rows={1}
             disabled={isLoading}
-            className="block w-full resize-none border-none outline-none bg-transparent px-4 pt-3 pb-2 text-sm text-slate-800 placeholder-slate-400 disabled:opacity-50"
+            className="block max-h-[120px] w-full resize-none overflow-y-auto border-none bg-transparent px-4 pb-2 pt-3 text-sm text-slate-800 outline-none placeholder-slate-400 disabled:opacity-50"
           />
           <div className="flex items-center justify-between px-4 pb-2.5">
-            <span className="text-[11px] text-slate-300">Enter to send · Shift+Enter for newline</span>
+            <span className="text-[11px] text-slate-300">Enter zum Senden · Umschalt+Enter für neue Zeile</span>
             <span className={`text-[11px] ${near ? 'text-red-500 font-semibold' : 'text-slate-300'}`}>
               {text.length}/4000
             </span>

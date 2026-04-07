@@ -200,7 +200,7 @@ export default function LanguageCoachResponse({
           <div className="border-b border-sky-200 bg-sky-100 px-3 py-2">
             <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-sky-800">
               <Lightbulb size={12} />
-              <span>Lern-Tipps</span>
+              <span>Lernhinweise</span>
             </span>
           </div>
           <ul className="space-y-1 bg-sky-50 px-3 py-2.5 text-sm text-sky-900">
@@ -218,7 +218,7 @@ export default function LanguageCoachResponse({
           <div className="border-b border-orange-200 bg-orange-100 px-3 py-2">
             <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-orange-800">
               <ListChecks size={12} />
-              <span>Mini-Übung</span>
+              <span>Miniübung</span>
             </span>
           </div>
           <ul className="space-y-1 bg-orange-50 px-3 py-2.5 text-sm text-orange-900">

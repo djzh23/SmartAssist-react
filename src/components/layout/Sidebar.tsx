@@ -27,38 +27,38 @@ interface NavItem {
 }
 
 const mainLinks: NavItem[] = [
-  { label: 'Home', icon: <Home size={15} />, to: '/', exact: true },
-  { label: 'Tools', icon: <Wrench size={15} />, to: '/tools' },
-  { label: 'Pricing', icon: <Tag size={15} />, to: '/pricing' },
+  { label: 'Startseite', icon: <Home size={15} />, to: '/', exact: true },
+  { label: 'Alle Werkzeuge', icon: <Wrench size={15} />, to: '/tools' },
+  { label: 'Preise', icon: <Tag size={15} />, to: '/pricing' },
 ]
 
 const chatLinks: NavItem[] = [
-  { label: 'General Chat', icon: <MessageCircle size={15} />, to: '/chat' },
-  { label: 'Job Analyzer', icon: <Briefcase size={15} />, to: '/chat?tool=jobanalyzer' },
-  { label: 'Interview Coach', icon: <Target size={15} />, to: '/chat?tool=interviewprep' },
-  { label: 'Programming', icon: <Code2 size={15} />, to: '/chat?tool=programming' },
-  { label: 'Language', icon: <Globe size={15} />, to: '/chat?tool=language' },
+  { label: 'Allgemeiner Chat', icon: <MessageCircle size={15} />, to: '/chat' },
+  { label: 'Stellenanalyse', icon: <Briefcase size={15} />, to: '/chat?tool=jobanalyzer' },
+  { label: 'Vorstellungsgespräch', icon: <Target size={15} />, to: '/chat?tool=interviewprep' },
+  { label: 'Programmieren', icon: <Code2 size={15} />, to: '/chat?tool=programming' },
+  { label: 'Sprachen lernen', icon: <Globe size={15} />, to: '/chat?tool=language' },
 ]
 
 function SidebarLink({ item, onClick }: { item: NavItem; onClick?: () => void }) {
   const navigate = useNavigate()
   const location = useLocation()
+  const searchParams = new URLSearchParams(location.search)
+  const toolFromUrl = location.pathname === '/chat' ? (searchParams.get('tool') ?? 'general') : null
 
-  const isChatLink = item.to.includes('?')
-  const targetTool = isChatLink ? new URLSearchParams(item.to.split('?')[1]).get('tool') : null
-  const currentTool = location.pathname === '/chat'
-    ? new URLSearchParams(location.search).get('tool') ?? 'general'
+  const isGeneralChat = item.to === '/chat'
+  const isChatLink = item.to.includes('?') || isGeneralChat
+  const targetTool = item.to.includes('?')
+    ? new URLSearchParams(item.to.split('?')[1]).get('tool')
     : null
 
-  const isActive = isChatLink
-    ? location.pathname === '/chat' && (
-      location.search === `?tool=${targetTool}`
-      || (targetTool === 'interviewprep' && currentTool === 'interview')
-      || (targetTool === 'interview' && currentTool === 'interviewprep')
-    )
-    : item.exact
-      ? location.pathname === '/'
-      : location.pathname.startsWith(item.to) && item.to !== '/'
+  const isActive = isGeneralChat
+    ? location.pathname === '/chat' && toolFromUrl === 'general'
+    : isChatLink && targetTool
+      ? location.pathname === '/chat' && toolFromUrl === targetTool
+      : item.exact
+        ? location.pathname === '/'
+        : location.pathname.startsWith(item.to) && item.to !== '/'
 
   const base = 'mb-0.5 flex items-center gap-2.5 rounded-lg border-l-[3px] px-4 py-2.5 text-sm font-medium no-underline transition-all duration-150'
   const active = 'border-primary bg-sidebar-active text-white'
@@ -67,14 +67,14 @@ function SidebarLink({ item, onClick }: { item: NavItem; onClick?: () => void })
   const handleClick = (event: React.MouseEvent) => {
     if (isChatLink) {
       event.preventDefault()
-      navigate(item.to)
+      navigate(isGeneralChat ? '/chat' : item.to)
     }
     onClick?.()
   }
 
   if (isChatLink) {
     return (
-      <a href={item.to} onClick={handleClick} className={`${base} ${isActive ? active : inactive}`}>
+      <a href={isGeneralChat ? '/chat' : item.to} onClick={handleClick} className={`${base} ${isActive ? active : inactive}`}>
         <span className="flex w-4 flex-shrink-0 items-center justify-center">{item.icon}</span>
         <span>{item.label}</span>
       </a>
@@ -106,7 +106,7 @@ function UsageBanner() {
     >
       <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-300">
         <Sparkles size={11} />
-        <span>{responsesLeft === Infinity ? 'Unbegrenzt' : responsesLeft} responses left · Upgrade</span>
+        <span>{responsesLeft === Infinity ? 'Unbegrenzt' : responsesLeft} Nachrichten übrig · Upgrade</span>
       </span>
       <span className="text-[10px] text-amber-400"><ArrowRight size={12} /></span>
     </button>
@@ -124,7 +124,7 @@ function UsageBar() {
   return (
     <div className="border-t border-white/8 px-3 py-2">
       <div className="mb-1 flex items-center justify-between text-[10px] text-slate-500">
-        <span>Daily usage</span>
+        <span>Tagesverbrauch</span>
         <span>{usageToday}/{limitLabel}</span>
       </div>
       <div className="h-[3px] overflow-hidden rounded-full bg-white/10">
@@ -153,18 +153,18 @@ export default function Sidebar({ onNavClick }: Props) {
       {plan !== 'pro' && <UsageBanner />}
 
       <nav className="flex flex-1 flex-col px-2">
-        <p className="px-3 pb-1.5 pt-3 text-[10px] font-bold uppercase tracking-[1.5px] text-slate-500">Main</p>
+        <p className="px-3 pb-1.5 pt-3 text-[10px] font-bold uppercase tracking-[1.5px] text-slate-500">Hauptmenü</p>
         {mainLinks.map(link => (
           <SidebarLink key={link.to} item={link} onClick={onNavClick} />
         ))}
 
-        <p className="px-3 pb-1.5 pt-5 text-[10px] font-bold uppercase tracking-[1.5px] text-slate-500">Career Tools</p>
+        <p className="px-3 pb-1.5 pt-5 text-[10px] font-bold uppercase tracking-[1.5px] text-slate-500">Chat und Karriere</p>
         {chatLinks.map(link => (
           <SidebarLink key={link.to} item={link} onClick={onNavClick} />
         ))}
 
-        <p className="px-3 pb-1.5 pt-5 text-[10px] font-bold uppercase tracking-[1.5px] text-slate-500">Account</p>
-        <SidebarLink item={{ label: 'Profile', icon: <User size={15} />, to: '/profile' }} onClick={onNavClick} />
+        <p className="px-3 pb-1.5 pt-5 text-[10px] font-bold uppercase tracking-[1.5px] text-slate-500">Konto</p>
+        <SidebarLink item={{ label: 'Mein Profil', icon: <User size={15} />, to: '/profile' }} onClick={onNavClick} />
       </nav>
 
       <div className="flex-shrink-0">

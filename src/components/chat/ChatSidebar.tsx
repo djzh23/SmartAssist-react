@@ -1,4 +1,4 @@
-﻿import { Briefcase, ChevronRight, Code2, Globe2, MessageCircle, Plus, Target, Trash2, X } from 'lucide-react'
+import { Briefcase, ChevronRight, Code2, Globe2, MessageCircle, Plus, Target, Trash2, X } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { ChatSession, ToolType } from '../../types'
 import { NATIVE_LANGS, PROGRAMMING_LANGUAGES, TARGET_LANGS } from '../../types'
@@ -106,7 +106,7 @@ export default function ChatSidebar({
             className="flex flex-1 items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
           >
             <Plus size={15} />
-            Neuer Chat
+            Neues Gespräch
           </button>
 
           <button
@@ -186,7 +186,7 @@ export default function ChatSidebar({
           {sessions.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center gap-2 py-10 text-slate-400">
               <span className="text-xl font-semibold opacity-40">{TOOL_BADGE[currentToolType] ?? 'CHAT'}</span>
-              <p className="px-6 text-center text-xs">Noch keine Konversationen</p>
+              <p className="px-6 text-center text-xs">Noch keine Gespräche. Starte einen neuen Chat!</p>
             </div>
           ) : (
             <ul className="px-2">

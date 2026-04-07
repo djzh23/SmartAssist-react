@@ -41,8 +41,8 @@ export default function MessageList({
     return (
       <div className="flex-1 flex flex-col items-center justify-center gap-3 text-center p-8">
         <MessageCircle size={40} className="text-slate-200" />
-        <p className="text-slate-400 font-medium">Start a new conversation</p>
-        <p className="text-slate-300 text-sm">Type a message below or click "+ New Chat"</p>
+        <p className="text-slate-400 font-medium">Starte ein neues Gespräch</p>
+        <p className="text-slate-300 text-sm">Schreib eine Nachricht unten oder tippe auf Neues Gespräch</p>
       </div>
     )
   }

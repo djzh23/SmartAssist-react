@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { SignInButton, SignUpButton, useUser } from '@clerk/clerk-react'
-import { Check, Play, Send } from 'lucide-react'
+import { Check, Loader2, Play, Send } from 'lucide-react'
 import { askAgent } from '../api/client'
+import LearningResponse from '../components/chat/LearningResponse'
+import { parseLearningResponse } from '../utils/parseLearningResponse'
 import '../styles/landing.css'
 
 // ── Navbar ───────────────────────────────────────────────────────────────────
@@ -21,16 +23,16 @@ function LandingNav() {
             href="/pricing"
             className="hidden text-sm font-medium text-slate-600 transition-colors hover:text-slate-900 sm:block"
           >
-            Pricing
+            Preise
           </a>
           <SignInButton mode="modal" fallbackRedirectUrl="/chat">
             <button className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:border-slate-400">
-              Sign in
+              Anmelden
             </button>
           </SignInButton>
           <SignUpButton mode="modal" fallbackRedirectUrl="/chat">
             <button className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-hover">
-              Get started free
+              Jetzt starten
             </button>
           </SignUpButton>
         </div>
@@ -111,7 +113,7 @@ function ChatMockup() {
         {/* Input bar */}
         <div className="flex items-center gap-2 border-t border-slate-100 bg-white px-3 py-2.5">
           <div className="flex-1 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-400">
-            Type a message...
+            Schreib eine Nachricht…
           </div>
           <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-primary">
             <Send size={12} className="text-white" />
@@ -149,27 +151,26 @@ function HeroSection() {
         {/* Left: copy */}
         <div>
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-cyan-200 bg-cyan-50 px-4 py-1.5 text-xs font-semibold text-cyan-700">
-            ✨ Powered by Claude AI
+            ✨ Angetrieben von Claude KI
           </div>
 
           <h1 className="mb-4 text-[clamp(36px,5vw,56px)] font-bold leading-[1.1] text-slate-800">
-            Your AI Assistant
+            Dein intelligenter
             <br />
-            <span className="text-primary">That Actually
-              <br />
-              Understands You
+            <span className="text-primary">KI Assistent
             </span>
           </h1>
 
           <p className="mb-8 max-w-[480px] text-lg leading-relaxed text-slate-500">
-            SmartAssist combines powerful AI tools — weather, language learning,
-            job analysis, and more — into one beautiful chat experience.
+            SmartAssist vereint leistungsstarke KI Werkzeuge —
+            Wetter, Sprachenlernen, Stellenanalyse und vieles mehr —
+            in einer einzigen übersichtlichen Oberfläche.
           </p>
 
           <div className="mb-6 flex flex-wrap items-center gap-4">
             <SignUpButton mode="modal" fallbackRedirectUrl="/chat">
               <button className="flex h-12 items-center gap-2 rounded-xl bg-primary px-7 text-base font-semibold text-white shadow-lg shadow-cyan-200/60 transition-colors hover:bg-primary-hover">
-                Get started free →
+                Jetzt kostenlos starten →
               </button>
             </SignUpButton>
             <a
@@ -177,12 +178,12 @@ function HeroSection() {
               className="flex h-12 items-center gap-2 rounded-xl border border-slate-300 px-6 text-base font-medium text-slate-700 transition-colors hover:border-slate-400"
             >
               <Play size={16} className="text-slate-500" />
-              Watch demo
+              Demo ansehen
             </a>
           </div>
 
           <p className="text-sm text-slate-400">
-            ★★★★★&nbsp;&nbsp;Trusted by developers · Free to start · No credit card
+            ★★★★★&nbsp;&nbsp;Von Entwicklern geschätzt · Kostenlos starten · Keine Kreditkarte
           </p>
         </div>
 
@@ -201,33 +202,33 @@ const FEATURES = [
   {
     icon: '🌤️',
     iconBg: 'bg-blue-50',
-    title: 'Real-time Weather',
-    desc: 'Get accurate weather for any city worldwide. Ask naturally — no commands needed.',
+    title: 'Wetter in Echtzeit',
+    desc: 'Präzises Wetter für jede Stadt weltweit. Einfach fragen, ganz ohne Kommandos.',
     chip: 'Wie ist das Wetter in Casablanca?',
     highlight: false,
   },
   {
     icon: '🌍',
     iconBg: 'bg-cyan-50',
-    title: 'Language Learning Mode',
-    desc: 'Chat in your language, learn a new one. AI translates and corrects you naturally.',
-    chip: 'Hallo → ¡Hola! + grammar tip',
+    title: 'Sprachenlernen',
+    desc: 'Chatte in deiner Sprache und lerne eine neue. Die KI übersetzt und korrigiert dich natürlich.',
+    chip: 'Hallo → ¡Hola! + Grammatikhinweis',
     highlight: true,
-    badge: 'Most Popular',
+    badge: 'Beliebt',
   },
   {
     icon: '💼',
     iconBg: 'bg-emerald-50',
-    title: 'Job Analyzer',
-    desc: 'Paste any job posting and get a clear summary, CV tips, and keywords to stand out.',
-    chip: 'Analyze this job: [paste text]',
+    title: 'Stellenanalyse',
+    desc: 'Füge eine Stellenanzeige ein und erhalte eine klare Zusammenfassung, Lebenslauftipps und Keywords.',
+    chip: 'Analysiere diese Stelle: [Text einfügen]',
     highlight: false,
   },
   {
     icon: '📝',
     iconBg: 'bg-amber-50',
-    title: 'Smart Summaries',
-    desc: 'Summarize any text in seconds. Perfect for long articles, emails, or documents.',
+    title: 'Smarte Zusammenfassungen',
+    desc: 'Fasse lange Texte in Sekunden zusammen. Ideal für Artikel, E Mails oder Dokumente.',
     chip: 'Fasse diesen Artikel zusammen: ...',
     highlight: false,
   },
@@ -239,9 +240,9 @@ function FeaturesSection() {
       <div className="mx-auto max-w-[1100px]">
         <div className="mb-12 text-center">
           <h2 className="mb-3 text-3xl font-bold text-slate-800">
-            Everything you need, nothing you don't
+            Alles was du brauchst, nichts was du nicht brauchst
           </h2>
-          <p className="text-slate-500">Four powerful tools, one beautiful interface</p>
+          <p className="text-slate-500">Vier starke Werkzeuge, eine klare Oberfläche</p>
         </div>
 
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
@@ -283,21 +284,46 @@ function FeaturesSection() {
 interface DemoMessage {
   role: 'user' | 'assistant'
   text: string
+  ts?: string
 }
 
 const DEMO_CHIPS = [
-  { emoji: '🌤️', label: 'Weather in Berlin?' },
-  { emoji: '🌍', label: 'Teach me Spanish' },
-  { emoji: '💼', label: 'Analyze a job posting' },
-  { emoji: '😄', label: 'Tell me a joke' },
+  { emoji: '🌤️', label: 'Wie ist das Wetter in Berlin?' },
+  { emoji: '🌍', label: 'Bring mir Spanisch bei' },
+  { emoji: '💼', label: 'Analysiere diese Stellenausschreibung' },
+  { emoji: '😄', label: 'Erzähl mir einen Witz' },
 ] as const
+
+function DemoAssistantBubble({ text }: { text: string }) {
+  const parsed = parseLearningResponse(text)
+  if (parsed?.isStructured) {
+    return (
+      <LearningResponse
+        data={{
+          targetLanguageText: parsed.targetText,
+          nativeLanguageText: parsed.translationText,
+          learnTip: parsed.tipText ?? undefined,
+        }}
+        targetLang="Spanisch"
+        nativeLang="Deutsch"
+        targetLangCode="es"
+        timestamp={new Date().toISOString()}
+      />
+    )
+  }
+  return (
+    <div className="max-w-[min(100%,520px)] break-words rounded-2xl rounded-bl-sm bg-slate-100 px-4 py-2.5 text-sm text-slate-800">
+      <span className="whitespace-pre-wrap">{text}</span>
+    </div>
+  )
+}
 
 function LiveDemoSection() {
   const [messages, setMessages] = useState<DemoMessage[]>([])
   const [count, setCount] = useState(0)
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
-  const sessionId = useRef('demo_' + Math.random().toString(36).substring(2, 8))
+  const sessionId = useRef(`demo_${Math.random().toString(36).substring(2, 10)}`)
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -313,13 +339,35 @@ function LiveDemoSection() {
     setLoading(true)
 
     try {
-      const res = await askAgent({ message: msg, sessionId: sessionId.current })
-      setMessages(prev => [...prev, { role: 'assistant', text: res.reply }])
+      const spanischDemo =
+        /spanisch|spanish|bring mir|sprach|lerne/i.test(msg) || msg === DEMO_CHIPS[1].label
+
+      const res = await askAgent({
+        message: msg,
+        sessionId: sessionId.current,
+        toolType: spanischDemo ? 'language' : 'general',
+        ...(spanischDemo
+          ? {
+              languageLearningMode: true,
+              nativeLanguage: 'Deutsch',
+              targetLanguage: 'Spanisch',
+              nativeLanguageCode: 'de',
+              targetLanguageCode: 'es',
+              level: 'adaptive',
+              learningGoal: 'Kurze Sätze, Zielsprache und Übersetzung',
+            }
+          : {}),
+      })
+      const ts = new Date().toISOString()
+      setMessages(prev => [...prev, { role: 'assistant', text: res.reply, ts }])
       setCount(c => c + 1)
     } catch {
       setMessages(prev => [
         ...prev,
-        { role: 'assistant', text: 'Something went wrong. Please try again.' },
+        {
+          role: 'assistant',
+          text: 'Etwas ist schiefgelaufen. Bitte versuche es erneut.',
+        },
       ])
     } finally {
       setLoading(false)
@@ -332,39 +380,36 @@ function LiveDemoSection() {
     <section id="demo" className="px-6 py-20" style={{ background: '#F8F7FF' }}>
       <div className="mx-auto max-w-[600px]">
         <div className="mb-8 text-center">
-          <h2 className="mb-3 text-3xl font-bold text-slate-800">Try it right now</h2>
-          <p className="text-slate-500">No account needed for your first 2 messages</p>
+          <h2 className="mb-3 text-3xl font-bold text-slate-800">Live testen</h2>
+          <p className="text-slate-500">
+            Zwei kostenlose Nachrichten ohne Konto. Danach einfach registrieren und mit allen Werkzeugen weitermachen.
+          </p>
         </div>
 
         <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-lg">
-          {/* Header */}
           <div className="flex items-center border-b border-slate-100 px-5 py-4">
-            <span className="font-bold text-slate-800">⚡ Live Demo</span>
+            <span className="font-bold text-slate-800">⚡ Live testen</span>
             <div className="ml-auto flex items-center gap-1.5">
               <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
-              <span className="text-xs text-slate-400">Active</span>
+              <span className="text-xs text-slate-400">Aktiv</span>
             </div>
           </div>
 
-          {/* Messages */}
           <div className="max-h-[320px] min-h-[200px] space-y-4 overflow-y-auto p-5">
             {messages.length === 0 && !loading && (
               <p className="pt-8 text-center text-sm text-slate-400">
-                Send a message to get started...
+                Schreib eine kurze Nachricht und sieh, wie SmartAssist antwortet. Tippe unten oder wähle einen Vorschlag.
               </p>
             )}
             {messages.map((m, i) => (
-              <div key={i} className={m.role === 'user' ? 'flex justify-end' : 'flex'}>
-                <div
-                  className={[
-                    'max-w-[80%] rounded-2xl px-4 py-2.5 text-sm',
-                    m.role === 'user'
-                      ? 'rounded-br-sm bg-primary text-white'
-                      : 'rounded-bl-sm bg-slate-100 text-slate-800',
-                  ].join(' ')}
-                >
-                  {m.text}
-                </div>
+              <div key={`${m.role}-${i}-${m.ts ?? ''}`} className={m.role === 'user' ? 'flex justify-end' : 'flex'}>
+                {m.role === 'user' ? (
+                  <div className="max-w-[85%] break-words rounded-2xl rounded-br-sm bg-primary px-4 py-2.5 text-sm text-white">
+                    <span className="whitespace-pre-wrap">{m.text}</span>
+                  </div>
+                ) : (
+                  <DemoAssistantBubble text={m.text} />
+                )}
               </div>
             ))}
             {loading && (
@@ -379,12 +424,12 @@ function LiveDemoSection() {
             <div ref={bottomRef} />
           </div>
 
-          {/* Suggestion chips */}
           {!atLimit && messages.length === 0 && (
             <div className="flex flex-wrap gap-2 px-5 pb-3">
               {DEMO_CHIPS.map(c => (
                 <button
                   key={c.label}
+                  type="button"
                   onClick={() => setInput(c.label)}
                   className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-600 transition-colors hover:border-cyan-200 hover:bg-cyan-50 hover:text-cyan-700"
                 >
@@ -395,17 +440,27 @@ function LiveDemoSection() {
             </div>
           )}
 
-          {/* Input / limit prompt */}
           {atLimit ? (
             <div className="border-t border-slate-100 px-5 py-5 text-center">
-              <p className="mb-3 text-sm text-slate-600">
-                You've used your 2 demo messages! Sign up free to get 20 messages/day →
+              <p className="mb-2 text-sm font-medium text-slate-800">
+                Das waren deine zwei Demo Nachrichten
+              </p>
+              <p className="mb-4 text-sm leading-relaxed text-slate-600">
+                Mit einem kostenlosen Konto erhältst du täglich 20 Nachrichten, alle Werkzeuge und deinen Verlauf im Browser.
               </p>
               <SignUpButton mode="modal" fallbackRedirectUrl="/chat">
-                <button className="rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-hover">
-                  Create free account
+                <button className="mb-3 w-full rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-hover sm:w-auto">
+                  Kostenlos registrieren
                 </button>
               </SignUpButton>
+              <p className="text-xs text-slate-400">
+                Bereits Konto?{' '}
+                <SignInButton mode="modal" fallbackRedirectUrl="/chat">
+                  <button type="button" className="font-medium text-primary hover:underline">
+                    Anmelden
+                  </button>
+                </SignInButton>
+              </p>
             </div>
           ) : (
             <div className="flex gap-2 border-t border-slate-100 px-4 py-3">
@@ -414,18 +469,23 @@ function LiveDemoSection() {
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={e => {
-                  if (e.key === 'Enter') void send(input)
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault()
+                    void send(input)
+                  }
                 }}
-                placeholder="Type a message..."
+                placeholder="Schreib eine Nachricht…"
                 disabled={loading}
                 className="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary/20 disabled:opacity-50"
               />
               <button
+                type="button"
                 onClick={() => void send(input)}
                 disabled={loading || !input.trim()}
-                className="flex-shrink-0 rounded-xl bg-primary px-4 py-2.5 text-white transition-colors hover:bg-primary-hover disabled:opacity-50"
+                className="flex h-10 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-primary text-white transition-colors hover:bg-primary-hover disabled:opacity-50"
+                title="Senden"
               >
-                <Send size={16} />
+                {loading ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
               </button>
             </div>
           )}
@@ -441,20 +501,20 @@ const STEPS = [
   {
     num: '1',
     icon: '🔑',
-    title: 'Create free account',
-    text: 'Sign up with Google in one click. No credit card required.',
+    title: 'Kostenloses Konto erstellen',
+    text: 'Melde dich mit einem Klick über Google an. Keine Kreditkarte nötig.',
   },
   {
     num: '2',
     icon: '💬',
-    title: 'Choose your tool',
-    text: 'Pick from Weather, Language Learning, Job Analyzer, and more.',
+    title: 'Werkzeug auswählen',
+    text: 'Wähle aus Wetter, Sprachen lernen, Stellenanalyse und mehr.',
   },
   {
     num: '3',
     icon: '✨',
-    title: 'Get smart answers',
-    text: 'The AI uses the right tool automatically. Just chat naturally.',
+    title: 'Smarte Antworten erhalten',
+    text: 'Die KI wählt das passende Werkzeug automatisch aus. Einfach drauflosschreiben.',
   },
 ] as const
 
@@ -463,7 +523,7 @@ function HowItWorksSection() {
     <section className="bg-white px-6 py-20">
       <div className="mx-auto max-w-[900px]">
         <div className="mb-12 text-center">
-          <h2 className="text-3xl font-bold text-slate-800">Get started in 30 seconds</h2>
+          <h2 className="text-3xl font-bold text-slate-800">In 30 Sekunden startklar</h2>
         </div>
 
         <div className="relative grid grid-cols-1 gap-10 md:grid-cols-3">
@@ -491,19 +551,19 @@ function HowItWorksSection() {
 const PREVIEW_PLANS = [
   {
     id: 'free',
-    name: 'Free',
+    name: 'Kostenlos',
     price: '0 €',
-    period: '/forever',
+    period: '/für immer',
     icon: '⚡',
     borderClass: 'border-slate-200',
     headerBg: 'bg-slate-50',
     features: [
-      '2 responses without login',
-      '20 responses/day after login',
-      'All tools',
-      'Browser session memory',
+      '2 Antworten ohne Anmeldung',
+      '20 Antworten pro Tag nach Login',
+      'Alle Werkzeuge',
+      'Sitzungsspeicher im Browser',
     ],
-    cta: 'Get started free',
+    cta: 'Kostenlos starten',
     ctaClass: 'border border-slate-300 bg-white text-slate-600 hover:border-slate-400',
     useSignUp: true,
     scale: false,
@@ -512,19 +572,19 @@ const PREVIEW_PLANS = [
     id: 'premium',
     name: 'Premium',
     price: '4,99 €',
-    period: '/month',
+    period: '/pro Monat',
     icon: '✨',
     borderClass: 'border-primary border-2',
     headerBg: 'bg-cyan-50',
-    badge: 'MOST POPULAR',
+    badge: 'Am beliebtesten',
     features: [
-      'Everything in Free',
-      '200 responses/day',
-      'Job Analyzer tool',
+      'Alles aus Kostenlos',
+      '200 Antworten pro Tag',
+      'Stellenanalyse Werkzeug',
       'ElevenLabs Audio',
-      'Conversation history (30 days)',
+      'Gesprächsverlauf (30 Tage)',
     ],
-    cta: 'Start Premium',
+    cta: 'Premium starten',
     ctaClass: 'bg-primary text-white hover:bg-primary-hover',
     useSignUp: false,
     href: '/pricing',
@@ -534,17 +594,17 @@ const PREVIEW_PLANS = [
     id: 'pro',
     name: 'Pro',
     price: '9,99 €',
-    period: '/month',
+    period: '/pro Monat',
     icon: '👑',
     borderClass: 'border-amber-400',
     headerBg: 'bg-amber-50',
     features: [
-      'Everything in Premium',
-      'Unlimited responses',
-      'Full conversation history',
-      'API access (coming soon)',
+      'Alles aus Premium',
+      'Unbegrenzte Antworten',
+      'Voller Gesprächsverlauf',
+      'API Zugang (demnächst)',
     ],
-    cta: 'Go Pro',
+    cta: 'Pro werden',
     ctaClass: 'bg-amber-500 text-white hover:bg-amber-600',
     useSignUp: false,
     href: '/pricing',
@@ -558,9 +618,9 @@ function PricingPreviewSection() {
       <div className="mx-auto max-w-[1000px]">
         <div className="mb-10 text-center">
           <h2 className="mb-3 text-3xl font-bold text-slate-800">
-            Simple, transparent pricing
+            Einfache, transparente Preise
           </h2>
-          <p className="text-slate-500">Start free. Upgrade when you're ready.</p>
+          <p className="text-slate-500">Kostenlos starten. Upgrade, wenn du soweit bist.</p>
         </div>
 
         <div className="grid grid-cols-1 items-center gap-6 md:grid-cols-3">
@@ -622,7 +682,7 @@ function PricingPreviewSection() {
         </div>
 
         <p className="mt-8 text-center text-sm text-slate-400">
-          All plans include access to all tools. Cancel anytime.
+          Alle Pläne enthalten alle Werkzeuge. Jederzeit kündbar.
         </p>
       </div>
     </section>
@@ -639,13 +699,13 @@ function FinalCtaSection() {
     >
       <div className="mx-auto max-w-[600px]">
         <div className="mb-6 text-6xl">⚡</div>
-        <h2 className="mb-4 text-3xl font-bold">Start chatting smarter today</h2>
+        <h2 className="mb-4 text-3xl font-bold">Starte noch heute smarter</h2>
         <p className="mb-8 text-lg text-white/80">
-          Join thousands of users who save time with SmartAssist
+          Schließ dich Tausenden von Nutzern an, die täglich Zeit mit SmartAssist sparen.
         </p>
         <SignUpButton mode="modal" fallbackRedirectUrl="/chat">
           <button className="rounded-xl bg-white px-8 py-3.5 text-base font-bold text-primary shadow-xl transition-colors hover:bg-slate-100">
-            Get started free — it's free forever
+            Kostenlos starten, für immer
           </button>
         </SignUpButton>
       </div>
@@ -665,7 +725,7 @@ function FooterSection() {
               <span className="text-xl">⚡</span>
               <span className="text-lg font-bold text-white">SmartAssist</span>
             </div>
-            <p className="text-sm text-slate-400">AI tools for everyone</p>
+            <p className="text-sm text-slate-400">KI Werkzeuge für alle</p>
           </div>
           <div className="flex items-center gap-6 text-sm text-slate-400">
             <a href="#" className="transition-colors hover:text-white">Privacy</a>
@@ -675,9 +735,9 @@ function FooterSection() {
         </div>
         <div className="border-t border-white/10 pt-6 text-center">
           <p className="mb-1 text-xs text-slate-500">
-            Built with ♥ using .NET 9 · React · Claude AI
+            Built with ♥ using .NET 9 · React · Claude KI
           </p>
-          <p className="text-xs text-slate-600">© 2025 SmartAssist. All rights reserved.</p>
+          <p className="text-xs text-slate-600">© 2026 SmartAssist. Alle Rechte vorbehalten.</p>
         </div>
       </div>
     </footer>
