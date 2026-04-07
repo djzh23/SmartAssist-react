@@ -43,7 +43,12 @@ export default function MessageBubble({
     return (
       <div className="flex flex-col items-start gap-1 animate-slide-up w-full">
         <JobAnalysisCard text={msg.text} />
-        <span className="text-[11px] text-slate-400 pl-1">{time}</span>
+        <div className="flex items-center gap-2 pl-1">
+          <span className="rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[11px] font-medium text-indigo-600">
+            Job Analyzer
+          </span>
+          <span className="text-[11px] text-slate-400">{time}</span>
+        </div>
       </div>
     )
   }
