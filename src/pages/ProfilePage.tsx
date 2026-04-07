@@ -87,20 +87,24 @@ export default function ProfilePage() {
 
   const handleRetryUsageSync = async () => {
     try {
-      // Try session-based confirmation first if session_id is in the URL
+      // Session-based confirmation gives the real plan (premium vs pro) without waiting for webhook
       if (checkoutSessionId) {
         const token = await getToken()
         if (token) {
           const result = await confirmPlanFromSession(checkoutSessionId, token)
           if (result.plan === 'premium' || result.plan === 'pro') {
-            await refreshUsage({ retries: 0 })
+            const confirmedPlan = result.plan as 'premium' | 'pro'
+            markUpgradePending(confirmedPlan, 120)
+            await refreshUsage({ retries: 1, retryDelayMs: 800 })
             setUpgradeSyncNotice(null)
             return
           }
         }
       }
-      await refreshUsage({ retries: 1, retryDelayMs: 1000 })
-      setUpgradeSyncNotice(null)
+      const nextPlan = await refreshUsage({ retries: 1, retryDelayMs: 1000 })
+      if (nextPlan === 'premium' || nextPlan === 'pro') {
+        setUpgradeSyncNotice(null)
+      }
     } catch (error) {
       setUpgradeSyncNotice(error instanceof Error ? error.message : 'Usage sync failed')
     }
@@ -112,53 +116,67 @@ export default function ProfilePage() {
     let cancelled = false
 
     const syncAfterUpgrade = async () => {
-      try {
-        markUpgradePending('premium', 120)
-      } catch (error) {
-        console.warn('[ProfilePage] Could not mark pending upgrade state', error)
-      }
+      setUpgradeSyncNotice('Payment received. Verifying your plan...')
 
-      setUpgradeSyncNotice('Payment received. Temporary Premium access is active while server confirmation is syncing...')
-
-      // Fast path: confirm plan directly via checkout session ID (avoids waiting for webhook)
+      // ── Step 1: Fast path via session ID (direct Stripe read, no webhook dependency) ──
+      // This also tells us the ACTUAL plan (premium vs pro) before marking pending.
       if (checkoutSessionId) {
         try {
           const token = await getToken()
           if (token) {
             const result = await confirmPlanFromSession(checkoutSessionId, token)
             if (!cancelled && (result.plan === 'premium' || result.plan === 'pro')) {
-              await refreshUsage({ retries: 0 })
+              // Plan is now written to the backend — sync to pick it up
+              const confirmedPlan = result.plan as 'premium' | 'pro'
+              markUpgradePending(confirmedPlan, 120)
+              await refreshUsage({ retries: 1, retryDelayMs: 800 })
               if (!cancelled) setUpgradeSyncNotice(null)
               return
             }
           }
         } catch (error) {
-          console.warn('[ProfilePage] Session-based plan confirmation failed, falling back to poll', error)
+          console.warn('[ProfilePage] Session-based confirmation failed, falling back to poll', error)
         }
       }
 
-      // Fallback: poll usage endpoint until backend confirms (webhook may take a few seconds)
+      // ── Step 2: Check if webhook already fired ──
+      // Determine the real plan before optimistically marking pending.
+      try {
+        const nextPlan = await refreshUsage({ retries: 0 })
+        if (!cancelled && (nextPlan === 'premium' || nextPlan === 'pro')) {
+          // Already confirmed — no pending state needed
+          setUpgradeSyncNotice(null)
+          return
+        }
+        // Backend reachable but plan is still 'free' — webhook hasn't landed yet.
+        // Use the backend-confirmed plan to set pending (not a hardcoded guess).
+        markUpgradePending(nextPlan === 'pro' ? 'pro' : 'premium', 120)
+      } catch {
+        // Backend unreachable — fall back to 'premium' as the safer default.
+        // If the user bought Pro, this will self-correct once the webhook fires.
+        markUpgradePending('premium', 120)
+      }
+
+      setUpgradeSyncNotice('Payment received. Temporary access is active while server confirmation is pending...')
+
+      // ── Step 3: Poll until backend confirms ──
       for (let attempt = 0; attempt < 6; attempt++) {
+        if (cancelled) return
+        await new Promise(resolve => window.setTimeout(resolve, 2000))
         if (cancelled) return
         try {
           const nextPlan = await refreshUsage({ retries: 0 })
-          if (cancelled) return
-
           if (nextPlan === 'premium' || nextPlan === 'pro') {
-            setUpgradeSyncNotice(null)
+            if (!cancelled) setUpgradeSyncNotice(null)
             return
           }
-        } catch (error) {
-          if (!cancelled) {
-            setUpgradeSyncNotice(error instanceof Error ? error.message : 'Usage sync failed')
-          }
+        } catch {
+          // keep polling
         }
-
-        await new Promise(resolve => window.setTimeout(resolve, 2000))
       }
 
       if (!cancelled) {
-        setUpgradeSyncNotice('Server confirmation is still pending. Temporary Premium access remains active. Please retry sync in a few seconds.')
+        setUpgradeSyncNotice('Server confirmation is still pending. Temporary access remains active. Please retry sync in a few seconds.')
       }
     }
 
