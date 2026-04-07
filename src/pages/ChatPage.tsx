@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { AlertCircle, X } from 'lucide-react'
 import type { ToolType } from '../types'
@@ -14,18 +14,23 @@ import { useUserPlan, dispatchServerUsage } from '../hooks/useUserPlan'
 import { sanitizeTechnicalContext } from '../utils/cvTechnicalContext'
 
 const LANG_NAMES: Record<string, string> = {
-  de: 'German',
-  en: 'English',
-  es: 'Spanish',
-  fr: 'French',
-  it: 'Italian',
-  ar: 'Arabic',
-  pt: 'Portuguese',
+  de: 'Deutsch',
+  en: 'Englisch',
+  es: 'Spanisch',
+  fr: 'Französisch',
+  it: 'Italienisch',
+  ar: 'Arabisch',
+  pt: 'Portugiesisch',
+}
+
+function apiToolTypeForChat(tool: ToolType): string | undefined {
+  if (tool === 'general') return undefined
+  if (tool === 'interview') return 'interviewprep'
+  return tool
 }
 
 const INTERVIEW_PROMPT_LIMIT = 3900
 const JOB_ANALYZER_PROMPT_LIMIT = 3900
-const LANGUAGE_PROMPT_LIMIT = 3900
 const LS_CONTEXT = 'smartassist_context_by_tool_and_session'
 const LS_CONTEXT_DISMISSED = 'smartassist_context_modal_dismissed'
 
@@ -344,35 +349,6 @@ function buildJobAnalyzerPrompt(userMessage: string, setup: JobAnalyzerPromptCon
     : prompt.slice(0, JOB_ANALYZER_PROMPT_LIMIT - 1)
 }
 
-function buildLanguagePrompt(userMessage: string, targetLanguage: string, nativeLanguage: string): string {
-  const baseInstruction = [
-    `[SYSTEM - LANGUAGE COACH] Teach ${targetLanguage} to a learner whose native language is ${nativeLanguage}.`,
-    'First detect user intent: translation, correction, grammar explanation, vocabulary, or conversation practice.',
-    `Use ${targetLanguage} for examples and corrected phrases.`,
-    `Use ${nativeLanguage} for explanations and tips.`,
-    'Return a short markdown response with max 3 sections total.',
-    'Section 1 is always required: ## Korrektur',
-    'Then choose only the most relevant 1 to 2 sections from:',
-    '- ## Antwort in Zielsprache',
-    '- ## Erklärung',
-    '- ## Vokabeln',
-    '- ## Mini-Übung',
-    'Rules:',
-    '- Keep the full response concise, usually 80 to 140 words unless user requests depth.',
-    '- Always provide a real correction. If sentence is already correct, state that clearly and suggest one stronger alternative.',
-    '- Do not use placeholders such as "Keine Angaben".',
-    '- Include vocabulary only when useful for the current intent, max 3 entries.',
-    '- If user asks a direct translation, prioritize answer + correction and skip unrelated sections.',
-  ].join('\n')
-
-  const safeUser = userMessage.trim().slice(0, 1500) || 'Bitte starte mit einer kurzen Übung auf meinem aktuellen Niveau.'
-  const prompt = `${baseInstruction}\n\nUSER MESSAGE:\n${safeUser}`
-
-  return prompt.length <= LANGUAGE_PROMPT_LIMIT
-    ? prompt
-    : prompt.slice(0, LANGUAGE_PROMPT_LIMIT - 1)
-}
-
 export default function ChatPage() {
   const [searchParams] = useSearchParams()
   const rawToolParam = (searchParams.get('tool') ?? 'general').toLowerCase()
@@ -420,8 +396,8 @@ export default function ChatPage() {
 
     setCheckoutBanner(
       upgraded
-        ? { type: 'success', text: 'Upgrade successful. Your plan has been updated.' }
-        : { type: 'info', text: 'Checkout was cancelled.' },
+        ? { type: 'success', text: 'Upgrade erfolgreich. Dein Plan wurde aktualisiert.' }
+        : { type: 'info', text: 'Checkout wurde abgebrochen.' },
     )
 
     const timer = window.setTimeout(() => setCheckoutBanner(null), 7000)
@@ -619,9 +595,7 @@ export default function ChatPage() {
       ? buildInterviewPrompt(outgoingText, interviewLangName, interviewSetup)
       : (store.currentToolType === 'jobanalyzer'
         ? buildJobAnalyzerPrompt(outgoingText, jobAnalyzerSetup)
-        : (isLanguage
-          ? buildLanguagePrompt(outgoingText, targetName, nativeName)
-          : outgoingText))
+        : outgoingText)
 
     const streamingMsgId = crypto.randomUUID()
     store.addMessage(sessionId, { id: streamingMsgId, text: '', isUser: false })
@@ -634,13 +608,14 @@ export default function ChatPage() {
         {
           message: apiMessage,
           sessionId,
+          toolType: apiToolTypeForChat(store.currentToolType),
           languageLearningMode: llMode,
           targetLanguage: llMode ? targetName : undefined,
           nativeLanguage: llMode ? nativeName : undefined,
           targetLanguageCode: llMode ? targetLang : undefined,
           nativeLanguageCode: llMode ? nativeLang : undefined,
           level: llMode ? 'adaptive' : undefined,
-          learningGoal: llMode ? `Learn ${targetName} with corrections, tips, and short practice tasks.` : undefined,
+          learningGoal: llMode ? 'Kurze Sätze, Zielsprache und Übersetzung' : undefined,
           programmingMode: isProgramming ? true : undefined,
           programmingLanguage: isProgramming ? progMeta?.label : undefined,
           interviewMode: isInterview ? true : undefined,
@@ -665,7 +640,7 @@ export default function ChatPage() {
       if (sendError instanceof UsageLimitError) {
         setShowLimitModal(true)
       } else {
-        setError(sendError instanceof Error ? sendError.message : 'Etwas ist schiefgelaufen.')
+        setError(sendError instanceof Error ? sendError.message : 'Etwas ist schiefgelaufen. Bitte versuche es erneut.')
       }
     } finally {
       setIsLoading(false)
@@ -783,12 +758,12 @@ export default function ChatPage() {
           <div className="flex-shrink-0 px-4 pb-0 pt-3">
             <div className="mx-auto flex max-w-3xl flex-wrap items-center gap-2">
               <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-50 px-3 py-1 text-xs font-medium text-sky-700">
-                Interview Coach
+                Vorstellungsgespräch
               </span>
 
               {activeContext?.hasCv && (
                 <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
-                  CV context active
+                  Lebenslauf Kontext aktiv
                 </span>
               )}
 

@@ -1,6 +1,7 @@
-import { GraduationCap, Languages, Lightbulb, Volume2 } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { Loader2, Square, Volume2, VolumeX } from 'lucide-react'
 import type { LearningData } from '../../types'
-import { speak } from '../../api/client'
+import { fetchSpeechBlob } from '../../api/client'
 
 interface Props {
   data: LearningData
@@ -11,52 +12,113 @@ interface Props {
 }
 
 export default function LearningResponse({ data, targetLang, nativeLang, targetLangCode, timestamp }: Props) {
-  const time = new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  const time = new Date(timestamp).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })
+  const [isLoadingAudio, setIsLoadingAudio] = useState(false)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [audioError, setAudioError] = useState(false)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const objectUrlRef = useRef<string | null>(null)
+
+  const stopAndCleanup = useCallback(() => {
+    const a = audioRef.current
+    if (a) {
+      a.pause()
+      audioRef.current = null
+    }
+    if (objectUrlRef.current) {
+      URL.revokeObjectURL(objectUrlRef.current)
+      objectUrlRef.current = null
+    }
+    setIsPlaying(false)
+  }, [])
+
+  useEffect(() => () => {
+    stopAndCleanup()
+  }, [stopAndCleanup])
+
+  const handleSpeak = async () => {
+    if (isPlaying) {
+      stopAndCleanup()
+      return
+    }
+
+    const text = data.targetLanguageText.trim()
+    if (!text) return
+
+    setIsLoadingAudio(true)
+    setAudioError(false)
+    try {
+      const blob = await fetchSpeechBlob(text.slice(0, 1200), targetLangCode)
+      stopAndCleanup()
+      const url = URL.createObjectURL(blob)
+      objectUrlRef.current = url
+      const audio = new Audio(url)
+      audioRef.current = audio
+      audio.onended = () => {
+        stopAndCleanup()
+      }
+      audio.onerror = () => {
+        stopAndCleanup()
+      }
+      setIsPlaying(true)
+      await audio.play()
+    } catch {
+      setAudioError(true)
+      window.setTimeout(() => setAudioError(false), 2000)
+    } finally {
+      setIsLoadingAudio(false)
+    }
+  }
 
   return (
-    <div className="flex animate-slide-up flex-col gap-2">
-      <div className="overflow-hidden rounded-xl border border-blue-200">
-        <div className="flex items-center justify-between border-b border-blue-200 bg-blue-100 px-3 py-2">
-          <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-blue-800">
-            <Languages size={12} />
-            <span>{targetLang}</span>
+    <div className="flex max-w-[520px] animate-slide-up flex-col gap-1.5">
+      <div className="learning-card-target group rounded-xl border-l-[3px] border-l-[#7C3AED] bg-[#F5F3FF] px-4 py-3.5 transition-transform duration-100 hover:translate-x-0.5">
+        <div className="mb-2 flex items-center justify-between">
+          <span className="text-[10px] font-bold uppercase tracking-[1.2px] text-slate-500">
+            {targetLang}
           </span>
           <button
-            onClick={() => speak(data.targetLanguageText, targetLangCode)}
-            className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-200 text-blue-700 transition-colors hover:bg-blue-600 hover:text-white"
+            type="button"
+            onClick={() => void handleSpeak()}
+            disabled={isLoadingAudio}
             title="Aussprache anhören"
+            className={[
+              'flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-sm transition-all duration-150',
+              'bg-[rgba(124,58,237,0.1)] text-[#7C3AED] hover:bg-[rgba(124,58,237,0.2)]',
+              isPlaying ? 'bg-[#7C3AED] text-white motion-safe:animate-pulse' : '',
+              isLoadingAudio ? 'cursor-wait opacity-60' : '',
+              audioError ? 'bg-red-100 text-red-600' : '',
+            ].join(' ')}
           >
-            <Volume2 size={13} />
+            {isLoadingAudio
+              ? <Loader2 size={15} className="animate-spin" />
+              : isPlaying
+                ? <Square size={13} fill="currentColor" />
+                : audioError
+                  ? <VolumeX size={15} />
+                  : <Volume2 size={15} />}
           </button>
         </div>
-        <div className="bg-blue-50 px-3 py-2.5 font-serif text-[15px] font-medium leading-relaxed tracking-[0.2px] text-sky-900">
+        <p className="font-serif text-lg font-medium leading-relaxed text-[#2D1B69]">
           {data.targetLanguageText}
-        </div>
+        </p>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-emerald-200">
-        <div className="border-b border-emerald-200 bg-emerald-100 px-3 py-2">
-          <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-emerald-800">
-            <GraduationCap size={12} />
-            <span>{nativeLang}</span>
-          </span>
+      <div className="learning-card-translation rounded-xl border-l-[3px] border-l-slate-300 bg-[#F9FAFB] px-4 py-3.5 transition-transform duration-100 hover:translate-x-0.5">
+        <div className="mb-2 text-[10px] font-bold uppercase tracking-[1.2px] text-slate-500">
+          {nativeLang}
         </div>
-        <div className="bg-emerald-50 px-3 py-2.5 text-sm italic leading-relaxed text-slate-600">
+        <p className="text-sm italic leading-relaxed text-slate-500">
           {data.nativeLanguageText}
-        </div>
+        </p>
       </div>
 
       {data.learnTip && (
-        <div className="overflow-hidden rounded-xl border border-amber-200">
-          <div className="border-b border-amber-200 bg-amber-100 px-3 py-2">
-            <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-amber-800">
-              <Lightbulb size={12} />
-              <span>Lernhinweis</span>
-            </span>
-          </div>
-          <div className="bg-amber-50 px-3 py-2.5 font-mono text-[12.5px] leading-relaxed text-amber-900">
+        <div className="learning-card-tip rounded-xl border-l-[3px] border-l-amber-500 bg-[#FFFBEB] px-3.5 py-2 transition-transform duration-100 hover:translate-x-0.5">
+          <p className="font-mono text-[13px] leading-snug text-amber-900">
+            <span className="mr-1" aria-hidden>💡</span>
             {data.learnTip}
-          </div>
+          </p>
         </div>
       )}
 

@@ -35,25 +35,25 @@ export const PROGRAMMING_LANGUAGES: ProgrammingLanguageMeta[] = [
 export interface LangOption { code: string; label: string }
 
 export const NATIVE_LANGS: LangOption[] = [
-  { code: 'de', label: 'German' },
-  { code: 'en', label: 'English' },
-  { code: 'fr', label: 'French' },
-  { code: 'ar', label: 'Arabic' },
+  { code: 'de', label: 'Deutsch' },
+  { code: 'en', label: 'Englisch' },
+  { code: 'fr', label: 'Französisch' },
+  { code: 'ar', label: 'Arabisch' },
 ]
 
 export const TARGET_LANGS: LangOption[] = [
-  { code: 'es', label: 'Spanish' },
-  { code: 'fr', label: 'French' },
-  { code: 'en', label: 'English' },
-  { code: 'it', label: 'Italian' },
-  { code: 'de', label: 'German' },
-  { code: 'ar', label: 'Arabic' },
-  { code: 'pt', label: 'Portuguese' },
+  { code: 'es', label: 'Spanisch' },
+  { code: 'fr', label: 'Französisch' },
+  { code: 'en', label: 'Englisch' },
+  { code: 'it', label: 'Italienisch' },
+  { code: 'de', label: 'Deutsch' },
+  { code: 'ar', label: 'Arabisch' },
+  { code: 'pt', label: 'Portugiesisch' },
 ]
 
 export const INTERVIEW_LANGS: LangOption[] = [
   { code: 'de', label: 'Deutsch' },
-  { code: 'en', label: 'English' },
+  { code: 'en', label: 'Englisch' },
 ]
 
 // ── Chat / session types ──────────────────────────────────
@@ -83,6 +83,8 @@ export interface ChatSession {
 export interface AgentRequest {
   message: string
   sessionId?: string
+  /** Backend tool: general, language, jobanalyzer, programming, interviewprep */
+  toolType?: string
   languageLearningMode?: boolean
   targetLanguage?: string
   nativeLanguage?: string

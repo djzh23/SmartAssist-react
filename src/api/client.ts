@@ -186,6 +186,24 @@ export async function generateSpeech(text: string, languageCode: string): Promis
   return res.arrayBuffer()
 }
 
+/** TTS via agent endpoint; throws on failure (fail loud). */
+export async function fetchSpeechBlob(text: string, languageCode: string): Promise<Blob> {
+  const res = await fetch(`${BASE}/api/agent/speak`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text, languageCode }),
+  })
+  if (!res.ok) {
+    let message = `Sprachausgabe fehlgeschlagen (${res.status})`
+    try {
+      const err = await res.json() as { error?: string }
+      if (err?.error) message = err.error
+    } catch { /* ignore */ }
+    throw new Error(message)
+  }
+  return res.blob()
+}
+
 // ── Browser TTS fallback ───────────────────────────────────────────────────
 export function speakWithBrowser(text: string, lang: string): void {
   if (!window.speechSynthesis) return

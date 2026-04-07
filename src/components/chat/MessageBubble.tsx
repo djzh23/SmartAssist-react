@@ -7,6 +7,7 @@ import ProgrammingResponse from './ProgrammingResponse'
 import InterviewResponse from './InterviewResponse'
 import CodeBlock from './CodeBlock'
 import { parseSegments } from '../../utils/markdownRenderer'
+import { parseLearningResponse } from '../../utils/parseLearningResponse'
 
 interface Props {
   msg: ChatMessage
@@ -31,6 +32,23 @@ export default function MessageBubble({
   const isJobAnalyzerReply = !msg.isUser && (toolType === 'jobanalyzer' || msg.toolUsed === 'analyze_job')
 
   if (!msg.isUser && toolType === 'language' && useLanguageCard) {
+    const structured = parseLearningResponse(msg.text)
+    if (structured?.isStructured) {
+      return (
+        <LearningResponse
+          data={{
+            targetLanguageText: structured.targetText,
+            nativeLanguageText: structured.translationText,
+            learnTip: structured.tipText ?? undefined,
+          }}
+          targetLang={targetLang}
+          nativeLang={nativeLang}
+          targetLangCode={targetLangCode}
+          timestamp={msg.timestamp}
+        />
+      )
+    }
+
     if (msg.learningData) {
       return (
         <LearningResponse
@@ -61,7 +79,7 @@ export default function MessageBubble({
         <div className="flex items-center gap-2 pl-1">
           <span className="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[11px] font-medium text-sky-600">
             <BriefcaseBusiness size={11} />
-            <span>Job Analyzer</span>
+            <span>Stellenanalyse</span>
           </span>
           <span className="text-[11px] text-slate-400">{time}</span>
         </div>
