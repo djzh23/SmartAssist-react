@@ -44,7 +44,7 @@ export default function AuthButton({ variant = 'full' }: Props) {
         )}
         <SignOutButton>
           <button className="w-full rounded-lg border border-rose-500/20 bg-rose-500/10 py-1.5 text-xs font-medium text-rose-300 transition-colors hover:bg-rose-500/20">
-            Sign out
+            Abmelden
           </button>
         </SignOutButton>
       </div>
@@ -55,7 +55,7 @@ export default function AuthButton({ variant = 'full' }: Props) {
     <div className="px-3 py-2">
       <SignInButton mode="modal">
         <button className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary py-2 text-xs font-semibold text-white transition-colors hover:bg-primary-hover">
-          🔐 Sign in
+          🔐 Anmelden
         </button>
       </SignInButton>
     </div>

@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@clerk/clerk-react'
 import { ArrowRight, BarChart2, Calendar, Crown, Loader2, Sparkles, Star, Zap } from 'lucide-react'
@@ -257,13 +257,13 @@ export default function ProfilePage() {
 
         {syncError && (
           <div className="flex items-center justify-between gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-            <span>Usage sync error: {syncError}</span>
+            <span>Verbrauchssync Fehler: {syncError}</span>
             <button
               onClick={() => void handleRetryUsageSync()}
               disabled={isSyncingUsage}
               className="rounded-lg border border-rose-300 bg-white px-3 py-1.5 text-xs font-semibold text-rose-700 disabled:opacity-60"
             >
-              {isSyncingUsage ? 'Retrying...' : 'Retry sync'}
+              {isSyncingUsage ? 'Wird wiederholt…' : 'Sync erneut'}
             </button>
           </div>
         )}
@@ -273,7 +273,7 @@ export default function ProfilePage() {
             onClick={() => navigate('/chat')}
             className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:border-slate-400"
           >
-            Go to Chat
+            Zum Chat
           </button>
         </div>
 
@@ -300,7 +300,7 @@ export default function ProfilePage() {
               {user.isSignedIn && (
                 <p className="mt-0.5 flex items-center gap-1 text-xs text-slate-400">
                   <Calendar size={11} />
-                  Signed in
+                  Angemeldet
                 </p>
               )}
             </div>
@@ -308,14 +308,14 @@ export default function ProfilePage() {
         </div>
 
         <div className="space-y-5 rounded-3xl border border-slate-200/90 bg-white/90 p-5 shadow-[0_10px_34px_rgba(15,23,42,0.08)] backdrop-blur">
-          <h2 className="text-xs font-bold uppercase tracking-[0.15em] text-slate-400">Your Usage Today</h2>
+          <h2 className="text-xs font-bold uppercase tracking-[0.15em] text-slate-400">Dein heutiger Verbrauch</h2>
           <UsageBar used={user.usageToday} limit={user.dailyLimit} />
 
           <div className="grid grid-cols-3 gap-3">
             {[
-              { icon: <BarChart2 size={14} className="text-sky-500" />, label: 'Total Responses', value: user.totalResponses },
-              { icon: <Calendar size={14} className="text-cyan-500" />, label: 'Days Active', value: user.daysActive },
-              { icon: <Star size={14} className="text-amber-500" />, label: 'Favorite Tool', value: user.favoriteTool ?? 'â€”' },
+              { icon: <BarChart2 size={14} className="text-sky-500" />, label: 'Antworten gesamt', value: user.totalResponses },
+              { icon: <Calendar size={14} className="text-cyan-500" />, label: 'Aktive Tage', value: user.daysActive },
+              { icon: <Star size={14} className="text-amber-500" />, label: 'Lieblingstool', value: user.favoriteTool ?? '—' },
             ].map(stat => (
               <div key={stat.label} className="rounded-2xl border border-slate-100 bg-slate-50/85 px-3 py-3">
                 <div className="mb-1 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
@@ -339,7 +339,7 @@ export default function ProfilePage() {
               <div>
                 <p className="font-bold text-slate-800">{planLabel}</p>
                 <p className="text-xs text-slate-500">
-                  {user.plan === 'free' ? '20 responses/day (after login)' : user.plan === 'premium' ? '200 responses/day' : 'Unlimited responses'}
+                  {user.plan === 'free' ? '20 Nachrichten pro Tag (nach Anmeldung)' : user.plan === 'premium' ? '200 Nachrichten pro Tag' : 'Unbegrenzte Nachrichten'}
                 </p>
               </div>
             </div>
@@ -360,7 +360,7 @@ export default function ProfilePage() {
                   opacity: portalLoading ? 0.7 : 1,
                 }}
               >
-                {portalLoading ? 'Opening...' : 'Manage Subscription â†’'}
+                {portalLoading ? 'Wird geöffnet…' : 'Abonnement verwalten →'}
               </button>
             )}
 
@@ -372,7 +372,7 @@ export default function ProfilePage() {
               onClick={() => navigate('/pricing')}
               className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-hover"
             >
-              {user.plan === 'free' ? 'Upgrade to Premium' : 'Upgrade to Pro'}
+              {user.plan === 'free' ? 'Premium werden' : 'Pro werden'}
               <ArrowRight size={14} />
             </button>
           )}

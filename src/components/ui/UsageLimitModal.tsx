@@ -66,19 +66,19 @@ export default function UsageLimitModal({ isOpen, isLoggedIn, userEmail, onClose
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-cyan-200 bg-cyan-50 text-cyan-700">
             <Rocket size={28} />
           </div>
-          <h2 className="text-xl font-bold text-slate-800">Limit erreicht</h2>
-          <p className="mt-1.5 text-sm text-slate-500">Upgrade, um weiter zu chatten</p>
+          <h2 className="text-xl font-bold text-slate-800">Du hast dein Limit erreicht</h2>
+          <p className="mt-1.5 text-sm text-slate-500">Melde dich an für mehr Möglichkeiten</p>
         </div>
 
         <div className="relative grid grid-cols-1 gap-3 px-6 pb-6 sm:grid-cols-2">
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
             <p className="mb-1 text-sm font-semibold text-slate-800">
-              {isLoggedIn ? 'Du bist eingeloggt' : 'Kostenlos einloggen'}
+              {isLoggedIn ? 'Du bist angemeldet' : 'Kostenlos anmelden'}
             </p>
             <ul className="mb-3 space-y-1">
               {!isLoggedIn && (
                 <li className="flex items-center gap-1.5 text-xs text-slate-600">
-                  <Check size={12} className="text-emerald-500" /> 20 Antworten pro Tag
+                  <Check size={12} className="text-emerald-500" /> 20 Nachrichten am Tag, für immer kostenlos
                 </li>
               )}
               <li className="flex items-center gap-1.5 text-xs text-slate-600">
@@ -91,7 +91,7 @@ export default function UsageLimitModal({ isOpen, isLoggedIn, userEmail, onClose
             {!isLoggedIn && (
               <SignInButton mode="modal" fallbackRedirectUrl="/chat">
                 <button className="w-full rounded-xl border border-slate-300 bg-white py-2 text-xs font-semibold text-slate-700 transition-colors hover:border-slate-400">
-                  Mit Google einloggen
+                  Mit Google anmelden
                 </button>
               </SignInButton>
             )}
@@ -102,13 +102,10 @@ export default function UsageLimitModal({ isOpen, isLoggedIn, userEmail, onClose
               className="pointer-events-none absolute inset-0 opacity-40"
               style={{ backgroundImage: 'radial-gradient(circle at 80% 0%, rgba(6,182,212,0.18), transparent 55%)' }}
             />
-            <p className="relative mb-1 text-sm font-semibold text-slate-800">Premium</p>
+            <p className="relative mb-1 text-sm font-semibold text-slate-800">Premium werden</p>
             <ul className="relative mb-3 space-y-1">
               <li className="flex items-center gap-1.5 text-xs text-slate-700">
-                <Check size={12} className="text-emerald-500" /> 200 Antworten pro Tag
-              </li>
-              <li className="flex items-center gap-1.5 text-xs text-slate-700">
-                <Check size={12} className="text-emerald-500" /> Alle Tools freigeschaltet
+                <Check size={12} className="text-emerald-500" /> 200 Nachrichten am Tag, alle Werkzeuge
               </li>
               <li className="flex items-center gap-1.5 text-xs text-slate-700">
                 <Check size={12} className="text-emerald-500" /> 4,99 € pro Monat
@@ -119,7 +116,7 @@ export default function UsageLimitModal({ isOpen, isLoggedIn, userEmail, onClose
               className="relative w-full rounded-xl bg-primary py-2 text-xs font-semibold text-white transition-colors hover:bg-primary-hover disabled:opacity-60"
               disabled={isUpgrading}
             >
-              {isUpgrading ? 'Weiterleitung...' : 'Auf Premium upgraden - 4,99 €/Monat'}
+              {isUpgrading ? 'Weiterleitung…' : 'Jetzt upgraden'}
             </button>
           </div>
         </div>
