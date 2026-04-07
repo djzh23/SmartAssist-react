@@ -23,12 +23,14 @@ function scoreBarClasses(score?: number): string {
 
 export default function JobAnalysisCard({ text }: Props) {
   const sections = parseJobAnalysis(text)
+  const nonEmptySections = sections.filter(section => section.body.trim().length > 0)
+  const visibleSections = nonEmptySections.length > 0 ? nonEmptySections : sections
 
-  if (sections.length === 0) {
+  if (visibleSections.length === 0) {
     return <p className="whitespace-pre-wrap text-sm text-slate-700">{text}</p>
   }
 
-  const overallScore = pickOverallScore(sections)
+  const overallScore = pickOverallScore(visibleSections)
 
   return (
     <div className="w-full space-y-3">
@@ -64,7 +66,7 @@ export default function JobAnalysisCard({ text }: Props) {
       </div>
 
       <div className="flex w-full flex-col gap-2.5">
-        {sections.map((section, index) => (
+        {visibleSections.map((section, index) => (
           <article
             key={`${section.title}-${index}`}
             className="rounded-xl border px-4 py-3.5 shadow-sm backdrop-blur-[1px]"
@@ -94,7 +96,7 @@ export default function JobAnalysisCard({ text }: Props) {
 
             <div
               className="job-analysis-body text-[0.89rem] leading-relaxed text-slate-700"
-              dangerouslySetInnerHTML={{ __html: bodyToHtml(section.body || 'Keine zusätzlichen Details verfügbar.') }}
+              dangerouslySetInnerHTML={{ __html: bodyToHtml(section.body) }}
             />
           </article>
         ))}

@@ -29,20 +29,20 @@ function save(key: string, value: unknown): void {
 function welcomeFor(tool: ToolType): string | null {
   switch (tool) {
     case 'general':
-      return 'Hallo! Ich bin dein persÃ¶nlicher KI-Assistent.\nFrag mich alles â€” ich helfe dir schnell und prÃ¤zise weiter.'
+      return 'Hallo. Ich bin dein persönlicher KI-Assistent.\nFrag mich einfach, ich helfe dir schnell und präzise weiter.'
     case 'jobanalyzer':
-      return 'Job-Analyse bereit.\nFÃ¼ge eine Stellenanzeige oder einen Link ein â€” ich zeige dir genau, worauf es ankommt.'
+      return 'Job-Analyse bereit.\nFüge eine Stellenanzeige oder einen Link ein, ich zeige dir klar, worauf es ankommt.'
     case 'language':
-      return 'Sprachcoach aktiv.\nSchreib einfach drauf los â€” ich Ã¼bersetze, korrigiere und erklÃ¤re auf deinem Niveau.'
+      return 'Sprachcoach aktiv.\nSchreib einfach los, ich übersetze, korrigiere und erkläre auf deinem Niveau.'
     case 'programming':
-      return `Programming Assistant ready!
-Choose your programming language to get started, or just paste your code and I will help you with:
-- Debugging and error fixing
-- Code reviews and best practices
-- Algorithm design and optimization
-- Architecture questions`
+      return `Programmierung aktiv.
+Wähle eine Sprache oder sende direkt deinen Code. Ich unterstütze dich bei:
+- Debugging und Fehleranalyse
+- Code Reviews und Best Practices
+- Algorithmik und Optimierung
+- Architektur und Strukturfragen`
     case 'interview':
-      return 'Interview-Coach aktiv.\nÃ–ffne das Setup, hinterlege deinen Lebenslauf und die Zielstelle â€” ich bereite dich gezielt vor.'
+      return 'Interview-Coach aktiv.\nÖffne das Setup, hinterlege Lebenslauf und Zielstelle, dann bereite ich dich gezielt vor.'
     default:
       return null
   }

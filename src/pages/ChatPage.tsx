@@ -24,6 +24,7 @@ const LANG_NAMES: Record<string, string> = {
 }
 
 const INTERVIEW_PROMPT_LIMIT = 3900
+const JOB_ANALYZER_PROMPT_LIMIT = 3900
 const LS_CONTEXT = 'smartassist_context_by_tool_and_session'
 const LS_CONTEXT_DISMISSED = 'smartassist_context_modal_dismissed'
 
@@ -53,6 +54,19 @@ interface InterviewPromptContext {
   cvText: string
   jobUrl: string
   jobText: string
+}
+
+interface JobAnalyzerPromptContext {
+  jobTitle: string
+  companyName: string
+  jobText: string
+  cvText: string
+}
+
+interface HandleSendOptions {
+  displayText?: string
+  apiMessageOverride?: string
+  skipUserBubble?: boolean
 }
 
 function isToolType(value: string): value is ToolType {
@@ -213,6 +227,28 @@ function toInterviewContext(context: SessionContextData | null): InterviewPrompt
   }
 }
 
+function defaultJobAnalyzerContext(): JobAnalyzerPromptContext {
+  return {
+    jobTitle: '',
+    companyName: '',
+    jobText: '',
+    cvText: '',
+  }
+}
+
+function toJobAnalyzerContext(context: SessionContextData | null): JobAnalyzerPromptContext {
+  if (!context || context.toolType !== 'jobanalyzer') {
+    return defaultJobAnalyzerContext()
+  }
+
+  return {
+    jobTitle: context.jobTitle.trim().slice(0, 180),
+    companyName: context.companyName.trim().slice(0, 180),
+    jobText: context.jobText.trim(),
+    cvText: sanitizeTechnicalContext(context.cvText).trim(),
+  }
+}
+
 function interviewBaseInstruction(language: string, hasCv: boolean, alias: string): string {
   const name = alias || 'the candidate'
 
@@ -258,6 +294,52 @@ function buildInterviewPrompt(userMessage: string, language: string, setup: Inte
   return prompt.length <= INTERVIEW_PROMPT_LIMIT
     ? prompt
     : prompt.slice(0, INTERVIEW_PROMPT_LIMIT - 1)
+}
+
+function buildJobAnalyzerPrompt(userMessage: string, setup: JobAnalyzerPromptContext): string {
+  const title = setup.jobTitle
+    ? `${setup.jobTitle}${setup.companyName ? ` bei ${setup.companyName}` : ''}`
+    : (setup.companyName ? `Rolle bei ${setup.companyName}` : '')
+
+  const baseInstruction = [
+    '[SYSTEM - JOB ANALYZER] Antworte nur auf Deutsch.',
+    'Nutze eine klare, kurze und professionelle Struktur mit genau diesen Sektionen:',
+    '## 🎯 Match Score',
+    '## ✅ Stärken des Profils',
+    '## ⚠️ Lücken / Risiken',
+    '## 🔑 Wichtigste Keywords',
+    '## 🚀 Konkrete nächste Schritte',
+    'Regeln:',
+    '- Maximal 5 Stichpunkte pro Sektion.',
+    '- Keine Wiederholung des gesamten Originaltexts.',
+    '- Keine langen Absätze, nur präzise Aussagen.',
+    '- Begründe den Match Score mit 2 bis 4 klaren Gründen.',
+  ].join('\n')
+
+  let safeUser = userMessage.trim().slice(0, 700)
+  if (!safeUser) safeUser = 'Bitte starte jetzt die Erstanalyse.'
+
+  const titleLine = title ? `\nZielrolle: ${title}` : ''
+  let remaining = JOB_ANALYZER_PROMPT_LIMIT - (baseInstruction.length + safeUser.length + titleLine.length + 120)
+
+  if (remaining < 1100) {
+    safeUser = safeUser.slice(0, Math.max(220, safeUser.length - (1100 - remaining)))
+    remaining = JOB_ANALYZER_PROMPT_LIMIT - (baseInstruction.length + safeUser.length + titleLine.length + 120)
+  }
+
+  const jobMax = Math.max(700, Math.floor(remaining * 0.62))
+  const cvMax = Math.max(360, remaining - jobMax)
+
+  const compactJob = compactLines(setup.jobText, 36, jobMax)
+  const compactCv = compactLines(setup.cvText, 20, cvMax)
+
+  const jobBlock = compactJob ? `\nSTELLENKONTEXT:\n${compactJob}` : ''
+  const cvBlock = compactCv ? `\nBEWERBERPROFIL (technischer Auszug):\n${compactCv}` : ''
+
+  const prompt = `${baseInstruction}${titleLine}${jobBlock}${cvBlock}\nUser: ${safeUser}`
+  return prompt.length <= JOB_ANALYZER_PROMPT_LIMIT
+    ? prompt
+    : prompt.slice(0, JOB_ANALYZER_PROMPT_LIMIT - 1)
 }
 
 export default function ChatPage() {
@@ -402,7 +484,16 @@ export default function ChatPage() {
     if (userAlreadyStarted) return
 
     if (activeContextTool === 'jobanalyzer' && normalized.jobText) {
-      void handleSend(`Please analyze this job posting:\n\n${normalized.jobText}`)
+      const roleHint = normalized.jobTitle
+        ? `${normalized.jobTitle}${normalized.companyName ? ` bei ${normalized.companyName}` : ''}`
+        : 'Stellenkontext'
+
+      void handleSend(
+        'Bitte starte die Analyse mit den gespeicherten Setup-Daten.',
+        {
+          displayText: `Analyse starten: ${roleHint}`,
+        },
+      )
       return
     }
 
@@ -464,25 +555,32 @@ export default function ChatPage() {
     localStorage.removeItem(LS_CONTEXT_DISMISSED)
   }
 
-  const handleSend = async (text: string) => {
+  const handleSend = async (text: string, options?: HandleSendOptions) => {
     if (isAtLimit) {
       setShowLimitModal(true)
       return
     }
 
     const sessionId = store.activeSessionId ?? store.newSession(store.currentToolType)
+    const displayText = options?.displayText ?? text
+    const outgoingText = options?.apiMessageOverride ?? text
 
-    store.addMessage(sessionId, { text, isUser: true })
+    if (!options?.skipUserBubble) {
+      store.addMessage(sessionId, { text: displayText, isUser: true })
+    }
     setIsLoading(true)
     setError(null)
 
     const interviewSetup = toInterviewContext(activeContext)
+    const jobAnalyzerSetup = toJobAnalyzerContext(activeContext)
     const interviewLangCode = interviewSetup.language === 'en' ? 'en' : 'de'
     const interviewLangName = interviewLangCode === 'de' ? 'German' : 'English'
 
     const apiMessage = isInterview
-      ? buildInterviewPrompt(text, interviewLangName, interviewSetup)
-      : text
+      ? buildInterviewPrompt(outgoingText, interviewLangName, interviewSetup)
+      : (store.currentToolType === 'jobanalyzer'
+        ? buildJobAnalyzerPrompt(outgoingText, jobAnalyzerSetup)
+        : outgoingText)
 
     const streamingMsgId = crypto.randomUUID()
     store.addMessage(sessionId, { id: streamingMsgId, text: '', isUser: false })
@@ -540,13 +638,13 @@ export default function ChatPage() {
 
   const contextInfo = {
     jobanalyzer: activeContext?.toolType === 'jobanalyzer' && activeContext.hasJob
-      ? `JOB: ${activeContext.jobTitle || 'Job context active'}${activeContext.companyName ? ` at ${activeContext.companyName}` : ''}`
+      ? `Stelle: ${activeContext.jobTitle || 'Kontext aktiv'}${activeContext.companyName ? ` bei ${activeContext.companyName}` : ''}`
       : null,
     interview: activeContext?.toolType === 'interview' && activeContext.hasJob
-      ? `INTERVIEW: ${activeContext.jobTitle || 'Target role'}${activeContext.companyName ? ` at ${activeContext.companyName}` : ''}`
+      ? `Interview: ${activeContext.jobTitle || 'Zielrolle'}${activeContext.companyName ? ` bei ${activeContext.companyName}` : ''}`
       : null,
     programming: activeContext?.toolType === 'programming' && programmingContextLabel
-      ? `CODE: ${programmingContextLabel}`
+      ? `Code: ${programmingContextLabel}`
       : null,
   } as const
 
@@ -615,7 +713,7 @@ export default function ChatPage() {
           <div className="context-indicator">
             <span>{activeContextInfo}</span>
             <button onClick={() => setShowContextModal(true)} className="context-edit-btn">
-              Edit ??
+              Bearbeiten
             </button>
           </div>
         )}

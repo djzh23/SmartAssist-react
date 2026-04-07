@@ -22,6 +22,14 @@ interface Props {
 }
 
 const API_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || ''
+const JOB_TEXT_MAX = 7000
+const CV_TEXT_MAX = 4200
+const TITLE_MAX = 180
+const COMPANY_MAX = 180
+
+function trimTo(value: string, max: number): string {
+  return value.trim().slice(0, max)
+}
 
 async function readErrorMessage(response: Response, fallback: string): Promise<string> {
   try {
@@ -40,6 +48,7 @@ function mapToolType(toolType: ContextModalToolType): 'jobanalyzer' | 'interview
 export default function ContextModal({ toolType, sessionId, initialData, onClose, onContextSet }: Props) {
   const { user } = useUser()
   const { getToken } = useAuth()
+
   const [step, setStep] = useState(1)
   const [cvText, setCvText] = useState(initialData?.cvText ?? '')
   const [jobText, setJobText] = useState(initialData?.jobText ?? '')
@@ -51,9 +60,17 @@ export default function ContextModal({ toolType, sessionId, initialData, onClose
 
   const effectiveToolType = useMemo(() => mapToolType(toolType), [toolType])
   const languageOptions = useMemo(
-    () => [...PROGRAMMING_LANGUAGES.map(lang => ({ id: lang.id, label: lang.label })), { id: 'other', label: 'Other' }],
+    () => [...PROGRAMMING_LANGUAGES.map(lang => ({ id: lang.id, label: lang.label })), { id: 'other', label: 'Andere' }],
     [],
   )
+
+  const trimmedJobText = trimTo(jobText, JOB_TEXT_MAX)
+  const trimmedCvText = trimTo(cvText, CV_TEXT_MAX)
+  const trimmedJobTitle = trimTo(jobTitle, TITLE_MAX)
+  const trimmedCompanyName = trimTo(companyName, COMPANY_MAX)
+
+  const jobWasTrimmed = jobText.trim().length > JOB_TEXT_MAX
+  const cvWasTrimmed = cvText.trim().length > CV_TEXT_MAX
 
   useEffect(() => {
     const derivedProgrammingId = initialData?.programmingLanguageId
@@ -86,29 +103,29 @@ export default function ContextModal({ toolType, sessionId, initialData, onClose
         body: JSON.stringify({
           sessionId,
           toolType: effectiveToolType,
-          cvText: cvText || null,
-          jobText: jobText || null,
-          jobTitle: jobTitle || null,
-          companyName: companyName || null,
+          cvText: trimmedCvText || null,
+          jobText: trimmedJobText || null,
+          jobTitle: trimmedJobTitle || null,
+          companyName: trimmedCompanyName || null,
           programmingLanguage: selectedLanguageLabel,
           userId: user?.id ?? null,
         }),
       })
 
       if (!response.ok) {
-        throw new Error(await readErrorMessage(response, `Failed to save context (${response.status})`))
+        throw new Error(await readErrorMessage(response, `Kontext konnte nicht gespeichert werden (${response.status})`))
       }
 
       onContextSet({
-        cvText: cvText.trim(),
-        jobText: jobText.trim(),
-        jobTitle: jobTitle.trim(),
-        companyName: companyName.trim(),
+        cvText: trimmedCvText,
+        jobText: trimmedJobText,
+        jobTitle: trimmedJobTitle,
+        companyName: trimmedCompanyName,
         programmingLanguage: selectedLanguageLabel ?? '',
         programmingLanguageId: programmingLanguageId.trim(),
       })
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : 'Failed to save context')
+      setError(submitError instanceof Error ? submitError.message : 'Kontext konnte nicht gespeichert werden')
     } finally {
       setLoading(false)
     }
@@ -119,48 +136,58 @@ export default function ContextModal({ toolType, sessionId, initialData, onClose
       <div className="modal-backdrop">
         <div className="modal-box">
           <div className="modal-header">
-            <span>🎯 Interview Preparation Setup</span>
+            <span>Interview Setup</span>
             <button onClick={onClose} className="modal-close">×</button>
           </div>
 
           {step === 1 && (
             <div className="modal-body">
-              <h3>Step 1 of 2: Job Details</h3>
+              <h3>Schritt 1 von 2: Zielstelle</h3>
               <p className="modal-subtitle">
-                Tell us what role you are preparing for.
+                Für welche Rolle möchtest du dich vorbereiten?
               </p>
-              <label>Job Title *</label>
+
+              <label>Stellenbezeichnung *</label>
               <input
                 value={jobTitle}
                 onChange={event => setJobTitle(event.target.value)}
-                placeholder="e.g. Senior .NET Developer"
+                placeholder="z. B. Senior .NET Developer"
                 className="modal-input"
               />
-              <label>Company Name</label>
+
+              <label>Unternehmen</label>
               <input
                 value={companyName}
                 onChange={event => setCompanyName(event.target.value)}
-                placeholder="e.g. Siemens AG"
+                placeholder="z. B. Siemens AG"
                 className="modal-input"
               />
-              <label>Job Description (paste here)</label>
+
+              <label>Stellenbeschreibung</label>
               <textarea
                 value={jobText}
                 onChange={event => setJobText(event.target.value)}
-                placeholder="Paste the full job description for personalized questions..."
+                placeholder="Füge die vollständige Stellenausschreibung hier ein..."
                 className="modal-textarea"
                 rows={5}
               />
+
+              {jobWasTrimmed && (
+                <p className="modal-hint text-amber-700">
+                  Hinweis: Der Stellenkontext wird auf {JOB_TEXT_MAX} Zeichen gekürzt.
+                </p>
+              )}
+
               <div className="modal-actions">
                 <button onClick={onClose} className="btn-ghost">
-                  Skip for now
+                  Später
                 </button>
                 <button
                   onClick={() => setStep(2)}
                   className="btn-primary"
-                  disabled={!jobTitle.trim()}
+                  disabled={!trimmedJobTitle}
                 >
-                  Next →
+                  Weiter →
                 </button>
               </div>
             </div>
@@ -168,30 +195,38 @@ export default function ContextModal({ toolType, sessionId, initialData, onClose
 
           {step === 2 && (
             <div className="modal-body">
-              <h3>Step 2 of 2: Your CV</h3>
+              <h3>Schritt 2 von 2: Lebenslauf</h3>
               <p className="modal-subtitle">
-                Paste your CV for personalized interview questions based on your actual experience.
+                Füge deinen Lebenslauf ein, damit die Fragen auf dein Profil abgestimmt werden.
               </p>
-              <label>Your CV / Resume (paste text)</label>
+
+              <label>Lebenslauf (Text)</label>
               <textarea
                 value={cvText}
                 onChange={event => setCvText(event.target.value)}
-                placeholder="Paste your CV text here..."
+                placeholder="Füge hier deinen Lebenslauf als Text ein..."
                 className="modal-textarea"
                 rows={8}
               />
+
               <p className="modal-hint">
-                🔒 Your CV stays in your browser session and local device context.
+                Daten bleiben lokal im Browser-Kontext. Teile keine sensiblen Inhalte im Chat.
               </p>
+
+              {cvWasTrimmed && (
+                <p className="modal-hint text-amber-700">
+                  Hinweis: Der Lebenslauf-Kontext wird auf {CV_TEXT_MAX} Zeichen gekürzt.
+                </p>
+              )}
 
               {error && <p className="modal-error">{error}</p>}
 
               <div className="modal-actions">
                 <button onClick={() => setStep(1)} className="btn-ghost">
-                  ← Back
+                  ← Zurück
                 </button>
                 <button onClick={() => void submitContext()} className="btn-primary" disabled={loading}>
-                  {loading ? 'Setting up...' : 'Start Interview Prep 🎯'}
+                  {loading ? 'Wird vorbereitet...' : 'Interview starten'}
                 </button>
               </div>
             </div>
@@ -206,43 +241,52 @@ export default function ContextModal({ toolType, sessionId, initialData, onClose
       <div className="modal-backdrop">
         <div className="modal-box">
           <div className="modal-header">
-            <span>💼 Job Analyzer Setup</span>
+            <span>Job Analyzer Setup</span>
             <button onClick={onClose} className="modal-close">×</button>
           </div>
+
           <div className="modal-body">
-            <h3>Paste the job posting</h3>
+            <h3>Stellenanzeige einfügen</h3>
             <p className="modal-subtitle">
-              Add the job description to get personalized CV tips, keywords, and application advice.
+              Ergänze Ausschreibung und optional Lebenslauf für eine gezielte Analyse.
             </p>
-            <label>Job Description or URL</label>
+
+            <label>Stellenanzeige oder URL</label>
             <textarea
               value={jobText}
               onChange={event => setJobText(event.target.value)}
-              placeholder="Paste the complete job posting here, or enter the job URL..."
+              placeholder="Füge hier die vollständige Stellenausschreibung oder den Link ein..."
               className="modal-textarea"
               rows={8}
             />
-            <label>Your CV (optional for tailored advice)</label>
+
+            <label>Lebenslauf (optional)</label>
             <textarea
               value={cvText}
               onChange={event => setCvText(event.target.value)}
-              placeholder="Paste your CV for specific optimization tips..."
+              placeholder="Optional: Lebenslauf einfügen für eine präzisere Passungsanalyse..."
               className="modal-textarea"
               rows={4}
             />
+
+            {(jobWasTrimmed || cvWasTrimmed) && (
+              <p className="modal-hint text-amber-700">
+                Hinweis: Sehr lange Eingaben werden für stabile Analyse automatisch gekürzt.
+              </p>
+            )}
 
             {error && <p className="modal-error">{error}</p>}
 
             <div className="modal-actions">
               <button onClick={onClose} className="btn-ghost">
-                Skip — I will paste in chat
+                Überspringen
               </button>
               <button
                 onClick={() => void submitContext()}
-                disabled={!jobText.trim() || loading}
+                disabled={!trimmedJobText || loading}
                 className="btn-primary"
               >
-                {loading ? 'Analyzing...' : 'Analyze Job 💼'}
+                {loading ? 'Analyse läuft...' : 'Analyse starten'}
               </button>
             </div>
           </div>
@@ -256,14 +300,16 @@ export default function ContextModal({ toolType, sessionId, initialData, onClose
       <div className="modal-backdrop">
         <div className="modal-box">
           <div className="modal-header">
-            <span>💻 Programming Assistant Setup</span>
+            <span>Programming Setup</span>
             <button onClick={onClose} className="modal-close">×</button>
           </div>
+
           <div className="modal-body">
-            <h3>What language are you working in?</h3>
+            <h3>In welcher Sprache arbeitest du?</h3>
             <p className="modal-subtitle">
-              The AI will focus on patterns and best practices for your language.
+              Antworten werden auf Best Practices und Idiome deiner Sprache ausgerichtet.
             </p>
+
             <div className="lang-grid">
               {languageOptions.map(lang => (
                 <button
@@ -280,14 +326,14 @@ export default function ContextModal({ toolType, sessionId, initialData, onClose
 
             <div className="modal-actions">
               <button onClick={onClose} className="btn-ghost">
-                Skip
+                Überspringen
               </button>
               <button
                 onClick={() => void submitContext()}
                 disabled={!programmingLanguageId.trim() || loading}
                 className="btn-primary"
               >
-                {loading ? 'Setting up...' : 'Start Coding 💻'}
+                {loading ? 'Wird vorbereitet...' : 'Coding starten'}
               </button>
             </div>
           </div>
