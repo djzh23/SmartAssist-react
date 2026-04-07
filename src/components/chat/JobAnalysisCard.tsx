@@ -14,6 +14,13 @@ function scorePillClasses(score?: number): string {
   return 'bg-rose-100 text-rose-700 border-rose-200'
 }
 
+function scoreBarClasses(score?: number): string {
+  if (typeof score !== 'number') return 'bg-slate-300'
+  if (score >= 75) return 'bg-emerald-500'
+  if (score >= 50) return 'bg-amber-500'
+  return 'bg-rose-500'
+}
+
 export default function JobAnalysisCard({ text }: Props) {
   const sections = parseJobAnalysis(text)
 
@@ -25,7 +32,7 @@ export default function JobAnalysisCard({ text }: Props) {
 
   return (
     <div className="w-full space-y-3">
-      <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+      <div className="rounded-xl border border-indigo-100 bg-gradient-to-r from-white via-indigo-50/50 to-white px-4 py-3 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
@@ -39,13 +46,28 @@ export default function JobAnalysisCard({ text }: Props) {
             {typeof overallScore === 'number' ? `Match Score ${overallScore}/100` : 'Score wird berechnet'}
           </span>
         </div>
+
+        {typeof overallScore === 'number' && (
+          <div className="mt-3">
+            <div className="mb-1 flex items-center justify-between text-[11px] text-slate-500">
+              <span>Übereinstimmung</span>
+              <span>{overallScore}%</span>
+            </div>
+            <div className="h-2 overflow-hidden rounded-full bg-slate-200">
+              <div
+                className={`h-full rounded-full transition-all duration-500 ${scoreBarClasses(overallScore)}`}
+                style={{ width: `${Math.max(3, overallScore)}%` }}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="flex w-full flex-col gap-2.5">
         {sections.map((section, index) => (
           <article
             key={`${section.title}-${index}`}
-            className="rounded-xl border px-4 py-3.5 shadow-sm"
+            className="rounded-xl border px-4 py-3.5 shadow-sm backdrop-blur-[1px]"
             style={{
               background: section.bg,
               borderColor: section.border,
@@ -72,7 +94,7 @@ export default function JobAnalysisCard({ text }: Props) {
 
             <div
               className="job-analysis-body text-[0.89rem] leading-relaxed text-slate-700"
-              dangerouslySetInnerHTML={{ __html: bodyToHtml(section.body) }}
+              dangerouslySetInnerHTML={{ __html: bodyToHtml(section.body || 'Keine zusätzlichen Details verfügbar.') }}
             />
           </article>
         ))}

@@ -1,4 +1,4 @@
-// Parse and format job analyzer output into structured, color coded sections.
+// Parse and format Job Analyzer output into structured, color coded sections.
 
 export type JobSectionTone =
   | 'score'
@@ -128,14 +128,10 @@ function clampScore(value: number): number {
 
 function extractScore(content: string): number | undefined {
   const fractionMatch = content.match(/(\d{1,3})\s*\/\s*100/)
-  if (fractionMatch) {
-    return clampScore(Number(fractionMatch[1]))
-  }
+  if (fractionMatch) return clampScore(Number(fractionMatch[1]))
 
   const percentMatch = content.match(/(\d{1,3})\s*%/)
-  if (percentMatch) {
-    return clampScore(Number(percentMatch[1]))
-  }
+  if (percentMatch) return clampScore(Number(percentMatch[1]))
 
   return undefined
 }
@@ -143,21 +139,37 @@ function extractScore(content: string): number | undefined {
 function normalizeHeader(raw: string): string {
   return raw
     .replace(/^#+\s*/, '')
-    .replace(/^\*\*(.+)\*\*$/, '$1')
+    .replace(/\*\*/g, '')
+    .replace(/^[-*•\s]+/, '')
     .replace(/\s*:\s*$/, '')
     .trim()
+}
+
+function splitHeadingAndInlineBody(normalizedHeading: string): { title: string; inlineBody: string } {
+  const valueMatch = normalizedHeading.match(/^(.{2,80}?):\s+(.+)$/)
+  if (!valueMatch) {
+    return { title: normalizedHeading, inlineBody: '' }
+  }
+
+  const maybeTitle = valueMatch[1].trim()
+  const maybeValue = valueMatch[2].trim()
+  if (/^https?:\/\//i.test(maybeValue)) {
+    return { title: normalizedHeading, inlineBody: '' }
+  }
+
+  return { title: maybeTitle, inlineBody: maybeValue }
 }
 
 function isLikelyHeading(line: string): boolean {
   const trimmed = line.trim()
   if (!trimmed) return false
 
-  if (/^##+\s+/.test(trimmed)) return true
+  if (/^#+\s+/.test(trimmed)) return true
 
-  // Upper-case style headings: STRENGTHS:
+  // Upper-case heading style: STRENGTHS:
   if (/^[A-Z0-9ÄÖÜ/&+\- ][A-Z0-9ÄÖÜ/&+\- ]{1,80}:\s*$/.test(trimmed)) return true
 
-  // Normal title style headings with trailing colon.
+  // Normal title style: Anforderungen:
   if (/^[A-Za-zÄÖÜäöüß][^:]{1,80}:\s*$/.test(trimmed)) return true
 
   return false
@@ -177,13 +189,14 @@ function detectTone(title: string, body: string): JobSectionTone {
 
   if (
     haystack.includes('starke')
+    || haystack.includes('stärke')
     || haystack.includes('strength')
-    || haystack.includes('profil fit')
     || haystack.includes('geeignet')
   ) return 'strength'
 
   if (
     haystack.includes('luecke')
+    || haystack.includes('lücke')
     || haystack.includes('gap')
     || haystack.includes('fehl')
     || haystack.includes('missing')
@@ -259,21 +272,33 @@ export function parseJobAnalysis(text: string): JobSection[] {
 
   for (const rawLine of lines) {
     const line = rawLine.trimEnd()
-    if (isLikelyHeading(line)) {
-      flush()
-      currentHeader = normalizeHeader(line)
+    const trimmed = line.trim()
+
+    if (!trimmed) {
+      currentBodyLines.push('')
       continue
     }
 
-    // Markdown heading form with body on same line.
-    const markdownHeading = line.match(/^##+\s+(.+)$/)
-    if (markdownHeading) {
-      flush()
-      currentHeader = normalizeHeader(markdownHeading[1])
+    if (/^[-]{3,}$/.test(trimmed)) {
+      currentBodyLines.push('')
       continue
     }
 
-    currentBodyLines.push(line)
+    if (isLikelyHeading(trimmed)) {
+      flush()
+
+      const headingSource = /^#+\s+/.test(trimmed)
+        ? trimmed.replace(/^#+\s+/, '')
+        : trimmed
+      const normalized = normalizeHeader(headingSource)
+      const { title, inlineBody } = splitHeadingAndInlineBody(normalized)
+
+      currentHeader = title
+      if (inlineBody) currentBodyLines.push(inlineBody)
+      continue
+    }
+
+    currentBodyLines.push(trimmed)
   }
 
   flush()
@@ -295,15 +320,10 @@ function escapeHtml(input: string): string {
 
 function formatInline(input: string): string {
   let value = escapeHtml(input)
-
   value = value.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-  value = value.replace(
-    /`(.+?)`/g,
-    '<code class="job-inline-code">$1</code>',
-  )
+  value = value.replace(/`(.+?)`/g, '<code class="job-inline-code">$1</code>')
   value = value.replace(/(\b\d{1,3}\s*\/\s*100\b)/g, '<span class="job-inline-score">$1</span>')
   value = value.replace(/(\b\d{1,3}\s*%\b)/g, '<span class="job-inline-percent">$1</span>')
-
   return value
 }
 
@@ -321,6 +341,11 @@ export function bodyToHtml(text: string): string {
   for (const rawLine of lines) {
     const line = rawLine.trim()
     if (!line) {
+      closeList()
+      continue
+    }
+
+    if (/^[-]{3,}$/.test(line)) {
       closeList()
       continue
     }
@@ -349,11 +374,9 @@ export function bodyToHtml(text: string): string {
 
     closeList()
 
-    const inlineKeyValue = line.match(/^([A-Za-zÄÖÜäöüß0-9][^:]{1,60}):\s+(.+)$/)
-    if (inlineKeyValue && !/^https?:\/\//i.test(line)) {
-      parts.push(
-        `<p class="job-kv"><span class="job-kv-key">${formatInline(inlineKeyValue[1])}:</span> ${formatInline(inlineKeyValue[2])}</p>`,
-      )
+    const keyValue = line.match(/^([A-Za-zÄÖÜäöüß0-9][^:]{1,60}):\s+(.+)$/)
+    if (keyValue && !/^https?:\/\//i.test(line)) {
+      parts.push(`<p class="job-kv"><span class="job-kv-key">${formatInline(keyValue[1])}:</span> ${formatInline(keyValue[2])}</p>`)
       continue
     }
 

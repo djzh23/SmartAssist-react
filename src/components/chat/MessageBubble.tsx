@@ -24,6 +24,7 @@ export default function MessageBubble({
   progLang = 'csharp',
 }: Props) {
   const time = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  const isJobAnalyzerReply = !msg.isUser && (toolType === 'jobanalyzer' || msg.toolUsed === 'analyze_job')
 
   // Language learning response
   if (!msg.isUser && msg.learningData) {
@@ -39,7 +40,7 @@ export default function MessageBubble({
   }
 
   // Job analysis response
-  if (!msg.isUser && msg.toolUsed === 'analyze_job') {
+  if (isJobAnalyzerReply) {
     return (
       <div className="flex flex-col items-start gap-1 animate-slide-up w-full">
         <JobAnalysisCard text={msg.text} />
