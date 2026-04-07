@@ -1,13 +1,30 @@
-import { ChevronRight, Plus, Trash2, X } from 'lucide-react'
+import { Briefcase, ChevronRight, Code2, Globe2, MessageCircle, Plus, Target, Trash2, X } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import type { ChatSession, ToolType } from '../../types'
 import { NATIVE_LANGS, PROGRAMMING_LANGUAGES, TARGET_LANGS } from '../../types'
 
-const TOOL_BADGE: Record<ToolType, string | null> = {
-  general: null,
-  jobanalyzer: 'JA',
-  language: 'LL',
-  programming: 'DEV',
-  interview: 'INT',
+const TOOL_ICON: Record<ToolType, LucideIcon> = {
+  general:     MessageCircle,
+  jobanalyzer: Briefcase,
+  language:    Globe2,
+  programming: Code2,
+  interview:   Target,
+}
+
+const TOOL_COLOR: Record<ToolType, string> = {
+  general:     'text-slate-400',
+  jobanalyzer: 'text-emerald-500',
+  language:    'text-blue-500',
+  programming: 'text-violet-500',
+  interview:   'text-amber-500',
+}
+
+const TOOL_BADGE: Record<ToolType, string> = {
+  general: 'CHAT',
+  jobanalyzer: 'JOB',
+  language: 'LANG',
+  programming: 'CODE',
+  interview: 'INTV',
 }
 
 interface Props {
@@ -172,7 +189,7 @@ export default function ChatSidebar({
           <div className="flex-shrink-0 border-t border-slate-200 px-3 py-2.5">
             <p className="text-xs font-medium text-slate-700">Interview Setup</p>
             <p className="mt-1 text-[11px] leading-relaxed text-slate-500">
-              Starte einen neuen Chat und hinterlege dort Sprache, Alias, Lebenslauf und Stellenziel.
+              Der Kontextdialog erscheint automatisch zu Beginn. Dort kannst du Stelle und Lebenslauf hinterlegen.
             </p>
           </div>
         )}
@@ -186,17 +203,19 @@ export default function ChatSidebar({
           ) : (
             <ul className="px-2">
               {sessions.map(session => {
-                const badge = TOOL_BADGE[session.toolType]
                 const preview = session.messages.find(msg => msg.isUser)?.text ?? 'Neue Konversation'
                 const time = new Date(session.messages[session.messages.length - 1]?.timestamp ?? session.createdAt)
                   .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                 const isActive = session.id === activeSessionId
 
+                const Icon = TOOL_ICON[session.toolType]
+                const iconColor = TOOL_COLOR[session.toolType]
+
                 return (
                   <li
                     key={session.id}
                     className={[
-                      'group mb-0.5 flex cursor-pointer items-center gap-1.5 rounded-lg border-l-2 px-2.5 py-2 transition-colors',
+                      'group mb-0.5 flex cursor-pointer items-center gap-2 rounded-lg border-l-2 px-2.5 py-2 transition-colors',
                       isActive
                         ? 'border-primary bg-primary-light'
                         : 'border-transparent hover:bg-slate-100',
@@ -206,10 +225,10 @@ export default function ChatSidebar({
                       onClose()
                     }}
                   >
+                    <Icon size={13} className={`flex-shrink-0 ${isActive ? 'text-primary' : iconColor}`} />
                     <div className="min-w-0 flex-1">
                       <p className={`truncate text-[12.5px] ${isActive ? 'font-medium text-primary' : 'text-slate-700'}`}>
-                        {badge && <span className="mr-1">[{badge}]</span>}
-                        {preview.length > 30 ? `${preview.slice(0, 30)}...` : preview}
+                        {preview.length > 32 ? `${preview.slice(0, 32)}…` : preview}
                       </p>
                       <p className="text-[10.5px] text-slate-400">{time}</p>
                     </div>
