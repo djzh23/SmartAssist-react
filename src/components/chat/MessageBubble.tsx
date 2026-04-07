@@ -1,6 +1,7 @@
 import type { ChatMessage, ToolType } from '../../types'
 import { BriefcaseBusiness, Settings2 } from 'lucide-react'
 import JobAnalysisCard from './JobAnalysisCard'
+import LanguageCoachResponse from './LanguageCoachResponse'
 import LearningResponse from './LearningResponse'
 import ProgrammingResponse from './ProgrammingResponse'
 import InterviewResponse from './InterviewResponse'
@@ -27,10 +28,22 @@ export default function MessageBubble({
   const time = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   const isJobAnalyzerReply = !msg.isUser && (toolType === 'jobanalyzer' || msg.toolUsed === 'analyze_job')
 
-  if (!msg.isUser && msg.learningData) {
+  if (!msg.isUser && toolType === 'language') {
+    if (msg.learningData) {
+      return (
+        <LearningResponse
+          data={msg.learningData}
+          targetLang={targetLang}
+          nativeLang={nativeLang}
+          targetLangCode={targetLangCode}
+          timestamp={msg.timestamp}
+        />
+      )
+    }
+
     return (
-      <LearningResponse
-        data={msg.learningData}
+      <LanguageCoachResponse
+        text={msg.text}
         targetLang={targetLang}
         nativeLang={nativeLang}
         targetLangCode={targetLangCode}

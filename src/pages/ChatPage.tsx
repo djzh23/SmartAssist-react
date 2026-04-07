@@ -25,6 +25,7 @@ const LANG_NAMES: Record<string, string> = {
 
 const INTERVIEW_PROMPT_LIMIT = 3900
 const JOB_ANALYZER_PROMPT_LIMIT = 3900
+const LANGUAGE_PROMPT_LIMIT = 3900
 const LS_CONTEXT = 'smartassist_context_by_tool_and_session'
 const LS_CONTEXT_DISMISSED = 'smartassist_context_modal_dismissed'
 
@@ -343,6 +344,35 @@ function buildJobAnalyzerPrompt(userMessage: string, setup: JobAnalyzerPromptCon
     : prompt.slice(0, JOB_ANALYZER_PROMPT_LIMIT - 1)
 }
 
+function buildLanguagePrompt(userMessage: string, targetLanguage: string, nativeLanguage: string): string {
+  const baseInstruction = [
+    `[SYSTEM - LANGUAGE COACH] Teach ${targetLanguage} to a learner whose native language is ${nativeLanguage}.`,
+    `Always write the practice sentence in ${targetLanguage}.`,
+    `Explain feedback and grammar in ${nativeLanguage}.`,
+    'Output markdown with exactly these sections and no extra headings:',
+    '## Antwort in Zielsprache',
+    '## Korrektur',
+    '## Erklärung',
+    '## Lern-Tipps',
+    '## Mini-Übung',
+    '## Vokabeln',
+    'Rules:',
+    '- Keep answers concrete and language-specific.',
+    '- Correct user mistakes precisely with short explanations.',
+    '- In Lern-Tipps give 3 bullet points.',
+    '- In Mini-Übung give one short task and one model answer in parentheses.',
+    '- In Vokabeln provide up to 6 entries in format "Wort = Bedeutung".',
+    '- Never skip a section. If data is missing write "Keine Angaben".',
+  ].join('\n')
+
+  const safeUser = userMessage.trim().slice(0, 1500) || 'Bitte starte mit einer kurzen Übung auf meinem aktuellen Niveau.'
+  const prompt = `${baseInstruction}\n\nUSER MESSAGE:\n${safeUser}`
+
+  return prompt.length <= LANGUAGE_PROMPT_LIMIT
+    ? prompt
+    : prompt.slice(0, LANGUAGE_PROMPT_LIMIT - 1)
+}
+
 export default function ChatPage() {
   const [searchParams] = useSearchParams()
   const rawToolParam = (searchParams.get('tool') ?? 'general').toLowerCase()
@@ -589,7 +619,9 @@ export default function ChatPage() {
       ? buildInterviewPrompt(outgoingText, interviewLangName, interviewSetup)
       : (store.currentToolType === 'jobanalyzer'
         ? buildJobAnalyzerPrompt(outgoingText, jobAnalyzerSetup)
-        : outgoingText)
+        : (isLanguage
+          ? buildLanguagePrompt(outgoingText, targetName, nativeName)
+          : outgoingText))
 
     const streamingMsgId = crypto.randomUUID()
     store.addMessage(sessionId, { id: streamingMsgId, text: '', isUser: false })
@@ -607,8 +639,8 @@ export default function ChatPage() {
           nativeLanguage: llMode ? nativeName : undefined,
           targetLanguageCode: llMode ? targetLang : undefined,
           nativeLanguageCode: llMode ? nativeLang : undefined,
-          level: llMode ? 'A1' : undefined,
-          learningGoal: llMode ? 'speaking basics, verbs, sentence structure' : undefined,
+          level: llMode ? 'adaptive' : undefined,
+          learningGoal: llMode ? `Learn ${targetName} with corrections, tips, and short practice tasks.` : undefined,
           programmingMode: isProgramming ? true : undefined,
           programmingLanguage: isProgramming ? progMeta?.label : undefined,
           interviewMode: isInterview ? true : undefined,

@@ -1,15 +1,19 @@
-﻿import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import {
-  Target,
-  Code2,
-  Briefcase,
-  Globe2,
   ArrowRight,
-  ShieldCheck,
-  Lock,
+  BrainCircuit,
+  Briefcase,
+  Code2,
+  Compass,
+  Globe2,
   HardDrive,
-  TriangleAlert,
   Heart,
+  Lock,
+  MessageSquareQuote,
+  ShieldCheck,
+  Sparkles,
+  Target,
+  TriangleAlert,
 } from 'lucide-react'
 
 const HIGHLIGHTS = [
@@ -17,28 +21,28 @@ const HIGHLIGHTS = [
     icon: Target,
     accent: { soft: 'bg-cyan-50', ring: 'border-cyan-200', text: 'text-cyan-700' },
     title: 'Interview Coaching',
-    desc: 'Ãœbe typische Fragen, formuliere stÃ¤rkere Antworten und gehe entspannter ins GesprÃ¤ch.',
+    desc: 'Übe typische Fragen, formuliere stärkere Antworten und gehe entspannter ins Gespräch.',
     line: 'bg-cyan-500',
   },
   {
     icon: Briefcase,
     accent: { soft: 'bg-emerald-50', ring: 'border-emerald-200', text: 'text-emerald-700' },
     title: 'Job Analyse',
-    desc: 'Verstehe schnell, was in einer Stelle wirklich wichtig ist und worauf du deinen Lebenslauf ausrichten solltest.',
+    desc: 'Erkenne sofort, was in einer Stelle wirklich zählt und worauf du deinen Lebenslauf ausrichten solltest.',
     line: 'bg-emerald-500',
   },
   {
     icon: Code2,
     accent: { soft: 'bg-sky-50', ring: 'border-sky-200', text: 'text-sky-700' },
     title: 'Technik Training',
-    desc: 'Trainiere Programmierfragen mit klaren ErklÃ¤rungen und praktischen Codebeispielen.',
+    desc: 'Trainiere technische Fragen mit präzisen Erklärungen und direkt nutzbaren Codebeispielen.',
     line: 'bg-sky-500',
   },
 ]
 
 const QUICK_LINKS = [
-  { icon: Target, tool: 'interviewprep', label: 'Interview Coach', desc: 'VorstellungsgesprÃ¤che Ã¼ben', accent: { soft: 'bg-cyan-50', ring: 'border-cyan-200', text: 'text-cyan-700' } },
-  { icon: Briefcase, tool: 'jobanalyzer', label: 'Job Analyzer', desc: 'Stellenanzeige prÃ¼fen', accent: { soft: 'bg-emerald-50', ring: 'border-emerald-200', text: 'text-emerald-700' } },
+  { icon: Target, tool: 'interviewprep', label: 'Interview Coach', desc: 'Vorstellungsgespräche üben', accent: { soft: 'bg-cyan-50', ring: 'border-cyan-200', text: 'text-cyan-700' } },
+  { icon: Briefcase, tool: 'jobanalyzer', label: 'Job Analyzer', desc: 'Stellenanzeige prüfen', accent: { soft: 'bg-emerald-50', ring: 'border-emerald-200', text: 'text-emerald-700' } },
   { icon: Code2, tool: 'programming', label: 'Programming', desc: 'Technische Fragen', accent: { soft: 'bg-sky-50', ring: 'border-sky-200', text: 'text-sky-700' } },
   { icon: Globe2, tool: 'language', label: 'Language', desc: 'Sprachen trainieren', accent: { soft: 'bg-amber-50', ring: 'border-amber-200', text: 'text-amber-700' } },
 ]
@@ -47,21 +51,27 @@ const TRUST_POINTS = [
   {
     icon: ShieldCheck,
     color: 'text-emerald-600',
-    title: 'VertrauenswÃ¼rdig und anonym',
-    desc: 'Du kannst mit einem Alias arbeiten. Deine Chat-Historie bleibt in deinem Browser.',
+    title: 'Vertrauenswürdig und anonym',
+    desc: 'Du kannst jederzeit mit Alias arbeiten. Deine Chat-Historie bleibt in deinem Browser.',
   },
   {
     icon: HardDrive,
     color: 'text-sky-600',
     title: 'Lokale Verarbeitung',
-    desc: 'Die technische Analyse deines Lebenslaufs lÃ¤uft lokal im Browser auf deinem GerÃ¤t.',
+    desc: 'Die technische Analyse deines Lebenslaufs läuft lokal im Browser auf deinem Gerät.',
   },
   {
     icon: Lock,
-    color: 'text-sky-600',
+    color: 'text-cyan-600',
     title: 'Nur technischer Kontext',
-    desc: 'FÃ¼r die Auswertung wird nur reduzierter technischer Kontext genutzt.',
+    desc: 'Für die Auswertung wird nur reduzierter technischer Kontext verwendet.',
   },
+]
+
+const HERO_CHIPS = [
+  { icon: BrainCircuit, label: 'KI Fokus' },
+  { icon: Compass, label: 'Klare Roadmap' },
+  { icon: MessageSquareQuote, label: 'Direktes Feedback' },
 ]
 
 export default function HomePage() {
@@ -77,41 +87,56 @@ export default function HomePage() {
         backgroundSize: '28px 28px',
       }}
     >
-      {/* Decorative blobs â€” fixed so they stay visible regardless of scroll depth */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden" style={{ zIndex: 0 }}>
         <div className="absolute -right-28 top-0 h-80 w-80 rounded-full bg-cyan-200/45 blur-3xl" />
-        <div className="absolute -left-28 bottom-0 h-96 w-96 rounded-full bg-cyan-200/45 blur-3xl" />
+        <div className="absolute -left-28 bottom-0 h-96 w-96 rounded-full bg-emerald-200/40 blur-3xl" />
         <div className="absolute left-1/2 top-14 h-44 w-44 -translate-x-1/2 rotate-45 rounded-[34px] border border-cyan-200/45" />
         <div className="absolute right-10 top-52 h-28 w-28 rotate-12 rounded-2xl border border-slate-300/70 bg-white/40" />
         <div className="absolute bottom-32 left-16 h-16 w-16 rotate-6 rounded-xl border border-cyan-200/60 bg-white/30" />
       </div>
 
       <div className="relative z-10 mx-auto max-w-2xl px-6 py-12">
-        {/* Hero */}
         <div className="mb-10 rounded-3xl border border-slate-200/80 bg-white/85 p-7 text-center shadow-[0_14px_38px_rgba(15,23,42,0.10)] backdrop-blur">
-          <div className="pointer-events-none absolute inset-0 rounded-3xl opacity-70" style={{
-            backgroundImage: 'radial-gradient(circle at 70% 0%, rgba(124,58,237,0.07), transparent 55%)',
-          }} />
+          <div
+            className="pointer-events-none absolute inset-0 rounded-3xl opacity-70"
+            style={{ backgroundImage: 'radial-gradient(circle at 70% 0%, rgba(6,182,212,0.10), transparent 55%)' }}
+          />
 
-          <div className="relative inline-flex h-16 w-16 items-center justify-center rounded-2xl border border-cyan-200 bg-cyan-50 text-xl font-bold text-cyan-700 mb-5 shadow-sm">
-            SA
+          <div className="relative mb-5 inline-flex h-16 w-16 items-center justify-center rounded-2xl border border-cyan-200 bg-cyan-50 text-cyan-700 shadow-sm">
+            <Sparkles size={24} strokeWidth={2.2} />
           </div>
-          <h1 className="relative text-3xl font-bold tracking-tight text-slate-800 mb-3">
-            Dein KI Assistent fÃ¼r die Jobsuche
+
+          <h1 className="relative mb-3 text-3xl font-bold tracking-tight text-slate-800">
+            Dein KI-Assistent für die Jobsuche
           </h1>
-          <p className="relative text-sm text-slate-500 leading-relaxed max-w-md mx-auto">
-            Bereite dich auf Interviews vor, analysiere Stellenanzeigen und arbeite gezielt an deinen technischen Antworten.
+          <p className="relative mx-auto max-w-md text-sm leading-relaxed text-slate-500">
+            Bereite dich auf Interviews vor, analysiere Stellenanzeigen und trainiere Antworten strukturiert und praxisnah.
           </p>
+
+          <div className="relative mt-5 flex flex-wrap items-center justify-center gap-2">
+            {HERO_CHIPS.map(item => {
+              const Icon = item.icon
+              return (
+                <span
+                  key={item.label}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-cyan-200/80 bg-cyan-50/80 px-3 py-1 text-[11px] font-semibold text-cyan-700"
+                >
+                  <Icon size={12} />
+                  {item.label}
+                </span>
+              )
+            })}
+          </div>
+
           <button
             onClick={() => navigate('/chat?tool=interviewprep')}
-            className="relative mt-6 inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-white rounded-xl px-6 py-3 font-semibold text-sm transition-colors shadow-sm"
+            className="relative mt-6 inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-hover"
           >
             Jetzt starten
             <ArrowRight size={16} />
           </button>
         </div>
 
-        {/* Quick links */}
         <div className="mb-8">
           <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.15em] text-slate-400">Schnellzugriff</h2>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -123,43 +148,44 @@ export default function HomePage() {
                   onClick={() => navigate(`/chat?tool=${link.tool}`)}
                   className="group relative overflow-hidden rounded-2xl border border-slate-200/90 bg-white/90 p-4 text-left shadow-[0_6px_18px_rgba(15,23,42,0.07)] backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_12px_28px_rgba(15,23,42,0.11)]"
                 >
-                  <div className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity" style={{
-                    backgroundImage: 'radial-gradient(circle at 80% 0%, rgba(124,58,237,0.06), transparent 55%)',
-                  }} />
-                  <div className={`relative flex h-9 w-9 items-center justify-center rounded-xl border ${link.accent.soft} ${link.accent.ring} mb-3`}>
+                  <div
+                    className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity group-hover:opacity-100"
+                    style={{ backgroundImage: 'radial-gradient(circle at 80% 0%, rgba(6,182,212,0.10), transparent 55%)' }}
+                  />
+                  <div className={`relative mb-3 flex h-9 w-9 items-center justify-center rounded-xl border ${link.accent.soft} ${link.accent.ring}`}>
                     <Icon size={16} strokeWidth={2} className={link.accent.text} />
                   </div>
                   <p className={`relative text-xs font-semibold ${link.accent.text}`}>{link.label}</p>
-                  <p className="relative mt-0.5 text-[11px] text-slate-400 leading-snug">{link.desc}</p>
+                  <p className="relative mt-0.5 text-[11px] leading-snug text-slate-400">{link.desc}</p>
                 </button>
               )
             })}
           </div>
         </div>
 
-        {/* Highlights */}
         <div className="mb-8">
-          <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.15em] text-slate-400">Was SmartAssist fÃ¼r dich tut</h2>
+          <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.15em] text-slate-400">Was SmartAssist für dich tut</h2>
           <div className="flex flex-col gap-3">
             {HIGHLIGHTS.map(card => {
               const Icon = card.icon
               return (
                 <div
                   key={card.title}
-                  className="relative overflow-hidden flex items-start gap-4 rounded-2xl border border-slate-200/90 bg-white/90 p-4 shadow-[0_6px_18px_rgba(15,23,42,0.07)] backdrop-blur"
+                  className="relative flex items-start gap-4 overflow-hidden rounded-2xl border border-slate-200/90 bg-white/90 p-4 shadow-[0_6px_18px_rgba(15,23,42,0.07)] backdrop-blur"
                 >
-                  <div className="pointer-events-none absolute inset-0 opacity-80" style={{
-                    backgroundImage: 'radial-gradient(circle at 92% 0%, rgba(124,58,237,0.06), transparent 50%)',
-                  }} />
+                  <div
+                    className="pointer-events-none absolute inset-0 opacity-80"
+                    style={{ backgroundImage: 'radial-gradient(circle at 92% 0%, rgba(6,182,212,0.09), transparent 50%)' }}
+                  />
                   <div className={`relative flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border ${card.accent.soft} ${card.accent.ring}`}>
                     <Icon size={17} strokeWidth={2} className={card.accent.text} />
                   </div>
                   <div className="relative min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5">
+                    <div className="mb-0.5 flex items-center gap-2">
                       <span className={`h-4 w-0.5 rounded-full ${card.line}`} />
-                      <h3 className="font-semibold text-slate-800 text-sm">{card.title}</h3>
+                      <h3 className="text-sm font-semibold text-slate-800">{card.title}</h3>
                     </div>
-                    <p className="text-slate-500 text-xs leading-relaxed">{card.desc}</p>
+                    <p className="text-xs leading-relaxed text-slate-500">{card.desc}</p>
                   </div>
                 </div>
               )
@@ -167,7 +193,6 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Trust */}
         <div className="mb-8">
           <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.15em] text-slate-400">Vertrauen und Datenschutz</h2>
           <div className="rounded-2xl border border-slate-200/80 bg-white/85 p-4 shadow-[0_6px_18px_rgba(15,23,42,0.07)] backdrop-blur">
@@ -179,7 +204,7 @@ export default function HomePage() {
                     <Icon size={15} className={`mt-0.5 flex-shrink-0 ${item.color}`} />
                     <div>
                       <p className="text-sm font-semibold text-slate-700">{item.title}</p>
-                      <p className="text-xs text-slate-500 leading-relaxed">{item.desc}</p>
+                      <p className="text-xs leading-relaxed text-slate-500">{item.desc}</p>
                     </div>
                   </div>
                 )
@@ -187,18 +212,18 @@ export default function HomePage() {
             </div>
 
             <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5">
-              <p className="text-[11px] text-amber-800 leading-relaxed">
+              <p className="text-[11px] leading-relaxed text-amber-800">
                 <span className="inline-flex items-center gap-1 font-semibold">
                   <TriangleAlert size={13} />
                   Wichtiger Hinweis:
                 </span>{' '}
-                Bitte teile im Chat keine vertraulichen oder persÃ¶nlichen Daten. Wenn du sensible Inhalte eingibst, passiert das auf eigene Verantwortung.
+                Bitte teile im Chat keine vertraulichen oder persönlichen Daten. Wenn du sensible Inhalte eingibst, passiert das auf eigene Verantwortung.
               </p>
             </div>
 
-            <p className="mt-3 text-xs text-slate-500 text-center inline-flex items-center justify-center gap-1.5 w-full">
+            <p className="mt-3 inline-flex w-full items-center justify-center gap-1.5 text-center text-xs text-slate-500">
               <Heart size={13} className="text-rose-500" />
-              Mit Liebe und viel GlÃ¼ck auf deinem Weg.
+              Mit Liebe und viel Glück auf deinem Weg.
             </p>
           </div>
         </div>
@@ -206,7 +231,7 @@ export default function HomePage() {
         <div className="text-center">
           <button
             onClick={() => navigate('/tools')}
-            className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline font-medium"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
           >
             Alle Tools ansehen
             <ArrowRight size={14} />
@@ -216,6 +241,3 @@ export default function HomePage() {
     </div>
   )
 }
-
-
-

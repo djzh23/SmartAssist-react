@@ -106,7 +106,7 @@ function UsageBanner() {
     >
       <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-300">
         <Sparkles size={11} />
-        <span>{responsesLeft === Infinity ? '∞' : responsesLeft} responses left · Upgrade</span>
+        <span>{responsesLeft === Infinity ? 'Unbegrenzt' : responsesLeft} responses left · Upgrade</span>
       </span>
       <span className="text-[10px] text-amber-400"><ArrowRight size={12} /></span>
     </button>
@@ -119,7 +119,7 @@ function UsageBar() {
 
   const pct = dailyLimit === Infinity ? 0 : Math.min(100, (usageToday / dailyLimit) * 100)
   const barColor = pct > 90 ? '#EF4444' : pct > 70 ? '#F59E0B' : '#06B6D4'
-  const limitLabel = dailyLimit === Infinity ? '∞' : String(dailyLimit)
+  const limitLabel = dailyLimit === Infinity ? 'Unbegrenzt' : String(dailyLimit)
 
   return (
     <div className="border-t border-white/8 px-3 py-2">
