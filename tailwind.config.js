@@ -1,13 +1,13 @@
-/** @type {import('tailwindcss').Config} */
+﻿/** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
   theme: {
     extend: {
       colors: {
         primary: {
-          DEFAULT: '#7C3AED',
-          hover:   '#6D28D9',
-          light:   '#EDE9FE',
+          DEFAULT: '#06B6D4',
+          hover:   '#0891B2',
+          light:   '#ECFEFF',
         },
         sidebar: {
           DEFAULT: '#1e293b',
@@ -42,3 +42,4 @@ export default {
   },
   plugins: [],
 }
+

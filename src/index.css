@@ -1,4 +1,4 @@
-@tailwind base;
+﻿@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
@@ -129,7 +129,7 @@
 }
 
 .modal-input:focus {
-  border-color: #7C3AED;
+  border-color: #06B6D4;
 }
 
 .modal-textarea {
@@ -146,7 +146,7 @@
 }
 
 .modal-textarea:focus {
-  border-color: #7C3AED;
+  border-color: #06B6D4;
 }
 
 .modal-hint {
@@ -185,7 +185,7 @@
 
 .btn-primary {
   border: 1px solid transparent;
-  background: #7C3AED;
+  background: #06B6D4;
   color: white;
   border-radius: 10px;
   padding: 8px 14px;
@@ -195,7 +195,7 @@
 }
 
 .btn-primary:hover {
-  background: #6D28D9;
+  background: #0891B2;
 }
 
 .btn-primary:disabled,
@@ -223,23 +223,23 @@
 }
 
 .lang-btn:hover {
-  border-color: #7C3AED;
-  color: #7C3AED;
+  border-color: #06B6D4;
+  color: #06B6D4;
 }
 
 .lang-btn.selected {
-  border-color: #7C3AED;
-  background: #F5F3FF;
-  color: #7C3AED;
+  border-color: #06B6D4;
+  background: #ECFEFF;
+  color: #06B6D4;
   font-weight: 600;
 }
 
 .context-indicator {
-  background: #F5F3FF;
+  background: #ECFEFF;
   border-bottom: 1px solid #E5E7EB;
   padding: 6px 20px;
   font-size: 12px;
-  color: #7C3AED;
+  color: #06B6D4;
   font-weight: 500;
   display: flex;
   align-items: center;
@@ -256,7 +256,7 @@
 }
 
 .context-edit-btn:hover {
-  color: #7C3AED;
+  color: #06B6D4;
 }
 
 .job-analysis-body .job-p {
@@ -311,13 +311,13 @@
 
 .job-analysis-body .job-inline-score {
   display: inline-block;
-  background: #E0E7FF;
-  border: 1px solid #C7D2FE;
+  background: #CFFAFE;
+  border: 1px solid #A5F3FC;
   border-radius: 999px;
   padding: 1px 7px;
   font-size: 0.82em;
   font-weight: 700;
-  color: #4338CA;
+  color: #0E7490;
 }
 
 .job-analysis-body .job-inline-percent {
@@ -347,3 +347,4 @@
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
 }
+

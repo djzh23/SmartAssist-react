@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+﻿import { useEffect, useRef, useState } from 'react'
 import type { ChangeEvent } from 'react'
 import {
   Briefcase,
@@ -34,7 +34,7 @@ function compactLines(text: string, maxLines: number, maxChars: number): string 
   const lines = text
     .replace(/\r\n?/g, '\n')
     .split(/\n+/)
-    .map(line => line.replace(/^[-*•\s]+/, '').trim())
+    .map(line => line.replace(/^[-*â€¢\s]+/, '').trim())
     .filter(Boolean)
 
   const out: string[] = []
@@ -43,7 +43,7 @@ function compactLines(text: string, maxLines: number, maxChars: number): string 
   for (const line of lines) {
     if (out.length >= maxLines || length >= maxChars) break
     const room = maxChars - length
-    const normalized = line.length > room ? `${line.slice(0, Math.max(0, room - 1)).trim()}…` : line
+    const normalized = line.length > room ? `${line.slice(0, Math.max(0, room - 1)).trim()}â€¦` : line
     if (!normalized) break
     out.push(normalized)
     length += normalized.length + 1
@@ -124,7 +124,7 @@ export default function InterviewSetupModal({
     } catch {
       setUploadedCvRawText(null)
       setUploadedCvFileName(null)
-      setError('PDF konnte nicht verarbeitet werden. Bitte prüfe, ob es geschützt oder gescannt ist.')
+      setError('PDF konnte nicht verarbeitet werden. Bitte prÃ¼fe, ob es geschÃ¼tzt oder gescannt ist.')
     } finally {
       setIsParsingPdf(false)
     }
@@ -163,7 +163,7 @@ export default function InterviewSetupModal({
 
     const cvSource = uploadedCvRawText?.trim() || manualCvInput.trim() || cvAnalysis.trim()
     if (!cvSource) {
-      setError('Bitte lade zuerst deinen Lebenslauf hoch oder füge ihn manuell ein.')
+      setError('Bitte lade zuerst deinen Lebenslauf hoch oder fÃ¼ge ihn manuell ein.')
       return
     }
 
@@ -181,7 +181,7 @@ export default function InterviewSetupModal({
     }
 
     if (!effectiveJobText && !normalizedJobUrl) {
-      setError('Bitte füge entweder einen Job-Link oder den Text der Stellenanzeige ein.')
+      setError('Bitte fÃ¼ge entweder einen Job-Link oder den Text der Stellenanzeige ein.')
       return
     }
 
@@ -222,12 +222,12 @@ export default function InterviewSetupModal({
         <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
           <div>
             <h2 className="text-lg font-bold text-slate-800">Interview Setup</h2>
-            <p className="text-xs text-slate-500">Sprache, Alias, Lebenslauf und Stelle für diesen Chat.</p>
+            <p className="text-xs text-slate-500">Sprache, Alias, Lebenslauf und Stelle fÃ¼r diesen Chat.</p>
           </div>
           <button
             onClick={onClose}
             className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600"
-            aria-label="Schließen"
+            aria-label="SchlieÃŸen"
           >
             <X size={16} />
           </button>
@@ -258,7 +258,7 @@ export default function InterviewSetupModal({
             </div>
 
             <div>
-              <label className="text-xs font-medium text-slate-700">Alias für Anonymisierung</label>
+              <label className="text-xs font-medium text-slate-700">Alias fÃ¼r Anonymisierung</label>
               <input
                 type="text"
                 value={alias}
@@ -273,7 +273,7 @@ export default function InterviewSetupModal({
           {/* CV */}
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
             <div className="mb-2 flex items-center gap-1.5 text-slate-700">
-              <FileText size={14} className="text-indigo-500" />
+              <FileText size={14} className="text-sky-500" />
               <p className="text-xs font-medium">Lebenslauf-Quelle</p>
               {uploadedCvFileName && (
                 <span className="ml-auto rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] text-emerald-700">
@@ -297,7 +297,7 @@ export default function InterviewSetupModal({
               value={manualCvInput}
               onChange={e => setManualCvInput(e.target.value)}
               rows={5}
-              placeholder="Oder Lebenslauf-Text manuell einfügen"
+              placeholder="Oder Lebenslauf-Text manuell einfÃ¼gen"
               className="min-h-[110px] w-full resize-y rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 placeholder-slate-400 outline-none focus:border-primary"
             />
           </div>
@@ -325,25 +325,25 @@ export default function InterviewSetupModal({
               value={jobText}
               onChange={e => setJobText(e.target.value)}
               rows={5}
-              placeholder="Anforderungen und Aufgaben hier einfügen"
+              placeholder="Anforderungen und Aufgaben hier einfÃ¼gen"
               className="min-h-[110px] w-full resize-y rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 placeholder-slate-400 outline-none focus:border-primary"
             />
           </div>
 
           {/* Analyse trigger */}
-          <div className="flex items-center justify-between gap-2 rounded-xl border border-indigo-100 bg-indigo-50 px-3 py-2">
-            <p className="text-[11px] leading-relaxed text-indigo-700">
+          <div className="flex items-center justify-between gap-2 rounded-xl border border-sky-100 bg-sky-50 px-3 py-2">
+            <p className="text-[11px] leading-relaxed text-sky-700">
               Lebenslauf wird lokal aufbereitet. Bei Job-Links wird nur der Stellenkontext geladen.
             </p>
             <button
               onClick={handleAnalyze}
               disabled={isBusy}
-              className="whitespace-nowrap rounded-lg bg-indigo-600 px-3 py-2 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-60"
+              className="whitespace-nowrap rounded-lg bg-sky-600 px-3 py-2 text-xs font-medium text-white hover:bg-sky-700 disabled:opacity-60"
             >
               {isBusy ? (
                 <span className="inline-flex items-center gap-1">
                   <Loader2 size={12} className="animate-spin" />
-                  {isResolvingJob ? 'Stelle laden…' : 'Aufbereiten…'}
+                  {isResolvingJob ? 'Stelle ladenâ€¦' : 'Aufbereitenâ€¦'}
                 </span>
               ) : 'Kontext aufbereiten'}
             </button>
@@ -359,7 +359,7 @@ export default function InterviewSetupModal({
             <div className="space-y-3 rounded-xl border border-emerald-200 bg-emerald-50/60 p-3">
               <div className="flex items-center gap-2 text-xs font-semibold text-emerald-700">
                 <CheckCircle2 size={14} />
-                Kontext aufbereitet — bereit zum Speichern
+                Kontext aufbereitet â€” bereit zum Speichern
               </div>
 
               {/* CV preview */}
@@ -369,7 +369,7 @@ export default function InterviewSetupModal({
                     Lebenslauf-Kontext (aufbereitet)
                   </p>
                   <pre className="max-h-32 overflow-y-auto whitespace-pre-wrap text-[11px] leading-relaxed text-slate-700">
-                    {cvAnalysis.slice(0, 600)}{cvAnalysis.length > 600 ? '…' : ''}
+                    {cvAnalysis.slice(0, 600)}{cvAnalysis.length > 600 ? 'â€¦' : ''}
                   </pre>
                 </div>
               )}
@@ -381,7 +381,7 @@ export default function InterviewSetupModal({
                     Stellenkontext {resolvedJobText ? '(via Link geladen)' : ''}
                   </p>
                   <pre className="max-h-32 overflow-y-auto whitespace-pre-wrap text-[11px] leading-relaxed text-slate-700">
-                    {(resolvedJobText || jobText).slice(0, 400)}{(resolvedJobText || jobText).length > 400 ? '…' : ''}
+                    {(resolvedJobText || jobText).slice(0, 400)}{(resolvedJobText || jobText).length > 400 ? 'â€¦' : ''}
                   </pre>
                 </div>
               )}
@@ -402,10 +402,11 @@ export default function InterviewSetupModal({
             disabled={isBusy}
             className="flex-1 rounded-lg bg-primary py-2.5 text-sm font-semibold text-white hover:bg-primary-hover disabled:opacity-60"
           >
-            Für diesen Chat speichern
+            FÃ¼r diesen Chat speichern
           </button>
         </div>
       </div>
     </div>
   )
 }
+

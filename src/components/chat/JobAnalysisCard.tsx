@@ -1,4 +1,4 @@
-import { bodyToHtml, parseJobAnalysis, pickOverallScore } from '../../utils/jobMarkdown'
+﻿import { bodyToHtml, parseJobAnalysis, pickOverallScore } from '../../utils/jobMarkdown'
 
 interface Props {
   text: string
@@ -34,7 +34,7 @@ export default function JobAnalysisCard({ text }: Props) {
 
   return (
     <div className="w-full space-y-3">
-      <div className="rounded-xl border border-indigo-100 bg-gradient-to-r from-white via-indigo-50/50 to-white px-4 py-3 shadow-sm">
+      <div className="rounded-xl border border-sky-100 bg-gradient-to-r from-white via-sky-50/50 to-white px-4 py-3 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
@@ -52,7 +52,7 @@ export default function JobAnalysisCard({ text }: Props) {
         {typeof overallScore === 'number' && (
           <div className="mt-3">
             <div className="mb-1 flex items-center justify-between text-[11px] text-slate-500">
-              <span>Übereinstimmung</span>
+              <span>Ãœbereinstimmung</span>
               <span>{overallScore}%</span>
             </div>
             <div className="h-2 overflow-hidden rounded-full bg-slate-200">
@@ -104,3 +104,4 @@ export default function JobAnalysisCard({ text }: Props) {
     </div>
   )
 }
+

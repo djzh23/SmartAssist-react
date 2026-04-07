@@ -15,10 +15,10 @@ import {
 const HIGHLIGHTS = [
   {
     icon: Target,
-    accent: { soft: 'bg-violet-50', ring: 'border-violet-200', text: 'text-violet-700' },
+    accent: { soft: 'bg-cyan-50', ring: 'border-cyan-200', text: 'text-cyan-700' },
     title: 'Interview Coaching',
     desc: 'Ãœbe typische Fragen, formuliere stÃ¤rkere Antworten und gehe entspannter ins GesprÃ¤ch.',
-    line: 'bg-violet-500',
+    line: 'bg-cyan-500',
   },
   {
     icon: Briefcase,
@@ -29,17 +29,17 @@ const HIGHLIGHTS = [
   },
   {
     icon: Code2,
-    accent: { soft: 'bg-indigo-50', ring: 'border-indigo-200', text: 'text-indigo-700' },
+    accent: { soft: 'bg-sky-50', ring: 'border-sky-200', text: 'text-sky-700' },
     title: 'Technik Training',
     desc: 'Trainiere Programmierfragen mit klaren ErklÃ¤rungen und praktischen Codebeispielen.',
-    line: 'bg-indigo-500',
+    line: 'bg-sky-500',
   },
 ]
 
 const QUICK_LINKS = [
-  { icon: Target, tool: 'interviewprep', label: 'Interview Coach', desc: 'VorstellungsgesprÃ¤che Ã¼ben', accent: { soft: 'bg-violet-50', ring: 'border-violet-200', text: 'text-violet-700' } },
+  { icon: Target, tool: 'interviewprep', label: 'Interview Coach', desc: 'VorstellungsgesprÃ¤che Ã¼ben', accent: { soft: 'bg-cyan-50', ring: 'border-cyan-200', text: 'text-cyan-700' } },
   { icon: Briefcase, tool: 'jobanalyzer', label: 'Job Analyzer', desc: 'Stellenanzeige prÃ¼fen', accent: { soft: 'bg-emerald-50', ring: 'border-emerald-200', text: 'text-emerald-700' } },
-  { icon: Code2, tool: 'programming', label: 'Programming', desc: 'Technische Fragen', accent: { soft: 'bg-indigo-50', ring: 'border-indigo-200', text: 'text-indigo-700' } },
+  { icon: Code2, tool: 'programming', label: 'Programming', desc: 'Technische Fragen', accent: { soft: 'bg-sky-50', ring: 'border-sky-200', text: 'text-sky-700' } },
   { icon: Globe2, tool: 'language', label: 'Language', desc: 'Sprachen trainieren', accent: { soft: 'bg-amber-50', ring: 'border-amber-200', text: 'text-amber-700' } },
 ]
 
@@ -52,7 +52,7 @@ const TRUST_POINTS = [
   },
   {
     icon: HardDrive,
-    color: 'text-indigo-600',
+    color: 'text-sky-600',
     title: 'Lokale Verarbeitung',
     desc: 'Die technische Analyse deines Lebenslaufs lÃ¤uft lokal im Browser auf deinem GerÃ¤t.',
   },
@@ -79,9 +79,9 @@ export default function HomePage() {
     >
       {/* Decorative blobs â€” fixed so they stay visible regardless of scroll depth */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden" style={{ zIndex: 0 }}>
-        <div className="absolute -right-28 top-0 h-80 w-80 rounded-full bg-violet-200/45 blur-3xl" />
+        <div className="absolute -right-28 top-0 h-80 w-80 rounded-full bg-cyan-200/45 blur-3xl" />
         <div className="absolute -left-28 bottom-0 h-96 w-96 rounded-full bg-cyan-200/45 blur-3xl" />
-        <div className="absolute left-1/2 top-14 h-44 w-44 -translate-x-1/2 rotate-45 rounded-[34px] border border-violet-200/45" />
+        <div className="absolute left-1/2 top-14 h-44 w-44 -translate-x-1/2 rotate-45 rounded-[34px] border border-cyan-200/45" />
         <div className="absolute right-10 top-52 h-28 w-28 rotate-12 rounded-2xl border border-slate-300/70 bg-white/40" />
         <div className="absolute bottom-32 left-16 h-16 w-16 rotate-6 rounded-xl border border-cyan-200/60 bg-white/30" />
       </div>
@@ -93,7 +93,7 @@ export default function HomePage() {
             backgroundImage: 'radial-gradient(circle at 70% 0%, rgba(124,58,237,0.07), transparent 55%)',
           }} />
 
-          <div className="relative inline-flex h-16 w-16 items-center justify-center rounded-2xl border border-violet-200 bg-violet-50 text-xl font-bold text-violet-700 mb-5 shadow-sm">
+          <div className="relative inline-flex h-16 w-16 items-center justify-center rounded-2xl border border-cyan-200 bg-cyan-50 text-xl font-bold text-cyan-700 mb-5 shadow-sm">
             SA
           </div>
           <h1 className="relative text-3xl font-bold tracking-tight text-slate-800 mb-3">
@@ -216,5 +216,6 @@ export default function HomePage() {
     </div>
   )
 }
+
 
 

@@ -1,4 +1,4 @@
-// Parse and format Job Analyzer output into structured, color coded sections.
+﻿// Parse and format Job Analyzer output into structured, color coded sections.
 
 export type JobSectionTone =
   | 'score'
@@ -37,17 +37,17 @@ interface ToneStyle {
 
 const TONE_STYLES: Record<JobSectionTone, ToneStyle> = {
   score: {
-    icon: '🎯',
+    icon: 'ðŸŽ¯',
     chip: 'Match',
-    bg: '#EEF2FF',
-    border: '#6366F1',
-    color: '#4338CA',
-    chipBg: '#E0E7FF',
-    chipColor: '#3730A3',
+    bg: '#ECFEFF',
+    border: '#0EA5E9',
+    color: '#0369A1',
+    chipBg: '#CFFAFE',
+    chipColor: '#0E7490',
   },
   strength: {
-    icon: '✅',
-    chip: 'Stärken',
+    icon: 'âœ…',
+    chip: 'StÃ¤rken',
     bg: '#ECFDF3',
     border: '#10B981',
     color: '#047857',
@@ -55,8 +55,8 @@ const TONE_STYLES: Record<JobSectionTone, ToneStyle> = {
     chipColor: '#065F46',
   },
   gaps: {
-    icon: '⚠️',
-    chip: 'Lücken',
+    icon: 'âš ï¸',
+    chip: 'LÃ¼cken',
     bg: '#FFFBEB',
     border: '#F59E0B',
     color: '#B45309',
@@ -64,8 +64,8 @@ const TONE_STYLES: Record<JobSectionTone, ToneStyle> = {
     chipColor: '#92400E',
   },
   actions: {
-    icon: '🚀',
-    chip: 'Nächste Schritte',
+    icon: 'ðŸš€',
+    chip: 'NÃ¤chste Schritte',
     bg: '#FFF7ED',
     border: '#F97316',
     color: '#C2410C',
@@ -73,16 +73,16 @@ const TONE_STYLES: Record<JobSectionTone, ToneStyle> = {
     chipColor: '#9A3412',
   },
   keywords: {
-    icon: '🔑',
+    icon: 'ðŸ”‘',
     chip: 'Keywords',
-    bg: '#F5F3FF',
-    border: '#8B5CF6',
-    color: '#6D28D9',
-    chipBg: '#EDE9FE',
-    chipColor: '#5B21B6',
+    bg: '#ECFEFF',
+    border: '#22D3EE',
+    color: '#0891B2',
+    chipBg: '#ECFEFF',
+    chipColor: '#0E7490',
   },
   interview: {
-    icon: '🎤',
+    icon: 'ðŸŽ¤',
     chip: 'Interview',
     bg: '#ECFEFF',
     border: '#06B6D4',
@@ -91,7 +91,7 @@ const TONE_STYLES: Record<JobSectionTone, ToneStyle> = {
     chipColor: '#155E75',
   },
   risk: {
-    icon: '🛑',
+    icon: 'ðŸ›‘',
     chip: 'Risiko',
     bg: '#FEF2F2',
     border: '#EF4444',
@@ -100,8 +100,8 @@ const TONE_STYLES: Record<JobSectionTone, ToneStyle> = {
     chipColor: '#991B1B',
   },
   salary: {
-    icon: '💶',
-    chip: 'Vergütung',
+    icon: 'ðŸ’¶',
+    chip: 'VergÃ¼tung',
     bg: '#F0FDF4',
     border: '#22C55E',
     color: '#15803D',
@@ -109,7 +109,7 @@ const TONE_STYLES: Record<JobSectionTone, ToneStyle> = {
     chipColor: '#166534',
   },
   general: {
-    icon: '📌',
+    icon: 'ðŸ“Œ',
     chip: 'Kontext',
     bg: '#F8FAFC',
     border: '#94A3B8',
@@ -140,7 +140,7 @@ function normalizeHeader(raw: string): string {
   return raw
     .replace(/^#+\s*/, '')
     .replace(/\*\*/g, '')
-    .replace(/^[-*•\s]+/, '')
+    .replace(/^[-*â€¢\s]+/, '')
     .replace(/\s*:\s*$/, '')
     .trim()
 }
@@ -167,10 +167,10 @@ function isLikelyHeading(line: string): boolean {
   if (/^#+\s+/.test(trimmed)) return true
 
   // Upper-case heading style: STRENGTHS:
-  if (/^[A-Z0-9ÄÖÜ/&+\- ][A-Z0-9ÄÖÜ/&+\- ]{1,80}:\s*$/.test(trimmed)) return true
+  if (/^[A-Z0-9Ã„Ã–Ãœ/&+\- ][A-Z0-9Ã„Ã–Ãœ/&+\- ]{1,80}:\s*$/.test(trimmed)) return true
 
   // Normal title style: Anforderungen:
-  if (/^[A-Za-zÄÖÜäöüß][^:]{1,80}:\s*$/.test(trimmed)) return true
+  if (/^[A-Za-zÃ„Ã–ÃœÃ¤Ã¶Ã¼ÃŸ][^:]{1,80}:\s*$/.test(trimmed)) return true
 
   return false
 }
@@ -183,20 +183,20 @@ function detectTone(title: string, body: string): JobSectionTone {
     || haystack.includes('score')
     || haystack.includes('fit')
     || haystack.includes('uebereinst')
-    || haystack.includes('übereinst')
+    || haystack.includes('Ã¼bereinst')
     || haystack.includes('passung')
   ) return 'score'
 
   if (
     haystack.includes('starke')
-    || haystack.includes('stärke')
+    || haystack.includes('stÃ¤rke')
     || haystack.includes('strength')
     || haystack.includes('geeignet')
   ) return 'strength'
 
   if (
     haystack.includes('luecke')
-    || haystack.includes('lücke')
+    || haystack.includes('lÃ¼cke')
     || haystack.includes('gap')
     || haystack.includes('fehl')
     || haystack.includes('missing')
@@ -240,7 +240,7 @@ function detectTone(title: string, body: string): JobSectionTone {
 }
 
 function buildSection(title: string, body: string): JobSection {
-  const cleanTitle = title.trim() || 'Analyse Überblick'
+  const cleanTitle = title.trim() || 'Analyse Ãœberblick'
   const tone = detectTone(cleanTitle, body)
   const style = TONE_STYLES[tone]
   const score = extractScore(`${cleanTitle}\n${body}`)
@@ -266,7 +266,7 @@ export function parseJobAnalysis(text: string): JobSection[] {
   const flush = () => {
     const body = currentBodyLines.join('\n').trim()
     if (!currentHeader && !body) return
-    sections.push(buildSection(currentHeader || 'Analyse Überblick', body))
+    sections.push(buildSection(currentHeader || 'Analyse Ãœberblick', body))
     currentBodyLines = []
   }
 
@@ -304,7 +304,7 @@ export function parseJobAnalysis(text: string): JobSection[] {
   flush()
 
   if (sections.length === 0) {
-    return [buildSection('Analyse Überblick', raw)]
+    return [buildSection('Analyse Ãœberblick', raw)]
   }
 
   return sections
@@ -350,7 +350,7 @@ export function bodyToHtml(text: string): string {
       continue
     }
 
-    const unordered = line.match(/^[-*•]\s+(.+)$/)
+    const unordered = line.match(/^[-*â€¢]\s+(.+)$/)
     if (unordered) {
       if (listMode !== 'ul') {
         closeList()
@@ -374,13 +374,13 @@ export function bodyToHtml(text: string): string {
 
     closeList()
 
-    const keyValue = line.match(/^([A-Za-zÄÖÜäöüß0-9][^:]{1,60}):\s+(.+)$/)
+    const keyValue = line.match(/^([A-Za-zÃ„Ã–ÃœÃ¤Ã¶Ã¼ÃŸ0-9][^:]{1,60}):\s+(.+)$/)
     if (keyValue && !/^https?:\/\//i.test(line)) {
       parts.push(`<p class="job-kv"><span class="job-kv-key">${formatInline(keyValue[1])}:</span> ${formatInline(keyValue[2])}</p>`)
       continue
     }
 
-    const subHeading = line.match(/^([A-Za-zÄÖÜäöüß0-9][^:]{1,60}):$/)
+    const subHeading = line.match(/^([A-Za-zÃ„Ã–ÃœÃ¤Ã¶Ã¼ÃŸ0-9][^:]{1,60}):$/)
     if (subHeading) {
       parts.push(`<h4 class="job-subhead">${formatInline(subHeading[1])}</h4>`)
       continue
@@ -399,3 +399,4 @@ export function pickOverallScore(sections: JobSection[]): number | undefined {
   }
   return undefined
 }
+

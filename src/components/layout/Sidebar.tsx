@@ -1,4 +1,4 @@
-import { NavLink, useNavigate, useLocation } from 'react-router-dom'
+﻿import { NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { Home, Wrench, MessageCircle, Briefcase, Globe, Code2, Target, Tag, User } from 'lucide-react'
 import { useUserPlan } from '../../hooks/useUserPlan'
 import AuthButton from '../ui/AuthButton'
@@ -94,9 +94,9 @@ function UsageBanner() {
       className="mx-2 mb-2 flex items-center justify-between gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-left transition-colors hover:bg-amber-500/20"
     >
       <span className="text-[11px] font-medium text-amber-300">
-        ⚡ {responsesLeft === Infinity ? '∞' : responsesLeft} responses left · Upgrade
+        âš¡ {responsesLeft === Infinity ? 'âˆž' : responsesLeft} responses left Â· Upgrade
       </span>
-      <span className="text-[10px] text-amber-400">→</span>
+      <span className="text-[10px] text-amber-400">â†’</span>
     </button>
   )
 }
@@ -107,8 +107,8 @@ function UsageBar() {
   if (plan === 'pro') return null
 
   const pct = dailyLimit === Infinity ? 0 : Math.min(100, (usageToday / dailyLimit) * 100)
-  const barColor = pct > 90 ? '#EF4444' : pct > 70 ? '#F59E0B' : '#7C3AED'
-  const limitLabel = dailyLimit === Infinity ? '∞' : String(dailyLimit)
+  const barColor = pct > 90 ? '#EF4444' : pct > 70 ? '#F59E0B' : '#06B6D4'
+  const limitLabel = dailyLimit === Infinity ? 'âˆž' : String(dailyLimit)
 
   return (
     <div className="border-t border-white/8 px-3 py-2">
@@ -133,7 +133,7 @@ export default function Sidebar({ onNavClick }: Props) {
     <div className="h-full flex flex-col overflow-y-auto overflow-x-hidden">
       {/* Brand */}
       <div className="flex items-center gap-2.5 px-4 py-5 flex-shrink-0">
-        <span className="text-xl leading-none">🎯</span>
+        <span className="text-xl leading-none">ðŸŽ¯</span>
         <span className="text-white font-bold text-[15px] tracking-wide">SmartAssist</span>
       </div>
 
@@ -175,3 +175,4 @@ export default function Sidebar({ onNavClick }: Props) {
     </div>
   )
 }
+

@@ -1,9 +1,9 @@
-import type { ReactNode } from 'react'
+﻿import type { ReactNode } from 'react'
 import CodeBlock from './CodeBlock'
 import { parseBlocks, parseSegments } from '../../utils/markdownRenderer'
 import type { Block } from '../../utils/markdownRenderer'
 
-// ── Inline markdown ────────────────────────────────────────
+// â”€â”€ Inline markdown â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function renderInline(text: string): ReactNode[] {
   const nodes: ReactNode[] = []
   const re = /(\*\*[^*\n]+\*\*|\*[^*\n]+\*|`[^`\n]+`)/g
@@ -16,23 +16,23 @@ function renderInline(text: string): ReactNode[] {
     else if (tok.startsWith('*'))
       nodes.push(<em key={k++} className="italic text-slate-700">{tok.slice(1, -1)}</em>)
     else
-      nodes.push(<code key={k++} className="bg-indigo-50 text-indigo-700 border border-indigo-200 text-[0.78em] font-mono rounded px-1 py-0.5">{tok.slice(1, -1)}</code>)
+      nodes.push(<code key={k++} className="bg-sky-50 text-sky-700 border border-sky-200 text-[0.78em] font-mono rounded px-1 py-0.5">{tok.slice(1, -1)}</code>)
     last = re.lastIndex
   }
   if (last < text.length) nodes.push(text.slice(last))
   return nodes
 }
 
-// ── Section detection ──────────────────────────────────────
+// â”€â”€ Section detection â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 type SectionKind = 'tip' | 'question' | 'warning' | 'star' | 'job' | 'default'
 
 function detectKind(h: string): SectionKind {
   const l = h.toLowerCase()
-  if (l.includes('tipp') || l.includes('vorber') || l.includes('trick') || l.includes('💡') || l.includes('advice') || l.includes('prep')) return 'tip'
-  if (l.includes('frage') || l.includes('question') || l.includes('❓') || l.includes('typisch')) return 'question'
-  if (l.includes('fehler') || l.includes('mistake') || l.includes('⚠️') || l.includes('vermeiden') || l.includes('avoid')) return 'warning'
-  if (l.includes('star') || l.includes('präsent') || l.includes('pitch') || l.includes('⭐')) return 'star'
-  if (l.includes('stelle') || l.includes('job') || l.includes('role') || l.includes('🏢') || l.includes('über') || l.includes('about') || l.includes('anford') || l.includes('skill') || l.includes('🎯')) return 'job'
+  if (l.includes('tipp') || l.includes('vorber') || l.includes('trick') || l.includes('ðŸ’¡') || l.includes('advice') || l.includes('prep')) return 'tip'
+  if (l.includes('frage') || l.includes('question') || l.includes('â“') || l.includes('typisch')) return 'question'
+  if (l.includes('fehler') || l.includes('mistake') || l.includes('âš ï¸') || l.includes('vermeiden') || l.includes('avoid')) return 'warning'
+  if (l.includes('star') || l.includes('prÃ¤sent') || l.includes('pitch') || l.includes('â­')) return 'star'
+  if (l.includes('stelle') || l.includes('job') || l.includes('role') || l.includes('ðŸ¢') || l.includes('Ã¼ber') || l.includes('about') || l.includes('anford') || l.includes('skill') || l.includes('ðŸŽ¯')) return 'job'
   return 'default'
 }
 
@@ -41,11 +41,11 @@ const S: Record<SectionKind, { wrap: string; h2: string; h3: string; dot: string
   question:{ wrap: 'bg-blue-50 border border-blue-200 rounded-xl px-4 py-3',     h2: 'text-blue-800 font-bold text-sm',    h3: 'text-blue-700 font-semibold text-sm',    dot: 'bg-blue-400',    nb: 'bg-blue-100',   nt: 'text-blue-700',   q: 'border-l-4 border-blue-300 bg-blue-50/60 pl-3 italic text-blue-900' },
   warning: { wrap: 'bg-red-50 border border-red-200 rounded-xl px-4 py-3',       h2: 'text-red-800 font-bold text-sm',     h3: 'text-red-700 font-semibold text-sm',     dot: 'bg-red-400',     nb: 'bg-red-100',    nt: 'text-red-700',    q: 'border-l-4 border-red-300 bg-red-50/60 pl-3 italic text-red-900' },
   star:    { wrap: 'bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3',h2: 'text-emerald-800 font-bold text-sm', h3: 'text-emerald-700 font-semibold text-sm', dot: 'bg-emerald-400', nb: 'bg-emerald-100',nt: 'text-emerald-700',q: 'border-l-4 border-emerald-300 bg-emerald-50/60 pl-3 italic text-emerald-900' },
-  job:     { wrap: 'bg-violet-50 border border-violet-200 rounded-xl px-4 py-3', h2: 'text-violet-800 font-bold text-sm',  h3: 'text-violet-700 font-semibold text-sm',  dot: 'bg-violet-400',  nb: 'bg-violet-100', nt: 'text-violet-700', q: 'border-l-4 border-violet-300 bg-violet-50/60 pl-3 italic text-violet-900' },
-  default: { wrap: '',                                                             h2: 'text-indigo-700 font-bold text-sm border-b border-indigo-100 pb-1', h3: 'text-slate-700 font-semibold text-sm', dot: 'bg-indigo-400', nb: 'bg-indigo-100', nt: 'text-indigo-700', q: 'border-l-4 border-indigo-300 bg-indigo-50/60 pl-3 italic text-indigo-900' },
+  job:     { wrap: 'bg-cyan-50 border border-cyan-200 rounded-xl px-4 py-3', h2: 'text-cyan-800 font-bold text-sm',  h3: 'text-cyan-700 font-semibold text-sm',  dot: 'bg-cyan-400',  nb: 'bg-cyan-100', nt: 'text-cyan-700', q: 'border-l-4 border-cyan-300 bg-cyan-50/60 pl-3 italic text-cyan-900' },
+  default: { wrap: '',                                                             h2: 'text-sky-700 font-bold text-sm border-b border-sky-100 pb-1', h3: 'text-slate-700 font-semibold text-sm', dot: 'bg-sky-400', nb: 'bg-sky-100', nt: 'text-sky-700', q: 'border-l-4 border-sky-300 bg-sky-50/60 pl-3 italic text-sky-900' },
 }
 
-// ── Section grouping ───────────────────────────────────────
+// â”€â”€ Section grouping â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 interface Section { heading: (Block & { type: 'h2' | 'h1' }) | null; kind: SectionKind; blocks: Block[] }
 
 function groupSections(blocks: Block[]): Section[] {
@@ -63,7 +63,7 @@ function groupSections(blocks: Block[]): Section[] {
   return secs
 }
 
-// ── Block renderer ─────────────────────────────────────────
+// â”€â”€ Block renderer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function renderBlock(b: Block, s: typeof S[SectionKind], i: number): ReactNode {
   switch (b.type) {
     case 'h3': return <h4 key={i} className={`mt-2 mb-1 ${s.h3}`}>{renderInline(b.content)}</h4>
@@ -97,7 +97,7 @@ function renderBlock(b: Block, s: typeof S[SectionKind], i: number): ReactNode {
   }
 }
 
-// ── Main component ─────────────────────────────────────────
+// â”€â”€ Main component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 interface Props { text: string; timestamp: string }
 
 export default function InterviewResponse({ text, timestamp }: Props) {
@@ -108,7 +108,7 @@ export default function InterviewResponse({ text, timestamp }: Props) {
   return (
     <div className="self-start w-full animate-slide-up flex flex-col gap-1">
       <div className="bg-white border border-slate-200 rounded-[4px_18px_18px_18px] overflow-hidden shadow-sm">
-        <div className="h-1 bg-gradient-to-r from-indigo-500 via-blue-400 to-indigo-300" />
+        <div className="h-1 bg-gradient-to-r from-sky-500 via-blue-400 to-sky-300" />
         <div className={`px-4 pt-3 pb-4 flex flex-col ${hasStructure ? 'gap-3' : 'gap-1'}`}>
           {segs.map((seg, si) =>
             seg.type === 'code' ? (
@@ -130,9 +130,10 @@ export default function InterviewResponse({ text, timestamp }: Props) {
         </div>
       </div>
       <div className="flex items-center gap-2 pl-1">
-        <span className="text-[10px] bg-indigo-50 text-indigo-500 border border-indigo-200 rounded-full px-2 py-0.5 font-medium">🎯 Interview Coach</span>
+        <span className="text-[10px] bg-sky-50 text-sky-500 border border-sky-200 rounded-full px-2 py-0.5 font-medium">ðŸŽ¯ Interview Coach</span>
         <span className="text-[11px] text-slate-400">{time}</span>
       </div>
     </div>
   )
 }
+

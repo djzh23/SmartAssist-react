@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+﻿import { useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth, useClerk, useUser } from '@clerk/clerk-react'
 import { Check, ChevronDown, ChevronUp, Clock, Crown, Sparkles, X, Zap } from 'lucide-react'
@@ -29,7 +29,7 @@ const PLANS: Plan[] = [
   {
     id: 'free',
     name: 'Free',
-    price: '0 €',
+    price: '0 â‚¬',
     period: '/forever',
     icon: <Zap size={18} className="text-slate-500" />,
     accentBorder: 'border-slate-200',
@@ -49,11 +49,11 @@ const PLANS: Plan[] = [
   {
     id: 'premium',
     name: 'Premium',
-    price: '4,99 €',
+    price: '4,99 â‚¬',
     period: '/month',
-    icon: <Sparkles size={18} className="text-violet-600" />,
-    accentBorder: 'border-violet-400',
-    accentHeader: 'bg-violet-50',
+    icon: <Sparkles size={18} className="text-cyan-600" />,
+    accentBorder: 'border-cyan-400',
+    accentHeader: 'bg-cyan-50',
     badgeText: 'MOST POPULAR',
     badgeStyle: 'bg-primary text-white',
     scale: true,
@@ -71,7 +71,7 @@ const PLANS: Plan[] = [
   {
     id: 'pro',
     name: 'Pro',
-    price: '9,99 €',
+    price: '9,99 â‚¬',
     period: '/month',
     icon: <Crown size={18} className="text-amber-600" />,
     accentBorder: 'border-amber-400',
@@ -205,21 +205,21 @@ export default function PricingPage() {
       }}
     >
       <div className="pointer-events-none fixed inset-0 overflow-hidden" style={{ zIndex: 0 }}>
-        <div className="absolute -right-28 top-0 h-80 w-80 rounded-full bg-violet-200/45 blur-3xl" />
+        <div className="absolute -right-28 top-0 h-80 w-80 rounded-full bg-cyan-200/45 blur-3xl" />
         <div className="absolute -left-28 bottom-0 h-96 w-96 rounded-full bg-cyan-200/45 blur-3xl" />
-        <div className="absolute left-1/2 top-14 h-44 w-44 -translate-x-1/2 rotate-45 rounded-[34px] border border-violet-200/45" />
+        <div className="absolute left-1/2 top-14 h-44 w-44 -translate-x-1/2 rotate-45 rounded-[34px] border border-cyan-200/45" />
         <div className="absolute right-10 top-52 h-28 w-28 rotate-12 rounded-2xl border border-slate-300/70 bg-white/40" />
       </div>
 
       {toast && (
-        <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 animate-slide-up rounded-2xl border border-violet-200 bg-white px-5 py-3 shadow-xl">
+        <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 animate-slide-up rounded-2xl border border-cyan-200 bg-white px-5 py-3 shadow-xl">
           <p className="text-sm font-medium text-slate-700">{toast}</p>
         </div>
       )}
 
       <div className="relative z-10 mx-auto max-w-5xl px-6 py-12">
         <div className="mb-10 text-center">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-violet-500">Preise & Pläne</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-cyan-500">Preise & PlÃ¤ne</p>
           <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-800 md:text-4xl">
             Einfach. Transparent. Fair.
           </h1>
@@ -311,7 +311,7 @@ export default function PricingPage() {
 
         <div className="mx-auto max-w-2xl">
           <h2 className="mb-4 text-xs font-bold uppercase tracking-[0.15em] text-slate-400">
-            Häufige Fragen
+            HÃ¤ufige Fragen
           </h2>
           <div className="space-y-3">
             {FAQ.map(item => (
@@ -323,3 +323,4 @@ export default function PricingPage() {
     </div>
   )
 }
+

@@ -1,4 +1,4 @@
-import { Volume2 } from 'lucide-react'
+﻿import { Volume2 } from 'lucide-react'
 import type { LearningData } from '../../types'
 import { speak } from '../../api/client'
 
@@ -19,7 +19,7 @@ export default function LearningResponse({ data, targetLang, nativeLang, targetL
       <div className="rounded-xl overflow-hidden border border-blue-200">
         <div className="flex items-center justify-between px-3 py-2 bg-blue-100 border-b border-blue-200">
           <span className="text-[10px] font-bold uppercase tracking-wider text-blue-800">
-            🌍 {targetLang}
+            ðŸŒ {targetLang}
           </span>
           <button
             onClick={() => speak(data.targetLanguageText, targetLangCode)}
@@ -29,7 +29,7 @@ export default function LearningResponse({ data, targetLang, nativeLang, targetL
             <Volume2 size={13} />
           </button>
         </div>
-        <div className="px-3 py-2.5 bg-blue-50 font-serif text-[15px] text-indigo-900 font-medium leading-relaxed tracking-[0.2px]">
+        <div className="px-3 py-2.5 bg-blue-50 font-serif text-[15px] text-sky-900 font-medium leading-relaxed tracking-[0.2px]">
           {data.targetLanguageText}
         </div>
       </div>
@@ -38,7 +38,7 @@ export default function LearningResponse({ data, targetLang, nativeLang, targetL
       <div className="rounded-xl overflow-hidden border border-emerald-200">
         <div className="px-3 py-2 bg-emerald-100 border-b border-emerald-200">
           <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800">
-            🗣️ {nativeLang}
+            ðŸ—£ï¸ {nativeLang}
           </span>
         </div>
         <div className="px-3 py-2.5 bg-emerald-50 text-sm text-slate-600 italic leading-relaxed">
@@ -51,7 +51,7 @@ export default function LearningResponse({ data, targetLang, nativeLang, targetL
         <div className="rounded-xl overflow-hidden border border-amber-200">
           <div className="px-3 py-2 bg-amber-100 border-b border-amber-200">
             <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800">
-              💡 Learn
+              ðŸ’¡ Learn
             </span>
           </div>
           <div className="px-3 py-2.5 bg-amber-50 font-mono text-[12.5px] text-amber-900 leading-relaxed">
@@ -64,3 +64,4 @@ export default function LearningResponse({ data, targetLang, nativeLang, targetL
     </div>
   )
 }
+

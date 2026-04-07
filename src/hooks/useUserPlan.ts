@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+﻿import { useCallback, useEffect, useState } from 'react'
 import { useUser, useAuth } from '@clerk/clerk-react'
 import { getAgentUsage } from '../api/client'
 
@@ -131,8 +131,8 @@ export function getPlanLabel(plan: PlanType): string {
 export function getPlanColors(plan: PlanType): { badge: string; border: string; button: string } {
   if (plan === 'premium') {
     return {
-      badge: 'bg-violet-100 text-violet-700 border-violet-200',
-      border: 'border-violet-400',
+      badge: 'bg-cyan-100 text-cyan-700 border-cyan-200',
+      border: 'border-cyan-400',
       button: 'bg-primary hover:bg-primary-hover text-white',
     }
   }
@@ -358,7 +358,7 @@ export function useUserPlan(): UserPlanState {
   const planColorMap: Record<PlanType, string> = {
     anonymous: '#6B7280',
     free: '#6B7280',
-    premium: '#7C3AED',
+    premium: '#06B6D4',
     pro: '#D97706',
   }
 
@@ -412,3 +412,4 @@ export function useUserPlan(): UserPlanState {
     markUpgradePending,
   }
 }
+

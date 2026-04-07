@@ -1,4 +1,4 @@
-import type { ChatMessage, ToolType } from '../../types'
+﻿import type { ChatMessage, ToolType } from '../../types'
 import JobAnalysisCard from './JobAnalysisCard'
 import LearningResponse from './LearningResponse'
 import ProgrammingResponse from './ProgrammingResponse'
@@ -45,7 +45,7 @@ export default function MessageBubble({
       <div className="flex flex-col items-start gap-1 animate-slide-up w-full">
         <JobAnalysisCard text={msg.text} />
         <div className="flex items-center gap-2 pl-1">
-          <span className="rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[11px] font-medium text-indigo-600">
+          <span className="rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[11px] font-medium text-sky-600">
             Job Analyzer
           </span>
           <span className="text-[11px] text-slate-400">{time}</span>
@@ -54,7 +54,7 @@ export default function MessageBubble({
     )
   }
 
-  // Programming mode — syntax-highlighted code blocks
+  // Programming mode â€” syntax-highlighted code blocks
   if (!msg.isUser && toolType === 'programming') {
     return (
       <ProgrammingResponse
@@ -65,7 +65,7 @@ export default function MessageBubble({
     )
   }
 
-  // Interview mode — professional structured response
+  // Interview mode â€” professional structured response
   if (!msg.isUser && toolType === 'interview') {
     return (
       <InterviewResponse
@@ -75,7 +75,7 @@ export default function MessageBubble({
     )
   }
 
-  // Standard bubble — with code-fence support for assistant messages
+  // Standard bubble â€” with code-fence support for assistant messages
   if (!msg.isUser) {
     const segments = parseSegments(msg.text)
     const hasCode = segments.some(s => s.type === 'code')
@@ -93,8 +93,8 @@ export default function MessageBubble({
         </div>
         <div className="flex items-center gap-2 px-1">
           {msg.toolUsed && msg.toolUsed !== 'analyze_job' && (
-            <span className="text-[11px] bg-violet-50 text-violet-600 border border-violet-200 rounded-full px-2.5 py-0.5 font-medium">
-              ⚙ {msg.toolUsed.replace(/_/g, ' ')}
+            <span className="text-[11px] bg-cyan-50 text-cyan-600 border border-cyan-200 rounded-full px-2.5 py-0.5 font-medium">
+              âš™ {msg.toolUsed.replace(/_/g, ' ')}
             </span>
           )}
           <span className="text-[11px] text-slate-400">{time}</span>
@@ -113,3 +113,4 @@ export default function MessageBubble({
     </div>
   )
 }
+

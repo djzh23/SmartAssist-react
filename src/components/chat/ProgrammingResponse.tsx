@@ -1,10 +1,10 @@
-import type { ReactNode } from 'react'
+﻿import type { ReactNode } from 'react'
 import CodeBlock from './CodeBlock'
 import { PROGRAMMING_LANGUAGES } from '../../types'
 import { parseBlocks, parseSegments } from '../../utils/markdownRenderer'
 import type { Block } from '../../utils/markdownRenderer'
 
-// ── Inline markdown renderer ───────────────────────────────
+// â”€â”€ Inline markdown renderer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function renderInline(text: string): ReactNode[] {
   const nodes: ReactNode[] = []
   const regex = /(\*\*[^*\n]+\*\*|\*[^*\n]+\*|`[^`\n]+`)/g
@@ -21,7 +21,7 @@ function renderInline(text: string): ReactNode[] {
       nodes.push(<em key={k++} className="italic text-slate-700">{tok.slice(1, -1)}</em>)
     } else {
       nodes.push(
-        <code key={k++} className="bg-violet-50 text-violet-700 border border-violet-200 text-[0.78em] font-mono rounded px-1 py-0.5">
+        <code key={k++} className="bg-cyan-50 text-cyan-700 border border-cyan-200 text-[0.78em] font-mono rounded px-1 py-0.5">
           {tok.slice(1, -1)}
         </code>
       )
@@ -32,12 +32,12 @@ function renderInline(text: string): ReactNode[] {
   return nodes
 }
 
-// ── Block renderer ─────────────────────────────────────────
+// â”€â”€ Block renderer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function renderBlocks(blocks: Block[]): ReactNode[] {
   return blocks.map((b, i) => {
     switch (b.type) {
       case 'h1':
-        return <h2 key={i} className="text-base font-bold text-violet-700 mt-3 mb-1 first:mt-0">{renderInline(b.content)}</h2>
+        return <h2 key={i} className="text-base font-bold text-cyan-700 mt-3 mb-1 first:mt-0">{renderInline(b.content)}</h2>
       case 'h2':
         return <h3 key={i} className="text-sm font-bold text-slate-800 mt-3 mb-1 first:mt-0 border-b border-slate-200 pb-0.5">{renderInline(b.content)}</h3>
       case 'h3':
@@ -47,7 +47,7 @@ function renderBlocks(blocks: Block[]): ReactNode[] {
           <ul key={i} className="mt-1.5 mb-1.5 flex flex-col gap-0.5 pl-0">
             {b.items.map((item, j) => (
               <li key={j} className="flex items-start gap-2 text-sm text-slate-700">
-                <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-violet-400 flex-shrink-0" />
+                <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-cyan-400 flex-shrink-0" />
                 <span>{renderInline(item)}</span>
               </li>
             ))}
@@ -66,7 +66,7 @@ function renderBlocks(blocks: Block[]): ReactNode[] {
         )
       case 'blockquote':
         return (
-          <div key={i} className="my-2 border-l-4 border-violet-300 bg-violet-50/60 pl-3 rounded-r-lg py-2 pr-3 text-sm italic text-violet-900">
+          <div key={i} className="my-2 border-l-4 border-cyan-300 bg-cyan-50/60 pl-3 rounded-r-lg py-2 pr-3 text-sm italic text-cyan-900">
             {b.content.split('\n').map((ln, j) => <p key={j}>{renderInline(ln)}</p>)}
           </div>
         )
@@ -78,7 +78,7 @@ function renderBlocks(blocks: Block[]): ReactNode[] {
   })
 }
 
-// ── Main component ─────────────────────────────────────────
+// â”€â”€ Main component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 interface Props {
   text: string
   progLang: string
@@ -108,3 +108,4 @@ export default function ProgrammingResponse({ text, progLang, timestamp }: Props
     </div>
   )
 }
+

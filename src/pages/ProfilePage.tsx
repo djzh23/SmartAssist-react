@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@clerk/clerk-react'
 import { ArrowRight, BarChart2, Calendar, Crown, Loader2, Sparkles, Star, Zap } from 'lucide-react'
@@ -26,7 +26,7 @@ function UsageBar({ used, limit }: { used: number; limit: number }) {
     <div>
       <div className="mb-1.5 flex items-center justify-between text-xs">
         <span className="font-medium text-slate-700">Daily Responses</span>
-        <span className="text-slate-500">{used} / {limit === Infinity ? '∞' : limit}</span>
+        <span className="text-slate-500">{used} / {limit === Infinity ? 'âˆž' : limit}</span>
       </div>
       <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
         <div
@@ -36,7 +36,7 @@ function UsageBar({ used, limit }: { used: number; limit: number }) {
       </div>
       <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
         <span>Responses used today: {used}</span>
-        <span>Remaining: {limit === Infinity ? '∞' : Math.max(0, limit - used)}</span>
+        <span>Remaining: {limit === Infinity ? 'âˆž' : Math.max(0, limit - used)}</span>
         <span>Resets at midnight</span>
       </div>
     </div>
@@ -118,7 +118,7 @@ export default function ProfilePage() {
     const syncAfterUpgrade = async () => {
       setUpgradeSyncNotice('Payment received. Verifying your plan...')
 
-      // ── Step 1: Fast path via session ID (direct Stripe read, no webhook dependency) ──
+      // â”€â”€ Step 1: Fast path via session ID (direct Stripe read, no webhook dependency) â”€â”€
       // This also tells us the ACTUAL plan (premium vs pro) before marking pending.
       if (checkoutSessionId) {
         try {
@@ -126,7 +126,7 @@ export default function ProfilePage() {
           if (token) {
             const result = await confirmPlanFromSession(checkoutSessionId, token)
             if (!cancelled && (result.plan === 'premium' || result.plan === 'pro')) {
-              // Plan is now written to the backend — sync to pick it up
+              // Plan is now written to the backend â€” sync to pick it up
               const confirmedPlan = result.plan as 'premium' | 'pro'
               markUpgradePending(confirmedPlan, 120)
               await refreshUsage({ retries: 1, retryDelayMs: 800 })
@@ -139,27 +139,27 @@ export default function ProfilePage() {
         }
       }
 
-      // ── Step 2: Check if webhook already fired ──
+      // â”€â”€ Step 2: Check if webhook already fired â”€â”€
       // Determine the real plan before optimistically marking pending.
       try {
         const nextPlan = await refreshUsage({ retries: 0 })
         if (!cancelled && (nextPlan === 'premium' || nextPlan === 'pro')) {
-          // Already confirmed — no pending state needed
+          // Already confirmed â€” no pending state needed
           setUpgradeSyncNotice(null)
           return
         }
-        // Backend reachable but plan is still 'free' — webhook hasn't landed yet.
+        // Backend reachable but plan is still 'free' â€” webhook hasn't landed yet.
         // Use the backend-confirmed plan to set pending (not a hardcoded guess).
         markUpgradePending(nextPlan === 'pro' ? 'pro' : 'premium', 120)
       } catch {
-        // Backend unreachable — fall back to 'premium' as the safer default.
+        // Backend unreachable â€” fall back to 'premium' as the safer default.
         // If the user bought Pro, this will self-correct once the webhook fires.
         markUpgradePending('premium', 120)
       }
 
       setUpgradeSyncNotice('Payment received. Temporary access is active while server confirmation is pending...')
 
-      // ── Step 3: Poll until backend confirms ──
+      // â”€â”€ Step 3: Poll until backend confirms â”€â”€
       for (let attempt = 0; attempt < 6; attempt++) {
         if (cancelled) return
         await new Promise(resolve => window.setTimeout(resolve, 2000))
@@ -206,15 +206,15 @@ export default function ProfilePage() {
       }}
     >
       <div className="pointer-events-none fixed inset-0 overflow-hidden" style={{ zIndex: 0 }}>
-        <div className="absolute -right-28 top-0 h-80 w-80 rounded-full bg-violet-200/45 blur-3xl" />
+        <div className="absolute -right-28 top-0 h-80 w-80 rounded-full bg-cyan-200/45 blur-3xl" />
         <div className="absolute -left-28 bottom-0 h-96 w-96 rounded-full bg-cyan-200/45 blur-3xl" />
-        <div className="absolute left-1/2 top-14 h-44 w-44 -translate-x-1/2 rotate-45 rounded-[34px] border border-violet-200/45" />
+        <div className="absolute left-1/2 top-14 h-44 w-44 -translate-x-1/2 rotate-45 rounded-[34px] border border-cyan-200/45" />
         <div className="absolute right-10 top-52 h-28 w-28 rotate-12 rounded-2xl border border-slate-300/70 bg-white/40" />
       </div>
 
       <div className="relative z-10 mx-auto max-w-2xl space-y-6 px-6 py-12">
         <div className="mb-2">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-violet-500">Mein Konto</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-cyan-500">Mein Konto</p>
           <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-800">Profil und Nutzung</h1>
         </div>
 
@@ -232,12 +232,12 @@ export default function ProfilePage() {
               gap: '10px',
             }}
           >
-            🎉 Welcome to Premium! Your plan has been upgraded.
+            ðŸŽ‰ Welcome to Premium! Your plan has been upgraded.
           </div>
         )}
 
         {isUpgradePending && !upgradeSyncNotice && (
-          <div className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-800">
+          <div className="rounded-xl border border-cyan-200 bg-cyan-50 px-4 py-3 text-sm text-cyan-800">
             Temporary {pendingUpgradePlan === 'pro' ? 'Pro' : 'Premium'} access is active while backend confirmation is pending.
           </div>
         )}
@@ -283,7 +283,7 @@ export default function ProfilePage() {
             style={{ backgroundImage: 'radial-gradient(circle at 88% 0%, rgba(124,58,237,0.07), transparent 50%)' }}
           />
           <div className="relative flex items-center gap-4">
-            <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl border border-violet-200 bg-violet-50 text-xl font-bold text-violet-700">
+            <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl border border-cyan-200 bg-cyan-50 text-xl font-bold text-cyan-700">
               {user.initials}
             </div>
             <div className="min-w-0 flex-1">
@@ -313,9 +313,9 @@ export default function ProfilePage() {
 
           <div className="grid grid-cols-3 gap-3">
             {[
-              { icon: <BarChart2 size={14} className="text-indigo-500" />, label: 'Total Responses', value: user.totalResponses },
+              { icon: <BarChart2 size={14} className="text-sky-500" />, label: 'Total Responses', value: user.totalResponses },
               { icon: <Calendar size={14} className="text-cyan-500" />, label: 'Days Active', value: user.daysActive },
-              { icon: <Star size={14} className="text-amber-500" />, label: 'Favorite Tool', value: user.favoriteTool ?? '—' },
+              { icon: <Star size={14} className="text-amber-500" />, label: 'Favorite Tool', value: user.favoriteTool ?? 'â€”' },
             ].map(stat => (
               <div key={stat.label} className="rounded-2xl border border-slate-100 bg-slate-50/85 px-3 py-3">
                 <div className="mb-1 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
@@ -334,7 +334,7 @@ export default function ProfilePage() {
           <div className={`rounded-2xl border-2 p-4 ${planColors.border} bg-white/80`}>
             <div className="flex items-center gap-2">
               <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-100 bg-slate-50">
-                <PlanIcon size={16} className={user.plan === 'pro' ? 'text-amber-500' : user.plan === 'premium' ? 'text-violet-600' : 'text-slate-500'} />
+                <PlanIcon size={16} className={user.plan === 'pro' ? 'text-amber-500' : user.plan === 'premium' ? 'text-cyan-600' : 'text-slate-500'} />
               </div>
               <div>
                 <p className="font-bold text-slate-800">{planLabel}</p>
@@ -352,15 +352,15 @@ export default function ProfilePage() {
                   marginTop: '12px',
                   padding: '8px 16px',
                   background: 'transparent',
-                  border: '1px solid #7C3AED',
-                  color: '#7C3AED',
+                  border: '1px solid #06B6D4',
+                  color: '#06B6D4',
                   borderRadius: '8px',
                   fontSize: '13px',
                   cursor: 'pointer',
                   opacity: portalLoading ? 0.7 : 1,
                 }}
               >
-                {portalLoading ? 'Opening...' : 'Manage Subscription →'}
+                {portalLoading ? 'Opening...' : 'Manage Subscription â†’'}
               </button>
             )}
 
@@ -379,7 +379,7 @@ export default function ProfilePage() {
         </div>
 
         <div className="rounded-3xl border border-slate-200/90 bg-white/90 p-5 shadow-[0_10px_34px_rgba(15,23,42,0.08)] backdrop-blur">
-          <h2 className="mb-4 text-xs font-bold uppercase tracking-[0.15em] text-slate-400">Usage History — last 7 days</h2>
+          <h2 className="mb-4 text-xs font-bold uppercase tracking-[0.15em] text-slate-400">Usage History â€” last 7 days</h2>
 
           <div className="flex h-28 items-end gap-2">
             {WEEK_HISTORY.map((day, idx) => {
@@ -406,3 +406,4 @@ export default function ProfilePage() {
     </div>
   )
 }
+

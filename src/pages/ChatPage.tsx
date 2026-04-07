@@ -67,6 +67,7 @@ interface HandleSendOptions {
   displayText?: string
   apiMessageOverride?: string
   skipUserBubble?: boolean
+  contextOverride?: SessionContextData | null
 }
 
 function isToolType(value: string): value is ToolType {
@@ -492,6 +493,7 @@ export default function ChatPage() {
         'Bitte starte die Analyse mit den gespeicherten Setup-Daten.',
         {
           displayText: `Analyse starten: ${roleHint}`,
+          contextOverride: normalized,
         },
       )
       return
@@ -501,7 +503,7 @@ export default function ChatPage() {
       const intro = normalized.jobTitle
         ? `I am preparing for an interview for: ${normalized.jobTitle}${normalized.companyName ? ` at ${normalized.companyName}` : ''}. Please start the interview preparation.`
         : 'Please start an interview preparation session and ask me targeted questions.'
-      void handleSend(intro)
+      void handleSend(intro, { contextOverride: normalized })
       return
     }
 
@@ -509,14 +511,20 @@ export default function ChatPage() {
       if (normalized.programmingLanguageId) {
         setProgLang(normalized.programmingLanguageId)
       }
-      void handleSend(`I am working with ${normalized.programmingLanguage}. I am ready to get help with my code.`)
+      void handleSend(
+        `I am working with ${normalized.programmingLanguage}. I am ready to get help with my code.`,
+        { contextOverride: normalized },
+      )
       return
     }
 
     if (activeContextTool === 'programming' && normalized.programmingLanguageId) {
       const mapped = PROGRAMMING_LANGUAGES.find(lang => lang.id === normalized.programmingLanguageId)?.label ?? normalized.programmingLanguageId
       setProgLang(normalized.programmingLanguageId)
-      void handleSend(`I am working with ${mapped}. I am ready to get help with my code.`)
+      void handleSend(
+        `I am working with ${mapped}. I am ready to get help with my code.`,
+        { contextOverride: normalized },
+      )
     }
   }
 
@@ -571,8 +579,9 @@ export default function ChatPage() {
     setIsLoading(true)
     setError(null)
 
-    const interviewSetup = toInterviewContext(activeContext)
-    const jobAnalyzerSetup = toJobAnalyzerContext(activeContext)
+    const effectiveContext = options?.contextOverride ?? activeContext
+    const interviewSetup = toInterviewContext(effectiveContext)
+    const jobAnalyzerSetup = toJobAnalyzerContext(effectiveContext)
     const interviewLangCode = interviewSetup.language === 'en' ? 'en' : 'de'
     const interviewLangName = interviewLangCode === 'de' ? 'German' : 'English'
 
@@ -741,7 +750,7 @@ export default function ChatPage() {
         {isInterview && (
           <div className="flex-shrink-0 px-4 pb-0 pt-3">
             <div className="mx-auto flex max-w-3xl flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-50 px-3 py-1 text-xs font-medium text-sky-700">
                 Interview Coach
               </span>
 
@@ -753,7 +762,7 @@ export default function ChatPage() {
 
               <button
                 onClick={() => setShowContextModal(true)}
-                className="text-xs text-indigo-600 hover:text-indigo-800 hover:underline"
+                className="text-xs text-sky-600 hover:text-sky-800 hover:underline"
               >
                 Setup öffnen
               </button>
@@ -817,4 +826,5 @@ export default function ChatPage() {
     </div>
   )
 }
+
 

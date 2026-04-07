@@ -1,4 +1,4 @@
-import { Briefcase, ChevronRight, Code2, Globe2, MessageCircle, Plus, Target, Trash2, X } from 'lucide-react'
+﻿import { Briefcase, ChevronRight, Code2, Globe2, MessageCircle, Plus, Target, Trash2, X } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { ChatSession, ToolType } from '../../types'
 import { NATIVE_LANGS, PROGRAMMING_LANGUAGES, TARGET_LANGS } from '../../types'
@@ -15,7 +15,7 @@ const TOOL_COLOR: Record<ToolType, string> = {
   general:     'text-slate-400',
   jobanalyzer: 'text-emerald-500',
   language:    'text-blue-500',
-  programming: 'text-violet-500',
+  programming: 'text-cyan-500',
   interview:   'text-amber-500',
 }
 
@@ -78,7 +78,7 @@ export default function ChatSidebar({
         <button
           onClick={onOpen}
           className="absolute left-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-400 transition-colors hover:border-primary hover:text-primary md:hidden"
-          title="Chats öffnen"
+          title="Chats Ã¶ffnen"
         >
           <ChevronRight size={16} />
         </button>
@@ -112,7 +112,7 @@ export default function ChatSidebar({
           <button
             onClick={onClose}
             className="ml-2 flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-200 hover:text-slate-600 md:hidden"
-            title="Schließen"
+            title="SchlieÃŸen"
           >
             <X size={16} />
           </button>
@@ -228,7 +228,7 @@ export default function ChatSidebar({
                     <Icon size={13} className={`flex-shrink-0 ${isActive ? 'text-primary' : iconColor}`} />
                     <div className="min-w-0 flex-1">
                       <p className={`truncate text-[12.5px] ${isActive ? 'font-medium text-primary' : 'text-slate-700'}`}>
-                        {preview.length > 32 ? `${preview.slice(0, 32)}…` : preview}
+                        {preview.length > 32 ? `${preview.slice(0, 32)}â€¦` : preview}
                       </p>
                       <p className="text-[10.5px] text-slate-400">{time}</p>
                     </div>
@@ -239,7 +239,7 @@ export default function ChatSidebar({
                         onDelete(session.id)
                       }}
                       className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded text-slate-400 opacity-0 transition-all group-hover:opacity-100 hover:bg-red-50 hover:text-red-500"
-                      title="Löschen"
+                      title="LÃ¶schen"
                     >
                       <X size={12} />
                     </button>
@@ -256,10 +256,11 @@ export default function ChatSidebar({
             className="flex w-full flex-shrink-0 items-center justify-center gap-1.5 border-t border-slate-200 py-2.5 text-xs text-slate-400 transition-colors hover:text-red-500"
           >
             <Trash2 size={12} />
-            Verlauf löschen
+            Verlauf lÃ¶schen
           </button>
         )}
       </aside>
     </>
   )
 }
+

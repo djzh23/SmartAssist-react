@@ -79,13 +79,13 @@ const TOOLS: ToolCardMeta[] = [
     icon: Target,
     badge: 'Career',
     accent: {
-      soft: 'bg-violet-50',
-      ring: 'border-violet-200 text-violet-700',
-      text: 'text-violet-700',
-      chip: 'border-violet-200 bg-violet-50 text-violet-700',
+      soft: 'bg-cyan-50',
+      ring: 'border-cyan-200 text-cyan-700',
+      text: 'text-cyan-700',
+      chip: 'border-cyan-200 bg-cyan-50 text-cyan-700',
     },
     preview: [
-      { title: 'Fragenkatalog', subtitle: 'Fachlich und verhaltensorientiert', line: 'bg-violet-500' },
+      { title: 'Fragenkatalog', subtitle: 'Fachlich und verhaltensorientiert', line: 'bg-cyan-500' },
       { title: 'Antwortstruktur', subtitle: 'STAR, Klarheit, rote Linie', line: 'bg-fuchsia-500' },
     ],
   },
@@ -129,13 +129,13 @@ const TOOLS: ToolCardMeta[] = [
     icon: Code2,
     badge: 'Tech',
     accent: {
-      soft: 'bg-indigo-50',
-      ring: 'border-indigo-200 text-indigo-700',
-      text: 'text-indigo-700',
-      chip: 'border-indigo-200 bg-indigo-50 text-indigo-700',
+      soft: 'bg-sky-50',
+      ring: 'border-sky-200 text-sky-700',
+      text: 'text-sky-700',
+      chip: 'border-sky-200 bg-sky-50 text-sky-700',
     },
     preview: [
-      { title: 'Code & DSA', subtitle: 'Verständlich und praxisnah', line: 'bg-indigo-500' },
+      { title: 'Code & DSA', subtitle: 'Verständlich und praxisnah', line: 'bg-sky-500' },
       { title: 'Architektur', subtitle: 'Klarer Aufbau, starke Argumentation', line: 'bg-blue-500' },
     ],
   },
@@ -240,15 +240,15 @@ export default function ToolsPage() {
             backgroundSize: '28px 28px',
           }}
         />
-        <div className="absolute -right-28 top-0 h-80 w-80 rounded-full bg-violet-200/45 blur-3xl" />
+        <div className="absolute -right-28 top-0 h-80 w-80 rounded-full bg-cyan-200/45 blur-3xl" />
         <div className="absolute -left-28 bottom-0 h-96 w-96 rounded-full bg-cyan-200/45 blur-3xl" />
-        <div className="absolute left-1/2 top-14 h-44 w-44 -translate-x-1/2 rotate-45 rounded-[34px] border border-violet-200/45" />
+        <div className="absolute left-1/2 top-14 h-44 w-44 -translate-x-1/2 rotate-45 rounded-[34px] border border-cyan-200/45" />
         <div className="absolute right-10 top-52 h-28 w-28 rotate-12 rounded-2xl border border-slate-300/70 bg-white/40" />
       </div>
 
       <div className="relative mx-auto max-w-6xl px-6 py-10 md:py-12">
         <div className="mb-10 rounded-3xl border border-slate-200/80 bg-white/85 p-6 shadow-[0_14px_38px_rgba(15,23,42,0.10)] backdrop-blur">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-violet-500">SmartAssist Workspace</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-cyan-500">SmartAssist Workspace</p>
           <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-800 md:text-3xl">Tools für deine Vorbereitung</h1>
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-500">
             Wähle das passende Tool für deinen nächsten Schritt. Alle Bereiche sind auf Fokus, Übersicht und schnelle Umsetzung ausgerichtet.
@@ -353,3 +353,4 @@ export default function ToolsPage() {
     </div>
   )
 }
+
