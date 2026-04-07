@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+﻿import { useState, useEffect, useCallback } from 'react'
 import type { ChatSession, ChatMessage, ToolType } from '../types'
 
 const LS_SESSIONS = 'smartassist_react_sessions'
@@ -28,14 +28,21 @@ function save(key: string, value: unknown): void {
 
 function welcomeFor(tool: ToolType): string | null {
   switch (tool) {
+    case 'general':
+      return 'Hallo! Ich bin dein persÃ¶nlicher KI-Assistent.\nFrag mich alles â€” ich helfe dir schnell und prÃ¤zise weiter.'
     case 'jobanalyzer':
-      return 'Job Analyzer ist bereit.\nFüge einen Stellentext oder Link ein, dann bekommst du eine konkrete Auswertung für deinen Lebenslauf.'
+      return 'Job-Analyse bereit.\nFÃ¼ge eine Stellenanzeige oder einen Link ein â€” ich zeige dir genau, worauf es ankommt.'
     case 'language':
-      return 'Sprachlernen ist aktiv.\nSchreibe in deiner Sprache, ich antworte mit Übersetzung und Lernhilfe.'
+      return 'Sprachcoach aktiv.\nSchreib einfach drauf los â€” ich Ã¼bersetze, korrigiere und erklÃ¤re auf deinem Niveau.'
     case 'programming':
-      return 'Programmierung und DSA sind aktiv.\nWähle links die Sprache und stelle dann deine Frage zu Algorithmen, Datenstrukturen oder Code.'
+      return `Programming Assistant ready!
+Choose your programming language to get started, or just paste your code and I will help you with:
+- Debugging and error fixing
+- Code reviews and best practices
+- Algorithm design and optimization
+- Architecture questions`
     case 'interview':
-      return 'Interview Coach ist aktiv.\nKlicke auf "Neuer Chat", öffne das Setup und hinterlege Sprache, Alias, Lebenslauf und Stellenziel für diesen Chat.'
+      return 'Interview-Coach aktiv.\nÃ–ffne das Setup, hinterlege deinen Lebenslauf und die Zielstelle â€” ich bereite dich gezielt vor.'
     default:
       return null
   }
@@ -51,7 +58,10 @@ export interface SessionStore {
   deleteSession: (id: string) => void
   clearHistory: () => void
   switchToTool: (tool: ToolType) => void
-  addMessage: (sessionId: string, msg: Omit<ChatMessage, 'id' | 'timestamp'>) => void
+  addMessage: (sessionId: string, msg: Partial<ChatMessage> & { text: string; isUser: boolean }) => void
+  updateMessageText: (sessionId: string, msgId: string, text: string) => void
+  finalizeMessage: (sessionId: string, msgId: string, meta: { toolUsed?: string }) => void
+  deleteMessage: (sessionId: string, msgId: string) => void
   activeMessages: ChatMessage[]
   visibleSessions: ChatSession[]
 }
@@ -132,9 +142,23 @@ export function useChatSessions(): SessionStore {
     localStorage.removeItem(LS_ACTIVE)
   }, [])
 
-  const addMessage = useCallback((sessionId: string, msg: Omit<ChatMessage, 'id' | 'timestamp'>) => {
-    const full: ChatMessage = { ...msg, id: uid(), timestamp: new Date().toISOString() }
+  const addMessage = useCallback((
+    sessionId: string,
+    msg: Partial<ChatMessage> & { text: string; isUser: boolean },
+  ) => {
+    const full: ChatMessage = {
+      id: uid(),
+      timestamp: new Date().toISOString(),
+      ...msg,
+    }
+    setSessions(prev => {
+      const session = prev[sessionId]
+      if (!session) return prev
+      return { ...prev, [sessionId]: { ...session, messages: [...session.messages, full] } }
+    })
+  }, [])
 
+  const updateMessageText = useCallback((sessionId: string, msgId: string, text: string) => {
     setSessions(prev => {
       const session = prev[sessionId]
       if (!session) return prev
@@ -142,7 +166,41 @@ export function useChatSessions(): SessionStore {
         ...prev,
         [sessionId]: {
           ...session,
-          messages: [...session.messages, full],
+          messages: session.messages.map(m => m.id === msgId ? { ...m, text } : m),
+        },
+      }
+    })
+  }, [])
+
+  const finalizeMessage = useCallback((
+    sessionId: string,
+    msgId: string,
+    meta: { toolUsed?: string },
+  ) => {
+    setSessions(prev => {
+      const session = prev[sessionId]
+      if (!session) return prev
+      return {
+        ...prev,
+        [sessionId]: {
+          ...session,
+          messages: session.messages.map(m =>
+            m.id === msgId ? { ...m, toolUsed: meta.toolUsed } : m,
+          ),
+        },
+      }
+    })
+  }, [])
+
+  const deleteMessage = useCallback((sessionId: string, msgId: string) => {
+    setSessions(prev => {
+      const session = prev[sessionId]
+      if (!session) return prev
+      return {
+        ...prev,
+        [sessionId]: {
+          ...session,
+          messages: session.messages.filter(m => m.id !== msgId),
         },
       }
     })
@@ -166,7 +224,13 @@ export function useChatSessions(): SessionStore {
     clearHistory,
     switchToTool,
     addMessage,
+    updateMessageText,
+    finalizeMessage,
+    deleteMessage,
     activeMessages,
     visibleSessions,
   }
 }
+
+
+
