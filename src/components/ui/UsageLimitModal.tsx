@@ -1,6 +1,6 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import { SignInButton, useAuth, useUser } from '@clerk/clerk-react'
-import { X } from 'lucide-react'
+import { Check, Rocket, X } from 'lucide-react'
 import { createCheckoutSession } from '../../services/StripeService'
 
 interface Props {
@@ -18,7 +18,7 @@ export default function UsageLimitModal({ isOpen, isLoggedIn, userEmail, onClose
 
   const handleUpgrade = async () => {
     if (!isLoggedIn) {
-      setError('Please sign in first, then upgrade to Premium.')
+      setError('Bitte zuerst einloggen und dann auf Premium upgraden.')
       return
     }
 
@@ -26,12 +26,8 @@ export default function UsageLimitModal({ isOpen, isLoggedIn, userEmail, onClose
       setIsUpgrading(true)
       setError(null)
       const token = await getToken()
-      if (!token) {
-        throw new Error('Could not create authenticated checkout session. Please sign in again.')
-      }
-      if (!user?.id) {
-        throw new Error('Missing user profile ID. Please reload and try again.')
-      }
+      if (!token) throw new Error('Authentifizierte Checkout-Session konnte nicht erstellt werden. Bitte erneut einloggen.')
+      if (!user?.id) throw new Error('User-ID fehlt. Bitte Seite neu laden und erneut versuchen.')
 
       const url = await createCheckoutSession('premium', userEmail ?? user?.primaryEmailAddress?.emailAddress, {
         token,
@@ -39,7 +35,7 @@ export default function UsageLimitModal({ isOpen, isLoggedIn, userEmail, onClose
       })
       window.location.href = url
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create checkout')
+      setError(err instanceof Error ? err.message : 'Checkout konnte nicht erstellt werden.')
     } finally {
       setIsUpgrading(false)
     }
@@ -48,75 +44,74 @@ export default function UsageLimitModal({ isOpen, isLoggedIn, userEmail, onClose
   if (!isOpen) return null
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-fade-in"
-      onClick={onClose}
-    >
+    <div className="fixed inset-0 z-50 flex animate-fade-in items-center justify-center bg-black/50 p-4" onClick={onClose}>
       <div
-        className="relative w-full max-w-md overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl animate-slide-up"
+        className="relative w-full max-w-md animate-slide-up overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl"
         onClick={e => e.stopPropagation()}
       >
         <button
           onClick={onClose}
           className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600"
-          aria-label="SchlieÃŸen"
+          aria-label="Schließen"
         >
           <X size={16} />
         </button>
 
-        <div className="pointer-events-none absolute inset-0 opacity-60" style={{
-          backgroundImage: 'radial-gradient(circle at 50% 0%, rgba(124,58,237,0.09), transparent 55%)',
-        }} />
+        <div
+          className="pointer-events-none absolute inset-0 opacity-60"
+          style={{ backgroundImage: 'radial-gradient(circle at 50% 0%, rgba(6,182,212,0.12), transparent 55%)' }}
+        />
 
-        <div className="relative px-6 pt-8 pb-4 text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-cyan-200 bg-cyan-50 text-3xl">
-            ðŸš€
+        <div className="relative px-6 pb-4 pt-8 text-center">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-cyan-200 bg-cyan-50 text-cyan-700">
+            <Rocket size={28} />
           </div>
-          <h2 className="text-xl font-bold text-slate-800">You've reached your limit</h2>
-          <p className="mt-1.5 text-sm text-slate-500">Upgrade to keep chatting</p>
+          <h2 className="text-xl font-bold text-slate-800">Limit erreicht</h2>
+          <p className="mt-1.5 text-sm text-slate-500">Upgrade, um weiter zu chatten</p>
         </div>
 
         <div className="relative grid grid-cols-1 gap-3 px-6 pb-6 sm:grid-cols-2">
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
             <p className="mb-1 text-sm font-semibold text-slate-800">
-              {isLoggedIn ? 'You are logged in' : 'Sign in for free'}
+              {isLoggedIn ? 'Du bist eingeloggt' : 'Kostenlos einloggen'}
             </p>
             <ul className="mb-3 space-y-1">
               {!isLoggedIn && (
                 <li className="flex items-center gap-1.5 text-xs text-slate-600">
-                  <span className="text-emerald-500">âœ“</span> 20 responses/day
+                  <Check size={12} className="text-emerald-500" /> 20 Antworten pro Tag
                 </li>
               )}
               <li className="flex items-center gap-1.5 text-xs text-slate-600">
-                <span className="text-emerald-500">âœ“</span> All basic tools
+                <Check size={12} className="text-emerald-500" /> Alle Basis-Tools
               </li>
               <li className="flex items-center gap-1.5 text-xs text-slate-600">
-                <span className="text-emerald-500">âœ“</span> Free forever
+                <Check size={12} className="text-emerald-500" /> Kostenlos nutzbar
               </li>
             </ul>
             {!isLoggedIn && (
               <SignInButton mode="modal" fallbackRedirectUrl="/chat">
                 <button className="w-full rounded-xl border border-slate-300 bg-white py-2 text-xs font-semibold text-slate-700 transition-colors hover:border-slate-400">
-                  Sign in with Google
+                  Mit Google einloggen
                 </button>
               </SignInButton>
             )}
           </div>
 
           <div className="relative overflow-hidden rounded-2xl border-2 border-cyan-400 bg-cyan-50 p-4">
-            <div className="pointer-events-none absolute inset-0 opacity-40" style={{
-              backgroundImage: 'radial-gradient(circle at 80% 0%, rgba(124,58,237,0.15), transparent 55%)',
-            }} />
-            <p className="relative mb-1 text-sm font-semibold text-slate-800">Go Premium</p>
+            <div
+              className="pointer-events-none absolute inset-0 opacity-40"
+              style={{ backgroundImage: 'radial-gradient(circle at 80% 0%, rgba(6,182,212,0.18), transparent 55%)' }}
+            />
+            <p className="relative mb-1 text-sm font-semibold text-slate-800">Premium</p>
             <ul className="relative mb-3 space-y-1">
               <li className="flex items-center gap-1.5 text-xs text-slate-700">
-                <span className="text-emerald-500">âœ“</span> 200 responses/day
+                <Check size={12} className="text-emerald-500" /> 200 Antworten pro Tag
               </li>
               <li className="flex items-center gap-1.5 text-xs text-slate-700">
-                <span className="text-emerald-500">âœ“</span> All tools unlocked
+                <Check size={12} className="text-emerald-500" /> Alle Tools freigeschaltet
               </li>
               <li className="flex items-center gap-1.5 text-xs text-slate-700">
-                <span className="text-emerald-500">âœ“</span> 4,99 â‚¬/month
+                <Check size={12} className="text-emerald-500" /> 4,99 € pro Monat
               </li>
             </ul>
             <button
@@ -124,27 +119,21 @@ export default function UsageLimitModal({ isOpen, isLoggedIn, userEmail, onClose
               className="relative w-full rounded-xl bg-primary py-2 text-xs font-semibold text-white transition-colors hover:bg-primary-hover disabled:opacity-60"
               disabled={isUpgrading}
             >
-              {isUpgrading ? 'Redirecting...' : 'Upgrade to Premium â€” 4,99â‚¬/month'}
+              {isUpgrading ? 'Weiterleitung...' : 'Auf Premium upgraden - 4,99 €/Monat'}
             </button>
           </div>
         </div>
 
         {error && (
-          <div className="px-6 pb-2 text-center text-sm text-red-600">
-            {error}
-          </div>
+          <div className="px-6 pb-2 text-center text-sm text-red-600">{error}</div>
         )}
 
         <div className="border-t border-slate-100 px-6 py-3 text-center">
-          <button
-            onClick={onClose}
-            className="text-xs text-slate-400 hover:text-slate-600 hover:underline"
-          >
-            Maybe later
+          <button onClick={onClose} className="text-xs text-slate-400 hover:text-slate-600 hover:underline">
+            Vielleicht später
           </button>
         </div>
       </div>
     </div>
   )
 }
-

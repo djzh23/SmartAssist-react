@@ -1,4 +1,5 @@
-﻿import type { ChatMessage, ToolType } from '../../types'
+import type { ChatMessage, ToolType } from '../../types'
+import { BriefcaseBusiness, Settings2 } from 'lucide-react'
 import JobAnalysisCard from './JobAnalysisCard'
 import LearningResponse from './LearningResponse'
 import ProgrammingResponse from './ProgrammingResponse'
@@ -26,7 +27,6 @@ export default function MessageBubble({
   const time = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   const isJobAnalyzerReply = !msg.isUser && (toolType === 'jobanalyzer' || msg.toolUsed === 'analyze_job')
 
-  // Language learning response
   if (!msg.isUser && msg.learningData) {
     return (
       <LearningResponse
@@ -39,14 +39,14 @@ export default function MessageBubble({
     )
   }
 
-  // Job analysis response
   if (isJobAnalyzerReply) {
     return (
-      <div className="flex flex-col items-start gap-1 animate-slide-up w-full">
+      <div className="flex w-full animate-slide-up flex-col items-start gap-1">
         <JobAnalysisCard text={msg.text} />
         <div className="flex items-center gap-2 pl-1">
-          <span className="rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[11px] font-medium text-sky-600">
-            Job Analyzer
+          <span className="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[11px] font-medium text-sky-600">
+            <BriefcaseBusiness size={11} />
+            <span>Job Analyzer</span>
           </span>
           <span className="text-[11px] text-slate-400">{time}</span>
         </div>
@@ -54,7 +54,6 @@ export default function MessageBubble({
     )
   }
 
-  // Programming mode â€” syntax-highlighted code blocks
   if (!msg.isUser && toolType === 'programming') {
     return (
       <ProgrammingResponse
@@ -65,7 +64,6 @@ export default function MessageBubble({
     )
   }
 
-  // Interview mode â€” professional structured response
   if (!msg.isUser && toolType === 'interview') {
     return (
       <InterviewResponse
@@ -75,26 +73,26 @@ export default function MessageBubble({
     )
   }
 
-  // Standard bubble â€” with code-fence support for assistant messages
   if (!msg.isUser) {
     const segments = parseSegments(msg.text)
     const hasCode = segments.some(s => s.type === 'code')
 
     return (
-      <div className="self-start animate-slide-up flex flex-col gap-1 max-w-[85%]">
-        <div className="bg-slate-100 text-slate-800 rounded-[4px_18px_18px_18px] px-3.5 py-2.5 text-sm leading-relaxed break-words">
+      <div className="self-start flex max-w-[85%] animate-slide-up flex-col gap-1">
+        <div className="break-words rounded-[4px_18px_18px_18px] bg-slate-100 px-3.5 py-2.5 text-sm leading-relaxed text-slate-800">
           {hasCode
             ? segments.map((seg, i) =>
                 seg.type === 'code'
                   ? <CodeBlock key={i} code={seg.content} language={seg.language} />
-                  : <span key={i} className="whitespace-pre-wrap">{seg.content}</span>
+                  : <span key={i} className="whitespace-pre-wrap">{seg.content}</span>,
               )
             : <span className="whitespace-pre-wrap">{msg.text}</span>}
         </div>
         <div className="flex items-center gap-2 px-1">
           {msg.toolUsed && msg.toolUsed !== 'analyze_job' && (
-            <span className="text-[11px] bg-cyan-50 text-cyan-600 border border-cyan-200 rounded-full px-2.5 py-0.5 font-medium">
-              âš™ {msg.toolUsed.replace(/_/g, ' ')}
+            <span className="inline-flex items-center gap-1 rounded-full border border-cyan-200 bg-cyan-50 px-2.5 py-0.5 text-[11px] font-medium text-cyan-600">
+              <Settings2 size={11} />
+              <span>{msg.toolUsed.replace(/_/g, ' ')}</span>
             </span>
           )}
           <span className="text-[11px] text-slate-400">{time}</span>
@@ -103,14 +101,12 @@ export default function MessageBubble({
     )
   }
 
-  // User bubble
   return (
-    <div className="flex flex-col gap-1 animate-slide-up max-w-[72%] self-end items-end">
-      <div className="px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap break-words bg-primary text-white rounded-[18px_18px_4px_18px]">
+    <div className="flex max-w-[72%] animate-slide-up flex-col items-end gap-1 self-end">
+      <div className="break-words whitespace-pre-wrap rounded-[18px_18px_4px_18px] bg-primary px-3.5 py-2.5 text-sm leading-relaxed text-white">
         {msg.text}
       </div>
-      <span className="text-[11px] text-slate-400 px-1">{time}</span>
+      <span className="px-1 text-[11px] text-slate-400">{time}</span>
     </div>
   )
 }
-

@@ -1,17 +1,41 @@
-﻿import { bodyToHtml, parseJobAnalysis, pickOverallScore } from '../../utils/jobMarkdown'
+import {
+  AlertTriangle,
+  CheckCircle2,
+  FileSearch,
+  KeyRound,
+  Landmark,
+  MessageSquareMore,
+  Rocket,
+  ShieldAlert,
+  Target,
+  type LucideIcon,
+} from 'lucide-react'
+import { bodyToHtml, parseJobAnalysis, pickOverallScore, type JobSectionTone } from '../../utils/jobMarkdown'
 
 interface Props {
   text: string
 }
 
+const ICON_BY_TONE: Record<JobSectionTone, LucideIcon> = {
+  score: Target,
+  strength: CheckCircle2,
+  gaps: AlertTriangle,
+  actions: Rocket,
+  keywords: KeyRound,
+  interview: MessageSquareMore,
+  risk: ShieldAlert,
+  salary: Landmark,
+  general: FileSearch,
+}
+
 function scorePillClasses(score?: number): string {
   if (typeof score !== 'number') {
-    return 'bg-slate-100 text-slate-600 border-slate-200'
+    return 'border-slate-200 bg-slate-100 text-slate-600'
   }
 
-  if (score >= 75) return 'bg-emerald-100 text-emerald-700 border-emerald-200'
-  if (score >= 50) return 'bg-amber-100 text-amber-700 border-amber-200'
-  return 'bg-rose-100 text-rose-700 border-rose-200'
+  if (score >= 75) return 'border-emerald-200 bg-emerald-100 text-emerald-700'
+  if (score >= 50) return 'border-amber-200 bg-amber-100 text-amber-700'
+  return 'border-rose-200 bg-rose-100 text-rose-700'
 }
 
 function scoreBarClasses(score?: number): string {
@@ -52,7 +76,7 @@ export default function JobAnalysisCard({ text }: Props) {
         {typeof overallScore === 'number' && (
           <div className="mt-3">
             <div className="mb-1 flex items-center justify-between text-[11px] text-slate-500">
-              <span>Ãœbereinstimmung</span>
+              <span>Uebereinstimmung</span>
               <span>{overallScore}%</span>
             </div>
             <div className="h-2 overflow-hidden rounded-full bg-slate-200">
@@ -66,42 +90,44 @@ export default function JobAnalysisCard({ text }: Props) {
       </div>
 
       <div className="flex w-full flex-col gap-2.5">
-        {visibleSections.map((section, index) => (
-          <article
-            key={`${section.title}-${index}`}
-            className="rounded-xl border px-4 py-3.5 shadow-sm backdrop-blur-[1px]"
-            style={{
-              background: section.bg,
-              borderColor: section.border,
-            }}
-          >
-            <header className="mb-2.5 flex flex-wrap items-center justify-between gap-2">
-              <div className="flex min-w-0 items-center gap-2">
-                <span className="text-base leading-none">{section.icon}</span>
-                <h3 className="truncate text-sm font-semibold" style={{ color: section.color }}>
-                  {section.title}
-                </h3>
-              </div>
-              <span
-                className="rounded-full border px-2.5 py-0.5 text-[11px] font-semibold"
-                style={{
-                  background: section.chipBg,
-                  borderColor: section.border,
-                  color: section.chipColor,
-                }}
-              >
-                {section.chip}
-              </span>
-            </header>
+        {visibleSections.map((section, index) => {
+          const Icon = ICON_BY_TONE[section.tone] ?? FileSearch
+          return (
+            <article
+              key={`${section.title}-${index}`}
+              className="rounded-xl border px-4 py-3.5 shadow-sm backdrop-blur-[1px]"
+              style={{
+                background: section.bg,
+                borderColor: section.border,
+              }}
+            >
+              <header className="mb-2.5 flex flex-wrap items-center justify-between gap-2">
+                <div className="flex min-w-0 items-center gap-2">
+                  <Icon size={16} style={{ color: section.color }} />
+                  <h3 className="truncate text-sm font-semibold" style={{ color: section.color }}>
+                    {section.title}
+                  </h3>
+                </div>
+                <span
+                  className="rounded-full border px-2.5 py-0.5 text-[11px] font-semibold"
+                  style={{
+                    background: section.chipBg,
+                    borderColor: section.border,
+                    color: section.chipColor,
+                  }}
+                >
+                  {section.chip}
+                </span>
+              </header>
 
-            <div
-              className="job-analysis-body text-[0.89rem] leading-relaxed text-slate-700"
-              dangerouslySetInnerHTML={{ __html: bodyToHtml(section.body) }}
-            />
-          </article>
-        ))}
+              <div
+                className="job-analysis-body text-[0.89rem] leading-relaxed text-slate-700"
+                dangerouslySetInnerHTML={{ __html: bodyToHtml(section.body) }}
+              />
+            </article>
+          )
+        })}
       </div>
     </div>
   )
 }
-
