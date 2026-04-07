@@ -1,17 +1,16 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { AlertCircle, X } from 'lucide-react'
 import type { ToolType } from '../types'
 import { PROGRAMMING_LANGUAGES } from '../types'
-import { askAgent } from '../api/client'
+import { UsageLimitError, askAgentStream } from '../api/client'
 import ChatInput from '../components/chat/ChatInput'
 import ChatSidebar from '../components/chat/ChatSidebar'
-import InterviewSetupModal, { type InterviewSetupData } from '../components/chat/InterviewSetupModal'
+import ContextModal, { type ContextModalToolType, type ContextPayload } from '../components/chat/ContextModal'
 import MessageList from '../components/chat/MessageList'
 import UsageLimitModal from '../components/ui/UsageLimitModal'
 import { useChatSessions } from '../hooks/useChatSessions'
 import { useUserPlan, dispatchServerUsage } from '../hooks/useUserPlan'
-import { UsageLimitError } from '../api/client'
 import { sanitizeTechnicalContext } from '../utils/cvTechnicalContext'
 
 const LANG_NAMES: Record<string, string> = {
@@ -25,9 +24,139 @@ const LANG_NAMES: Record<string, string> = {
 }
 
 const INTERVIEW_PROMPT_LIMIT = 3900
-const LS_INTERVIEW_CONTEXT = 'smartassist_interview_context_by_session'
+const LS_CONTEXT = 'smartassist_context_by_tool_and_session'
+const LS_CONTEXT_DISMISSED = 'smartassist_context_modal_dismissed'
 
-type InterviewContextMap = Record<string, InterviewSetupData>
+type ContextToolType = 'jobanalyzer' | 'interview' | 'programming'
+
+type SessionContextMap = Record<string, SessionContextData>
+
+type DismissedContextMap = Record<string, true>
+
+interface SessionContextData {
+  sessionId: string
+  toolType: ContextToolType
+  cvText: string
+  jobText: string
+  jobTitle: string
+  companyName: string
+  programmingLanguage: string
+  programmingLanguageId: string
+  hasJob: boolean
+  hasCv: boolean
+  updatedAt: string
+}
+
+interface InterviewPromptContext {
+  language: 'de' | 'en'
+  alias: string
+  cvText: string
+  jobUrl: string
+  jobText: string
+}
+
+function isToolType(value: string): value is ToolType {
+  return value === 'general' || value === 'jobanalyzer' || value === 'language' || value === 'programming' || value === 'interview'
+}
+
+function normalizeToolParam(value: string): ToolType {
+  if (value === 'interviewprep') return 'interview'
+  if (isToolType(value)) return value
+  return 'general'
+}
+
+function modalToolTypeFromParam(rawToolParam: string, normalized: ToolType): ContextModalToolType | null {
+  if (rawToolParam === 'interviewprep') return 'interviewprep'
+  if (normalized === 'interview' || normalized === 'jobanalyzer' || normalized === 'programming') return normalized
+  return null
+}
+
+function asContextTool(tool: ToolType): ContextToolType | null {
+  if (tool === 'jobanalyzer' || tool === 'interview' || tool === 'programming') return tool
+  return null
+}
+
+function contextKey(tool: ContextToolType, sessionId: string): string {
+  return `${tool}:${sessionId}`
+}
+
+function normalizeContext(input: Partial<SessionContextData> & { sessionId: string; toolType: ContextToolType }): SessionContextData {
+  const cvText = sanitizeTechnicalContext(input.cvText ?? '').slice(0, 4200)
+  const jobText = (input.jobText ?? '').trim().slice(0, 7000)
+  const jobTitle = (input.jobTitle ?? '').trim().slice(0, 180)
+  const companyName = (input.companyName ?? '').trim().slice(0, 180)
+  const programmingLanguage = (input.programmingLanguage ?? '').trim().slice(0, 80)
+  const programmingLanguageId = (input.programmingLanguageId ?? '').trim().slice(0, 40)
+
+  return {
+    sessionId: input.sessionId,
+    toolType: input.toolType,
+    cvText,
+    jobText,
+    jobTitle,
+    companyName,
+    programmingLanguage,
+    programmingLanguageId,
+    hasJob: Boolean(jobText || jobTitle || companyName),
+    hasCv: Boolean(cvText),
+    updatedAt: input.updatedAt ?? new Date().toISOString(),
+  }
+}
+
+function loadContextMap(): SessionContextMap {
+  try {
+    const raw = localStorage.getItem(LS_CONTEXT)
+    if (!raw) return {}
+
+    const parsed = JSON.parse(raw) as Record<string, Partial<SessionContextData>>
+    if (!parsed || typeof parsed !== 'object') return {}
+
+    const next: SessionContextMap = {}
+    for (const [key, value] of Object.entries(parsed)) {
+      if (!value?.sessionId || !value?.toolType) continue
+      if (value.toolType !== 'jobanalyzer' && value.toolType !== 'interview' && value.toolType !== 'programming') continue
+      next[key] = normalizeContext({
+        ...value,
+        sessionId: value.sessionId,
+        toolType: value.toolType,
+      })
+    }
+
+    return next
+  } catch (error) {
+    console.warn('[ChatPage] Failed to load context map', error)
+    return {}
+  }
+}
+
+function saveContextMap(value: SessionContextMap): void {
+  try {
+    localStorage.setItem(LS_CONTEXT, JSON.stringify(value))
+  } catch (error) {
+    console.warn('[ChatPage] Failed to save context map', error)
+  }
+}
+
+function loadDismissedContextMap(): DismissedContextMap {
+  try {
+    const raw = localStorage.getItem(LS_CONTEXT_DISMISSED)
+    if (!raw) return {}
+    const parsed = JSON.parse(raw) as DismissedContextMap
+    if (!parsed || typeof parsed !== 'object') return {}
+    return parsed
+  } catch (error) {
+    console.warn('[ChatPage] Failed to load dismissed context map', error)
+    return {}
+  }
+}
+
+function saveDismissedContextMap(value: DismissedContextMap): void {
+  try {
+    localStorage.setItem(LS_CONTEXT_DISMISSED, JSON.stringify(value))
+  } catch (error) {
+    console.warn('[ChatPage] Failed to save dismissed context map', error)
+  }
+}
 
 function compactLines(text: string, maxLines: number, maxChars: number): string {
   const lines = text
@@ -51,46 +180,37 @@ function compactLines(text: string, maxLines: number, maxChars: number): string 
   return out.join('\n')
 }
 
-
-function normalizeInterviewSetup(input?: Partial<InterviewSetupData> | null): InterviewSetupData {
+function defaultInterviewContext(): InterviewPromptContext {
   return {
-    language: input?.language === 'en' ? 'en' : 'de',
-    alias: (input?.alias ?? '').trim().slice(0, 40),
-    cvText: sanitizeTechnicalContext(input?.cvText ?? '').slice(0, 2200),
-    jobUrl: (input?.jobUrl ?? '').trim().slice(0, 300),
-    jobText: compactLines((input?.jobText ?? '').trim(), 14, 1700),
+    language: 'de',
+    alias: '',
+    cvText: '',
+    jobUrl: '',
+    jobText: '',
   }
 }
 
-function loadInterviewContextMap(): InterviewContextMap {
-  try {
-    const raw = localStorage.getItem(LS_INTERVIEW_CONTEXT)
-    if (!raw) return {}
-
-    const parsed = JSON.parse(raw) as Record<string, Partial<InterviewSetupData>>
-    if (!parsed || typeof parsed !== 'object') return {}
-
-    const next: InterviewContextMap = {}
-    for (const [sessionId, value] of Object.entries(parsed)) {
-      next[sessionId] = normalizeInterviewSetup(value)
-    }
-
-    return next
-  } catch {
-    return {}
+function toInterviewContext(context: SessionContextData | null): InterviewPromptContext {
+  if (!context || context.toolType !== 'interview') {
+    return defaultInterviewContext()
   }
-}
 
-function saveInterviewContextMap(value: InterviewContextMap): void {
-  try {
-    localStorage.setItem(LS_INTERVIEW_CONTEXT, JSON.stringify(value))
-  } catch {
-    // ignore storage errors
+  const titleLine = context.jobTitle
+    ? `ROLE: ${context.jobTitle}${context.companyName ? ` at ${context.companyName}` : ''}`
+    : (context.companyName ? `COMPANY: ${context.companyName}` : '')
+
+  const mergedJobText = [titleLine, context.jobText]
+    .filter(Boolean)
+    .join('\n')
+    .slice(0, 3000)
+
+  return {
+    language: 'de',
+    alias: '',
+    cvText: context.cvText,
+    jobUrl: '',
+    jobText: mergedJobText,
   }
-}
-
-function defaultInterviewSetup(): InterviewSetupData {
-  return normalizeInterviewSetup({})
 }
 
 function interviewBaseInstruction(language: string, hasCv: boolean, alias: string): string {
@@ -111,7 +231,7 @@ function interviewBaseInstruction(language: string, hasCv: boolean, alias: strin
   ].join('\n')
 }
 
-function buildInterviewPrompt(userMessage: string, language: string, setup: InterviewSetupData): string {
+function buildInterviewPrompt(userMessage: string, language: string, setup: InterviewPromptContext): string {
   const base = interviewBaseInstruction(language, !!setup.cvText.trim(), setup.alias.trim())
   const jobUrl = setup.jobUrl.trim().slice(0, 220)
 
@@ -142,29 +262,34 @@ function buildInterviewPrompt(userMessage: string, language: string, setup: Inte
 
 export default function ChatPage() {
   const [searchParams] = useSearchParams()
-  const toolParam = (searchParams.get('tool') ?? 'general') as ToolType
+  const rawToolParam = (searchParams.get('tool') ?? 'general').toLowerCase()
+  const toolParam = normalizeToolParam(rawToolParam)
+  const modalToolType = modalToolTypeFromParam(rawToolParam, toolParam)
 
   const store = useChatSessions()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [showContextModal, setShowContextModal] = useState(false)
+  const [dismissedContextKeys, setDismissedContextKeys] = useState<DismissedContextMap>(() => loadDismissedContextMap())
+  const [contextBySessionKey, setContextBySessionKey] = useState<SessionContextMap>(() => loadContextMap())
 
   const [nativeLang, setNativeLang] = useState('de')
   const [targetLang, setTargetLang] = useState('es')
   const [progLang, setProgLang] = useState('csharp')
 
-  const [interviewContextBySession, setInterviewContextBySession] = useState<InterviewContextMap>(() => loadInterviewContextMap())
-  const [setupOpen, setSetupOpen] = useState(false)
-  const [setupSessionId, setSetupSessionId] = useState<string | null>(null)
-  const [setupInitialData, setSetupInitialData] = useState<InterviewSetupData>(defaultInterviewSetup())
   const [showLimitModal, setShowLimitModal] = useState(false)
   const [checkoutBanner, setCheckoutBanner] = useState<{ type: 'success' | 'info'; text: string } | null>(null)
 
   const { isAtLimit, incrementUsage, isSignedIn, email, getToken } = useUserPlan()
 
   useEffect(() => {
-    saveInterviewContextMap(interviewContextBySession)
-  }, [interviewContextBySession])
+    saveContextMap(contextBySessionKey)
+  }, [contextBySessionKey])
+
+  useEffect(() => {
+    saveDismissedContextMap(dismissedContextKeys)
+  }, [dismissedContextKeys])
 
   useEffect(() => {
     store.switchToTool(toolParam)
@@ -199,55 +324,133 @@ export default function ChatPage() {
   const targetName = LANG_NAMES[targetLang] ?? targetLang
   const progMeta = PROGRAMMING_LANGUAGES.find(lang => lang.id === progLang)
 
-  const activeInterviewContext =
-    isInterview && store.activeSessionId
-      ? interviewContextBySession[store.activeSessionId] ?? defaultInterviewSetup()
-      : defaultInterviewSetup()
+  const activeContextTool = asContextTool(store.currentToolType)
+  const activeContextKey = activeContextTool && store.activeSessionId
+    ? contextKey(activeContextTool, store.activeSessionId)
+    : null
 
-  const openInterviewSetup = (sessionId: string) => {
-    const setup = interviewContextBySession[sessionId] ?? defaultInterviewSetup()
-    setSetupSessionId(sessionId)
-    setSetupInitialData(setup)
-    setSetupOpen(true)
+  const activeContext = activeContextKey ? contextBySessionKey[activeContextKey] ?? null : null
+  const hasUserMessages = useMemo(
+    () => store.activeMessages.some(message => message.isUser),
+    [store.activeMessages],
+  )
+
+  useEffect(() => {
+    if (!activeContextTool || !store.activeSessionId || !activeContextKey) {
+      setShowContextModal(false)
+      return
+    }
+
+    if (activeContext || hasUserMessages || dismissedContextKeys[activeContextKey]) {
+      return
+    }
+
+    const timer = window.setTimeout(() => setShowContextModal(true), 500)
+    return () => window.clearTimeout(timer)
+  }, [
+    activeContext,
+    activeContextKey,
+    activeContextTool,
+    dismissedContextKeys,
+    hasUserMessages,
+    store.activeSessionId,
+  ])
+
+  const handleCloseContextModal = () => {
+    setShowContextModal(false)
+
+    if (!activeContextKey) return
+    setDismissedContextKeys(prev => ({
+      ...prev,
+      [activeContextKey]: true,
+    }))
   }
 
-  const handleSaveInterviewSetup = (data: InterviewSetupData) => {
-    if (!setupSessionId) return
+  const handleContextSet = (contextData: ContextPayload) => {
+    if (!activeContextTool || !store.activeSessionId) {
+      setError('Cannot set context without an active session.')
+      setShowContextModal(false)
+      return
+    }
 
-    const normalized = normalizeInterviewSetup(data)
-
-    setInterviewContextBySession(prev => ({
-      ...prev,
-      [setupSessionId]: normalized,
-    }))
-
-    const hasCv = normalized.cvText.trim().length > 0
-    const hasJob = normalized.jobText.trim().length > 0 || normalized.jobUrl.trim().length > 0
-
-    store.addMessage(setupSessionId, {
-      isUser: false,
-      text: hasCv || hasJob
-        ? `Interview-Setup gespeichert.\nStarte direkt mit: "Was soll ich für mein Profil verbessern?" oder "Gib mir die Top 3 Interviewfragen für diese Stelle."`
-        : 'Interview-Setup gespeichert. Sprache und Alias gelten nur für diesen Chat.',
+    const key = contextKey(activeContextTool, store.activeSessionId)
+    const normalized = normalizeContext({
+      sessionId: store.activeSessionId,
+      toolType: activeContextTool,
+      cvText: contextData.cvText,
+      jobText: contextData.jobText,
+      jobTitle: contextData.jobTitle,
+      companyName: contextData.companyName,
+      programmingLanguage: contextData.programmingLanguage,
+      programmingLanguageId: contextData.programmingLanguageId,
     })
 
-    setSetupOpen(false)
-    setSetupSessionId(null)
+    setContextBySessionKey(prev => ({
+      ...prev,
+      [key]: normalized,
+    }))
+
+    setDismissedContextKeys(prev => {
+      const next = { ...prev }
+      delete next[key]
+      return next
+    })
+
+    setShowContextModal(false)
+
+    const userAlreadyStarted = store.activeMessages.some(message => message.isUser)
+    if (userAlreadyStarted) return
+
+    if (activeContextTool === 'jobanalyzer' && normalized.jobText) {
+      void handleSend(`Please analyze this job posting:\n\n${normalized.jobText}`)
+      return
+    }
+
+    if (activeContextTool === 'interview') {
+      const intro = normalized.jobTitle
+        ? `I am preparing for an interview for: ${normalized.jobTitle}${normalized.companyName ? ` at ${normalized.companyName}` : ''}. Please start the interview preparation.`
+        : 'Please start an interview preparation session and ask me targeted questions.'
+      void handleSend(intro)
+      return
+    }
+
+    if (activeContextTool === 'programming' && normalized.programmingLanguage) {
+      if (normalized.programmingLanguageId) {
+        setProgLang(normalized.programmingLanguageId)
+      }
+      void handleSend(`I am working with ${normalized.programmingLanguage}. I am ready to get help with my code.`)
+      return
+    }
+
+    if (activeContextTool === 'programming' && normalized.programmingLanguageId) {
+      const mapped = PROGRAMMING_LANGUAGES.find(lang => lang.id === normalized.programmingLanguageId)?.label ?? normalized.programmingLanguageId
+      setProgLang(normalized.programmingLanguageId)
+      void handleSend(`I am working with ${mapped}. I am ready to get help with my code.`)
+    }
   }
 
   const handleNewSession = () => {
-    const newId = store.newSession(store.currentToolType)
-    if (store.currentToolType === 'interview') {
-      openInterviewSetup(newId)
-    }
+    store.newSession(store.currentToolType)
   }
 
   const handleDeleteSession = (id: string) => {
     store.deleteSession(id)
-    setInterviewContextBySession(prev => {
-      if (!prev[id]) return prev
-      const next = { ...prev }
-      delete next[id]
+
+    setContextBySessionKey(prev => {
+      const next: SessionContextMap = {}
+      for (const [key, value] of Object.entries(prev)) {
+        if (value.sessionId === id) continue
+        next[key] = value
+      }
+      return next
+    })
+
+    setDismissedContextKeys(prev => {
+      const next: DismissedContextMap = {}
+      for (const [key, value] of Object.entries(prev)) {
+        if (key.endsWith(`:${id}`)) continue
+        next[key] = value
+      }
       return next
     })
   }
@@ -255,7 +458,10 @@ export default function ChatPage() {
   const handleClear = () => {
     if (!window.confirm('Alle Konversationen löschen?')) return
     store.clearHistory()
-    setInterviewContextBySession({})
+    setContextBySessionKey({})
+    setDismissedContextKeys({})
+    localStorage.removeItem(LS_CONTEXT)
+    localStorage.removeItem(LS_CONTEXT_DISMISSED)
   }
 
   const handleSend = async (text: string) => {
@@ -270,55 +476,91 @@ export default function ChatPage() {
     setIsLoading(true)
     setError(null)
 
-    const sessionInterviewContext = interviewContextBySession[sessionId] ?? defaultInterviewSetup()
-    const interviewLangCode = sessionInterviewContext.language === 'en' ? 'en' : 'de'
+    const interviewSetup = toInterviewContext(activeContext)
+    const interviewLangCode = interviewSetup.language === 'en' ? 'en' : 'de'
     const interviewLangName = interviewLangCode === 'de' ? 'German' : 'English'
 
     const apiMessage = isInterview
-      ? buildInterviewPrompt(text, interviewLangName, sessionInterviewContext)
+      ? buildInterviewPrompt(text, interviewLangName, interviewSetup)
       : text
+
+    const streamingMsgId = crypto.randomUUID()
+    store.addMessage(sessionId, { id: streamingMsgId, text: '', isUser: false })
 
     try {
       const token = await getToken()
-      const res = await askAgent({
-        message: apiMessage,
-        sessionId,
-        languageLearningMode: llMode,
-        targetLanguage: llMode ? targetName : undefined,
-        nativeLanguage: llMode ? nativeName : undefined,
-        targetLanguageCode: llMode ? targetLang : undefined,
-        nativeLanguageCode: llMode ? nativeLang : undefined,
-        level: llMode ? 'A1' : undefined,
-        learningGoal: llMode ? 'speaking basics, verbs, sentence structure' : undefined,
-        programmingMode: isProgramming ? true : undefined,
-        programmingLanguage: isProgramming ? progMeta?.label : undefined,
-        interviewMode: isInterview ? true : undefined,
-        interviewLanguage: isInterview ? (interviewLangCode === 'de' ? 'German' : 'English') : undefined,
-      }, token ?? undefined)
+      let accumulated = ''
 
-      store.addMessage(sessionId, {
-        text: res.reply,
-        isUser: false,
-        toolUsed: res.toolUsed,
-        learningData: res.learningData,
-      })
+      const { toolUsed, serverUsageToday } = await askAgentStream(
+        {
+          message: apiMessage,
+          sessionId,
+          languageLearningMode: llMode,
+          targetLanguage: llMode ? targetName : undefined,
+          nativeLanguage: llMode ? nativeName : undefined,
+          targetLanguageCode: llMode ? targetLang : undefined,
+          nativeLanguageCode: llMode ? nativeLang : undefined,
+          level: llMode ? 'A1' : undefined,
+          learningGoal: llMode ? 'speaking basics, verbs, sentence structure' : undefined,
+          programmingMode: isProgramming ? true : undefined,
+          programmingLanguage: isProgramming ? progMeta?.label : undefined,
+          interviewMode: isInterview ? true : undefined,
+          interviewLanguage: isInterview ? (interviewLangCode === 'de' ? 'German' : 'English') : undefined,
+        },
+        token,
+        (chunk) => {
+          accumulated += chunk
+          store.updateMessageText(sessionId, streamingMsgId, accumulated)
+        },
+      )
 
-      // Prefer server-authoritative usage count; fall back to local increment
-      if (typeof res.serverUsageToday === 'number') {
-        dispatchServerUsage(res.serverUsageToday)
+      store.finalizeMessage(sessionId, streamingMsgId, { toolUsed: toolUsed || undefined })
+
+      if (typeof serverUsageToday === 'number') {
+        dispatchServerUsage(serverUsageToday)
       } else {
         incrementUsage()
       }
-    } catch (err) {
-      if (err instanceof UsageLimitError) {
+    } catch (sendError) {
+      store.deleteMessage(sessionId, streamingMsgId)
+      if (sendError instanceof UsageLimitError) {
         setShowLimitModal(true)
       } else {
-        setError(err instanceof Error ? err.message : 'Etwas ist schiefgelaufen.')
+        setError(sendError instanceof Error ? sendError.message : 'Etwas ist schiefgelaufen.')
       }
     } finally {
       setIsLoading(false)
     }
   }
+
+  const programmingContextLabel = activeContext?.programmingLanguage
+    || (activeContext?.programmingLanguageId
+      ? PROGRAMMING_LANGUAGES.find(lang => lang.id === activeContext.programmingLanguageId)?.label ?? activeContext.programmingLanguageId
+      : '')
+
+  const contextInfo = {
+    jobanalyzer: activeContext?.toolType === 'jobanalyzer' && activeContext.hasJob
+      ? `JOB: ${activeContext.jobTitle || 'Job context active'}${activeContext.companyName ? ` at ${activeContext.companyName}` : ''}`
+      : null,
+    interview: activeContext?.toolType === 'interview' && activeContext.hasJob
+      ? `INTERVIEW: ${activeContext.jobTitle || 'Target role'}${activeContext.companyName ? ` at ${activeContext.companyName}` : ''}`
+      : null,
+    programming: activeContext?.toolType === 'programming' && programmingContextLabel
+      ? `CODE: ${programmingContextLabel}`
+      : null,
+  } as const
+
+  const activeContextInfo = activeContextTool ? contextInfo[activeContextTool] : null
+  const activeModalInitialData = activeContext
+    ? {
+      cvText: activeContext.cvText,
+      jobText: activeContext.jobText,
+      jobTitle: activeContext.jobTitle,
+      companyName: activeContext.companyName,
+      programmingLanguage: activeContext.programmingLanguage,
+      programmingLanguageId: activeContext.programmingLanguageId,
+    }
+    : undefined
 
   return (
     <div className="relative flex h-full overflow-hidden">
@@ -369,6 +611,15 @@ export default function ChatPage() {
           </div>
         )}
 
+        {activeContextInfo && (
+          <div className="context-indicator">
+            <span>{activeContextInfo}</span>
+            <button onClick={() => setShowContextModal(true)} className="context-edit-btn">
+              Edit ??
+            </button>
+          </div>
+        )}
+
         {isLanguage && (
           <div className="flex-shrink-0 px-4 pb-0 pt-3">
             <div className="mx-auto max-w-3xl">
@@ -393,23 +644,21 @@ export default function ChatPage() {
           <div className="flex-shrink-0 px-4 pb-0 pt-3">
             <div className="mx-auto flex max-w-3xl flex-wrap items-center gap-2">
               <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700">
-                Interview Coach | {activeInterviewContext.language === 'en' ? 'English' : 'Deutsch'}
+                Interview Coach
               </span>
 
-              {activeInterviewContext.cvText.trim() && (
+              {activeContext?.hasCv && (
                 <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
-                  CV aktiv{activeInterviewContext.alias ? ` | ${activeInterviewContext.alias}` : ''}
+                  CV context active
                 </span>
               )}
 
-              {store.activeSessionId && (
-                <button
-                  onClick={() => openInterviewSetup(store.activeSessionId!)}
-                  className="text-xs text-indigo-600 hover:text-indigo-800 hover:underline"
-                >
-                  Setup öffnen
-                </button>
-              )}
+              <button
+                onClick={() => setShowContextModal(true)}
+                className="text-xs text-indigo-600 hover:text-indigo-800 hover:underline"
+              >
+                Setup öffnen
+              </button>
             </div>
           </div>
         )}
@@ -451,16 +700,15 @@ export default function ChatPage() {
         />
       </div>
 
-      <InterviewSetupModal
-        isOpen={setupOpen}
-        sessionId={setupSessionId}
-        initialData={setupInitialData}
-        onClose={() => {
-          setSetupOpen(false)
-          setSetupSessionId(null)
-        }}
-        onSave={handleSaveInterviewSetup}
-      />
+      {showContextModal && store.activeSessionId && modalToolType && (
+        <ContextModal
+          toolType={modalToolType}
+          sessionId={store.activeSessionId}
+          initialData={activeModalInitialData}
+          onClose={handleCloseContextModal}
+          onContextSet={handleContextSet}
+        />
+      )}
 
       <UsageLimitModal
         isOpen={showLimitModal}
@@ -471,3 +719,4 @@ export default function ChatPage() {
     </div>
   )
 }
+

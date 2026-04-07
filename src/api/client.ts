@@ -29,6 +29,74 @@ function authHeaders(token?: string): Record<string, string> {
   return h
 }
 
+// ── Agent streaming ────────────────────────────────────────────────────────
+export interface StreamChunk {
+  type: 'chunk' | 'done' | 'error'
+  text?: string
+  toolUsed?: string
+  message?: string
+}
+
+/** Stream a chat response as SSE tokens. Calls onChunk for each text piece. */
+export async function askAgentStream(
+  request: AgentRequest,
+  token: string | null | undefined,
+  onChunk: (text: string) => void,
+): Promise<{ toolUsed: string; serverUsageToday?: number }> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (token) headers['Authorization'] = `Bearer ${token}`
+
+  const res = await fetch(`${BASE}/api/agent/stream`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(request),
+  })
+
+  if (res.status === 429) {
+    let reason = 'usage_limit'
+    try { const err = await res.json() as Record<string, string>; reason = err?.reason ?? err?.error ?? reason } catch { /**/ }
+    throw new UsageLimitError(reason, 429)
+  }
+
+  if (!res.ok) {
+    let message = `Request failed (${res.status})`
+    try { const err = await res.json() as Record<string, string>; if (err?.error) message = err.error } catch { /**/ }
+    throw new Error(message)
+  }
+
+  const rawUsage = res.headers.get('X-Usage-Today')
+  const serverUsageToday = rawUsage !== null ? Number(rawUsage) : undefined
+
+  const reader = res.body!.getReader()
+  const decoder = new TextDecoder()
+  let buffer = ''
+  let toolUsed = ''
+
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+    buffer += decoder.decode(value, { stream: true })
+    const lines = buffer.split('\n')
+    buffer = lines.pop() ?? ''
+    for (const line of lines) {
+      if (!line.startsWith('data: ')) continue
+      const raw = line.slice(6).trim()
+      if (!raw) continue
+      try {
+        const chunk = JSON.parse(raw) as StreamChunk
+        if (chunk.type === 'chunk' && chunk.text)  onChunk(chunk.text)
+        else if (chunk.type === 'done')             toolUsed = chunk.toolUsed ?? ''
+        else if (chunk.type === 'error')            throw new Error(chunk.message ?? 'Stream error')
+      } catch (e) {
+        if (e instanceof SyntaxError) continue // incomplete JSON line — skip
+        throw e
+      }
+    }
+  }
+
+  return { toolUsed, serverUsageToday }
+}
+
 // ── Agent ask ──────────────────────────────────────────────────────────────
 export async function askAgent(
   request: AgentRequest,
