@@ -1,8 +1,8 @@
-import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom'
-import { ClerkProvider, useAuth } from '@clerk/clerk-react'
-import { Loader2 } from 'lucide-react'
+import { BrowserRouter, Navigate, Route, Routes, useNavigate } from 'react-router-dom'
+import { ClerkProvider, useAuth, useUser } from '@clerk/clerk-react'
 import MainLayout from './components/layout/MainLayout'
-import HomePage from './pages/HomePage'
+import LoadingScreen from './components/LoadingScreen'
+import LandingPage from './pages/LandingPage'
 import ChatPage from './pages/ChatPage'
 import ToolsPage from './pages/ToolsPage'
 import PricingPage from './pages/PricingPage'
@@ -25,26 +25,35 @@ function ClerkProviderWithRouter({ children }: { children: React.ReactNode }) {
   )
 }
 
+// Requires authentication — redirects to landing if not signed in
+function ProtectedApp() {
+  const { isSignedIn, isLoaded } = useUser()
+
+  if (!isLoaded) return <LoadingScreen />
+  if (!isSignedIn) return <Navigate to="/" replace />
+  return <MainLayout />
+}
+
 function AppRoutes() {
   const { isLoaded } = useAuth()
 
-  if (!isLoaded) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-[#f5f6fb]">
-        <Loader2 size={28} className="animate-spin text-primary" />
-      </div>
-    )
-  }
+  if (!isLoaded) return <LoadingScreen />
 
   return (
     <Routes>
-      <Route element={<MainLayout />}>
-        <Route index element={<HomePage />} />
-        <Route path="chat" element={<ChatPage />} />
-        <Route path="tools" element={<ToolsPage />} />
-        <Route path="pricing" element={<PricingPage />} />
-        <Route path="profile" element={<ProfilePage />} />
+      {/* Public standalone pages */}
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/pricing" element={<PricingPage />} />
+
+      {/* Protected app — requires sign in, renders MainLayout with sidebar */}
+      <Route element={<ProtectedApp />}>
+        <Route path="/chat" element={<ChatPage />} />
+        <Route path="/tools" element={<ToolsPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
       </Route>
+
+      {/* Fallback */}
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
 }
