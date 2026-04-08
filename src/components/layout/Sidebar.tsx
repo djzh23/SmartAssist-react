@@ -140,9 +140,7 @@ export default function Sidebar({ onNavClick }: Props) {
   return (
     <div className="flex h-full flex-col overflow-x-hidden overflow-y-auto">
       <div className="flex flex-shrink-0 items-center gap-2.5 px-4 py-5">
-        <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-cyan-300/40 bg-cyan-400/10 text-cyan-300">
-          <Sparkles size={15} />
-        </span>
+        <img src="/favicon.png" alt="SmartAssist" className="h-7 w-7 rounded-lg" />
         <span className="text-[15px] font-bold tracking-wide text-white">SmartAssist</span>
       </div>
 

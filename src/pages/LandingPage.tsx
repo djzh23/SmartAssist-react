@@ -14,7 +14,7 @@ function LandingNav() {
     <nav className="fixed left-0 right-0 top-0 z-[100] h-16 border-b border-slate-200/80 bg-white/95 backdrop-blur-sm">
       <div className="flex h-full max-w-[1200px] items-center justify-between mx-auto px-6">
         <div className="flex items-center gap-2">
-          <span className="text-xl">⚡</span>
+          <img src="/favicon.png" alt="SmartAssist" className="h-8 w-8 rounded-xl" />
           <span className="text-lg font-bold text-slate-800">SmartAssist</span>
         </div>
 
@@ -722,7 +722,7 @@ function FooterSection() {
         <div className="mb-6 flex flex-col items-center justify-between gap-6 md:flex-row">
           <div>
             <div className="mb-1 flex items-center gap-2">
-              <span className="text-xl">⚡</span>
+              <img src="/favicon.png" alt="SmartAssist" className="h-7 w-7 rounded-lg" />
               <span className="text-lg font-bold text-white">SmartAssist</span>
             </div>
             <p className="text-sm text-slate-400">KI Werkzeuge für alle</p>

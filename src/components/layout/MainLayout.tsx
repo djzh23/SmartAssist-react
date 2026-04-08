@@ -39,7 +39,8 @@ export default function MainLayout() {
           >
             {mobileOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
-          <span className="text-white font-bold text-sm tracking-wide">⚡ SmartAssist</span>
+          <img src="/favicon.png" alt="" className="h-6 w-6 rounded-lg" aria-hidden="true" />
+          <span className="text-white font-bold text-sm tracking-wide">SmartAssist</span>
         </div>
 
         <main className="flex-1 overflow-hidden">
