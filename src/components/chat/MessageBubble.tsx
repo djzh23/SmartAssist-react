@@ -1,7 +1,6 @@
 import type { ChatMessage, ToolType } from '../../types'
 import { BriefcaseBusiness, Settings2 } from 'lucide-react'
 import JobAnalysisCard from './JobAnalysisCard'
-import LanguageCoachResponse from './LanguageCoachResponse'
 import LearningResponse from './LearningResponse'
 import ProgrammingResponse from './ProgrammingResponse'
 import InterviewResponse from './InterviewResponse'
@@ -32,6 +31,7 @@ export default function MessageBubble({
   const isJobAnalyzerReply = !msg.isUser && (toolType === 'jobanalyzer' || msg.toolUsed === 'analyze_job')
 
   if (!msg.isUser && toolType === 'language' && useLanguageCard) {
+    // 1. New structured ---ZIELSPRACHE--- format (preferred)
     const structured = parseLearningResponse(msg.text)
     if (structured?.isStructured) {
       return (
@@ -49,6 +49,7 @@ export default function MessageBubble({
       )
     }
 
+    // 2. Backend returned a structured LearningData object (legacy / non-streaming)
     if (msg.learningData) {
       return (
         <LearningResponse
@@ -61,15 +62,24 @@ export default function MessageBubble({
       )
     }
 
-    return (
-      <LanguageCoachResponse
-        text={msg.text}
-        targetLang={targetLang}
-        nativeLang={nativeLang}
-        targetLangCode={targetLangCode}
-        timestamp={msg.timestamp}
-      />
-    )
+    // 3. Fallback: render ANY language response as a LearningResponse card so
+    //    (a) the user always sees the purple bordered card style, and
+    //    (b) the audio button is available for the whole text.
+    //    An empty nativeLanguageText hides the translation card automatically.
+    if (msg.text.trim()) {
+      return (
+        <LearningResponse
+          data={{
+            targetLanguageText: msg.text.trim(),
+            nativeLanguageText: '',
+          }}
+          targetLang={targetLang}
+          nativeLang={nativeLang}
+          targetLangCode={targetLangCode}
+          timestamp={msg.timestamp}
+        />
+      )
+    }
   }
 
   if (isJobAnalyzerReply) {

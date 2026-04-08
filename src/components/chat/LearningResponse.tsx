@@ -104,14 +104,16 @@ export default function LearningResponse({ data, targetLang, nativeLang, targetL
         </p>
       </div>
 
-      <div className="learning-card-translation rounded-xl border-l-[3px] border-l-slate-300 bg-[#F9FAFB] px-4 py-3.5 transition-transform duration-100 hover:translate-x-0.5">
-        <div className="mb-2 text-[10px] font-bold uppercase tracking-[1.2px] text-slate-500">
-          {nativeLang}
+      {data.nativeLanguageText && (
+        <div className="learning-card-translation rounded-xl border-l-[3px] border-l-slate-300 bg-[#F9FAFB] px-4 py-3.5 transition-transform duration-100 hover:translate-x-0.5">
+          <div className="mb-2 text-[10px] font-bold uppercase tracking-[1.2px] text-slate-500">
+            {nativeLang}
+          </div>
+          <p className="text-sm italic leading-relaxed text-slate-500">
+            {data.nativeLanguageText}
+          </p>
         </div>
-        <p className="text-sm italic leading-relaxed text-slate-500">
-          {data.nativeLanguageText}
-        </p>
-      </div>
+      )}
 
       {data.learnTip && (
         <div className="learning-card-tip rounded-xl border-l-[3px] border-l-amber-500 bg-[#FFFBEB] px-3.5 py-2 transition-transform duration-100 hover:translate-x-0.5">

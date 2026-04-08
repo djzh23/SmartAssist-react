@@ -13,7 +13,8 @@ import { useChatSessions } from '../hooks/useChatSessions'
 import { useUserPlan, dispatchServerUsage } from '../hooks/useUserPlan'
 import { sanitizeTechnicalContext } from '../utils/cvTechnicalContext'
 
-const LANG_NAMES: Record<string, string> = {
+/** German UI labels shown in sidebar / header chips */
+const LANG_DISPLAY: Record<string, string> = {
   de: 'Deutsch',
   en: 'Englisch',
   es: 'Spanisch',
@@ -21,6 +22,17 @@ const LANG_NAMES: Record<string, string> = {
   it: 'Italienisch',
   ar: 'Arabisch',
   pt: 'Portugiesisch',
+}
+
+/** English names sent to the backend — Claude responds more reliably to English language names */
+const LANG_API: Record<string, string> = {
+  de: 'German',
+  en: 'English',
+  es: 'Spanish',
+  fr: 'French',
+  it: 'Italian',
+  ar: 'Arabic',
+  pt: 'Portuguese',
 }
 
 function apiToolTypeForChat(tool: ToolType): string | undefined {
@@ -409,8 +421,12 @@ export default function ChatPage() {
   const isInterview = store.currentToolType === 'interview'
 
   const llMode = isLanguage
-  const nativeName = LANG_NAMES[nativeLang] ?? nativeLang
-  const targetName = LANG_NAMES[targetLang] ?? targetLang
+  /** For display in UI (German labels) */
+  const nativeDisplay = LANG_DISPLAY[nativeLang] ?? nativeLang
+  const targetDisplay = LANG_DISPLAY[targetLang] ?? targetLang
+  /** For the backend API (English names, more reliable with Claude) */
+  const nativeApiName = LANG_API[nativeLang] ?? nativeLang
+  const targetApiName = LANG_API[targetLang] ?? targetLang
   const progMeta = PROGRAMMING_LANGUAGES.find(lang => lang.id === progLang)
 
   const activeContextTool = asContextTool(store.currentToolType)
@@ -610,8 +626,8 @@ export default function ChatPage() {
           sessionId,
           toolType: apiToolTypeForChat(store.currentToolType),
           languageLearningMode: llMode,
-          targetLanguage: llMode ? targetName : undefined,
-          nativeLanguage: llMode ? nativeName : undefined,
+          targetLanguage: llMode ? targetApiName : undefined,
+          nativeLanguage: llMode ? nativeApiName : undefined,
           targetLanguageCode: llMode ? targetLang : undefined,
           nativeLanguageCode: llMode ? nativeLang : undefined,
           level: llMode ? 'adaptive' : undefined,
@@ -738,7 +754,7 @@ export default function ChatPage() {
           <div className="flex-shrink-0 px-4 pb-0 pt-3">
             <div className="mx-auto max-w-3xl">
               <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-light px-3 py-1 text-xs font-medium text-primary">
-                Lernen: {targetName}
+                Lernen: {targetDisplay}
               </span>
             </div>
           </div>
@@ -784,8 +800,8 @@ export default function ChatPage() {
                 messages={store.activeMessages}
                 isLoading={isLoading}
                 toolType={store.currentToolType}
-                targetLang={targetName}
-                nativeLang={nativeName}
+                targetLang={targetDisplay}
+                nativeLang={nativeDisplay}
                 targetLangCode={targetLang}
                 progLang={progLang}
               />
