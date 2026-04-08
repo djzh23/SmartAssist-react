@@ -181,7 +181,7 @@ export default function ToolsPage() {
   )
 
   const renderCards = (items: ToolCardMeta[]) => (
-    <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+    <div className="grid grid-cols-1 gap-3.5 sm:gap-5 md:grid-cols-2 xl:grid-cols-3">
       {items.map(tool => {
         const Icon = tool.icon
 
@@ -250,16 +250,16 @@ export default function ToolsPage() {
         <div className="absolute right-24 top-[70%] h-14 w-14 -rotate-12 rounded-xl border border-slate-300/60 bg-white/30" />
       </div>
 
-      <div className="relative mx-auto max-w-6xl px-6 py-10 md:py-12" style={{ zIndex: 1 }}>
-        <div className="mb-10 rounded-3xl border border-slate-200/80 bg-white/85 p-6 shadow-[0_14px_38px_rgba(15,23,42,0.10)] backdrop-blur">
+      <div className="relative mx-auto max-w-6xl px-4 py-7 sm:px-6 sm:py-10 md:py-12" style={{ zIndex: 1 }}>
+        <div className="mb-8 rounded-2xl border border-slate-200/80 bg-white/85 p-4 shadow-[0_14px_38px_rgba(15,23,42,0.10)] backdrop-blur sm:mb-10 sm:rounded-3xl sm:p-6">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-cyan-500">SmartAssist Workspace</p>
-          <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-800 md:text-3xl">Tools für deine Vorbereitung</h1>
+          <h1 className="mt-2 text-xl font-bold tracking-tight text-slate-800 sm:text-2xl md:text-3xl">Tools für deine Vorbereitung</h1>
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-500">
             Wähle das passende Tool für deinen nächsten Schritt. Alle Bereiche sind auf Fokus, Übersicht und schnelle Umsetzung ausgerichtet.
           </p>
         </div>
 
-        <section className="mb-10">
+        <section className="mb-8 sm:mb-10">
           <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.15em] text-slate-400">Karriere Tools</h2>
           {renderCards(careerTools)}
         </section>
@@ -272,83 +272,92 @@ export default function ToolsPage() {
 
       {selected && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4 animate-fade-in"
+          className="fixed inset-0 z-50 flex animate-fade-in items-end justify-center bg-black/50 sm:items-center sm:p-4"
           onClick={() => setSelected(null)}
         >
           <div
-            className="w-full max-w-2xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl animate-slide-up"
+            className="flex w-full max-h-[92svh] max-h-[92vh] flex-col overflow-hidden rounded-t-3xl border border-slate-200/80 bg-white shadow-2xl animate-slide-up sm:max-w-2xl sm:rounded-3xl"
             onClick={event => event.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
-              <p className="text-sm font-semibold text-slate-700">Tool Vorschau</p>
+            {/* Drag handle (mobile only) */}
+            <div className="flex flex-shrink-0 justify-center pt-3 pb-1 sm:hidden">
+              <div className="h-1 w-9 rounded-full bg-slate-200" />
+            </div>
+
+            {/* Sticky header */}
+            <div className="flex flex-shrink-0 items-center justify-between border-b border-slate-100 px-4 py-3 sm:px-6 sm:py-4">
+              <div className="flex items-center gap-2.5">
+                <div className={`flex h-8 w-8 items-center justify-center rounded-xl border ${selected.accent.soft} ${selected.accent.ring}`}>
+                  <selected.icon size={15} />
+                </div>
+                <p className="text-sm font-semibold text-slate-800">{selected.name}</p>
+                <span className={`hidden rounded-full border px-2 py-0.5 text-[10px] font-semibold sm:inline-flex ${selected.accent.chip}`}>
+                  {selected.badge}
+                </span>
+              </div>
               <button
                 onClick={() => setSelected(null)}
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+                className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
                 aria-label="Schließen"
               >
                 <X size={16} />
               </button>
             </div>
 
-            <div className="grid grid-cols-1 gap-5 p-6 md:grid-cols-[1.1fr_0.9fr]">
-              <div>
-                <div className="flex items-center gap-3">
-                  <div className={`flex h-12 w-12 items-center justify-center rounded-2xl border ${selected.accent.soft} ${selected.accent.ring}`}>
-                    <selected.icon size={20} />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-slate-800">{selected.name}</h3>
-                    <span className={`mt-1 inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${selected.accent.chip}`}>
-                      {selected.badge}
-                    </span>
+            {/* Scrollable body */}
+            <div className="flex-1 overflow-y-auto overscroll-contain">
+              <div className="grid grid-cols-1 gap-4 p-4 sm:gap-5 sm:p-6 md:grid-cols-[1.1fr_0.9fr]">
+                {/* Left column: description + examples */}
+                <div>
+                  <p className="text-sm leading-relaxed text-slate-600">{selected.fullDescription}</p>
+
+                  <div className="mt-4 rounded-2xl border border-slate-100 bg-slate-50/70 p-3.5">
+                    <p className="text-[10.5px] font-bold uppercase tracking-[0.14em] text-slate-400">Beispielprompts</p>
+                    <div className="mt-2.5 space-y-2">
+                      {selected.examples.map(example => (
+                        <div key={example} className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-[13px] leading-snug text-slate-700">
+                          "{example}"
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
-                <p className="mt-4 text-sm leading-relaxed text-slate-600">{selected.fullDescription}</p>
+                {/* Right column: preview + CTA */}
+                <div className="flex flex-col rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-sm font-semibold text-slate-700">Direkt starten</p>
+                  <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                    Öffne das Tool im Chat und arbeite mit deinem eigenen Kontext.
+                  </p>
 
-                <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">Beispielprompts</p>
-                  <div className="mt-2 space-y-2">
-                    {selected.examples.map(example => (
-                      <div key={example} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">
-                        {example}
+                  <div className="mt-3.5 space-y-2">
+                    {selected.preview.map(row => (
+                      <div key={row.title} className="flex items-center gap-2.5 rounded-xl border border-slate-200 bg-white px-3 py-2">
+                        <span className={`h-6 w-1 flex-shrink-0 rounded-full ${row.line}`} />
+                        <div className="min-w-0">
+                          <p className="truncate text-xs font-semibold text-slate-700">{row.title}</p>
+                          <p className="truncate text-[11px] text-slate-500">{row.subtitle}</p>
+                        </div>
                       </div>
                     ))}
                   </div>
+
+                  <div className="mt-auto pt-4 flex flex-col gap-2">
+                    <button
+                      onClick={() => navigate(`/chat?tool=${selected.chatParam}`)}
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-hover active:scale-[0.98]"
+                    >
+                      Im Chat öffnen
+                      <ArrowRight size={15} />
+                    </button>
+                    <button
+                      onClick={() => setSelected(null)}
+                      className="inline-flex w-full items-center justify-center rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-500 transition-colors hover:border-slate-300 hover:text-slate-700"
+                    >
+                      Schließen
+                    </button>
+                  </div>
                 </div>
-              </div>
-
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-sm font-semibold text-slate-700">Direkt starten</p>
-                <p className="mt-1 text-xs leading-relaxed text-slate-500">
-                  Öffne das Tool im Chat und arbeite direkt mit deinem konkreten Kontext.
-                </p>
-
-                <div className="mt-4 space-y-2">
-                  {selected.preview.map(row => (
-                    <div key={row.title} className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2">
-                      <span className={`h-6 w-1 rounded-full ${row.line}`} />
-                      <div>
-                        <p className="text-xs font-semibold text-slate-700">{row.title}</p>
-                        <p className="text-[11px] text-slate-500">{row.subtitle}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <button
-                  onClick={() => navigate(`/chat?tool=${selected.chatParam}`)}
-                  className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-hover"
-                >
-                  Im Chat öffnen
-                  <ArrowRight size={15} />
-                </button>
-                <button
-                  onClick={() => setSelected(null)}
-                  className="mt-2 inline-flex w-full items-center justify-center rounded-xl border border-slate-200 px-4 py-3 text-sm font-medium text-slate-600 transition-colors hover:border-slate-300"
-                >
-                  Schließen
-                </button>
               </div>
             </div>
           </div>

@@ -7,7 +7,7 @@ export default function MainLayout() {
   const [mobileOpen, setMobileOpen] = useState(false)
 
   return (
-    <div className="flex h-screen overflow-hidden bg-white">
+    <div className="flex h-screen overflow-hidden bg-white overscroll-none" style={{ WebkitOverflowScrolling: 'touch' }}>
       {/* ── Mobile overlay ──────────────────────────────── */}
       {mobileOpen && (
         <div
