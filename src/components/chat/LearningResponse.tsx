@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Loader2, Square, Volume2, VolumeX } from 'lucide-react'
+import { Square, Volume2, VolumeX } from 'lucide-react'
 import type { LearningData } from '../../types'
-import { fetchSpeechBlob } from '../../api/client'
 
 interface Props {
   data: LearningData
@@ -11,28 +10,28 @@ interface Props {
   timestamp: string
 }
 
+/** Resolve the best BCP-47 tag for Web Speech (e.g. "es" → "es-ES", "ar" → "ar-SA") */
+const SPEECH_LANG_MAP: Record<string, string> = {
+  de: 'de-DE',
+  en: 'en-US',
+  es: 'es-ES',
+  fr: 'fr-FR',
+  it: 'it-IT',
+  ar: 'ar-SA',
+  pt: 'pt-PT',
+}
+
 export default function LearningResponse({ data, targetLang, nativeLang, targetLangCode, timestamp }: Props) {
   const time = new Date(timestamp).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })
-  const [isLoadingAudio, setIsLoadingAudio] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
   const [audioError, setAudioError] = useState(false)
-  const audioRef = useRef<HTMLAudioElement | null>(null)
-  const objectUrlRef = useRef<string | null>(null)
+  const uttRef = useRef<SpeechSynthesisUtterance | null>(null)
 
   const stopAndCleanup = useCallback(() => {
-    const a = audioRef.current
-    if (a) {
-      a.pause()
-      audioRef.current = null
-    }
-    if (objectUrlRef.current) {
-      URL.revokeObjectURL(objectUrlRef.current)
-      objectUrlRef.current = null
-    }
-    // Also cancel any browser TTS that might be running
     if (window.speechSynthesis?.speaking) {
       window.speechSynthesis.cancel()
     }
+    uttRef.current = null
     setIsPlaying(false)
   }, [])
 
@@ -40,18 +39,7 @@ export default function LearningResponse({ data, targetLang, nativeLang, targetL
     stopAndCleanup()
   }, [stopAndCleanup])
 
-  const playBlob = useCallback((blob: Blob) => {
-    const url = URL.createObjectURL(blob)
-    objectUrlRef.current = url
-    const audio = new Audio(url)
-    audioRef.current = audio
-    audio.onended = () => stopAndCleanup()
-    audio.onerror = () => stopAndCleanup()
-    setIsPlaying(true)
-    audio.play().catch(() => stopAndCleanup())
-  }, [stopAndCleanup])
-
-  const handleSpeak = async () => {
+  const handleSpeak = () => {
     if (isPlaying) {
       stopAndCleanup()
       return
@@ -60,34 +48,29 @@ export default function LearningResponse({ data, targetLang, nativeLang, targetL
     const text = data.targetLanguageText.trim()
     if (!text) return
 
-    setIsLoadingAudio(true)
-    setAudioError(false)
-    try {
-      const blob = await fetchSpeechBlob(text.slice(0, 1200), targetLangCode)
-      stopAndCleanup()
-      playBlob(blob)
-    } catch {
-      // ElevenLabs unavailable — fall back to browser Web Speech API
-      stopAndCleanup()
-      if (window.speechSynthesis) {
-        window.speechSynthesis.cancel()
-        const utt = new SpeechSynthesisUtterance(text)
-        utt.lang = targetLangCode
-        utt.onend = () => setIsPlaying(false)
-        utt.onerror = () => {
-          setIsPlaying(false)
-          setAudioError(true)
-          window.setTimeout(() => setAudioError(false), 2000)
-        }
-        setIsPlaying(true)
-        window.speechSynthesis.speak(utt)
-      } else {
-        setAudioError(true)
-        window.setTimeout(() => setAudioError(false), 2000)
-      }
-    } finally {
-      setIsLoadingAudio(false)
+    if (!window.speechSynthesis) {
+      setAudioError(true)
+      window.setTimeout(() => setAudioError(false), 2000)
+      return
     }
+
+    window.speechSynthesis.cancel()
+    const utt = new SpeechSynthesisUtterance(text)
+    utt.lang = SPEECH_LANG_MAP[targetLangCode] ?? targetLangCode
+    utt.rate = 0.9
+    utt.onend = () => {
+      uttRef.current = null
+      setIsPlaying(false)
+    }
+    utt.onerror = () => {
+      uttRef.current = null
+      setIsPlaying(false)
+      setAudioError(true)
+      window.setTimeout(() => setAudioError(false), 2000)
+    }
+    uttRef.current = utt
+    setIsPlaying(true)
+    window.speechSynthesis.speak(utt)
   }
 
   return (
@@ -99,24 +82,20 @@ export default function LearningResponse({ data, targetLang, nativeLang, targetL
           </span>
           <button
             type="button"
-            onClick={() => void handleSpeak()}
-            disabled={isLoadingAudio}
+            onClick={handleSpeak}
             title="Aussprache anhören"
             className={[
               'flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-sm transition-all duration-150',
               'bg-[rgba(124,58,237,0.1)] text-[#7C3AED] hover:bg-[rgba(124,58,237,0.2)]',
               isPlaying ? 'bg-[#7C3AED] text-white motion-safe:animate-pulse' : '',
-              isLoadingAudio ? 'cursor-wait opacity-60' : '',
               audioError ? 'bg-red-100 text-red-600' : '',
             ].join(' ')}
           >
-            {isLoadingAudio
-              ? <Loader2 size={15} className="animate-spin" />
-              : isPlaying
-                ? <Square size={13} fill="currentColor" />
-                : audioError
-                  ? <VolumeX size={15} />
-                  : <Volume2 size={15} />}
+            {isPlaying
+              ? <Square size={13} fill="currentColor" />
+              : audioError
+                ? <VolumeX size={15} />
+                : <Volume2 size={15} />}
           </button>
         </div>
         <p className="font-serif text-lg font-medium leading-relaxed text-[#2D1B69]">
