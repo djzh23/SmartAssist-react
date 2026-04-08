@@ -95,7 +95,7 @@ export default function ChatSidebar({
     <>
       {isOpen && (
         <div
-          className="fixed inset-0 z-10 bg-black/30 animate-fade-in md:hidden"
+          className="fixed inset-x-0 top-11 bottom-0 z-10 bg-black/30 animate-fade-in md:hidden"
           onClick={onClose}
         />
       )}
@@ -105,7 +105,7 @@ export default function ChatSidebar({
           'flex flex-col overflow-hidden border-r border-slate-200 bg-slate-50 transition-all duration-200',
           'md:relative md:flex md:w-64 md:translate-x-0',
           isOpen
-            ? 'fixed inset-y-0 left-0 z-20 flex w-64 animate-slide-in'
+            ? 'fixed top-11 bottom-0 left-0 z-20 flex w-64 animate-slide-in'
             : 'hidden',
         ].join(' ')}
       >
