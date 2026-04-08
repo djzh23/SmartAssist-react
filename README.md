@@ -1,125 +1,111 @@
-# SmartAssist — AI Chat Frontend
+# SmartAssist Frontend
 
-A React + TypeScript frontend for an AI-powered assistant with multiple specialized chat modes. Built as a portfolio project, it connects to a hosted ASP.NET Core backend and offers context-aware conversations across five distinct tools.
+React Frontend für die SmartAssist KI Plattform.
+Live unter: **[betweenatna.de](https://www.betweenatna.de)**
+Backend Repo: [github.com/djzh23/SmartAIAssist](https://github.com/djzh23/SmartAIAssist)
 
-## Features
+---
 
-### Chat Modes
-- **General** — open-ended AI conversation
-- **Language Learning** — AI responds in your target language with native-language support notes; configurable source/target language pairs
-- **Programming & DSA** — syntax-highlighted code responses, language selector (C#, Java, HTML/CSS, React/TSX, Design Patterns, Architecture)
-- **Interview Coach** — structured career coaching with colored response cards (requirements, questions, prep tips, STAR pitch); bilingual (German / English)
-- **Job Analyzer** — paste a job URL or description to get a structured role breakdown
+## Was ist SmartAssist?
 
-### CV Integration (Interview mode)
-- Upload a PDF resume — text extracted entirely in the browser via PDF.js (no data sent to a server at this stage)
-- AI summarizes the CV to a compact SKILLS / EXPERIENCE / PROJECTS / EDUCATION profile
-- Stored in `localStorage`; included in interview prompts for personalized advice
-- Alias field lets you use a pseudonym instead of your real name
+SmartAssist ist ein KI Assistent mit mehreren spezialisierten Chat Werkzeugen.
+Der Nutzer wählt ein Werkzeug, schreibt eine Nachricht und erhält eine strukturierte, kontextbewusste Antwort vom KI Modell (Anthropic Claude).
 
-### UI
-- Persistent chat sessions with per-tool history (localStorage)
-- Responsive sidebar with mobile overlay
-- Markdown rendering: bold, italic, inline code, headings, bullet/numbered lists, blockquotes, fenced code blocks
-- Copy button on all code blocks
+---
+
+## Werkzeuge
+
+| Werkzeug | Beschreibung |
+|---|---|
+| Allgemeiner Chat | Freie KI Konversation |
+| Sprachen lernen | KI antwortet strukturiert in Zielsprache mit Übersetzung und Lerntipp, Audio per Browser TTS |
+| Stellenanalyse | Stellenbeschreibung einfügen und Schlüsselanforderungen, passende Keywords und CV Tipps erhalten |
+| Vorstellungsgespräch | Interview Vorbereitung mit realistischen Fragen basierend auf Stelle und Lebenslauf |
+| Programmierung | Code Hilfe, Debugging und Best Practices mit Syntax Highlighting |
+| Wetter | Aktuelles Wetter für jede Stadt weltweit |
+
+---
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|------------|
+| Bereich | Technologie |
+|---|---|
 | Framework | React 18 + TypeScript |
-| Build | Vite |
+| Build Tool | Vite |
 | Styling | Tailwind CSS v3 |
 | Icons | Lucide React |
 | Routing | React Router v6 |
-| Code highlighting | react-syntax-highlighter (Prism / vscDarkPlus) |
-| PDF parsing | pdfjs-dist (browser-side, no server) |
-| Fonts | Google Fonts — Inter + Lora |
+| Authentifizierung | Clerk |
+| Schriften | Google Fonts (Inter + Lora) |
 
-## Project Structure
+---
+
+## Projektstruktur
 
 ```
 src/
-├── api/           client.ts — typed fetch wrapper (all API calls live here)
+├── api/
+│   └── client.ts            Alle API Aufrufe zum Backend (SSE Streaming, Speech)
 ├── components/
-│   ├── chat/      ChatSidebar, MessageList, MessageBubble, ChatInput,
-│   │              ProgrammingResponse, InterviewResponse, CodeBlock,
-│   │              LearningResponse, JobAnalysisCard
-│   ├── layout/    MainLayout, Sidebar
-│   └── ui/        ToolCard, Modal
-├── hooks/         useChatSessions — localStorage-persisted session state
-├── pages/         HomePage, ChatPage, ToolsPage
-├── types/         index.ts — all shared types and constants
+│   ├── chat/                ChatSidebar, MessageList, MessageBubble, ChatInput,
+│   │                        LearningResponse, JobAnalysisCard, CodeBlock, ...
+│   ├── layout/              MainLayout, Sidebar
+│   └── ui/                  UsageLimitModal, AuthButton
+├── hooks/
+│   ├── useChatSessions.ts   Session State (localStorage)
+│   └── useUserPlan.ts       Nutzerlimit und Plan Verwaltung
+├── pages/
+│   ├── LandingPage.tsx      Startseite mit Live Demo
+│   ├── ChatPage.tsx         Haupt Chat Seite
+│   ├── ProfilePage.tsx      Profil und Verbrauchsanzeige
+│   └── PricingPage.tsx      Preisübersicht
+├── types/
+│   └── index.ts             Gemeinsame Typen und Konstanten
 └── utils/
-    ├── markdownRenderer.ts  — shared parseBlocks / parseSegments utilities
-    ├── pdfParser.ts         — browser-side PDF text extraction
-    └── jobMarkdown.ts       — markdown → HTML for job analysis cards
+    ├── parseLearningResponse.ts   Sprachlern Antwort Parser
+    ├── markdownRenderer.ts        Markdown zu HTML
+    └── jobMarkdown.ts             Stellenanalyse Formatierung
 ```
 
-## Getting Started
+---
 
-### Prerequisites
-- Node.js 18+
-- npm or pnpm
+## Lokal starten
 
-### Installation
+**Voraussetzungen:** Node.js 18+
 
 ```bash
 git clone https://github.com/djzh23/SmartAssist-react.git
 cd SmartAssist-react
 npm install
-```
-
-### Configuration
-
-Copy the example env file and adjust if needed:
-
-```bash
-cp .env.example .env.local
-```
-
-By default, the Vite dev server proxies `/api/*` to the hosted backend at `https://smartassist-api.onrender.com`. No changes are required to run locally against the public backend.
-
-### Development
-
-```bash
 npm run dev
 ```
 
-Opens at `http://localhost:5174`.
+Öffnet unter `http://localhost:5174`.
 
-### Production Build
+Der Vite Dev Server leitet `/api/*` automatisch an das gehostete Backend weiter.
+Keine weitere Konfiguration nötig.
+
+---
+
+## Deployment
+
+Das Projekt läuft auf **Vercel**. Die `vercel.json` leitet alle `/api/*` Anfragen an das Backend auf Render weiter.
 
 ```bash
-npm run build
-npm run preview
+vercel --prod --yes
 ```
 
-## Deployment (Vercel)
+---
 
-The included `vercel.json` rewrites all `/api/*` requests to the backend on Render, avoiding CORS issues without needing a proxy server:
+## Umgebungsvariablen
 
-```json
-{
-  "rewrites": [
-    {
-      "source": "/api/:path*",
-      "destination": "https://smartassist-api.onrender.com/api/:path*"
-    }
-  ]
-}
-```
+| Variable | Beschreibung |
+|---|---|
+| `VITE_API_BASE_URL` | Backend URL (leer lassen für Proxy im Dev Modus) |
+| `VITE_CLERK_PUBLISHABLE_KEY` | Clerk Authentifizierung Key |
 
-Deploy steps:
-1. Push to GitHub
-2. Import the repo in [vercel.com](https://vercel.com)
-3. No environment variables needed — the rewrite handles routing
+---
 
-## Backend
-
-The API is a separate ASP.NET Core project: [SmartAssistApi](https://github.com/djzh23/SmartAssistApi).  
-Hosted at: `https://smartassist-api.onrender.com`
-
-## License
+## Lizenz
 
 MIT
