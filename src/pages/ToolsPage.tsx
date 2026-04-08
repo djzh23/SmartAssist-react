@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowRight,
@@ -231,22 +231,26 @@ export default function ToolsPage() {
   )
 
   return (
-    <div className="relative h-full overflow-y-auto bg-[#f5f6fb]">
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div
-          className="absolute inset-0 opacity-55"
-          style={{
-            backgroundImage: 'linear-gradient(to right, rgba(100,116,139,0.09) 1px, transparent 1px), linear-gradient(to bottom, rgba(100,116,139,0.09) 1px, transparent 1px)',
-            backgroundSize: '28px 28px',
-          }}
-        />
+    <div
+      className="relative h-full overflow-y-auto"
+      style={{
+        backgroundColor: '#f5f6fb',
+        backgroundImage: 'linear-gradient(to right, rgba(100,116,139,0.09) 1px, transparent 1px), linear-gradient(to bottom, rgba(100,116,139,0.09) 1px, transparent 1px)',
+        backgroundSize: '28px 28px',
+      }}
+    >
+      {/* Decorative blobs — spread across the full scrollable content via relative positioning */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden" style={{ zIndex: 0 }}>
         <div className="absolute -right-28 top-0 h-80 w-80 rounded-full bg-cyan-200/45 blur-3xl" />
-        <div className="absolute -left-28 bottom-0 h-96 w-96 rounded-full bg-cyan-200/45 blur-3xl" />
+        <div className="absolute -left-28 top-1/3 h-96 w-96 rounded-full bg-cyan-200/40 blur-3xl" />
+        <div className="absolute right-0 top-2/3 h-80 w-80 rounded-full bg-cyan-100/50 blur-3xl" />
         <div className="absolute left-1/2 top-14 h-44 w-44 -translate-x-1/2 rotate-45 rounded-[34px] border border-cyan-200/45" />
         <div className="absolute right-10 top-52 h-28 w-28 rotate-12 rounded-2xl border border-slate-300/70 bg-white/40" />
+        <div className="absolute left-16 top-[55%] h-20 w-20 rotate-6 rounded-2xl border border-cyan-200/50" />
+        <div className="absolute right-24 top-[70%] h-14 w-14 -rotate-12 rounded-xl border border-slate-300/60 bg-white/30" />
       </div>
 
-      <div className="relative mx-auto max-w-6xl px-6 py-10 md:py-12">
+      <div className="relative mx-auto max-w-6xl px-6 py-10 md:py-12" style={{ zIndex: 1 }}>
         <div className="mb-10 rounded-3xl border border-slate-200/80 bg-white/85 p-6 shadow-[0_14px_38px_rgba(15,23,42,0.10)] backdrop-blur">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-cyan-500">SmartAssist Workspace</p>
           <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-800 md:text-3xl">Tools für deine Vorbereitung</h1>
