@@ -25,12 +25,12 @@ function LandingNav() {
           >
             Preise
           </a>
-          <SignInButton mode="modal" fallbackRedirectUrl="/chat">
+          <SignInButton mode="modal" fallbackRedirectUrl="/tools">
             <button className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:border-slate-400">
               Anmelden
             </button>
           </SignInButton>
-          <SignUpButton mode="modal" fallbackRedirectUrl="/chat">
+          <SignUpButton mode="modal" fallbackRedirectUrl="/tools">
             <button className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-hover">
               Jetzt starten
             </button>
@@ -168,7 +168,7 @@ function HeroSection() {
           </p>
 
           <div className="mb-6 flex flex-wrap items-center gap-4">
-            <SignUpButton mode="modal" fallbackRedirectUrl="/chat">
+            <SignUpButton mode="modal" fallbackRedirectUrl="/tools">
               <button className="flex h-12 items-center gap-2 rounded-xl bg-primary px-7 text-base font-semibold text-white shadow-lg shadow-cyan-200/60 transition-colors hover:bg-primary-hover">
                 Jetzt kostenlos starten →
               </button>
@@ -448,14 +448,14 @@ function LiveDemoSection() {
               <p className="mb-4 text-sm leading-relaxed text-slate-600">
                 Mit einem kostenlosen Konto erhältst du täglich 20 Nachrichten, alle Werkzeuge und deinen Verlauf im Browser.
               </p>
-              <SignUpButton mode="modal" fallbackRedirectUrl="/chat">
+              <SignUpButton mode="modal" fallbackRedirectUrl="/tools">
                 <button className="mb-3 w-full rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-hover sm:w-auto">
                   Kostenlos registrieren
                 </button>
               </SignUpButton>
               <p className="text-xs text-slate-400">
                 Bereits Konto?{' '}
-                <SignInButton mode="modal" fallbackRedirectUrl="/chat">
+                <SignInButton mode="modal" fallbackRedirectUrl="/tools">
                   <button type="button" className="font-medium text-primary hover:underline">
                     Anmelden
                   </button>
@@ -660,7 +660,7 @@ function PricingPreviewSection() {
 
               <div className="px-5 pb-5">
                 {plan.useSignUp ? (
-                  <SignUpButton mode="modal" fallbackRedirectUrl="/chat">
+                  <SignUpButton mode="modal" fallbackRedirectUrl="/tools">
                     <button
                       className={`w-full rounded-xl py-2.5 text-sm font-semibold transition-colors ${plan.ctaClass}`}
                     >
@@ -703,7 +703,7 @@ function FinalCtaSection() {
         <p className="mb-8 text-lg text-white/80">
           Schließ dich Tausenden von Nutzern an, die täglich Zeit mit SmartAssist sparen.
         </p>
-        <SignUpButton mode="modal" fallbackRedirectUrl="/chat">
+        <SignUpButton mode="modal" fallbackRedirectUrl="/tools">
           <button className="rounded-xl bg-white px-8 py-3.5 text-base font-bold text-primary shadow-xl transition-colors hover:bg-slate-100">
             Kostenlos starten, für immer
           </button>
@@ -752,7 +752,7 @@ export default function LandingPage() {
 
   useEffect(() => {
     if (isLoaded && isSignedIn) {
-      navigate('/chat', { replace: true })
+      navigate('/tools', { replace: true })
     }
   }, [isLoaded, isSignedIn, navigate])
 
