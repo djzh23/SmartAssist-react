@@ -10,7 +10,7 @@ interface Props {
   timestamp: string
 }
 
-/** Resolve the best BCP-47 tag for Web Speech (e.g. "es" → "es-ES", "ar" → "ar-SA") */
+/** Best BCP-47 tag per language code */
 const SPEECH_LANG_MAP: Record<string, string> = {
   de: 'de-DE',
   en: 'en-US',
@@ -19,6 +19,28 @@ const SPEECH_LANG_MAP: Record<string, string> = {
   it: 'it-IT',
   ar: 'ar-SA',
   pt: 'pt-PT',
+}
+
+/**
+ * Pick the highest-quality available voice for a given BCP-47 language tag.
+ * Priority: Google neural > Microsoft Online/Natural > any network voice > local voice.
+ */
+function pickBestVoice(langTag: string): SpeechSynthesisVoice | null {
+  const voices = window.speechSynthesis.getVoices()
+  if (!voices.length) return null
+
+  const base = langTag.split('-')[0].toLowerCase()
+  const candidates = voices.filter(v => v.lang.toLowerCase().startsWith(base))
+  if (!candidates.length) return null
+
+  const rank = (v: SpeechSynthesisVoice): number => {
+    if (/google/i.test(v.name)) return 4
+    if (/microsoft.*(natural|online)/i.test(v.name)) return 3
+    if (!v.localService) return 2   // any online/network voice
+    return 1
+  }
+
+  return [...candidates].sort((a, b) => rank(b) - rank(a))[0]
 }
 
 export default function LearningResponse({ data, targetLang, nativeLang, targetLangCode, timestamp }: Props) {
@@ -39,6 +61,15 @@ export default function LearningResponse({ data, targetLang, nativeLang, targetL
     stopAndCleanup()
   }, [stopAndCleanup])
 
+  // Trigger voice list load on mount — Chrome loads voices asynchronously
+  useEffect(() => {
+    if (!window.speechSynthesis) return
+    window.speechSynthesis.getVoices()
+    const handler = () => window.speechSynthesis.getVoices()
+    window.speechSynthesis.addEventListener('voiceschanged', handler)
+    return () => window.speechSynthesis.removeEventListener('voiceschanged', handler)
+  }, [])
+
   const handleSpeak = () => {
     if (isPlaying) {
       stopAndCleanup()
@@ -54,10 +85,17 @@ export default function LearningResponse({ data, targetLang, nativeLang, targetL
       return
     }
 
+    const langTag = SPEECH_LANG_MAP[targetLangCode] ?? targetLangCode
     window.speechSynthesis.cancel()
+
     const utt = new SpeechSynthesisUtterance(text)
-    utt.lang = SPEECH_LANG_MAP[targetLangCode] ?? targetLangCode
-    utt.rate = 0.9
+    utt.lang = langTag
+    utt.rate = 0.85   // slightly slower for language learning
+    utt.pitch = 1.0
+
+    const bestVoice = pickBestVoice(langTag)
+    if (bestVoice) utt.voice = bestVoice
+
     utt.onend = () => {
       uttRef.current = null
       setIsPlaying(false)
