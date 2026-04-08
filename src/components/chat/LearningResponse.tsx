@@ -29,11 +29,26 @@ export default function LearningResponse({ data, targetLang, nativeLang, targetL
       URL.revokeObjectURL(objectUrlRef.current)
       objectUrlRef.current = null
     }
+    // Also cancel any browser TTS that might be running
+    if (window.speechSynthesis?.speaking) {
+      window.speechSynthesis.cancel()
+    }
     setIsPlaying(false)
   }, [])
 
   useEffect(() => () => {
     stopAndCleanup()
+  }, [stopAndCleanup])
+
+  const playBlob = useCallback((blob: Blob) => {
+    const url = URL.createObjectURL(blob)
+    objectUrlRef.current = url
+    const audio = new Audio(url)
+    audioRef.current = audio
+    audio.onended = () => stopAndCleanup()
+    audio.onerror = () => stopAndCleanup()
+    setIsPlaying(true)
+    audio.play().catch(() => stopAndCleanup())
   }, [stopAndCleanup])
 
   const handleSpeak = async () => {
@@ -50,21 +65,26 @@ export default function LearningResponse({ data, targetLang, nativeLang, targetL
     try {
       const blob = await fetchSpeechBlob(text.slice(0, 1200), targetLangCode)
       stopAndCleanup()
-      const url = URL.createObjectURL(blob)
-      objectUrlRef.current = url
-      const audio = new Audio(url)
-      audioRef.current = audio
-      audio.onended = () => {
-        stopAndCleanup()
-      }
-      audio.onerror = () => {
-        stopAndCleanup()
-      }
-      setIsPlaying(true)
-      await audio.play()
+      playBlob(blob)
     } catch {
-      setAudioError(true)
-      window.setTimeout(() => setAudioError(false), 2000)
+      // ElevenLabs unavailable — fall back to browser Web Speech API
+      stopAndCleanup()
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel()
+        const utt = new SpeechSynthesisUtterance(text)
+        utt.lang = targetLangCode
+        utt.onend = () => setIsPlaying(false)
+        utt.onerror = () => {
+          setIsPlaying(false)
+          setAudioError(true)
+          window.setTimeout(() => setAudioError(false), 2000)
+        }
+        setIsPlaying(true)
+        window.speechSynthesis.speak(utt)
+      } else {
+        setAudioError(true)
+        window.setTimeout(() => setAudioError(false), 2000)
+      }
     } finally {
       setIsLoadingAudio(false)
     }
