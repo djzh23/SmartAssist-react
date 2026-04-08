@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useAuth } from '@clerk/clerk-react'
 import { Square, Volume2, VolumeX } from 'lucide-react'
+import { fetchTtsAudio } from '../../api/client'
 import type { LearningData } from '../../types'
 
 interface Props {
@@ -57,13 +59,22 @@ function pickBestVoice(voices: SpeechSynthesisVoice[], langTag: string): SpeechS
 
 export default function LearningResponse({ data, targetLang, nativeLang, targetLangCode, timestamp }: Props) {
   const time = new Date(timestamp).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })
+  const { getToken } = useAuth()
   const [isPlaying, setIsPlaying] = useState(false)
   const [audioError, setAudioError] = useState<string | null>(null)
+  // For browser TTS fallback
   const uttRef = useRef<SpeechSynthesisUtterance | null>(null)
-  // Keep voices in a ref — updated whenever voiceschanged fires
+  const audioRef = useRef<HTMLAudioElement | null>(null)
   const voicesRef = useRef<SpeechSynthesisVoice[]>([])
 
   const stopAndCleanup = useCallback(() => {
+    // Stop backend audio
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current.src = ''
+      audioRef.current = null
+    }
+    // Stop browser TTS
     if (window.speechSynthesis?.speaking) {
       window.speechSynthesis.cancel()
     }
@@ -71,77 +82,81 @@ export default function LearningResponse({ data, targetLang, nativeLang, targetL
     setIsPlaying(false)
   }, [])
 
-  useEffect(() => () => {
-    stopAndCleanup()
-  }, [stopAndCleanup])
+  useEffect(() => () => { stopAndCleanup() }, [stopAndCleanup])
 
-  // Load voices on mount and keep ref up to date
+  // Pre-load browser voices on mount
   useEffect(() => {
     if (!window.speechSynthesis) return
-    const syncVoices = () => {
-      voicesRef.current = window.speechSynthesis.getVoices()
-    }
+    const syncVoices = () => { voicesRef.current = window.speechSynthesis.getVoices() }
     syncVoices()
     window.speechSynthesis.addEventListener('voiceschanged', syncVoices)
     return () => window.speechSynthesis.removeEventListener('voiceschanged', syncVoices)
   }, [])
 
-  const handleSpeak = () => {
-    if (isPlaying) {
-      stopAndCleanup()
-      return
-    }
-
-    const text = data.targetLanguageText.trim()
-    if (!text) return
-
+  /** Fallback: browser Web Speech API */
+  const speakWithBrowser = useCallback((text: string) => {
     if (!window.speechSynthesis) {
-      setAudioError('Dein Browser unterstützt keine Sprachausgabe.')
+      setAudioError('Keine Sprachausgabe verfügbar')
       window.setTimeout(() => setAudioError(null), 3000)
+      setIsPlaying(false)
       return
     }
-
-    const langTag = SPEECH_LANG_MAP[targetLangCode] ?? null
-
-    // If we don't know the BCP-47 tag for this language, fail loudly
-    if (!langTag) {
-      setAudioError(`Kein Sprachcode für "${targetLangCode}"`)
-      window.setTimeout(() => setAudioError(null), 3000)
-      return
-    }
-
-    // Ensure we have the latest voices (they may have loaded after mount)
-    if (!voicesRef.current.length) {
-      voicesRef.current = window.speechSynthesis.getVoices()
-    }
-
-    // Use the best matching voice if available; otherwise rely on utt.lang alone.
-    // Modern browsers (Chrome, Edge) will attempt the correct language even without
-    // an explicit locally-installed voice — never block the attempt.
-    const bestVoice = pickBestVoice(voicesRef.current, langTag)
-
+    const langTag = SPEECH_LANG_MAP[targetLangCode] ?? targetLangCode
     window.speechSynthesis.cancel()
-
     const utt = new SpeechSynthesisUtterance(text)
     utt.lang = langTag
     utt.rate = 0.85
     utt.pitch = 1.0
-    if (bestVoice) utt.voice = bestVoice
-
-    utt.onend = () => {
-      uttRef.current = null
-      setIsPlaying(false)
-    }
+    const best = pickBestVoice(voicesRef.current, langTag)
+    if (best) utt.voice = best
+    utt.onend = () => { uttRef.current = null; setIsPlaying(false) }
     utt.onerror = () => {
       uttRef.current = null
       setIsPlaying(false)
       setAudioError('Sprachausgabe fehlgeschlagen')
-      window.setTimeout(() => setAudioError(null), 2000)
+      window.setTimeout(() => setAudioError(null), 2500)
     }
     uttRef.current = utt
-    setIsPlaying(true)
     window.speechSynthesis.speak(utt)
-  }
+  }, [targetLangCode])
+
+  const handleSpeak = useCallback(async () => {
+    if (isPlaying) { stopAndCleanup(); return }
+
+    const text = data.targetLanguageText.trim()
+    if (!text) return
+
+    setIsPlaying(true)
+    setAudioError(null)
+
+    // ── Primary: backend TTS (OpenAI — real human voice) ──────────────────
+    try {
+      const token = await getToken()
+      const blob = await fetchTtsAudio(text, targetLangCode, token)
+      if (blob) {
+        const url = URL.createObjectURL(blob)
+        const audio = new Audio(url)
+        audioRef.current = audio
+        audio.onended = () => {
+          URL.revokeObjectURL(url)
+          audioRef.current = null
+          setIsPlaying(false)
+        }
+        audio.onerror = () => {
+          URL.revokeObjectURL(url)
+          audioRef.current = null
+          speakWithBrowser(text)   // silent fallback to browser TTS
+        }
+        await audio.play()
+        return
+      }
+    } catch {
+      // backend unavailable — fall through to browser TTS silently
+    }
+
+    // ── Fallback: browser Web Speech API ──────────────────────────────────
+    speakWithBrowser(text)
+  }, [isPlaying, data.targetLanguageText, targetLangCode, getToken, stopAndCleanup, speakWithBrowser])
 
   return (
     <div className="flex max-w-[520px] animate-slide-up flex-col gap-1.5">
@@ -153,7 +168,7 @@ export default function LearningResponse({ data, targetLang, nativeLang, targetL
           <div className="flex flex-col items-end gap-1">
             <button
               type="button"
-              onClick={handleSpeak}
+              onClick={() => void handleSpeak()}
               title={audioError ?? 'Aussprache anhören'}
               className={[
                 'flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-sm transition-all duration-150',

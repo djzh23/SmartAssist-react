@@ -175,4 +175,31 @@ export async function getAgentUsage(token?: string): Promise<UsageStatus> {
   }
 }
 
-// Audio is handled directly via Web Speech API in LearningResponse.tsx
+// ── TTS via backend (OpenAI) ────────────────────────────────────────────────
+
+/**
+ * Fetch synthesized speech from the backend (/api/speech/tts).
+ * Requires an auth token. Returns null on any failure — callers should fall
+ * back to browser TTS rather than showing an error.
+ */
+export async function fetchTtsAudio(
+  text: string,
+  languageCode: string,
+  token: string | null,
+): Promise<Blob | null> {
+  if (!token) return null
+  try {
+    const res = await fetch(`${BASE}/api/speech/tts`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ text, languageCode }),
+    })
+    if (!res.ok) return null
+    return await res.blob()
+  } catch {
+    return null
+  }
+}
