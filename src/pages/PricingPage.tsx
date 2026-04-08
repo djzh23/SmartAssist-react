@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { SignInButton, SignUpButton, useAuth, useClerk, useUser } from '@clerk/clerk-react'
-import { Check, ChevronDown, ChevronUp, Clock, Crown, LayoutGrid, Sparkles, X, Zap } from 'lucide-react'
+import { useAuth, useClerk, useUser } from '@clerk/clerk-react'
+import { Check, ChevronDown, ChevronUp, Clock, Crown, Sparkles, X, Zap } from 'lucide-react'
 import { createCheckoutSession } from '../services/StripeService'
 
 interface Feature {
@@ -124,53 +124,6 @@ function FaqItem({ q, a }: { q: string; a: string }) {
   )
 }
 
-function PricingNav() {
-  const { isSignedIn, isLoaded } = useUser()
-  const navigate = useNavigate()
-
-  return (
-    <nav className="fixed left-0 right-0 top-0 z-[100] h-16 border-b border-slate-200/80 bg-white/95 backdrop-blur-sm">
-      <div className="flex h-full max-w-[1200px] items-center justify-between mx-auto px-6">
-        <a href="/" className="flex items-center gap-2">
-          <span className="text-xl">⚡</span>
-          <span className="text-lg font-bold text-slate-800">SmartAssist</span>
-        </a>
-
-        <div className="flex items-center gap-3">
-          <a
-            href="/"
-            className="hidden text-sm font-medium text-slate-600 transition-colors hover:text-slate-900 sm:block"
-          >
-            Startseite
-          </a>
-          {isLoaded && isSignedIn ? (
-            <button
-              onClick={() => navigate('/tools')}
-              className="flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-hover"
-            >
-              <LayoutGrid size={15} />
-              Alle Werkzeuge
-            </button>
-          ) : (
-            <>
-              <SignInButton mode="modal" fallbackRedirectUrl="/tools">
-                <button className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:border-slate-400">
-                  Anmelden
-                </button>
-              </SignInButton>
-              <SignUpButton mode="modal" fallbackRedirectUrl="/tools">
-                <button className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-hover">
-                  Jetzt starten
-                </button>
-              </SignUpButton>
-            </>
-          )}
-        </div>
-      </div>
-    </nav>
-  )
-}
-
 export default function PricingPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -243,7 +196,7 @@ export default function PricingPage() {
 
   return (
     <div
-      className="relative min-h-screen overflow-y-auto"
+      className="relative h-full overflow-y-auto"
       style={{
         backgroundColor: '#f5f6fb',
         backgroundImage:
@@ -251,9 +204,7 @@ export default function PricingPage() {
         backgroundSize: '28px 28px',
       }}
     >
-      <PricingNav />
-
-      <div className="pointer-events-none fixed inset-0 overflow-hidden" style={{ zIndex: 0 }}>
+      <div className="pointer-events-none absolute inset-0 overflow-hidden" style={{ zIndex: 0 }}>
         <div className="absolute -right-28 top-0 h-80 w-80 rounded-full bg-cyan-200/45 blur-3xl" />
         <div className="absolute -left-28 bottom-0 h-96 w-96 rounded-full bg-cyan-200/45 blur-3xl" />
         <div className="absolute left-1/2 top-14 h-44 w-44 -translate-x-1/2 rotate-45 rounded-[34px] border border-cyan-200/45" />
@@ -266,7 +217,7 @@ export default function PricingPage() {
         </div>
       )}
 
-      <div className="relative z-10 mx-auto max-w-5xl px-6 py-12 pt-28">
+      <div className="relative z-10 mx-auto max-w-5xl px-6 py-12">
         <div className="mb-10 text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-cyan-500">Preise & PlÃ¤ne</p>
           <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-800 md:text-4xl">

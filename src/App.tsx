@@ -43,13 +43,13 @@ function AppRoutes() {
     <Routes>
       {/* Public standalone pages */}
       <Route path="/" element={<LandingPage />} />
-      <Route path="/pricing" element={<PricingPage />} />
 
       {/* Protected app — requires sign in, renders MainLayout with sidebar */}
       <Route element={<ProtectedApp />}>
         <Route path="/chat" element={<ChatPage />} />
         <Route path="/tools" element={<ToolsPage />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/pricing" element={<PricingPage />} />
       </Route>
 
       {/* Fallback */}

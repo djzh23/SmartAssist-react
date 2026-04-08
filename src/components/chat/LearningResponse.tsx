@@ -115,15 +115,10 @@ export default function LearningResponse({ data, targetLang, nativeLang, targetL
       voicesRef.current = window.speechSynthesis.getVoices()
     }
 
+    // Use the best matching voice if available; otherwise rely on utt.lang alone.
+    // Modern browsers (Chrome, Edge) will attempt the correct language even without
+    // an explicit locally-installed voice — never block the attempt.
     const bestVoice = pickBestVoice(voicesRef.current, langTag)
-
-    // If no matching voice found for this language, warn the user instead of
-    // silently falling back to an English voice that would sound wrong
-    if (!bestVoice && voicesRef.current.length > 0) {
-      setAudioError(`Keine ${targetLang}-Stimme auf diesem Gerät`)
-      window.setTimeout(() => setAudioError(null), 3500)
-      return
-    }
 
     window.speechSynthesis.cancel()
 

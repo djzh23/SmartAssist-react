@@ -4,7 +4,6 @@ import {
   Briefcase,
   Code2,
   Globe,
-  Home,
   MessageCircle,
   Sparkles,
   Tag,
@@ -27,9 +26,7 @@ interface NavItem {
 }
 
 const mainLinks: NavItem[] = [
-  { label: 'Startseite', icon: <Home size={15} />, to: '/', exact: true },
-  { label: 'Alle Werkzeuge', icon: <Wrench size={15} />, to: '/tools' },
-  { label: 'Preise', icon: <Tag size={15} />, to: '/pricing' },
+  { label: 'Startseite', icon: <Wrench size={15} />, to: '/tools' },
 ]
 
 const chatLinks: NavItem[] = [
@@ -165,6 +162,7 @@ export default function Sidebar({ onNavClick }: Props) {
 
         <p className="px-3 pb-1.5 pt-5 text-[10px] font-bold uppercase tracking-[1.5px] text-slate-500">Konto</p>
         <SidebarLink item={{ label: 'Mein Profil', icon: <User size={15} />, to: '/profile' }} onClick={onNavClick} />
+        <SidebarLink item={{ label: 'Preise', icon: <Tag size={15} />, to: '/pricing' }} onClick={onNavClick} />
       </nav>
 
       <div className="flex-shrink-0">
