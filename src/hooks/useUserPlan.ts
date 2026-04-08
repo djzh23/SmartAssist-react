@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useUser, useAuth } from '@clerk/clerk-react'
 import { getAgentUsage } from '../api/client'
 
@@ -18,6 +18,47 @@ function planKey(userId: string): string {
 
 function pendingUpgradeKey(userId: string): string {
   return `smartassist_pending_upgrade_${userId}`
+}
+
+function historyKey(userId: string | null): string {
+  return `smartassist_history_${userId ?? 'anonymous'}`
+}
+
+function readHistory(userId: string | null): Record<string, number> {
+  try {
+    const raw = localStorage.getItem(historyKey(userId))
+    if (!raw) return {}
+    return JSON.parse(raw) as Record<string, number>
+  } catch {
+    return {}
+  }
+}
+
+function writeHistory(userId: string | null, history: Record<string, number>): void {
+  try {
+    // Keep only the last 30 days to avoid unbounded growth
+    const trimmed = Object.fromEntries(
+      Object.entries(history)
+        .sort(([a], [b]) => b.localeCompare(a))
+        .slice(0, 30),
+    )
+    localStorage.setItem(historyKey(userId), JSON.stringify(trimmed))
+  } catch (error) {
+    console.warn('[useUserPlan] Failed to write history', error)
+  }
+}
+
+/** Returns the last 7 calendar days (oldest → newest) with day labels. */
+function buildWeekHistory(userId: string | null): Array<{ day: string; date: string; count: number }> {
+  const history = readHistory(userId)
+  const dayLabels = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa']
+  const today = new Date()
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(today)
+    d.setDate(today.getDate() - (6 - i))
+    const date = d.toISOString().split('T')[0]
+    return { day: dayLabels[d.getDay()], date, count: history[date] ?? 0 }
+  })
 }
 
 interface PendingUpgradeState {
@@ -181,10 +222,11 @@ export interface UserPlanState {
   isAtLimit: boolean
   planLabel: string
   planColor: string
-  // Persistent stats (stored in localStorage)
+  // Persistent stats (derived from history)
   totalResponses: number
   daysActive: number
   favoriteTool: string | null
+  weekHistory: Array<{ day: string; date: string; count: number }>
   incrementUsage: () => void
   getToken: ReturnType<typeof useAuth>['getToken']
   syncError: string | null
@@ -352,6 +394,13 @@ export function useUserPlan(): UserPlanState {
     const next = readUsageToday(key) + 1
     writeUsageToday(key, next)
     setUsageToday(next)
+
+    // Update per-day history
+    const history = readHistory(key)
+    const today = TODAY()
+    history[today] = (history[today] ?? 0) + 1
+    writeHistory(key, history)
+
     window.dispatchEvent(new Event(USAGE_EVENT))
   }
 
@@ -366,22 +415,13 @@ export function useUserPlan(): UserPlanState {
   const lastName = user?.lastName ?? null
   const rawInitials = [firstName?.[0] ?? '', lastName?.[0] ?? ''].join('').toUpperCase()
 
-  // Persistent stats from localStorage
-  const statsKey = `smartassist_stats_${userId ?? 'anonymous'}`
-  let totalResponses = 0
-  let daysActive = 1
-  let favoriteTool: string | null = null
-  try {
-    const raw = localStorage.getItem(statsKey)
-    if (raw) {
-      const s = JSON.parse(raw) as { total?: number; days?: number; fav?: string }
-      totalResponses = s.total ?? 0
-      daysActive = s.days ?? 1
-      favoriteTool = s.fav ?? null
-    }
-  } catch (error) {
-    console.warn('[useUserPlan] Failed to read profile stats from localStorage', error)
-  }
+  // Stats derived from history (real data, no fakes)
+  const historyKey2 = isSignedIn ? userId : null
+  const fullHistory = readHistory(historyKey2)
+  const totalResponses = Object.values(fullHistory).reduce((sum, c) => sum + c, 0)
+  const daysActive = Object.keys(fullHistory).length
+  const favoriteTool: string | null = null   // tracked separately in future
+  const weekHistory = buildWeekHistory(historyKey2)
 
   return {
     isLoaded,
@@ -402,6 +442,7 @@ export function useUserPlan(): UserPlanState {
     totalResponses,
     daysActive,
     favoriteTool,
+    weekHistory,
     incrementUsage,
     getToken,
     syncError,

@@ -29,77 +29,77 @@ const PLANS: Plan[] = [
   {
     id: 'free',
     name: 'Free',
-    price: '0 â‚¬',
-    period: '/forever',
+    price: '0 €',
+    period: '/für immer',
     icon: <Zap size={18} className="text-slate-500" />,
     accentBorder: 'border-slate-200',
     accentHeader: 'bg-slate-50',
     features: [
-      { text: '2 responses without login', included: true },
-      { text: '20 responses/day after login', included: true },
-      { text: 'All tools (Weather, Jokes, Language)', included: true },
-      { text: 'Browser session memory', included: true },
-      { text: 'Job Analyzer', included: false },
-      { text: 'ElevenLabs Audio', included: false },
-      { text: 'Conversation history', included: false },
+      { text: '2 Antworten ohne Anmeldung', included: true },
+      { text: '20 Antworten pro Tag nach Anmeldung', included: true },
+      { text: 'Alle Tools (Wetter, Witze, Sprachen)', included: true },
+      { text: 'Browser-Sitzungsspeicher', included: true },
+      { text: 'Stellenanalyse', included: false },
+      { text: 'Audio Aussprache', included: false },
+      { text: 'Gesprächsverlauf', included: false },
     ],
-    buttonLabel: 'Get Started',
+    buttonLabel: 'Kostenlos starten',
     buttonStyle: 'border border-slate-300 text-slate-600 hover:border-slate-400 bg-white',
   },
   {
     id: 'premium',
     name: 'Premium',
-    price: '4,99 â‚¬',
-    period: '/month',
+    price: '4,99 €',
+    period: '/Monat',
     icon: <Sparkles size={18} className="text-cyan-600" />,
     accentBorder: 'border-cyan-400',
     accentHeader: 'bg-cyan-50',
-    badgeText: 'MOST POPULAR',
+    badgeText: 'BELIEBTESTE WAHL',
     badgeStyle: 'bg-primary text-white',
     scale: true,
     features: [
-      { text: 'Everything in Free', included: true },
-      { text: '200 responses/day', included: true },
-      { text: 'Job Analyzer tool', included: true },
-      { text: 'ElevenLabs Audio', included: true },
-      { text: 'Conversation history (30 days)', included: true },
-      { text: 'Priority responses', included: true },
+      { text: 'Alles aus Free', included: true },
+      { text: '200 Antworten pro Tag', included: true },
+      { text: 'Stellenanalyse Tool', included: true },
+      { text: 'Audio Aussprache', included: true },
+      { text: 'Gesprächsverlauf (30 Tage)', included: true },
+      { text: 'Bevorzugte Antwortzeiten', included: true },
     ],
-    buttonLabel: 'Start Premium',
+    buttonLabel: 'Premium starten',
     buttonStyle: 'bg-primary hover:bg-primary-hover text-white',
   },
   {
     id: 'pro',
     name: 'Pro',
-    price: '9,99 â‚¬',
-    period: '/month',
+    price: '9,99 €',
+    period: '/Monat',
     icon: <Crown size={18} className="text-amber-600" />,
     accentBorder: 'border-amber-400',
     accentHeader: 'bg-amber-50',
     features: [
-      { text: 'Everything in Premium', included: true },
-      { text: 'Unlimited responses', included: true },
-      { text: 'Full conversation history', included: true },
-      { text: 'API access (coming soon)', included: true },
-      { text: 'Early access to new tools', included: true },
+      { text: 'Alles aus Premium', included: true },
+      { text: 'Unbegrenzte Antworten', included: true },
+      { text: 'Vollständiger Gesprächsverlauf', included: true },
+      { text: 'API-Zugang (demnächst)', included: true },
+      { text: 'Frühzugang zu neuen Tools', included: true },
     ],
-    buttonLabel: 'Go Pro',
+    buttonLabel: 'Pro werden',
     buttonStyle: 'bg-amber-500 hover:bg-amber-600 text-white',
   },
 ]
 
 const FAQ = [
   {
-    q: 'Can I cancel anytime?',
-    a: 'Yes, cancel with one click. No questions asked, no hidden fees.',
+    q: 'Kann ich jederzeit kündigen?',
+    a: 'Ja, mit einem Klick kündigen. Keine Fragen, keine versteckten Gebühren.',
   },
   {
-    q: 'Is my data safe?',
-    a: 'All data stays in your browser. We never store personal chat history on our servers.',
+    q: 'Sind meine Daten sicher?',
+    a: 'Alle Daten bleiben in deinem Browser. Wir speichern keinen persönlichen Chatverlauf auf unseren Servern.',
   },
   {
-    q: 'What payment methods are accepted?',
-    a: 'Credit card and debit card via Stripe. More methods coming soon.',
+    q: 'Welche Zahlungsmethoden werden akzeptiert?',
+    a: 'Kredit- und Debitkarte über Stripe. Weitere Methoden folgen bald.',
   },
 ]
 
@@ -182,7 +182,7 @@ export default function PricingPage() {
 
   const handleFreeClick = () => {
     navigate('/chat')
-    setToast('Free plan selected. You can start directly in the chat.')
+    setToast('Free-Plan ausgewählt. Du kannst direkt im Chat loslegen.')
     window.setTimeout(() => setToast(null), 3000)
   }
 
@@ -219,7 +219,7 @@ export default function PricingPage() {
 
       <div className="relative z-10 mx-auto max-w-5xl px-6 py-12">
         <div className="mb-10 text-center">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-cyan-500">Preise & PlÃ¤ne</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-cyan-500">Preise &amp; Pläne</p>
           <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-800 md:text-4xl">
             Einfach. Transparent. Fair.
           </h1>
@@ -230,7 +230,7 @@ export default function PricingPage() {
 
         {checkoutCancelled && (
           <div className="mx-auto mb-6 max-w-2xl rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            Checkout was cancelled.
+            Der Checkout wurde abgebrochen.
           </div>
         )}
 
@@ -300,8 +300,8 @@ export default function PricingPage() {
                   disabled={loadingPlan === plan.id}
                   className={`w-full rounded-xl py-2.5 text-sm font-semibold transition-colors disabled:opacity-60 ${plan.buttonStyle}`}
                 >
-                  {plan.id === 'premium' && (loadingPlan === 'premium' ? 'Redirecting...' : 'Start Premium')}
-                  {plan.id === 'pro' && (loadingPlan === 'pro' ? 'Redirecting...' : 'Go Pro')}
+                  {plan.id === 'premium' && (loadingPlan === 'premium' ? 'Wird weitergeleitet…' : 'Premium starten')}
+                  {plan.id === 'pro' && (loadingPlan === 'pro' ? 'Wird weitergeleitet…' : 'Pro werden')}
                   {plan.id === 'free' && plan.buttonLabel}
                 </button>
               </div>
@@ -311,7 +311,7 @@ export default function PricingPage() {
 
         <div className="mx-auto max-w-2xl">
           <h2 className="mb-4 text-xs font-bold uppercase tracking-[0.15em] text-slate-400">
-            HÃ¤ufige Fragen
+            Häufige Fragen
           </h2>
           <div className="space-y-3">
             {FAQ.map(item => (

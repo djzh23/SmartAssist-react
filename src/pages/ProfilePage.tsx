@@ -5,28 +5,17 @@ import { ArrowRight, BarChart2, Calendar, Crown, Loader2, Sparkles, Star, Zap } 
 import { useUserPlan, getPlanColors, getPlanLabel } from '../hooks/useUserPlan'
 import { confirmPlanFromSession, createPortalSession } from '../services/StripeService'
 
-const WEEK_HISTORY = [
-  { day: 'Mo', count: 4 },
-  { day: 'Di', count: 11 },
-  { day: 'Mi', count: 8 },
-  { day: 'Do', count: 15 },
-  { day: 'Fr', count: 20 },
-  { day: 'Sa', count: 6 },
-  { day: 'So', count: 8 },
-]
-
-const MAX_HISTORY = Math.max(...WEEK_HISTORY.map(d => d.count), 1)
-const TODAY_INDEX = 6
-
 function UsageBar({ used, limit }: { used: number; limit: number }) {
   const pct = Math.min(100, limit > 0 ? (used / limit) * 100 : 0)
   const barColor = pct >= 90 ? 'bg-rose-500' : pct >= 70 ? 'bg-amber-500' : 'bg-emerald-500'
+  const limitLabel = limit === Infinity ? '∞' : String(limit)
+  const remainingLabel = limit === Infinity ? '∞' : String(Math.max(0, limit - used))
 
   return (
     <div>
       <div className="mb-1.5 flex items-center justify-between text-xs">
-        <span className="font-medium text-slate-700">Daily Responses</span>
-        <span className="text-slate-500">{used} / {limit === Infinity ? 'âˆž' : limit}</span>
+        <span className="font-medium text-slate-700">Tägliche Antworten</span>
+        <span className="text-slate-500">{used} / {limitLabel}</span>
       </div>
       <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
         <div
@@ -35,9 +24,9 @@ function UsageBar({ used, limit }: { used: number; limit: number }) {
         />
       </div>
       <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
-        <span>Responses used today: {used}</span>
-        <span>Remaining: {limit === Infinity ? 'âˆž' : Math.max(0, limit - used)}</span>
-        <span>Resets at midnight</span>
+        <span>Heute genutzt: {used}</span>
+        <span>Verbleibend: {remainingLabel}</span>
+        <span>Setzt um Mitternacht zurück</span>
       </div>
     </div>
   )
@@ -60,6 +49,10 @@ export default function ProfilePage() {
   const checkoutSessionId = searchParams.get('session_id') ?? null
   const PlanIcon = user.plan === 'pro' ? Crown : user.plan === 'premium' ? Sparkles : Zap
 
+  const weekHistory = user.weekHistory
+  const maxCount = Math.max(...weekHistory.map(d => d.count), 1)
+  const todayDate = new Date().toISOString().split('T')[0]
+
   const handleManageSubscription = async () => {
     try {
       setPortalLoading(true)
@@ -67,19 +60,16 @@ export default function ProfilePage() {
 
       const token = await getToken()
       if (!token) {
-        throw new Error('Could not open portal without authentication token. Please sign in again.')
+        throw new Error('Kein Authentifizierungs-Token. Bitte erneut anmelden.')
       }
       if (!user.userId) {
-        throw new Error('Missing user profile ID. Please reload and try again.')
+        throw new Error('Benutzer-ID fehlt. Bitte Seite neu laden.')
       }
 
-      const portalUrl = await createPortalSession({
-        token,
-        userId: user.userId,
-      })
+      const portalUrl = await createPortalSession({ token, userId: user.userId })
       window.location.href = portalUrl
     } catch (err) {
-      setPortalError(err instanceof Error ? err.message : 'Portal error')
+      setPortalError(err instanceof Error ? err.message : 'Portal-Fehler')
     } finally {
       setPortalLoading(false)
     }
@@ -87,7 +77,6 @@ export default function ProfilePage() {
 
   const handleRetryUsageSync = async () => {
     try {
-      // Session-based confirmation gives the real plan (premium vs pro) without waiting for webhook
       if (checkoutSessionId) {
         const token = await getToken()
         if (token) {
@@ -106,7 +95,7 @@ export default function ProfilePage() {
         setUpgradeSyncNotice(null)
       }
     } catch (error) {
-      setUpgradeSyncNotice(error instanceof Error ? error.message : 'Usage sync failed')
+      setUpgradeSyncNotice(error instanceof Error ? error.message : 'Synchronisierung fehlgeschlagen')
     }
   }
 
@@ -116,17 +105,14 @@ export default function ProfilePage() {
     let cancelled = false
 
     const syncAfterUpgrade = async () => {
-      setUpgradeSyncNotice('Payment received. Verifying your plan...')
+      setUpgradeSyncNotice('Zahlung erhalten. Plan wird verifiziert…')
 
-      // â”€â”€ Step 1: Fast path via session ID (direct Stripe read, no webhook dependency) â”€â”€
-      // This also tells us the ACTUAL plan (premium vs pro) before marking pending.
       if (checkoutSessionId) {
         try {
           const token = await getToken()
           if (token) {
             const result = await confirmPlanFromSession(checkoutSessionId, token)
             if (!cancelled && (result.plan === 'premium' || result.plan === 'pro')) {
-              // Plan is now written to the backend â€” sync to pick it up
               const confirmedPlan = result.plan as 'premium' | 'pro'
               markUpgradePending(confirmedPlan, 120)
               await refreshUsage({ retries: 1, retryDelayMs: 800 })
@@ -135,31 +121,23 @@ export default function ProfilePage() {
             }
           }
         } catch (error) {
-          console.warn('[ProfilePage] Session-based confirmation failed, falling back to poll', error)
+          console.warn('[ProfilePage] Session-Bestätigung fehlgeschlagen, Polling wird gestartet', error)
         }
       }
 
-      // â”€â”€ Step 2: Check if webhook already fired â”€â”€
-      // Determine the real plan before optimistically marking pending.
       try {
         const nextPlan = await refreshUsage({ retries: 0 })
         if (!cancelled && (nextPlan === 'premium' || nextPlan === 'pro')) {
-          // Already confirmed â€” no pending state needed
           setUpgradeSyncNotice(null)
           return
         }
-        // Backend reachable but plan is still 'free' â€” webhook hasn't landed yet.
-        // Use the backend-confirmed plan to set pending (not a hardcoded guess).
         markUpgradePending(nextPlan === 'pro' ? 'pro' : 'premium', 120)
       } catch {
-        // Backend unreachable â€” fall back to 'premium' as the safer default.
-        // If the user bought Pro, this will self-correct once the webhook fires.
         markUpgradePending('premium', 120)
       }
 
-      setUpgradeSyncNotice('Payment received. Temporary access is active while server confirmation is pending...')
+      setUpgradeSyncNotice('Zahlung erhalten. Temporärer Zugriff aktiv, während Server-Bestätigung aussteht…')
 
-      // â”€â”€ Step 3: Poll until backend confirms â”€â”€
       for (let attempt = 0; attempt < 6; attempt++) {
         if (cancelled) return
         await new Promise(resolve => window.setTimeout(resolve, 2000))
@@ -171,20 +149,17 @@ export default function ProfilePage() {
             return
           }
         } catch {
-          // keep polling
+          // weiter versuchen
         }
       }
 
       if (!cancelled) {
-        setUpgradeSyncNotice('Server confirmation is still pending. Temporary access remains active. Please retry sync in a few seconds.')
+        setUpgradeSyncNotice('Server-Bestätigung ausstehend. Temporärer Zugriff bleibt aktiv. Bitte in wenigen Sekunden erneut synchronisieren.')
       }
     }
 
     void syncAfterUpgrade()
-
-    return () => {
-      cancelled = true
-    }
+    return () => { cancelled = true }
   }, [justUpgraded, checkoutSessionId, getToken, markUpgradePending, refreshUsage])
 
   if (!user.isLoaded) {
@@ -205,7 +180,7 @@ export default function ProfilePage() {
         backgroundSize: '28px 28px',
       }}
     >
-      <div className="pointer-events-none fixed inset-0 overflow-hidden" style={{ zIndex: 0 }}>
+      <div className="pointer-events-none absolute inset-0 overflow-hidden" style={{ zIndex: 0 }}>
         <div className="absolute -right-28 top-0 h-80 w-80 rounded-full bg-cyan-200/45 blur-3xl" />
         <div className="absolute -left-28 bottom-0 h-96 w-96 rounded-full bg-cyan-200/45 blur-3xl" />
         <div className="absolute left-1/2 top-14 h-44 w-44 -translate-x-1/2 rotate-45 rounded-[34px] border border-cyan-200/45" />
@@ -219,26 +194,15 @@ export default function ProfilePage() {
         </div>
 
         {justUpgraded && (
-          <div
-            style={{
-              background: '#D1FAE5',
-              color: '#065F46',
-              padding: '12px 20px',
-              borderRadius: '10px',
-              marginBottom: '20px',
-              fontSize: '14px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-            }}
-          >
-            ðŸŽ‰ Welcome to Premium! Your plan has been upgraded.
+          <div className="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+            <span>🎉</span>
+            <span>Willkommen bei Premium! Dein Plan wurde aktualisiert.</span>
           </div>
         )}
 
         {isUpgradePending && !upgradeSyncNotice && (
           <div className="rounded-xl border border-cyan-200 bg-cyan-50 px-4 py-3 text-sm text-cyan-800">
-            Temporary {pendingUpgradePlan === 'pro' ? 'Pro' : 'Premium'} access is active while backend confirmation is pending.
+            Temporärer {pendingUpgradePlan === 'pro' ? 'Pro' : 'Premium'}-Zugriff aktiv, während Backend-Bestätigung aussteht.
           </div>
         )}
 
@@ -250,20 +214,20 @@ export default function ProfilePage() {
               disabled={isSyncingUsage}
               className="rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-xs font-semibold text-amber-800 disabled:opacity-60"
             >
-              {isSyncingUsage ? 'Syncing...' : 'Sync now'}
+              {isSyncingUsage ? 'Synchronisiert…' : 'Jetzt synchronisieren'}
             </button>
           </div>
         )}
 
         {syncError && (
           <div className="flex items-center justify-between gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-            <span>Verbrauchssync Fehler: {syncError}</span>
+            <span>Synchronisierungsfehler: {syncError}</span>
             <button
               onClick={() => void handleRetryUsageSync()}
               disabled={isSyncingUsage}
               className="rounded-lg border border-rose-300 bg-white px-3 py-1.5 text-xs font-semibold text-rose-700 disabled:opacity-60"
             >
-              {isSyncingUsage ? 'Wird wiederholt…' : 'Sync erneut'}
+              {isSyncingUsage ? 'Wird wiederholt…' : 'Erneut versuchen'}
             </button>
           </div>
         )}
@@ -277,6 +241,7 @@ export default function ProfilePage() {
           </button>
         </div>
 
+        {/* Benutzerinfo */}
         <div className="relative overflow-hidden rounded-3xl border border-slate-200/90 bg-white/90 p-5 shadow-[0_10px_34px_rgba(15,23,42,0.08)] backdrop-blur">
           <div
             className="pointer-events-none absolute inset-0 opacity-80"
@@ -289,7 +254,7 @@ export default function ProfilePage() {
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
                 <p className="truncate font-semibold text-slate-800">
-                  {user.firstName ? `${user.firstName} ${user.lastName ?? ''}`.trim() : user.email ?? 'Guest User'}
+                  {user.firstName ? `${user.firstName} ${user.lastName ?? ''}`.trim() : user.email ?? 'Gast'}
                 </p>
                 <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold ${planColors.badge}`}>
                   <PlanIcon size={10} />
@@ -307,6 +272,7 @@ export default function ProfilePage() {
           </div>
         </div>
 
+        {/* Verbrauch */}
         <div className="space-y-5 rounded-3xl border border-slate-200/90 bg-white/90 p-5 shadow-[0_10px_34px_rgba(15,23,42,0.08)] backdrop-blur">
           <h2 className="text-xs font-bold uppercase tracking-[0.15em] text-slate-400">Dein heutiger Verbrauch</h2>
           <UsageBar used={user.usageToday} limit={user.dailyLimit} />
@@ -314,7 +280,7 @@ export default function ProfilePage() {
           <div className="grid grid-cols-3 gap-3">
             {[
               { icon: <BarChart2 size={14} className="text-sky-500" />, label: 'Antworten gesamt', value: user.totalResponses },
-              { icon: <Calendar size={14} className="text-cyan-500" />, label: 'Aktive Tage', value: user.daysActive },
+              { icon: <Calendar size={14} className="text-cyan-500" />, label: 'Aktive Tage', value: user.daysActive || 1 },
               { icon: <Star size={14} className="text-amber-500" />, label: 'Lieblingstool', value: user.favoriteTool ?? '—' },
             ].map(stat => (
               <div key={stat.label} className="rounded-2xl border border-slate-100 bg-slate-50/85 px-3 py-3">
@@ -328,6 +294,7 @@ export default function ProfilePage() {
           </div>
         </div>
 
+        {/* Aktueller Plan */}
         <div className="space-y-4 rounded-3xl border border-slate-200/90 bg-white/90 p-5 shadow-[0_10px_34px_rgba(15,23,42,0.08)] backdrop-blur">
           <h2 className="text-xs font-bold uppercase tracking-[0.15em] text-slate-400">Aktueller Plan</h2>
 
@@ -339,7 +306,11 @@ export default function ProfilePage() {
               <div>
                 <p className="font-bold text-slate-800">{planLabel}</p>
                 <p className="text-xs text-slate-500">
-                  {user.plan === 'free' ? '20 Nachrichten pro Tag (nach Anmeldung)' : user.plan === 'premium' ? '200 Nachrichten pro Tag' : 'Unbegrenzte Nachrichten'}
+                  {user.plan === 'free'
+                    ? '20 Nachrichten pro Tag (nach Anmeldung)'
+                    : user.plan === 'premium'
+                      ? '200 Nachrichten pro Tag'
+                      : 'Unbegrenzte Nachrichten'}
                 </p>
               </div>
             </div>
@@ -348,23 +319,13 @@ export default function ProfilePage() {
               <button
                 onClick={handleManageSubscription}
                 disabled={portalLoading}
-                style={{
-                  marginTop: '12px',
-                  padding: '8px 16px',
-                  background: 'transparent',
-                  border: '1px solid #06B6D4',
-                  color: '#06B6D4',
-                  borderRadius: '8px',
-                  fontSize: '13px',
-                  cursor: 'pointer',
-                  opacity: portalLoading ? 0.7 : 1,
-                }}
+                className="mt-3 rounded-lg border border-cyan-400 px-4 py-2 text-xs font-semibold text-cyan-600 transition-colors hover:bg-cyan-50 disabled:opacity-60"
               >
                 {portalLoading ? 'Wird geöffnet…' : 'Abonnement verwalten →'}
               </button>
             )}
 
-            {portalError && <p className="mt-3 text-sm text-red-600">{portalError}</p>}
+            {portalError && <p className="mt-3 text-sm text-rose-600">{portalError}</p>}
           </div>
 
           {user.plan !== 'pro' && (
@@ -378,32 +339,40 @@ export default function ProfilePage() {
           )}
         </div>
 
+        {/* Verlauf letzte 7 Tage */}
         <div className="rounded-3xl border border-slate-200/90 bg-white/90 p-5 shadow-[0_10px_34px_rgba(15,23,42,0.08)] backdrop-blur">
-          <h2 className="mb-4 text-xs font-bold uppercase tracking-[0.15em] text-slate-400">Usage History â€” last 7 days</h2>
+          <h2 className="mb-4 text-xs font-bold uppercase tracking-[0.15em] text-slate-400">
+            Verlauf — letzte 7 Tage
+          </h2>
 
-          <div className="flex h-28 items-end gap-2">
-            {WEEK_HISTORY.map((day, idx) => {
-              const heightPct = Math.max(4, (day.count / MAX_HISTORY) * 100)
-              const isToday = idx === TODAY_INDEX
-              return (
-                <div key={day.day} className="flex flex-1 flex-col items-center gap-1.5">
-                  <span className="text-[9px] font-semibold text-slate-400">{day.count}</span>
-                  <div className="w-full overflow-hidden rounded-t-lg" style={{ height: '72px' }}>
-                    <div
-                      className={`w-full rounded-t-lg transition-all duration-500 ${isToday ? 'bg-primary' : 'bg-slate-200'}`}
-                      style={{ height: `${heightPct}%`, marginTop: `${100 - heightPct}%` }}
-                    />
+          {weekHistory.every(d => d.count === 0) ? (
+            <p className="py-4 text-center text-xs text-slate-400">
+              Noch keine Aktivität aufgezeichnet. Starte ein Gespräch!
+            </p>
+          ) : (
+            <div className="flex h-28 items-end gap-2">
+              {weekHistory.map(day => {
+                const heightPct = Math.max(4, (day.count / maxCount) * 100)
+                const isToday = day.date === todayDate
+                return (
+                  <div key={day.date} className="flex flex-1 flex-col items-center gap-1.5">
+                    <span className="text-[9px] font-semibold text-slate-400">{day.count > 0 ? day.count : ''}</span>
+                    <div className="w-full overflow-hidden rounded-t-lg" style={{ height: '72px' }}>
+                      <div
+                        className={`w-full rounded-t-lg transition-all duration-500 ${isToday ? 'bg-primary' : 'bg-slate-200'}`}
+                        style={{ height: `${heightPct}%`, marginTop: `${100 - heightPct}%` }}
+                      />
+                    </div>
+                    <span className={`text-[10px] font-medium ${isToday ? 'text-primary font-bold' : 'text-slate-400'}`}>
+                      {day.day}
+                    </span>
                   </div>
-                  <span className={`text-[10px] font-medium ${isToday ? 'text-primary' : 'text-slate-400'}`}>
-                    {day.day}
-                  </span>
-                </div>
-              )
-            })}
-          </div>
+                )
+              })}
+            </div>
+          )}
         </div>
       </div>
     </div>
   )
 }
-
