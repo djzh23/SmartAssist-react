@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import type { ChatSession, ChatMessage, ToolType } from '../types'
 
 const LS_SESSIONS = 'smartassist_react_sessions'
@@ -7,6 +7,30 @@ const LS_ACTIVE = 'smartassist_react_active'
 
 function uid(): string {
   return Math.random().toString(36).slice(2, 10)
+}
+
+/** Fix UTF-8 mojibake stored in older localStorage sessions (ISO-8859-1 misread as UTF-8). */
+function fixMojibake(text: string): string {
+  return text
+    .replace(/Ã¶/g, 'ö').replace(/Ã¤/g, 'ä').replace(/Ã¼/g, 'ü')
+    .replace(/Ã–/g, 'Ö').replace(/Ã„/g, 'Ä').replace(/Ãœ/g, 'Ü')
+    .replace(/ÃŸ/g, 'ß').replace(/â€"/g, '—').replace(/â€˜/g, '\u2018')
+    .replace(/â€™/g, '\u2019').replace(/â€œ/g, '\u201c').replace(/â€\u009d/g, '\u201d')
+    .replace(/Ã©/g, 'é').replace(/Ã /g, 'à').replace(/Ã¨/g, 'è')
+    .replace(/Ã®/g, 'î').replace(/Ã´/g, 'ô').replace(/Ã»/g, 'û')
+    .replace(/Ã±/g, 'ñ').replace(/Ã¡/g, 'á').replace(/Ã³/g, 'ó')
+    .replace(/Ã­/g, 'í').replace(/Ãº/g, 'ú')
+}
+
+function sanitizeSessions(raw: Record<string, ChatSession>): Record<string, ChatSession> {
+  const out: Record<string, ChatSession> = {}
+  for (const [id, session] of Object.entries(raw)) {
+    out[id] = {
+      ...session,
+      messages: session.messages.map(m => ({ ...m, text: fixMojibake(m.text) })),
+    }
+  }
+  return out
 }
 
 function load<T>(key: string, fallback: T): T {
@@ -67,7 +91,7 @@ export interface SessionStore {
 }
 
 export function useChatSessions(): SessionStore {
-  const [sessions, setSessions] = useState<Record<string, ChatSession>>(() => load(LS_SESSIONS, {}))
+  const [sessions, setSessions] = useState<Record<string, ChatSession>>(() => sanitizeSessions(load(LS_SESSIONS, {})))
   const [sessionOrder, setSessionOrder] = useState<string[]>(() => load(LS_ORDER, []))
   const [activeId, setActiveId] = useState<string | null>(() => load(LS_ACTIVE, null))
   const [currentTool, setCurrentTool] = useState<ToolType>('general')
