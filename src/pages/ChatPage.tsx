@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { AlertCircle, X } from 'lucide-react'
+import { AlertCircle, PanelLeft, Plus, X } from 'lucide-react'
 import type { ToolType } from '../types'
 import { PROGRAMMING_LANGUAGES } from '../types'
 import { UsageLimitError, askAgentStream } from '../api/client'
@@ -718,6 +718,31 @@ export default function ChatPage() {
       />
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        {/* ── Mobile chat session bar (replaces floating chevron) ─── */}
+        <div className="flex flex-shrink-0 items-center gap-2 border-b border-slate-100 bg-white px-3 py-2 md:hidden">
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-500 transition-colors active:bg-slate-100"
+            aria-label="Gespräche öffnen"
+          >
+            <PanelLeft size={17} />
+          </button>
+          <p className="min-w-0 flex-1 truncate text-sm text-slate-400">
+            {(() => {
+              const preview = store.activeMessages.find(m => m.isUser)?.text
+              if (!preview) return 'Neues Gespräch'
+              return preview.length > 38 ? `${preview.slice(0, 38)}…` : preview
+            })()}
+          </p>
+          <button
+            onClick={handleNewSession}
+            className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-500 transition-colors active:bg-slate-100"
+            aria-label="Neues Gespräch starten"
+          >
+            <Plus size={16} />
+          </button>
+        </div>
+
         {checkoutBanner && (
           <div className="flex-shrink-0 px-4 pb-0 pt-3">
             <div

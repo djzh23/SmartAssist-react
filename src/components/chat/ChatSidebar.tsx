@@ -1,4 +1,4 @@
-import { Briefcase, ChevronRight, Code2, Globe2, MessageCircle, Plus, Target, Trash2, X } from 'lucide-react'
+import { Briefcase, Code2, Globe2, MessageCircle, Plus, Target, Trash2, X } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { ChatSession, ToolType } from '../../types'
 import { NATIVE_LANGS, PROGRAMMING_LANGUAGES, TARGET_LANGS } from '../../types'
@@ -52,7 +52,7 @@ interface Props {
   activeSessionId: string | null
   currentToolType: ToolType
   isOpen: boolean
-  onOpen: () => void
+  onOpen?: () => void
   onClose: () => void
   onSelect: (id: string) => void
   onNew: () => void
@@ -75,7 +75,6 @@ export default function ChatSidebar({
   activeSessionId,
   currentToolType,
   isOpen,
-  onOpen,
   onClose,
   onSelect,
   onNew,
@@ -94,16 +93,6 @@ export default function ChatSidebar({
 }: Props) {
   return (
     <>
-      {!isOpen && (
-        <button
-          onClick={onOpen}
-          className="absolute left-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-400 transition-colors hover:border-primary hover:text-primary md:hidden"
-          title="Chats öffnen"
-        >
-          <ChevronRight size={16} />
-        </button>
-      )}
-
       {isOpen && (
         <div
           className="fixed inset-0 z-10 bg-black/30 animate-fade-in md:hidden"

@@ -31,16 +31,16 @@ export default function MainLayout() {
       {/* ── Main content ────────────────────────────────── */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         {/* Mobile topbar */}
-        <div className="flex items-center gap-3 h-13 px-4 bg-sidebar md:hidden flex-shrink-0">
+        <div className="flex flex-shrink-0 items-center gap-2 bg-sidebar px-3 py-2.5 md:hidden">
           <button
             onClick={() => setMobileOpen(v => !v)}
-            className="text-white/70 hover:text-white transition-colors p-1"
-            aria-label="Toggle navigation"
+            className="flex h-10 w-10 items-center justify-center rounded-xl text-white/70 transition-colors hover:bg-white/10 hover:text-white active:bg-white/20"
+            aria-label={mobileOpen ? 'Navigation schließen' : 'Navigation öffnen'}
           >
-            {mobileOpen ? <X size={22} /> : <Menu size={22} />}
+            {mobileOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
           <img src="/favicon.png" alt="" className="h-6 w-6 rounded-lg" aria-hidden="true" />
-          <span className="text-white font-bold text-sm tracking-wide">SmartAssist</span>
+          <span className="flex-1 text-sm font-bold tracking-wide text-white">SmartAssist</span>
         </div>
 
         <main className="flex-1 overflow-hidden">
