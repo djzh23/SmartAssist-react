@@ -39,7 +39,7 @@ export default function MainLayout() {
             {mobileOpen ? <X size={18} /> : <Menu size={18} />}
           </button>
           <img src="/favicon.png" alt="" className="h-5 w-5 rounded-md" aria-hidden="true" />
-          <span className="flex-1 text-[13px] font-bold tracking-wide text-white">SmartAssist</span>
+          <span className="flex-1 text-[13px] font-bold tracking-wide text-white">PrivatePrep</span>
         </div>
 
         {/* Mobile backdrop — sits above content but below topbar */}

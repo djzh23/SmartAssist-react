@@ -267,7 +267,7 @@ export default function ToolsPage() {
 
       <div className="relative mx-auto max-w-6xl px-4 py-7 sm:px-6 sm:py-10 md:py-12" style={{ zIndex: 1 }}>
         <div className="mb-8 rounded-2xl border border-slate-200/80 bg-white/85 p-4 shadow-[0_14px_38px_rgba(15,23,42,0.10)] backdrop-blur sm:mb-10 sm:rounded-3xl sm:p-6">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-500">SmartAssist Workspace</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-500">PrivatePrep Workspace</p>
           <h1 className="mt-2 text-xl font-bold tracking-tight text-slate-800 sm:text-2xl md:text-3xl">Tools für deine Vorbereitung</h1>
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-500">
             Wähle das passende Tool für deinen nächsten Schritt. Alle Bereiche sind auf Fokus, Übersicht und schnelle Umsetzung ausgerichtet.

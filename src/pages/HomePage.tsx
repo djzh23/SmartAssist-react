@@ -164,7 +164,7 @@ export default function HomePage() {
         </div>
 
         <div className="mb-8">
-          <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.15em] text-slate-400">Was SmartAssist für dich tut</h2>
+          <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.15em] text-slate-400">Was PrivatePrep für dich tut</h2>
           <div className="flex flex-col gap-3">
             {HIGHLIGHTS.map(card => {
               const Icon = card.icon

@@ -140,8 +140,8 @@ export default function Sidebar({ onNavClick }: Props) {
   return (
     <div className="flex h-full flex-col overflow-x-hidden overflow-y-auto">
       <div className="flex flex-shrink-0 items-center gap-2.5 px-4 py-5">
-        <img src="/favicon.png" alt="SmartAssist" className="h-7 w-7 rounded-lg" />
-        <span className="text-[15px] font-bold tracking-wide text-white">SmartAssist</span>
+        <img src="/favicon.png" alt="PrivatePrep" className="h-7 w-7 rounded-lg" />
+        <span className="text-[15px] font-bold tracking-wide text-white">PrivatePrep</span>
       </div>
 
       <div className="mx-0 mb-2 h-px flex-shrink-0 bg-sidebar-border" />

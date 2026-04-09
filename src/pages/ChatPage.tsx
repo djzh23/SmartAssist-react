@@ -662,6 +662,17 @@ export default function ChatPage() {
     } catch (sendError) {
       store.deleteMessage(sessionId, streamingMsgId)
       if (sendError instanceof UsageLimitError) {
+        // Before showing the modal, re-check the plan from the server.
+        // If the backend returned 429 due to a stale "free" plan in Redis right after
+        // a Stripe upgrade (webhook lag), the refresh will pick up the new "premium" plan
+        // so the user can simply click Send again without seeing the modal.
+        try {
+          const latestPlan = await refreshUsage({ retries: 1, retryDelayMs: 1000 })
+          if (latestPlan === 'premium' || latestPlan === 'pro') {
+            // Plan is confirmed — 429 was a timing artifact, don't block the user
+            return
+          }
+        } catch { /* ignore — fall through to show modal */ }
         setShowLimitModal(true)
       } else {
         setError(sendError instanceof Error ? sendError.message : 'Etwas ist schiefgelaufen. Bitte versuche es erneut.')

@@ -73,8 +73,8 @@ function LandingNav() {
     <nav className="fixed left-0 right-0 top-0 z-[100] h-14 border-b border-amber-100/50 bg-white/95 shadow-sm backdrop-blur-md sm:h-16">
       <div className="mx-auto flex h-full max-w-[1200px] items-center justify-between px-4 sm:px-6">
         <div className="flex min-w-0 items-center gap-2">
-          <img src="/favicon.png" alt="SmartAssist" className="h-7 w-7 flex-shrink-0 rounded-xl sm:h-8 sm:w-8" />
-          <span className="bg-gradient-to-r from-amber-600 to-amber-700 bg-clip-text text-base font-bold text-transparent sm:text-lg">SmartAssist</span>
+          <img src="/favicon.png" alt="PrivatePrep" className="h-7 w-7 flex-shrink-0 rounded-xl sm:h-8 sm:w-8" />
+          <span className="bg-gradient-to-r from-amber-600 to-amber-700 bg-clip-text text-base font-bold text-transparent sm:text-lg">PrivatePrep</span>
         </div>
         <div className="flex flex-shrink-0 items-center gap-2 sm:gap-3">
           <button
@@ -113,7 +113,7 @@ function ChatMockup() {
     <div className="relative mx-auto max-w-[340px]">
       <div className="-rotate-2 overflow-hidden rounded-[22px] bg-white shadow-[0_24px_80px_rgba(124,58,237,0.22)]">
         <div className="flex items-center justify-between bg-gradient-to-r from-amber-600 to-amber-700 px-4 py-3">
-          <span className="text-sm font-bold text-white">⚡ SmartAssist</span>
+          <span className="text-sm font-bold text-white">⚡ PrivatePrep</span>
           <div className="flex items-center gap-1.5">
             <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-300" />
             <span className="text-xs text-white/80">Online</span>
@@ -587,7 +587,7 @@ function GeneralResponseBubble({ text }: { text: string }) {
     <div className="w-full overflow-hidden rounded-xl border border-amber-100 bg-gradient-to-br from-amber-50 to-white">
       <div className="flex items-center gap-1.5 border-b border-amber-100 px-4 py-2">
         <span className="text-sm">💬</span>
-        <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-amber-600">SmartAssist</span>
+        <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-amber-600">PrivatePrep</span>
       </div>
       <div className="px-4 py-3">
         <RichText text={text} dotColor="bg-amber-400" numColor="text-amber-600" />
@@ -1213,7 +1213,7 @@ function FinalCtaSection() {
         <div className="mb-6 text-6xl">⚡</div>
         <h2 className="mb-4 text-[clamp(28px,4vw,44px)] font-bold">Starte noch heute smarter</h2>
         <p className="mb-10 text-lg text-white/70">
-          Schließ dich Nutzern an, die täglich Zeit mit SmartAssist sparen.
+          Schließ dich Nutzern an, die täglich Zeit mit PrivatePrep sparen.
         </p>
         <SignUpButton mode="modal" fallbackRedirectUrl="/tools">
           <button className="rounded-2xl bg-gradient-to-r from-amber-400 to-amber-500 px-10 py-4 text-base font-bold text-amber-950 shadow-2xl shadow-black/40 transition-all hover:scale-[1.02] hover:brightness-105">
@@ -1240,8 +1240,8 @@ function FooterSection() {
         <div className="mb-6 flex flex-col items-center justify-between gap-6 md:flex-row">
           <div>
             <div className="mb-1 flex items-center gap-2">
-              <img src="/favicon.png" alt="SmartAssist" className="h-7 w-7 rounded-lg" />
-              <span className="bg-gradient-to-r from-amber-400 to-amber-300 bg-clip-text text-lg font-bold text-transparent">SmartAssist</span>
+              <img src="/favicon.png" alt="PrivatePrep" className="h-7 w-7 rounded-lg" />
+              <span className="bg-gradient-to-r from-amber-400 to-amber-300 bg-clip-text text-lg font-bold text-transparent">PrivatePrep</span>
             </div>
             <p className="text-sm text-slate-500">KI Werkzeuge für alle</p>
           </div>
@@ -1253,7 +1253,7 @@ function FooterSection() {
         </div>
         <div className="border-t border-white/5 pt-6 text-center">
           <p className="mb-1 text-xs text-slate-600">Entwickelt mit ♥ · .NET 9 · React · Claude KI</p>
-          <p className="text-xs text-slate-700">© 2026 SmartAssist. Alle Rechte vorbehalten.</p>
+          <p className="text-xs text-slate-700">© 2026 PrivatePrep. Alle Rechte vorbehalten.</p>
         </div>
       </div>
     </footer>
