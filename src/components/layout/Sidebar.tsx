@@ -115,7 +115,7 @@ function UsageBar() {
   if (plan === 'pro') return null
 
   const pct = dailyLimit === Infinity ? 0 : Math.min(100, (usageToday / dailyLimit) * 100)
-  const barColor = pct > 90 ? '#EF4444' : pct > 70 ? '#F59E0B' : '#06B6D4'
+  const barColor = pct > 90 ? '#EF4444' : pct > 70 ? '#F59E0B' : '#D97706'
   const limitLabel = dailyLimit === Infinity ? 'Unbegrenzt' : String(dailyLimit)
 
   return (

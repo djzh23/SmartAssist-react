@@ -196,7 +196,7 @@
 }
 
 .modal-input:focus {
-  border-color: #06B6D4;
+  border-color: #D97706;
 }
 
 .modal-textarea {
@@ -215,7 +215,7 @@
 }
 
 .modal-textarea:focus {
-  border-color: #06B6D4;
+  border-color: #D97706;
 }
 
 .modal-hint {
@@ -262,7 +262,7 @@
 
 .btn-primary {
   border: 1px solid transparent;
-  background: #06B6D4;
+  background: linear-gradient(135deg, #D97706, #B45309);
   color: white;
   border-radius: 10px;
   padding: 10px 16px;
@@ -270,11 +270,11 @@
   font-weight: 600;
   cursor: pointer;
   min-height: 44px;  /* accessible tap target */
-  transition: background 0.15s;
+  transition: background 0.15s, opacity 0.15s;
 }
 
 .btn-primary:hover {
-  background: #0891B2;
+  opacity: 0.9;
 }
 
 .btn-primary:disabled,
@@ -315,23 +315,23 @@
 }
 
 .lang-btn:hover {
-  border-color: #06B6D4;
-  color: #06B6D4;
+  border-color: #D97706;
+  color: #D97706;
 }
 
 .lang-btn.selected {
-  border-color: #06B6D4;
-  background: #ECFEFF;
-  color: #06B6D4;
+  border-color: #D97706;
+  background: #FFFBEB;
+  color: #B45309;
   font-weight: 600;
 }
 
 .context-indicator {
-  background: #ECFEFF;
+  background: #FFFBEB;
   border-bottom: 1px solid #E5E7EB;
   padding: 6px 20px;
   font-size: 12px;
-  color: #06B6D4;
+  color: #B45309;
   font-weight: 500;
   display: flex;
   align-items: center;
@@ -348,7 +348,7 @@
 }
 
 .context-edit-btn:hover {
-  color: #06B6D4;
+  color: #D97706;
 }
 
 .job-analysis-body .job-p {
@@ -403,13 +403,13 @@
 
 .job-analysis-body .job-inline-score {
   display: inline-block;
-  background: #CFFAFE;
-  border: 1px solid #A5F3FC;
+  background: #FEF3C7;
+  border: 1px solid #FDE68A;
   border-radius: 999px;
   padding: 1px 7px;
   font-size: 0.82em;
   font-weight: 700;
-  color: #0E7490;
+  color: #92400E;
 }
 
 .job-analysis-body .job-inline-percent {

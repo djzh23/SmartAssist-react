@@ -34,7 +34,7 @@ interface ToneStyle {
 const TONE_STYLES: Record<JobSectionTone, ToneStyle> = {
   score: {
     chip: 'Match',
-    bg: '#ECFEFF',
+    bg: '#FFFBEB',
     border: '#0EA5E9',
     color: '#0369A1',
     chipBg: '#CFFAFE',
@@ -66,16 +66,16 @@ const TONE_STYLES: Record<JobSectionTone, ToneStyle> = {
   },
   keywords: {
     chip: 'Keywords',
-    bg: '#ECFEFF',
+    bg: '#FFFBEB',
     border: '#22D3EE',
-    color: '#0891B2',
-    chipBg: '#ECFEFF',
+    color: '#B45309',
+    chipBg: '#FFFBEB',
     chipColor: '#0E7490',
   },
   interview: {
     chip: 'Interview',
-    bg: '#ECFEFF',
-    border: '#06B6D4',
+    bg: '#FFFBEB',
+    border: '#D97706',
     color: '#0E7490',
     chipBg: '#CFFAFE',
     chipColor: '#155E75',

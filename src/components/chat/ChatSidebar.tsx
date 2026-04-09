@@ -22,8 +22,8 @@ const TOOL_BADGE: Record<ToolType, string> = {
 
 // 8 distinct color themes for session tabs
 const SESSION_THEMES = [
-  { bg: 'bg-violet-50',  border: 'border-l-violet-400', icon: 'text-violet-500',  dot: 'bg-violet-400',  shape1: 'bg-violet-200/50',  shape2: 'border-violet-300/60' },
-  { bg: 'bg-cyan-50',    border: 'border-l-cyan-400',   icon: 'text-cyan-600',    dot: 'bg-cyan-400',    shape1: 'bg-cyan-200/50',    shape2: 'border-cyan-300/60' },
+  { bg: 'bg-amber-50',  border: 'border-l-amber-500', icon: 'text-amber-600',  dot: 'bg-amber-400',  shape1: 'bg-amber-200/50',  shape2: 'border-amber-300/60' },
+  { bg: 'bg-amber-50',    border: 'border-l-amber-400',   icon: 'text-amber-600',    dot: 'bg-amber-400',    shape1: 'bg-amber-100/60',    shape2: 'border-amber-200/60' },
   { bg: 'bg-emerald-50', border: 'border-l-emerald-400',icon: 'text-emerald-600', dot: 'bg-emerald-400', shape1: 'bg-emerald-200/50', shape2: 'border-emerald-300/60' },
   { bg: 'bg-amber-50',   border: 'border-l-amber-400',  icon: 'text-amber-600',   dot: 'bg-amber-400',   shape1: 'bg-amber-200/50',   shape2: 'border-amber-300/60' },
   { bg: 'bg-rose-50',    border: 'border-l-rose-400',   icon: 'text-rose-500',    dot: 'bg-rose-400',    shape1: 'bg-rose-200/50',    shape2: 'border-rose-300/60' },
@@ -129,9 +129,9 @@ export default function ChatSidebar({
 
         {showLLPanel && (
           <div className="flex-shrink-0 border-t border-slate-200 px-3 py-2.5">
-            <div className="mb-2.5 flex items-center justify-between rounded-lg border border-cyan-200 bg-cyan-50 px-2.5 py-2">
+            <div className="mb-2.5 flex items-center justify-between rounded-lg border border-cyan-200 bg-amber-50 px-2.5 py-2">
               <span className="text-xs font-semibold text-slate-700">Sprachlernen</span>
-              <span className="inline-flex items-center rounded-full border border-cyan-300 bg-white px-2 py-0.5 text-[10px] font-semibold text-cyan-700">
+              <span className="inline-flex items-center rounded-full border border-amber-300 bg-white px-2 py-0.5 text-[10px] font-semibold text-amber-700">
                 {languageLearningMode ? 'Aktiv' : 'Inaktiv'}
               </span>
             </div>

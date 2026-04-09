@@ -133,7 +133,7 @@ export default function MessageBubble({
         </div>
         <div className="flex items-center gap-2 px-1">
           {msg.toolUsed && msg.toolUsed !== 'analyze_job' && (
-            <span className="inline-flex items-center gap-1 rounded-full border border-cyan-200 bg-cyan-50 px-2.5 py-0.5 text-[11px] font-medium text-cyan-600">
+            <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-[11px] font-medium text-amber-600">
               <Settings2 size={11} />
               <span>{msg.toolUsed.replace(/_/g, ' ')}</span>
             </span>

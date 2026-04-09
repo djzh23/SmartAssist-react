@@ -63,7 +63,7 @@ export default function UsageLimitModal({ isOpen, isLoggedIn, userEmail, onClose
         />
 
         <div className="relative px-6 pb-4 pt-8 text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-cyan-200 bg-cyan-50 text-cyan-700">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-amber-200 bg-amber-50 text-amber-700">
             <Rocket size={28} />
           </div>
           <h2 className="text-xl font-bold text-slate-800">Du hast dein Limit erreicht</h2>
@@ -97,7 +97,7 @@ export default function UsageLimitModal({ isOpen, isLoggedIn, userEmail, onClose
             )}
           </div>
 
-          <div className="relative overflow-hidden rounded-2xl border-2 border-cyan-400 bg-cyan-50 p-4">
+          <div className="relative overflow-hidden rounded-2xl border-2 border-amber-400 bg-amber-50 p-4">
             <div
               className="pointer-events-none absolute inset-0 opacity-40"
               style={{ backgroundImage: 'radial-gradient(circle at 80% 0%, rgba(6,182,212,0.18), transparent 55%)' }}

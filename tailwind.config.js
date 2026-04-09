@@ -5,9 +5,14 @@ export default {
     extend: {
       colors: {
         primary: {
-          DEFAULT: '#06B6D4',
-          hover:   '#0891B2',
-          light:   '#ECFEFF',
+          DEFAULT: '#D97706',   // amber-600 — vanilla gold
+          hover:   '#B45309',   // amber-700 — deep gold
+          light:   '#FFFBEB',   // amber-50  — cream vanilla
+        },
+        dark: {
+          DEFAULT: '#1C1200',   // warm near-black
+          mid:     '#2D1C08',   // mid dark warm
+          light:   '#3D2A10',   // lighter dark warm
         },
         sidebar: {
           DEFAULT: '#1e293b',

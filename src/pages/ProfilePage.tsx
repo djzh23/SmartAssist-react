@@ -181,15 +181,15 @@ export default function ProfilePage() {
       }}
     >
       <div className="pointer-events-none absolute inset-0 overflow-hidden" style={{ zIndex: 0 }}>
-        <div className="absolute -right-28 top-0 h-80 w-80 rounded-full bg-cyan-200/45 blur-3xl" />
-        <div className="absolute -left-28 bottom-0 h-96 w-96 rounded-full bg-cyan-200/45 blur-3xl" />
-        <div className="absolute left-1/2 top-14 h-44 w-44 -translate-x-1/2 rotate-45 rounded-[34px] border border-cyan-200/45" />
+        <div className="absolute -right-28 top-0 h-80 w-80 rounded-full bg-amber-200/45 blur-3xl" />
+        <div className="absolute -left-28 bottom-0 h-96 w-96 rounded-full bg-amber-200/45 blur-3xl" />
+        <div className="absolute left-1/2 top-14 h-44 w-44 -translate-x-1/2 rotate-45 rounded-[34px] border border-amber-200/45" />
         <div className="absolute right-10 top-52 h-28 w-28 rotate-12 rounded-2xl border border-slate-300/70 bg-white/40" />
       </div>
 
       <div className="relative z-10 mx-auto max-w-2xl space-y-6 px-6 py-12">
         <div className="mb-2">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-cyan-500">Mein Konto</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-500">Mein Konto</p>
           <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-800">Profil und Nutzung</h1>
         </div>
 
@@ -201,7 +201,7 @@ export default function ProfilePage() {
         )}
 
         {isUpgradePending && !upgradeSyncNotice && (
-          <div className="rounded-xl border border-cyan-200 bg-cyan-50 px-4 py-3 text-sm text-cyan-800">
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
             Temporärer {pendingUpgradePlan === 'pro' ? 'Pro' : 'Premium'}-Zugriff aktiv, während Backend-Bestätigung aussteht.
           </div>
         )}
@@ -248,7 +248,7 @@ export default function ProfilePage() {
             style={{ backgroundImage: 'radial-gradient(circle at 88% 0%, rgba(124,58,237,0.07), transparent 50%)' }}
           />
           <div className="relative flex items-center gap-4">
-            <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl border border-cyan-200 bg-cyan-50 text-xl font-bold text-cyan-700">
+            <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl border border-amber-200 bg-amber-50 text-xl font-bold text-amber-700">
               {user.initials}
             </div>
             <div className="min-w-0 flex-1">
@@ -280,7 +280,7 @@ export default function ProfilePage() {
           <div className="grid grid-cols-3 gap-3">
             {[
               { icon: <BarChart2 size={14} className="text-sky-500" />, label: 'Antworten gesamt', value: user.totalResponses },
-              { icon: <Calendar size={14} className="text-cyan-500" />, label: 'Aktive Tage', value: user.daysActive || 1 },
+              { icon: <Calendar size={14} className="text-amber-500" />, label: 'Aktive Tage', value: user.daysActive || 1 },
               { icon: <Star size={14} className="text-amber-500" />, label: 'Lieblingstool', value: user.favoriteTool ?? '—' },
             ].map(stat => (
               <div key={stat.label} className="rounded-2xl border border-slate-100 bg-slate-50/85 px-3 py-3">
@@ -301,7 +301,7 @@ export default function ProfilePage() {
           <div className={`rounded-2xl border-2 p-4 ${planColors.border} bg-white/80`}>
             <div className="flex items-center gap-2">
               <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-100 bg-slate-50">
-                <PlanIcon size={16} className={user.plan === 'pro' ? 'text-amber-500' : user.plan === 'premium' ? 'text-cyan-600' : 'text-slate-500'} />
+                <PlanIcon size={16} className={user.plan === 'pro' ? 'text-amber-500' : user.plan === 'premium' ? 'text-amber-600' : 'text-slate-500'} />
               </div>
               <div>
                 <p className="font-bold text-slate-800">{planLabel}</p>
@@ -319,7 +319,7 @@ export default function ProfilePage() {
               <button
                 onClick={handleManageSubscription}
                 disabled={portalLoading}
-                className="mt-3 rounded-lg border border-cyan-400 px-4 py-2 text-xs font-semibold text-cyan-600 transition-colors hover:bg-cyan-50 disabled:opacity-60"
+                className="mt-3 rounded-lg border border-amber-400 px-4 py-2 text-xs font-semibold text-amber-600 transition-colors hover:bg-amber-50 disabled:opacity-60"
               >
                 {portalLoading ? 'Wird geöffnet…' : 'Abonnement verwalten →'}
               </button>

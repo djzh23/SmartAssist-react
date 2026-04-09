@@ -19,10 +19,10 @@ import {
 const HIGHLIGHTS = [
   {
     icon: Target,
-    accent: { soft: 'bg-cyan-50', ring: 'border-cyan-200', text: 'text-cyan-700' },
+    accent: { soft: 'bg-amber-50', ring: 'border-amber-200', text: 'text-amber-700' },
     title: 'Interview Coaching',
     desc: 'Übe typische Fragen, formuliere stärkere Antworten und gehe entspannter ins Gespräch.',
-    line: 'bg-cyan-500',
+    line: 'bg-amber-500',
   },
   {
     icon: Briefcase,
@@ -41,7 +41,7 @@ const HIGHLIGHTS = [
 ]
 
 const QUICK_LINKS = [
-  { icon: Target, tool: 'interviewprep', label: 'Interview Coach', desc: 'Vorstellungsgespräche üben', accent: { soft: 'bg-cyan-50', ring: 'border-cyan-200', text: 'text-cyan-700' } },
+  { icon: Target, tool: 'interviewprep', label: 'Interview Coach', desc: 'Vorstellungsgespräche üben', accent: { soft: 'bg-amber-50', ring: 'border-amber-200', text: 'text-amber-700' } },
   { icon: Briefcase, tool: 'jobanalyzer', label: 'Job Analyzer', desc: 'Stellenanzeige prüfen', accent: { soft: 'bg-emerald-50', ring: 'border-emerald-200', text: 'text-emerald-700' } },
   { icon: Code2, tool: 'programming', label: 'Programming', desc: 'Technische Fragen', accent: { soft: 'bg-sky-50', ring: 'border-sky-200', text: 'text-sky-700' } },
   { icon: Globe2, tool: 'language', label: 'Language', desc: 'Sprachen trainieren', accent: { soft: 'bg-amber-50', ring: 'border-amber-200', text: 'text-amber-700' } },
@@ -62,7 +62,7 @@ const TRUST_POINTS = [
   },
   {
     icon: Lock,
-    color: 'text-cyan-600',
+    color: 'text-amber-600',
     title: 'Nur technischer Kontext',
     desc: 'Für die Auswertung wird nur reduzierter technischer Kontext verwendet.',
   },
@@ -88,11 +88,11 @@ export default function HomePage() {
       }}
     >
       <div className="pointer-events-none fixed inset-0 overflow-hidden" style={{ zIndex: 0 }}>
-        <div className="absolute -right-28 top-0 h-80 w-80 rounded-full bg-cyan-200/45 blur-3xl" />
+        <div className="absolute -right-28 top-0 h-80 w-80 rounded-full bg-amber-200/45 blur-3xl" />
         <div className="absolute -left-28 bottom-0 h-96 w-96 rounded-full bg-emerald-200/40 blur-3xl" />
-        <div className="absolute left-1/2 top-14 h-44 w-44 -translate-x-1/2 rotate-45 rounded-[34px] border border-cyan-200/45" />
+        <div className="absolute left-1/2 top-14 h-44 w-44 -translate-x-1/2 rotate-45 rounded-[34px] border border-amber-200/45" />
         <div className="absolute right-10 top-52 h-28 w-28 rotate-12 rounded-2xl border border-slate-300/70 bg-white/40" />
-        <div className="absolute bottom-32 left-16 h-16 w-16 rotate-6 rounded-xl border border-cyan-200/60 bg-white/30" />
+        <div className="absolute bottom-32 left-16 h-16 w-16 rotate-6 rounded-xl border border-amber-200/60 bg-white/30" />
       </div>
 
       <div className="relative z-10 mx-auto max-w-2xl px-6 py-12">
@@ -102,7 +102,7 @@ export default function HomePage() {
             style={{ backgroundImage: 'radial-gradient(circle at 70% 0%, rgba(6,182,212,0.10), transparent 55%)' }}
           />
 
-          <div className="relative mb-5 inline-flex h-16 w-16 items-center justify-center rounded-2xl border border-cyan-200 bg-cyan-50 text-cyan-700 shadow-sm">
+          <div className="relative mb-5 inline-flex h-16 w-16 items-center justify-center rounded-2xl border border-amber-200 bg-amber-50 text-amber-700 shadow-sm">
             <Sparkles size={24} strokeWidth={2.2} />
           </div>
 
@@ -119,7 +119,7 @@ export default function HomePage() {
               return (
                 <span
                   key={item.label}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-cyan-200/80 bg-cyan-50/80 px-3 py-1 text-[11px] font-semibold text-cyan-700"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-amber-200/80 bg-amber-50/80 px-3 py-1 text-[11px] font-semibold text-amber-700"
                 >
                   <Icon size={12} />
                   {item.label}

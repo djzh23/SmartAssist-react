@@ -70,11 +70,11 @@ function scrollTo(id: string) {
 
 function LandingNav() {
   return (
-    <nav className="fixed left-0 right-0 top-0 z-[100] h-14 border-b border-violet-100/50 bg-white/95 shadow-sm backdrop-blur-md sm:h-16">
+    <nav className="fixed left-0 right-0 top-0 z-[100] h-14 border-b border-amber-100/50 bg-white/95 shadow-sm backdrop-blur-md sm:h-16">
       <div className="mx-auto flex h-full max-w-[1200px] items-center justify-between px-4 sm:px-6">
         <div className="flex min-w-0 items-center gap-2">
           <img src="/favicon.png" alt="SmartAssist" className="h-7 w-7 flex-shrink-0 rounded-xl sm:h-8 sm:w-8" />
-          <span className="bg-gradient-to-r from-primary to-violet-500 bg-clip-text text-base font-bold text-transparent sm:text-lg">SmartAssist</span>
+          <span className="bg-gradient-to-r from-amber-600 to-amber-700 bg-clip-text text-base font-bold text-transparent sm:text-lg">SmartAssist</span>
         </div>
         <div className="flex flex-shrink-0 items-center gap-2 sm:gap-3">
           <button
@@ -84,12 +84,12 @@ function LandingNav() {
             Preise
           </button>
           <SignInButton mode="modal" fallbackRedirectUrl="/tools">
-            <button className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 shadow-sm transition-all hover:border-violet-200 hover:text-primary sm:px-4 sm:py-2 sm:text-sm">
+            <button className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 shadow-sm transition-all hover:border-amber-200 hover:text-primary sm:px-4 sm:py-2 sm:text-sm">
               Anmelden
             </button>
           </SignInButton>
           <SignUpButton mode="modal" fallbackRedirectUrl="/tools">
-            <button className="rounded-xl bg-gradient-to-r from-primary to-violet-500 px-3 py-1.5 text-xs font-semibold text-white shadow-md shadow-violet-200 transition-all hover:shadow-lg sm:px-4 sm:py-2 sm:text-sm">
+            <button className="rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 px-3 py-1.5 text-xs font-semibold text-white shadow-md shadow-amber-200 transition-all hover:shadow-lg sm:px-4 sm:py-2 sm:text-sm">
               Jetzt starten
             </button>
           </SignUpButton>
@@ -112,7 +112,7 @@ function ChatMockup() {
   return (
     <div className="relative mx-auto max-w-[340px]">
       <div className="-rotate-2 overflow-hidden rounded-[22px] bg-white shadow-[0_24px_80px_rgba(124,58,237,0.22)]">
-        <div className="flex items-center justify-between bg-gradient-to-r from-primary to-violet-500 px-4 py-3">
+        <div className="flex items-center justify-between bg-gradient-to-r from-amber-600 to-amber-700 px-4 py-3">
           <span className="text-sm font-bold text-white">⚡ SmartAssist</span>
           <div className="flex items-center gap-1.5">
             <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-300" />
@@ -121,18 +121,18 @@ function ChatMockup() {
         </div>
         <div className="space-y-3 bg-slate-50 p-4">
           <div className="flex gap-2">
-            <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-violet-500 text-xs text-white">⚡</div>
+            <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-amber-600 to-amber-700 text-xs text-white">⚡</div>
             <div className="max-w-[200px] rounded-[12px_12px_12px_4px] bg-white px-3 py-2 text-xs text-slate-700 shadow-sm">
               ¡Hola! Ich sehe du lernst Spanisch 🌍
             </div>
           </div>
           <div className="flex justify-end">
-            <div className="max-w-[200px] rounded-[12px_12px_4px_12px] bg-gradient-to-r from-primary to-violet-500 px-3 py-2 text-xs text-white">
+            <div className="max-w-[200px] rounded-[12px_12px_4px_12px] bg-gradient-to-r from-amber-600 to-amber-700 px-3 py-2 text-xs text-white">
               Ja! Wie sagt man "Guten Morgen"?
             </div>
           </div>
           <div className="flex gap-2">
-            <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-violet-500 text-xs text-white">⚡</div>
+            <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-amber-600 to-amber-700 text-xs text-white">⚡</div>
             <div className="max-w-[200px] rounded-[12px_12px_12px_4px] border-l-[3px] border-l-primary bg-white px-3 py-2 text-xs shadow-sm">
               <p className="font-semibold text-slate-800">🌍 Buenos días</p>
               <p className="text-slate-600">🇩🇪 Guten Morgen</p>
@@ -141,7 +141,7 @@ function ChatMockup() {
           </div>
           {showTyping && (
             <div className="flex gap-2">
-              <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-violet-500 text-xs text-white">⚡</div>
+              <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-amber-600 to-amber-700 text-xs text-white">⚡</div>
               <div className="rounded-[12px_12px_12px_4px] bg-white px-3 py-3 shadow-sm">
                 <span className="typing-dot" /><span className="typing-dot" /><span className="typing-dot" />
               </div>
@@ -174,29 +174,29 @@ function HeroSection() {
     <section
       id="hero"
       className="relative flex flex-col justify-center overflow-hidden pt-14 scroll-mt-14 sm:pt-16 sm:scroll-mt-16"
-      style={{ background: 'linear-gradient(160deg, #FFFDF5 0%, #F7F0FF 55%, #EDE9FE 100%)', minHeight: '100svh' }}
+      style={{ background: 'linear-gradient(160deg, #FFFDF5 0%, #FFF8E5 55%, #FEF3C7 100%)', minHeight: '100svh' }}
     >
       {/* Tile dot pattern */}
       <div
         className="pointer-events-none absolute inset-0"
-        style={{ backgroundImage: 'radial-gradient(circle, rgba(124,58,237,0.1) 1.5px, transparent 1.5px)', backgroundSize: '36px 36px' }}
+        style={{ backgroundImage: 'radial-gradient(circle, rgba(180,100,0,0.1) 1.5px, transparent 1.5px)', backgroundSize: '36px 36px' }}
       />
 
       {/* Geometric decorations */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         {/* Soft blobs */}
-        <div className="absolute -right-32 -top-16 h-[520px] w-[520px] rounded-full bg-violet-300/25 blur-[100px]" />
+        <div className="absolute -right-32 -top-16 h-[520px] w-[520px] rounded-full bg-amber-300/25 blur-[100px]" />
         <div className="absolute -bottom-24 -left-24 h-[380px] w-[380px] rounded-full bg-amber-200/30 blur-[80px]" />
         <div className="absolute right-1/3 top-1/2 h-[220px] w-[220px] rounded-full bg-cyan-200/20 blur-[60px]" />
         {/* Sharp triangle */}
         <div className="absolute left-[7%] top-[28%] h-14 w-14 bg-amber-400/18" style={{ clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)' }} />
         {/* Diamond */}
-        <div className="absolute bottom-[28%] right-[10%] h-10 w-10 rotate-45 rounded-sm bg-violet-400/22" />
+        <div className="absolute bottom-[28%] right-[10%] h-10 w-10 rotate-45 rounded-sm bg-amber-400/22" />
         {/* Ring */}
-        <div className="absolute right-[18%] top-[20%] h-8 w-8 rounded-full border-2 border-violet-400/30" />
+        <div className="absolute right-[18%] top-[20%] h-8 w-8 rounded-full border-2 border-amber-400/30" />
         <div className="absolute left-[12%] bottom-[35%] h-16 w-16 rounded-full border border-amber-400/20" />
         {/* Hexagon */}
-        <div className="absolute left-[18%] bottom-[18%] h-11 w-11 bg-cyan-400/15" style={{ clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' }} />
+        <div className="absolute left-[18%] bottom-[18%] h-11 w-11 bg-amber-400/15" style={{ clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' }} />
         {/* Small diamond ring */}
         <div className="absolute right-[30%] top-[35%] h-6 w-6 rotate-45 border border-amber-300/30" />
       </div>
@@ -204,14 +204,14 @@ function HeroSection() {
       <div className="relative z-10 mx-auto grid max-w-[1200px] grid-cols-1 items-center gap-12 px-6 pb-16 pt-16 md:grid-cols-2 md:min-h-[calc(100vh-64px)]">
         {/* Left: copy */}
         <div>
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-violet-200 bg-violet-50 px-4 py-1.5 text-xs font-semibold text-violet-700">
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-4 py-1.5 text-xs font-semibold text-amber-700">
             ✨ Angetrieben von Claude KI
           </div>
 
           <h1 className="mb-5 text-[clamp(36px,5vw,60px)] font-bold leading-[1.1] text-slate-900">
             Dein intelligenter
             <br />
-            <span className="bg-gradient-to-r from-primary via-violet-500 to-violet-400 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-amber-600 via-amber-500 to-amber-400 bg-clip-text text-transparent">
               KI Assistent
             </span>
           </h1>
@@ -222,15 +222,15 @@ function HeroSection() {
 
           <div className="mb-7 flex flex-wrap items-center gap-3">
             <SignUpButton mode="modal" fallbackRedirectUrl="/tools">
-              <button className="flex h-12 items-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-violet-500 px-7 text-base font-semibold text-white shadow-lg shadow-violet-300/50 transition-all hover:scale-[1.02] hover:shadow-xl">
+              <button className="flex h-12 items-center gap-2 rounded-2xl bg-gradient-to-r from-[#1C1200] to-[#2D1C08] px-7 text-base font-semibold text-amber-300 shadow-lg shadow-black/25 transition-all hover:scale-[1.02] hover:shadow-xl">
                 Kostenlos starten
-                <span className="opacity-80">→</span>
+                <span className="opacity-70">→</span>
               </button>
             </SignUpButton>
             <button
               type="button"
               onClick={() => scrollTo('demo')}
-              className="flex h-12 items-center gap-2 rounded-2xl border-2 border-slate-200 bg-white/80 px-6 text-base font-medium text-slate-600 backdrop-blur-sm transition-all hover:border-violet-200 hover:bg-violet-50 hover:text-primary"
+              className="flex h-12 items-center gap-2 rounded-2xl border-2 border-amber-200 bg-white/80 px-6 text-base font-medium text-amber-700 backdrop-blur-sm transition-all hover:border-amber-400 hover:bg-amber-50"
             >
               <Play size={15} className="text-primary" />
               Demo ansehen
@@ -312,28 +312,28 @@ function FeaturesSection() {
     <section
       id="features"
       className="relative flex flex-col justify-center px-6 py-16 scroll-mt-14 sm:scroll-mt-16"
-      style={{ background: 'linear-gradient(180deg, #EDE9FE 0%, #F5F0FF 40%, #FFFFFF 100%)', minHeight: '100svh' }}
+      style={{ background: 'linear-gradient(180deg, #FEF3C7 0%, #FFFBEB 40%, #FFFFFF 100%)', minHeight: '100svh' }}
     >
       {/* Tile pattern */}
       <div
         className="pointer-events-none absolute inset-0"
-        style={{ backgroundImage: 'radial-gradient(circle, rgba(124,58,237,0.08) 1.5px, transparent 1.5px)', backgroundSize: '28px 28px' }}
+        style={{ backgroundImage: 'radial-gradient(circle, rgba(180,100,0,0.08) 1.5px, transparent 1.5px)', backgroundSize: '28px 28px' }}
       />
 
       {/* Geometric decorations */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -right-20 top-0 h-[300px] w-[300px] rounded-full bg-violet-200/20 blur-[80px]" />
+        <div className="absolute -right-20 top-0 h-[300px] w-[300px] rounded-full bg-amber-200/20 blur-[80px]" />
         <div className="absolute -left-10 bottom-0 h-[250px] w-[250px] rounded-full bg-amber-200/20 blur-[60px]" />
-        <div className="absolute right-[7%] top-[18%] h-14 w-14 bg-violet-400/10" style={{ clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' }} />
+        <div className="absolute right-[7%] top-[18%] h-14 w-14 bg-amber-400/10" style={{ clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' }} />
         <div className="absolute left-[5%] top-[55%] h-9 w-9 bg-amber-400/15" style={{ clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' }} />
-        <div className="absolute right-[14%] bottom-[18%] h-16 w-16 rounded-full border-2 border-violet-300/20" />
+        <div className="absolute right-[14%] bottom-[18%] h-16 w-16 rounded-full border-2 border-amber-300/20" />
         <div className="absolute left-[9%] top-[28%] h-8 w-8 rounded-full border-2 border-amber-400/18" />
-        <div className="absolute left-[20%] bottom-[10%] h-8 w-8 rotate-45 border border-violet-400/20" />
+        <div className="absolute left-[20%] bottom-[10%] h-8 w-8 rotate-45 border border-amber-400/20" />
       </div>
 
       <div className="relative z-10 mx-auto w-full max-w-[1100px]">
         <div className="mb-14 text-center">
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-violet-200 bg-violet-50 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.15em] text-violet-600">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.15em] text-amber-600">
             Werkzeuge
           </div>
           <h2 className="mb-3 text-[clamp(28px,4vw,44px)] font-bold text-slate-900">
@@ -356,7 +356,7 @@ function FeaturesSection() {
                 'w-[78vw] max-w-[300px] flex-shrink-0 snap-center',
                 'sm:w-auto sm:max-w-none',
                 'group relative cursor-default overflow-hidden rounded-2xl border bg-white/90 p-6 backdrop-blur-sm transition-all duration-200 hover:-translate-y-1.5',
-                f.highlight ? 'border-primary/40 shadow-lg shadow-violet-100' : 'border-white shadow-sm',
+                f.highlight ? 'border-amber-600/40 shadow-lg shadow-amber-200' : 'border-white shadow-sm',
               ].join(' ')}
             >
               {/* Warm glow on hover */}
@@ -584,13 +584,13 @@ function CodeResponseBubble({ text }: { text: string }) {
 
 function GeneralResponseBubble({ text }: { text: string }) {
   return (
-    <div className="w-full overflow-hidden rounded-xl border border-violet-100 bg-gradient-to-br from-violet-50 to-white">
-      <div className="flex items-center gap-1.5 border-b border-violet-100 px-4 py-2">
+    <div className="w-full overflow-hidden rounded-xl border border-amber-100 bg-gradient-to-br from-amber-50 to-white">
+      <div className="flex items-center gap-1.5 border-b border-amber-100 px-4 py-2">
         <span className="text-sm">💬</span>
-        <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-violet-600">SmartAssist</span>
+        <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-amber-600">SmartAssist</span>
       </div>
       <div className="px-4 py-3">
-        <RichText text={text} dotColor="bg-violet-400" numColor="text-violet-600" />
+        <RichText text={text} dotColor="bg-amber-400" numColor="text-amber-600" />
       </div>
     </div>
   )
@@ -693,19 +693,19 @@ function LiveDemoSection() {
     <section
       id="demo"
       className="relative flex flex-col justify-center overflow-hidden px-4 py-16 scroll-mt-14 sm:px-6 sm:scroll-mt-16"
-      style={{ background: 'linear-gradient(180deg, #FFFFFF 0%, #F5F0FF 30%, #EEF2FF 100%)', minHeight: '100svh' }}
+      style={{ background: 'linear-gradient(180deg, #FFFFFF 0%, #FFFBEB 30%, #FEF9C3 100%)', minHeight: '100svh' }}
     >
       {/* Tile pattern */}
       <div
         className="pointer-events-none absolute inset-0"
-        style={{ backgroundImage: 'radial-gradient(circle, rgba(124,58,237,0.06) 1.5px, transparent 1.5px)', backgroundSize: '30px 30px' }}
+        style={{ backgroundImage: 'radial-gradient(circle, rgba(180,100,0,0.06) 1.5px, transparent 1.5px)', backgroundSize: '30px 30px' }}
       />
       {/* Decorative shapes */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -left-16 top-1/4 h-[220px] w-[220px] rounded-full bg-violet-200/15 blur-[70px]" />
-        <div className="absolute -right-16 bottom-1/4 h-[200px] w-[200px] rounded-full bg-indigo-200/15 blur-[60px]" />
-        <div className="absolute right-[5%] top-[15%] h-10 w-10 rotate-45 border border-violet-300/20" />
-        <div className="absolute left-[4%] bottom-[20%] h-8 w-8 bg-violet-300/15" style={{ clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' }} />
+        <div className="absolute -left-16 top-1/4 h-[220px] w-[220px] rounded-full bg-amber-200/15 blur-[70px]" />
+        <div className="absolute -right-16 bottom-1/4 h-[200px] w-[200px] rounded-full bg-amber-200/15 blur-[60px]" />
+        <div className="absolute right-[5%] top-[15%] h-10 w-10 rotate-45 border border-amber-300/20" />
+        <div className="absolute left-[4%] bottom-[20%] h-8 w-8 bg-amber-300/15" style={{ clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' }} />
       </div>
       <div className="relative z-10 mx-auto w-full max-w-[640px]">
         <div className="mb-8 text-center">
@@ -806,7 +806,7 @@ function LiveDemoSection() {
               <button
                 type="button"
                 onClick={() => void send(cfg.chip)}
-                className="flex w-full items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-left text-xs text-slate-600 transition-colors hover:border-primary/40 hover:bg-primary-light hover:text-primary"
+                className="flex w-full items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-left text-xs text-slate-600 transition-colors hover:border-amber-600/40 hover:bg-primary-light hover:text-primary"
               >
                 <span className="flex-shrink-0">{cfg.emoji}</span>
                 <span className="truncate">{cfg.chip}</span>
@@ -852,7 +852,7 @@ function LiveDemoSection() {
                     key={t}
                     type="button"
                     onClick={() => handleToolSwitch(t)}
-                    className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-600 transition-colors hover:border-primary/40 hover:bg-primary-light hover:text-primary"
+                    className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-600 transition-colors hover:border-amber-600/40 hover:bg-primary-light hover:text-primary"
                   >
                     <span>{DEMO_TOOL_CONFIG[t].emoji}</span>
                     {DEMO_TOOL_CONFIG[t].label}
@@ -888,7 +888,7 @@ function LiveDemoSection() {
                 }}
                 placeholder={cfg.placeholder}
                 disabled={loading}
-                className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary/20 disabled:opacity-50 sm:px-4"
+                className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-amber-600/20 disabled:opacity-50 sm:px-4"
                 style={{ fontSize: 'max(16px, 0.875rem)' }}
               />
               <button
@@ -932,24 +932,24 @@ const STEPS = [
     icon: '🔑',
     title: 'Kostenloses Konto erstellen',
     text: 'Melde dich mit einem Klick über Google an. Keine Kreditkarte nötig.',
-    color: 'from-violet-600 to-violet-500',
-    glow: 'bg-violet-500/40',
+    color: 'from-amber-400 to-amber-300',
+    glow: 'bg-amber-400/50',
   },
   {
     num: '2',
     icon: '🎯',
     title: 'Werkzeug wählen',
     text: 'Chat, Job Analyse, Interview Vorbereitung, Programmierung oder Sprachenlernen.',
-    color: 'from-cyan-600 to-cyan-500',
-    glow: 'bg-cyan-500/40',
+    color: 'from-amber-500 to-amber-400',
+    glow: 'bg-amber-500/50',
   },
   {
     num: '3',
     icon: '✨',
     title: 'Smarte Antworten erhalten',
     text: 'Die KI versteht dein Anliegen und gibt präzise, hilfreiche Antworten.',
-    color: 'from-amber-500 to-amber-400',
-    glow: 'bg-amber-500/40',
+    color: 'from-amber-600 to-amber-500',
+    glow: 'bg-amber-600/50',
   },
 ] as const
 
@@ -958,7 +958,7 @@ function HowItWorksSection() {
     <section
       id="how-it-works"
       className="relative flex flex-col justify-center overflow-hidden px-6 py-16 scroll-mt-14 sm:scroll-mt-16"
-      style={{ background: 'linear-gradient(160deg, #1E1B2E 0%, #150F25 100%)', minHeight: '100svh' }}
+      style={{ background: 'linear-gradient(160deg, #1C1200 0%, #0D0800 100%)', minHeight: '100svh' }}
     >
       {/* Tile pattern */}
       <div
@@ -968,12 +968,12 @@ function HowItWorksSection() {
 
       {/* Geometric decorations */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -left-24 top-1/4 h-[320px] w-[320px] rounded-full bg-violet-700/20 blur-[100px]" />
-        <div className="absolute -right-24 bottom-1/4 h-[280px] w-[280px] rounded-full bg-cyan-600/10 blur-[80px]" />
-        <div className="absolute right-[9%] top-[22%] h-12 w-12 bg-violet-400/18" style={{ clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)' }} />
-        <div className="absolute left-[7%] bottom-[22%] h-8 w-8 bg-cyan-400/15" style={{ clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)' }} />
-        <div className="absolute left-[18%] top-[28%] h-20 w-20 rounded-full border border-violet-500/15" />
-        <div className="absolute right-[22%] bottom-[18%] h-12 w-12 rounded-full border border-cyan-400/10" />
+        <div className="absolute -left-24 top-1/4 h-[320px] w-[320px] rounded-full bg-amber-500/15 blur-[100px]" />
+        <div className="absolute -right-24 bottom-1/4 h-[280px] w-[280px] rounded-full bg-amber-300/10 blur-[80px]" />
+        <div className="absolute right-[9%] top-[22%] h-12 w-12 bg-amber-400/18" style={{ clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)' }} />
+        <div className="absolute left-[7%] bottom-[22%] h-8 w-8 bg-amber-400/15" style={{ clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)' }} />
+        <div className="absolute left-[18%] top-[28%] h-20 w-20 rounded-full border border-amber-500/15" />
+        <div className="absolute right-[22%] bottom-[18%] h-12 w-12 rounded-full border border-amber-400/10" />
         <div className="absolute right-[5%] bottom-[38%] h-8 w-8 rotate-45 border-2 border-amber-400/18" />
         <div className="absolute left-[28%] top-[15%] h-6 w-6 rotate-45 bg-amber-400/12 rounded-sm" />
       </div>
@@ -1028,7 +1028,7 @@ const PREVIEW_PLANS = [
       'Sitzungsspeicher im Browser',
     ],
     cta: 'Kostenlos starten',
-    ctaClass: 'border border-slate-300 bg-white text-slate-600 hover:border-violet-300 hover:text-primary',
+    ctaClass: 'border border-slate-300 bg-white text-slate-600 hover:border-amber-300 hover:text-primary',
     useSignUp: true,
     scale: false,
   },
@@ -1039,7 +1039,7 @@ const PREVIEW_PLANS = [
     period: '/pro Monat',
     icon: '✨',
     borderClass: 'border-primary border-2',
-    headerBg: 'bg-gradient-to-br from-violet-50 to-indigo-50',
+    headerBg: 'bg-gradient-to-br from-amber-50 to-amber-50',
     badge: 'Am beliebtesten',
     features: [
       'Alles aus Kostenlos',
@@ -1049,7 +1049,7 @@ const PREVIEW_PLANS = [
       'Gesprächsverlauf (30 Tage)',
     ],
     cta: 'Premium starten',
-    ctaClass: 'bg-gradient-to-r from-primary to-violet-500 text-white shadow-md shadow-violet-200 hover:shadow-lg',
+    ctaClass: 'bg-gradient-to-r from-amber-600 to-amber-700 text-white shadow-md shadow-amber-200 hover:shadow-lg',
     useSignUp: false,
     href: '/pricing',
     scale: true,
@@ -1126,12 +1126,12 @@ function PricingPreviewSection() {
                 'md:w-auto md:max-w-none',
                 'overflow-hidden rounded-3xl border bg-white shadow-sm',
                 plan.borderClass,
-                plan.scale ? 'md:scale-[1.04] shadow-xl shadow-violet-100/60' : '',
+                plan.scale ? 'md:scale-[1.04] shadow-xl shadow-amber-300/50' : '',
               ].join(' ')}
             >
               <div className={`px-5 pb-4 pt-5 ${plan.headerBg}`}>
                 {'badge' in plan && plan.badge && (
-                  <span className="mb-2 inline-block rounded-full bg-gradient-to-r from-primary to-violet-500 px-2.5 py-0.5 text-[10px] font-bold tracking-wide text-white">
+                  <span className="mb-2 inline-block rounded-full bg-gradient-to-r from-amber-600 to-amber-700 px-2.5 py-0.5 text-[10px] font-bold tracking-wide text-white">
                     {plan.badge}
                   </span>
                 )}
@@ -1182,7 +1182,7 @@ function FinalCtaSection() {
     <section
       id="cta"
       className="relative flex flex-col items-center justify-center overflow-hidden px-6 py-20 text-center text-white scroll-mt-14 sm:scroll-mt-16"
-      style={{ background: 'linear-gradient(160deg, #5B21B6 0%, #7C3AED 50%, #6D28D9 100%)', minHeight: '100svh' }}
+      style={{ background: 'linear-gradient(160deg, #1C1200 0%, #2D1C08 50%, #3D2A10 100%)', minHeight: '100svh' }}
     >
       {/* Tile pattern */}
       <div
@@ -1193,9 +1193,9 @@ function FinalCtaSection() {
       {/* Geometric decorations */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -left-20 top-1/2 h-[420px] w-[420px] -translate-y-1/2 rounded-full bg-white/5 blur-[80px]" />
-        <div className="absolute -right-20 top-1/2 h-[380px] w-[380px] -translate-y-1/2 rounded-full bg-violet-300/10 blur-[80px]" />
+        <div className="absolute -right-20 top-1/2 h-[380px] w-[380px] -translate-y-1/2 rounded-full bg-amber-300/10 blur-[80px]" />
         <div className="absolute left-1/2 top-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/5" />
-        <div className="absolute left-1/2 top-1/2 h-[360px] w-[360px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/8" />
+        <div className="absolute left-1/2 top-1/2 h-[360px] w-[360px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/10" />
         {/* Sparkles */}
         {[
           'top-[18%] left-[14%]', 'top-[32%] right-[11%]',
@@ -1216,7 +1216,7 @@ function FinalCtaSection() {
           Schließ dich Nutzern an, die täglich Zeit mit SmartAssist sparen.
         </p>
         <SignUpButton mode="modal" fallbackRedirectUrl="/tools">
-          <button className="rounded-2xl bg-white px-10 py-4 text-base font-bold text-primary shadow-2xl shadow-violet-900/50 transition-all hover:scale-[1.02] hover:shadow-3xl">
+          <button className="rounded-2xl bg-gradient-to-r from-amber-400 to-amber-500 px-10 py-4 text-base font-bold text-amber-950 shadow-2xl shadow-black/40 transition-all hover:scale-[1.02] hover:brightness-105">
             Kostenlos starten, für immer
           </button>
         </SignUpButton>
@@ -1230,7 +1230,7 @@ function FinalCtaSection() {
 
 function FooterSection() {
   return (
-    <footer className="relative overflow-hidden px-6 py-12" style={{ background: '#111827' }}>
+    <footer className="relative overflow-hidden px-6 py-12" style={{ background: '#0D0800' }}>
       {/* Tile pattern */}
       <div
         className="pointer-events-none absolute inset-0"
@@ -1241,7 +1241,7 @@ function FooterSection() {
           <div>
             <div className="mb-1 flex items-center gap-2">
               <img src="/favicon.png" alt="SmartAssist" className="h-7 w-7 rounded-lg" />
-              <span className="bg-gradient-to-r from-violet-400 to-violet-300 bg-clip-text text-lg font-bold text-transparent">SmartAssist</span>
+              <span className="bg-gradient-to-r from-amber-400 to-amber-300 bg-clip-text text-lg font-bold text-transparent">SmartAssist</span>
             </div>
             <p className="text-sm text-slate-500">KI Werkzeuge für alle</p>
           </div>
@@ -1276,17 +1276,17 @@ export default function LandingPage() {
     <div className="min-h-screen">
       <LandingNav />
       <HeroSection />
-      <SectionDivider from="#EDE9FE" to="#EDE9FE" />
+      <SectionDivider from="#FEF3C7" to="#FEF3C7" />
       <FeaturesSection />
       <SectionDivider from="#FFFFFF" to="#FFFFFF" />
       <LiveDemoSection />
-      <SectionDivider from="#EEF2FF" to="#1E1B2E" dark />
+      <SectionDivider from="#FEF9C3" to="#1C1200" dark />
       <HowItWorksSection />
-      <SectionDivider from="#150F25" to="#FFFBEB" />
+      <SectionDivider from="#0D0800" to="#FFFBEB" />
       <PricingPreviewSection />
-      <SectionDivider from="#FFF7ED" to="#5B21B6" />
+      <SectionDivider from="#FFF7ED" to="#1C1200" dark />
       <FinalCtaSection />
-      <SectionDivider from="#6D28D9" to="#111827" dark />
+      <SectionDivider from="#3D2A10" to="#0D0800" dark />
       <FooterSection />
     </div>
   )

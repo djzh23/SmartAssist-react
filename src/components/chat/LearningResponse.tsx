@@ -167,7 +167,7 @@ export default function LearningResponse({ data, targetLang, nativeLang, targetL
 
   return (
     <div className="flex max-w-[520px] animate-slide-up flex-col gap-1.5">
-      <div className="learning-card-target group rounded-xl border-l-[3px] border-l-[#7C3AED] bg-[#F5F3FF] px-4 py-3.5 transition-transform duration-100 hover:translate-x-0.5">
+      <div className="learning-card-target group rounded-xl border-l-[3px] border-l-[#D97706] bg-[#FFFBEB] px-4 py-3.5 transition-transform duration-100 hover:translate-x-0.5">
         <div className="mb-2 flex items-center justify-between">
           <span className="text-[10px] font-bold uppercase tracking-[1.2px] text-slate-500">
             {targetLang}
@@ -179,8 +179,8 @@ export default function LearningResponse({ data, targetLang, nativeLang, targetL
               title={audioError ?? 'Aussprache anhören'}
               className={[
                 'flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-sm transition-all duration-150',
-                'bg-[rgba(124,58,237,0.1)] text-[#7C3AED] hover:bg-[rgba(124,58,237,0.2)]',
-                isPlaying ? 'bg-[#7C3AED] text-white motion-safe:animate-pulse' : '',
+                'bg-[rgba(180,100,0,0.1)] text-[#D97706] hover:bg-[rgba(180,100,0,0.2)]',
+                isPlaying ? 'bg-[#D97706] text-white motion-safe:animate-pulse' : '',
                 audioError ? 'bg-red-100 text-red-600' : '',
               ].join(' ')}
             >

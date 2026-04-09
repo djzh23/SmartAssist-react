@@ -172,8 +172,8 @@ export function getPlanLabel(plan: PlanType): string {
 export function getPlanColors(plan: PlanType): { badge: string; border: string; button: string } {
   if (plan === 'premium') {
     return {
-      badge: 'bg-cyan-100 text-cyan-700 border-cyan-200',
-      border: 'border-cyan-400',
+      badge: 'bg-amber-100 text-amber-700 border-amber-200',
+      border: 'border-amber-400',
       button: 'bg-primary hover:bg-primary-hover text-white',
     }
   }
@@ -407,7 +407,7 @@ export function useUserPlan(): UserPlanState {
   const planColorMap: Record<PlanType, string> = {
     anonymous: '#6B7280',
     free: '#6B7280',
-    premium: '#06B6D4',
+    premium: '#D97706',
     pro: '#D97706',
   }
 
