@@ -83,7 +83,7 @@ export default function ProfilePage() {
       setSyncPlanError(null)
       const token = await getToken()
       if (!token) throw new Error('Kein Authentifizierungs-Token. Bitte erneut anmelden.')
-      const result = await syncPlanFromStripe(token)
+      const result = await syncPlanFromStripe(token, user.email)
       if (result.plan === 'premium' || result.plan === 'pro') {
         markUpgradePending(result.plan as 'premium' | 'pro', 120)
         await refreshUsage({ retries: 1, retryDelayMs: 800 })
@@ -117,7 +117,7 @@ export default function ProfilePage() {
       // 2. Query Stripe directly for active subscriptions (authoritative fallback)
       const token = await getToken()
       if (token) {
-        const syncResult = await syncPlanFromStripe(token)
+        const syncResult = await syncPlanFromStripe(token, user.email)
         if (syncResult.plan === 'premium' || syncResult.plan === 'pro') {
           markUpgradePending(syncResult.plan as 'premium' | 'pro', 120)
           await refreshUsage({ retries: 1, retryDelayMs: 800 })
@@ -193,7 +193,7 @@ export default function ProfilePage() {
       try {
         const token = await getToken()
         if (token && !cancelled) {
-          const syncResult = await syncPlanFromStripe(token)
+          const syncResult = await syncPlanFromStripe(token, user.email)
           if (!cancelled && (syncResult.plan === 'premium' || syncResult.plan === 'pro')) {
             const syncedPlan = syncResult.plan as 'premium' | 'pro'
             markUpgradePending(syncedPlan, 120)

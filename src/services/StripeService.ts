@@ -77,13 +77,20 @@ export interface SyncPlanResult {
  * Calls POST /api/stripe/sync-plan — the backend queries Stripe for the user's
  * active subscription and overwrites Redis to match. Use when webhook + confirm-plan
  * have both failed and the user is still stuck on "free".
+ *
+ * Pass email so the backend can find the Stripe customer even when the
+ * customer-ID mapping was never written to Redis (missed webhook).
  */
-export const syncPlanFromStripe = async (token: string): Promise<SyncPlanResult> => {
+export const syncPlanFromStripe = async (token: string, email?: string | null): Promise<SyncPlanResult> => {
   if (!token) throw new Error('Missing auth token for plan sync')
 
   const response = await fetch(`${API_URL}/api/stripe/sync-plan`, {
     method: 'POST',
-    headers: { Authorization: `Bearer ${token}` },
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ email: email ?? null }),
   })
 
   if (!response.ok) {

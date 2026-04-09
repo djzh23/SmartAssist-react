@@ -675,7 +675,7 @@ export default function ChatPage() {
           // Usage endpoint still returns free — query Stripe directly to repair Redis
           const token = await getToken()
           if (token) {
-            const syncResult = await syncPlanFromStripe(token)
+            const syncResult = await syncPlanFromStripe(token, email)
             if (syncResult.plan === 'premium' || syncResult.plan === 'pro') {
               await refreshUsage({ retries: 1, retryDelayMs: 500 })
               return // Redis repaired — let user retry
