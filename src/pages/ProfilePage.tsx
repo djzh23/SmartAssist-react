@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@clerk/clerk-react'
 import { ArrowRight, BarChart2, Calendar, Crown, Loader2, Sparkles, Star, Zap } from 'lucide-react'
 import { useUserPlan, getPlanColors, getPlanLabel } from '../hooks/useUserPlan'
-import { confirmPlanFromSession, createPortalSession } from '../services/StripeService'
+import { confirmPlanFromSession, createPortalSession, syncPlanFromStripe } from '../services/StripeService'
 
 function UsageBar({ used, limit }: { used: number; limit: number }) {
   const pct = Math.min(100, limit > 0 ? (used / limit) * 100 : 0)
@@ -44,6 +44,8 @@ export default function ProfilePage() {
   const [portalLoading, setPortalLoading] = useState(false)
   const [portalError, setPortalError] = useState<string | null>(null)
   const [upgradeSyncNotice, setUpgradeSyncNotice] = useState<string | null>(null)
+  const [isSyncingPlan, setIsSyncingPlan] = useState(false)
+  const [syncPlanError, setSyncPlanError] = useState<string | null>(null)
 
   const justUpgraded = (searchParams.get('upgraded') ?? '').toLowerCase() === 'true'
   const checkoutSessionId = searchParams.get('session_id') ?? null
@@ -75,8 +77,30 @@ export default function ProfilePage() {
     }
   }
 
+  const handleSyncPlan = async () => {
+    try {
+      setIsSyncingPlan(true)
+      setSyncPlanError(null)
+      const token = await getToken()
+      if (!token) throw new Error('Kein Authentifizierungs-Token. Bitte erneut anmelden.')
+      const result = await syncPlanFromStripe(token)
+      if (result.plan === 'premium' || result.plan === 'pro') {
+        markUpgradePending(result.plan as 'premium' | 'pro', 120)
+        await refreshUsage({ retries: 1, retryDelayMs: 800 })
+        setUpgradeSyncNotice(null)
+      } else {
+        setSyncPlanError('Kein aktives Premium-Abonnement bei Stripe gefunden. Bitte Zahlungsdetails prüfen.')
+      }
+    } catch (err) {
+      setSyncPlanError(err instanceof Error ? err.message : 'Synchronisierung fehlgeschlagen')
+    } finally {
+      setIsSyncingPlan(false)
+    }
+  }
+
   const handleRetryUsageSync = async () => {
     try {
+      // 1. Try confirm-plan with session ID (if we still have it)
       if (checkoutSessionId) {
         const token = await getToken()
         if (token) {
@@ -90,6 +114,18 @@ export default function ProfilePage() {
           }
         }
       }
+      // 2. Query Stripe directly for active subscriptions (authoritative fallback)
+      const token = await getToken()
+      if (token) {
+        const syncResult = await syncPlanFromStripe(token)
+        if (syncResult.plan === 'premium' || syncResult.plan === 'pro') {
+          markUpgradePending(syncResult.plan as 'premium' | 'pro', 120)
+          await refreshUsage({ retries: 1, retryDelayMs: 800 })
+          setUpgradeSyncNotice(null)
+          return
+        }
+      }
+      // 3. Plain refresh as last resort
       const nextPlan = await refreshUsage({ retries: 1, retryDelayMs: 1000 })
       if (nextPlan === 'premium' || nextPlan === 'pro') {
         setUpgradeSyncNotice(null)
@@ -138,7 +174,7 @@ export default function ProfilePage() {
 
       setUpgradeSyncNotice('Zahlung erhalten. Temporärer Zugriff aktiv, während Server-Bestätigung aussteht…')
 
-      for (let attempt = 0; attempt < 6; attempt++) {
+      for (let attempt = 0; attempt < 4; attempt++) {
         if (cancelled) return
         await new Promise(resolve => window.setTimeout(resolve, 2000))
         if (cancelled) return
@@ -153,8 +189,25 @@ export default function ProfilePage() {
         }
       }
 
+      // Final authoritative fallback: query Stripe directly for the active subscription
+      try {
+        const token = await getToken()
+        if (token && !cancelled) {
+          const syncResult = await syncPlanFromStripe(token)
+          if (!cancelled && (syncResult.plan === 'premium' || syncResult.plan === 'pro')) {
+            const syncedPlan = syncResult.plan as 'premium' | 'pro'
+            markUpgradePending(syncedPlan, 120)
+            await refreshUsage({ retries: 1, retryDelayMs: 800 })
+            if (!cancelled) setUpgradeSyncNotice(null)
+            return
+          }
+        }
+      } catch {
+        // ignore — show notice below
+      }
+
       if (!cancelled) {
-        setUpgradeSyncNotice('Server-Bestätigung ausstehend. Temporärer Zugriff bleibt aktiv. Bitte in wenigen Sekunden erneut synchronisieren.')
+        setUpgradeSyncNotice('Server-Bestätigung ausstehend. Klicke auf "Plan synchronisieren" um es erneut zu versuchen.')
       }
     }
 
@@ -329,13 +382,29 @@ export default function ProfilePage() {
           </div>
 
           {user.plan !== 'pro' && (
-            <button
-              onClick={() => navigate('/pricing')}
-              className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-hover"
-            >
-              {user.plan === 'free' ? 'Premium werden' : 'Pro werden'}
-              <ArrowRight size={14} />
-            </button>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={() => navigate('/pricing')}
+                className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-hover"
+              >
+                {user.plan === 'free' ? 'Premium werden' : 'Pro werden'}
+                <ArrowRight size={14} />
+              </button>
+              {user.plan === 'free' && (
+                <button
+                  onClick={() => void handleSyncPlan()}
+                  disabled={isSyncingPlan}
+                  title="Bereits bezahlt? Plan mit Stripe abgleichen"
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-600 transition-colors hover:border-slate-400 disabled:opacity-60"
+                >
+                  {isSyncingPlan ? <Loader2 size={12} className="animate-spin" /> : null}
+                  {isSyncingPlan ? 'Synchronisiert…' : 'Plan synchronisieren'}
+                </button>
+              )}
+            </div>
+          )}
+          {syncPlanError && (
+            <p className="mt-1 text-xs text-rose-600">{syncPlanError}</p>
           )}
         </div>
 

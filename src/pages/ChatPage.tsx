@@ -4,6 +4,7 @@ import { AlertCircle, PanelLeft, Plus, X } from 'lucide-react'
 import type { ToolType } from '../types'
 import { PROGRAMMING_LANGUAGES } from '../types'
 import { UsageLimitError, askAgentStream } from '../api/client'
+import { syncPlanFromStripe } from '../services/StripeService'
 import ChatInput from '../components/chat/ChatInput'
 import ChatSidebar from '../components/chat/ChatSidebar'
 import ContextModal, { type ContextModalToolType, type ContextPayload } from '../components/chat/ContextModal'
@@ -663,14 +664,22 @@ export default function ChatPage() {
       store.deleteMessage(sessionId, streamingMsgId)
       if (sendError instanceof UsageLimitError) {
         // Before showing the modal, re-check the plan from the server.
-        // If the backend returned 429 due to a stale "free" plan in Redis right after
-        // a Stripe upgrade (webhook lag), the refresh will pick up the new "premium" plan
-        // so the user can simply click Send again without seeing the modal.
+        // If the backend returned 429 due to a stale "free" plan right after a Stripe
+        // upgrade, the refresh (or Stripe sync) will unlock the correct plan so the user
+        // can simply click Send again without seeing the modal.
         try {
           const latestPlan = await refreshUsage({ retries: 1, retryDelayMs: 1000 })
           if (latestPlan === 'premium' || latestPlan === 'pro') {
-            // Plan is confirmed — 429 was a timing artifact, don't block the user
-            return
+            return // timing artifact — plan now confirmed, don't block
+          }
+          // Usage endpoint still returns free — query Stripe directly to repair Redis
+          const token = await getToken()
+          if (token) {
+            const syncResult = await syncPlanFromStripe(token)
+            if (syncResult.plan === 'premium' || syncResult.plan === 'pro') {
+              await refreshUsage({ retries: 1, retryDelayMs: 500 })
+              return // Redis repaired — let user retry
+            }
           }
         } catch { /* ignore — fall through to show modal */ }
         setShowLimitModal(true)

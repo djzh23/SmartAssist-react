@@ -68,6 +68,31 @@ export const confirmPlanFromSession = async (
   return response.json() as Promise<ConfirmPlanResult>
 }
 
+export interface SyncPlanResult {
+  plan: string
+  synced: boolean
+}
+
+/**
+ * Calls POST /api/stripe/sync-plan — the backend queries Stripe for the user's
+ * active subscription and overwrites Redis to match. Use when webhook + confirm-plan
+ * have both failed and the user is still stuck on "free".
+ */
+export const syncPlanFromStripe = async (token: string): Promise<SyncPlanResult> => {
+  if (!token) throw new Error('Missing auth token for plan sync')
+
+  const response = await fetch(`${API_URL}/api/stripe/sync-plan`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+  })
+
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, 'Failed to sync plan from Stripe'))
+  }
+
+  return response.json() as Promise<SyncPlanResult>
+}
+
 export const createPortalSession = async (auth: StripeAuthContext): Promise<string> => {
   if (!auth.token) throw new Error('Missing auth token for customer portal')
   if (!auth.userId) throw new Error('Missing user ID for customer portal')
