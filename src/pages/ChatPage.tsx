@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { flushSync } from 'react-dom'
 import { useSearchParams } from 'react-router-dom'
 import { AlertCircle, PanelLeft, Plus, X } from 'lucide-react'
 import type { ToolType } from '../types'
@@ -13,6 +14,7 @@ import UsageLimitModal from '../components/ui/UsageLimitModal'
 import { useChatSessions } from '../hooks/useChatSessions'
 import { useUserPlan, dispatchServerUsage } from '../hooks/useUserPlan'
 import { sanitizeTechnicalContext } from '../utils/cvTechnicalContext'
+import { applyStreamText } from '../chat/streamTextBridge'
 
 /** German UI labels shown in sidebar / header chips */
 const LANG_DISPLAY: Record<string, string> = {
@@ -369,9 +371,6 @@ export default function ChatPage() {
   const modalToolType = modalToolTypeFromParam(rawToolParam, toolParam)
 
   const store = useChatSessions()
-  const [isLoading, setIsLoading] = useState(false)
-  /** Session currently in handleSend (before stream finishes); allows typing in other chats */
-  const loadingSessionRef = useRef<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [showContextModal, setShowContextModal] = useState(false)
@@ -607,10 +606,6 @@ export default function ChatPage() {
     const displayText = options?.displayText ?? text
     const outgoingText = options?.apiMessageOverride ?? text
 
-    if (!options?.skipUserBubble) {
-      store.addMessage(sessionId, { text: displayText, isUser: true })
-    }
-    setIsLoading(true)
     setError(null)
 
     const effectiveContext = options?.contextOverride ?? activeContext
@@ -626,9 +621,13 @@ export default function ChatPage() {
         : outgoingText)
 
     const streamingMsgId = crypto.randomUUID()
-    store.addMessage(sessionId, { id: streamingMsgId, text: '', isUser: false })
-    store.setSessionStreaming(sessionId, true)
-    loadingSessionRef.current = sessionId
+    flushSync(() => {
+      if (!options?.skipUserBubble) {
+        store.addMessage(sessionId, { text: displayText, isUser: true })
+      }
+      store.addMessage(sessionId, { id: streamingMsgId, text: '', isUser: false })
+      store.setSessionStreaming(sessionId, true)
+    })
 
     try {
       const token = await getToken()
@@ -654,11 +653,13 @@ export default function ChatPage() {
         token,
         (chunk) => {
           accumulated += chunk
-          store.updateMessageText(sessionId, streamingMsgId, accumulated)
+          applyStreamText(sessionId, streamingMsgId, accumulated)
         },
       )
 
-      store.finalizeMessage(sessionId, streamingMsgId, { toolUsed: toolUsed || undefined })
+      flushSync(() => {
+        store.finalizeMessage(sessionId, streamingMsgId, { toolUsed: toolUsed || undefined })
+      })
 
       const preview = accumulated.trim().split('\n')[0] ?? 'Neue Antwort'
       store.notifyAnswerReady(sessionId, sessionToolType, preview)
@@ -696,18 +697,13 @@ export default function ChatPage() {
       }
     } finally {
       store.setSessionStreaming(sessionId, false)
-      loadingSessionRef.current = null
-      setIsLoading(false)
     }
   }
 
   const activeId = store.activeSessionId
-  const inputBlocked =
-    store.isSessionStreaming(activeId)
-    || (isLoading && loadingSessionRef.current === activeId)
-  const showTypingForActive =
-    store.isSessionStreaming(activeId)
-    || (isLoading && loadingSessionRef.current === activeId)
+  /** Streaming is tracked in ChatSessionsProvider so it survives switching chats / routes. */
+  const inputBlocked = store.isSessionStreaming(activeId)
+  const showTypingForActive = store.isSessionStreaming(activeId)
 
   const programmingContextLabel = activeContext?.programmingLanguage
     || (activeContext?.programmingLanguageId

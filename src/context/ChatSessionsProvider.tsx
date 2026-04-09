@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from 'react'
 import { useLocation } from 'react-router-dom'
+import { setStreamTextApplier } from '../chat/streamTextBridge'
 import type { ChatSession, ChatMessage, ToolType } from '../types'
 
 const LS_SESSIONS = 'smartassist_react_sessions'
@@ -245,6 +246,16 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     })
   }, [])
 
+  const updateMessageTextRef = useRef(updateMessageText)
+  updateMessageTextRef.current = updateMessageText
+
+  useEffect(() => {
+    setStreamTextApplier((sessionId, messageId, text) => {
+      updateMessageTextRef.current(sessionId, messageId, text)
+    })
+    return () => setStreamTextApplier(null)
+  }, [])
+
   const finalizeMessage = useCallback((
     sessionId: string,
     msgId: string,
@@ -299,7 +310,8 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
   const notifyAnswerReady = useCallback((sessionId: string, toolType: ToolType, preview: string) => {
     // Refs: stream may finish after navigation; stale closure must not hide the toast.
     const onChat = locationRef.current.pathname.startsWith('/chat')
-    if (onChat && activeIdRef.current === sessionId) {
+    const tabVisible = typeof document === 'undefined' || document.visibilityState === 'visible'
+    if (onChat && activeIdRef.current === sessionId && tabVisible) {
       return
     }
     const short = preview.length > 72 ? `${preview.slice(0, 72)}…` : preview
