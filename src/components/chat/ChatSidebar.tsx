@@ -1,7 +1,9 @@
-import { Briefcase, Code2, Globe2, Loader2, MessageCircle, Plus, Target, Trash2, X } from 'lucide-react'
+import { useState } from 'react'
+import { Briefcase, Code2, Globe2, GripVertical, Loader2, MessageCircle, Plus, Target, Trash2, X } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { ChatSession, ToolType } from '../../types'
 import { NATIVE_LANGS, PROGRAMMING_LANGUAGES, TARGET_LANGS } from '../../types'
+import { sessionListLabel } from '../../utils/sessionTitle'
 
 const TOOL_ICON: Record<ToolType, LucideIcon> = {
   general:     MessageCircle,
@@ -58,6 +60,8 @@ interface Props {
   onNew: () => void
   onDelete: (id: string) => void
   onClear: () => void
+  /** Drag-reorder visible sessions (indices in this list). */
+  onReorderSessions?: (fromIndex: number, toIndex: number) => void
   /** Per-session streaming (background generation) */
   sessionIsStreaming?: (sessionId: string) => boolean
   showLLPanel: boolean
@@ -82,6 +86,7 @@ export default function ChatSidebar({
   onNew,
   onDelete,
   onClear,
+  onReorderSessions,
   sessionIsStreaming,
   showLLPanel,
   languageLearningMode,
@@ -94,6 +99,10 @@ export default function ChatSidebar({
   onProgLangChange,
   showInterviewPanel,
 }: Props) {
+  const [dragFrom, setDragFrom] = useState<number | null>(null)
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
+  const canReorder = Boolean(onReorderSessions) && sessions.length > 1
+
   return (
     <>
       {isOpen && (
@@ -203,7 +212,7 @@ export default function ChatSidebar({
           ) : (
             <ul className="px-2">
               {sessions.map((session, idx) => {
-                const preview = session.messages.find(msg => msg.isUser)?.text ?? 'Neue Konversation'
+                const label = sessionListLabel(session, 30)
                 const time = new Date(session.messages[session.messages.length - 1]?.timestamp ?? session.createdAt)
                   .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                 const isActive = session.id === activeSessionId
@@ -212,21 +221,65 @@ export default function ChatSidebar({
                 const Icon = TOOL_ICON[session.toolType]
                 const theme = getTheme(idx)
                 const shape = getShape(idx)
+                const isDragging = dragFrom === idx
+                const isDropTarget = dragOverIndex === idx && dragFrom !== null && dragFrom !== idx
 
                 return (
                   <li
                     key={session.id}
                     className={[
-                      'group relative mb-1 flex cursor-pointer items-center gap-2 overflow-hidden rounded-xl border-l-[3px] px-2.5 py-2.5 transition-all duration-150',
+                      'group relative mb-1 flex cursor-pointer items-center overflow-hidden rounded-xl border-l-[3px] py-2.5 transition-all duration-150',
+                      canReorder ? 'gap-1 pl-1 pr-2.5' : 'gap-2 px-2.5',
                       isActive
                         ? `${theme.border} ${theme.bg} shadow-sm`
                         : `border-transparent hover:${theme.bg} hover:border-l-slate-300`,
+                      isDragging ? 'opacity-50' : '',
+                      isDropTarget ? 'ring-2 ring-primary/35 ring-offset-1' : '',
                     ].join(' ')}
+                    onDragOver={canReorder ? e => {
+                      e.preventDefault()
+                      e.dataTransfer.dropEffect = 'move'
+                      setDragOverIndex(idx)
+                    } : undefined}
+                    onDragLeave={canReorder ? e => {
+                      if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragOverIndex(null)
+                    } : undefined}
+                    onDrop={canReorder ? e => {
+                      e.preventDefault()
+                      const raw = e.dataTransfer.getData('text/plain')
+                      const from = parseInt(raw, 10)
+                      if (Number.isNaN(from) || !onReorderSessions) return
+                      onReorderSessions(from, idx)
+                      setDragFrom(null)
+                      setDragOverIndex(null)
+                    } : undefined}
                     onClick={() => {
                       onSelect(session.id)
                       onClose()
                     }}
                   >
+                    {canReorder && (
+                      <button
+                        type="button"
+                        draggable
+                        onClick={e => e.stopPropagation()}
+                        onDragStart={e => {
+                          e.stopPropagation()
+                          setDragFrom(idx)
+                          e.dataTransfer.effectAllowed = 'move'
+                          e.dataTransfer.setData('text/plain', String(idx))
+                        }}
+                        onDragEnd={() => {
+                          setDragFrom(null)
+                          setDragOverIndex(null)
+                        }}
+                        className="flex h-8 w-6 flex-shrink-0 cursor-grab touch-none items-center justify-center rounded-md text-slate-400 active:cursor-grabbing hover:bg-slate-200/80 hover:text-slate-600"
+                        aria-label="Reihenfolge ändern"
+                        title="Ziehen zum Sortieren"
+                      >
+                        <GripVertical size={14} />
+                      </button>
+                    )}
                     {/* Decorative geometric shapes in tab background */}
                     <div className={`pointer-events-none absolute right-1 top-1/2 h-10 w-10 -translate-y-1/2 translate-x-2 opacity-60 ${theme.shape1} ${shape.cls}`} />
                     <div className={`pointer-events-none absolute right-5 top-0.5 h-5 w-5 border ${theme.shape2} ${SHAPES[(idx + 2) % SHAPES.length].cls} opacity-50`} />
@@ -238,7 +291,7 @@ export default function ChatSidebar({
 
                     <div className="relative min-w-0 flex-1">
                       <p className={`truncate text-[12px] font-medium ${isActive ? 'text-slate-800' : 'text-slate-600'}`}>
-                        {preview.length > 28 ? `${preview.slice(0, 28)}…` : preview}
+                        {label}
                       </p>
                       <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
                         <span className={`h-1.5 w-1.5 flex-shrink-0 rounded-full ${theme.dot} opacity-70`} />

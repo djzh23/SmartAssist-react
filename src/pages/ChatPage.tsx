@@ -16,6 +16,7 @@ import { useChatSessions } from '../hooks/useChatSessions'
 import { useUserPlan, dispatchServerUsage } from '../hooks/useUserPlan'
 import { sanitizeTechnicalContext } from '../utils/cvTechnicalContext'
 import { applyStreamText } from '../chat/streamTextBridge'
+import { sessionListLabel } from '../utils/sessionTitle'
 
 /** German UI labels shown in sidebar / header chips */
 const LANG_DISPLAY: Record<string, string> = {
@@ -748,6 +749,7 @@ export default function ChatPage() {
         onNew={handleNewSession}
         onDelete={handleDeleteSession}
         onClear={handleClear}
+        onReorderSessions={(from, to) => store.reorderSessionsForTool(store.currentToolType, from, to)}
         showLLPanel={isLanguage}
         languageLearningMode={llMode}
         nativeLangCode={nativeLang}
@@ -771,11 +773,9 @@ export default function ChatPage() {
             <PanelLeft size={17} />
           </button>
           <p className="min-w-0 flex-1 truncate text-sm text-slate-400">
-            {(() => {
-              const preview = store.activeMessages.find(m => m.isUser)?.text
-              if (!preview) return 'Neues Gespräch'
-              return preview.length > 38 ? `${preview.slice(0, 38)}…` : preview
-            })()}
+            {activeId && store.sessions[activeId]
+              ? sessionListLabel(store.sessions[activeId], 40)
+              : 'Neues Gespräch'}
           </p>
           <button
             onClick={handleNewSession}

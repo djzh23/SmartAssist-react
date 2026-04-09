@@ -10,6 +10,8 @@ import {
 } from 'react'
 import { useLocation } from 'react-router-dom'
 import { setStreamTextApplier } from '../chat/streamTextBridge'
+import { reorderSessionOrderForTool } from '../utils/sessionOrder'
+import { suggestSessionTitle } from '../utils/sessionTitle'
 import type { ChatSession, ChatMessage, ToolType } from '../types'
 
 const LS_SESSIONS = 'smartassist_react_sessions'
@@ -128,6 +130,7 @@ export interface SessionStore {
   answerReadyToast: AnswerReadyToast | null
   dismissAnswerToast: () => void
   notifyAnswerReady: (sessionId: string, toolType: ToolType, preview: string) => void
+  reorderSessionsForTool: (toolType: ToolType, fromIndex: number, toIndex: number) => void
 }
 
 const ChatSessionsContext = createContext<SessionStore | null>(null)
@@ -146,6 +149,8 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
   locationRef.current = location
   const activeIdRef = useRef(activeId)
   activeIdRef.current = activeId
+  const sessionsRef = useRef(sessions)
+  sessionsRef.current = sessions
 
   useEffect(() => {
     if (activeId && sessions[activeId]) {
@@ -240,7 +245,16 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     setSessions(prev => {
       const session = prev[sessionId]
       if (!session) return prev
-      return { ...prev, [sessionId]: { ...session, messages: [...session.messages, full] } }
+      const shouldSetTitle = full.isUser && !(session.title?.trim())
+      const title = shouldSetTitle ? suggestSessionTitle(session.toolType, full.text) : session.title
+      return {
+        ...prev,
+        [sessionId]: {
+          ...session,
+          messages: [...session.messages, full],
+          ...(shouldSetTitle ? { title } : {}),
+        },
+      }
     })
   }, [])
 
@@ -348,6 +362,12 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  const reorderSessionsForTool = useCallback((toolType: ToolType, fromIndex: number, toIndex: number) => {
+    setSessionOrder(prev =>
+      reorderSessionOrderForTool(prev, toolType, fromIndex, toIndex, sessionsRef.current),
+    )
+  }, [])
+
   const activeMessages = activeId ? (sessions[activeId]?.messages ?? []) : []
 
   const visibleSessions = sessionOrder
@@ -377,6 +397,7 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     answerReadyToast,
     dismissAnswerToast,
     notifyAnswerReady,
+    reorderSessionsForTool,
   }), [
     sessions,
     sessionOrder,
@@ -399,6 +420,7 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     answerReadyToast,
     dismissAnswerToast,
     notifyAnswerReady,
+    reorderSessionsForTool,
   ])
 
   return (

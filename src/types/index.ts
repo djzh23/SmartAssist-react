@@ -77,6 +77,8 @@ export interface ChatSession {
   toolType: ToolType
   messages: ChatMessage[]
   createdAt: string
+  /** Short list title (set from first user message). */
+  title?: string
 }
 
 // ── API types ─────────────────────────────────────────────
