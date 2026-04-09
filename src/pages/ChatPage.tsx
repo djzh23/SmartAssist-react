@@ -382,7 +382,7 @@ export default function ChatPage() {
   const [showLimitModal, setShowLimitModal] = useState(false)
   const [checkoutBanner, setCheckoutBanner] = useState<{ type: 'success' | 'info'; text: string } | null>(null)
 
-  const { isAtLimit, incrementUsage, isSignedIn, email, getToken } = useUserPlan()
+  const { isAtLimit, incrementUsage, isSignedIn, email, getToken, refreshUsage } = useUserPlan()
 
   useEffect(() => {
     saveContextMap(contextBySessionKey)
@@ -412,9 +412,17 @@ export default function ChatPage() {
         : { type: 'info', text: 'Checkout wurde abgebrochen.' },
     )
 
+    if (upgraded) {
+      // Re-fetch plan from server so isAtLimit updates immediately.
+      // Retries handle Stripe webhook lag (plan may not be in Redis yet).
+      void refreshUsage({ retries: 4, retryDelayMs: 1500 }).catch(() => {
+        console.warn('[ChatPage] Plan refresh after upgrade failed — will retry on next send')
+      })
+    }
+
     const timer = window.setTimeout(() => setCheckoutBanner(null), 7000)
     return () => window.clearTimeout(timer)
-  }, [searchParams])
+  }, [searchParams, refreshUsage])
 
   const isLanguage = store.currentToolType === 'language'
   const isProgramming = store.currentToolType === 'programming'

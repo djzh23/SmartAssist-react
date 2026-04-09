@@ -3,6 +3,7 @@ import { useUser, useAuth } from '@clerk/clerk-react'
 import { getAgentUsage } from '../api/client'
 
 const USAGE_EVENT = 'smartassist_usage_updated'
+const PLAN_EVENT = 'smartassist_plan_updated'
 
 export type PlanType = 'anonymous' | 'free' | 'premium' | 'pro'
 
@@ -202,6 +203,11 @@ export function dispatchServerUsage(usageToday: number): void {
   window.dispatchEvent(new Event(USAGE_EVENT))
 }
 
+/** Broadcast a plan change so every useUserPlan instance re-reads from localStorage */
+function dispatchPlanUpdate(): void {
+  window.dispatchEvent(new Event(PLAN_EVENT))
+}
+
 function wait(ms: number): Promise<void> {
   return new Promise(resolve => window.setTimeout(resolve, ms))
 }
@@ -280,6 +286,18 @@ export function useUserPlan(): UserPlanState {
     return () => window.removeEventListener(USAGE_EVENT, sync)
   }, [userId, isSignedIn])
 
+  // Listen for plan changes broadcast by any other hook instance (e.g. after upgrade)
+  useEffect(() => {
+    const syncPlan = () => {
+      if (!isSignedIn || !userId) return
+      const pending = readPendingUpgrade(userId)
+      setPendingUpgrade(pending)
+      setPlan(pending?.plan ?? (localStorage.getItem(planKey(userId)) as PlanType | null) ?? 'free')
+    }
+    window.addEventListener(PLAN_EVENT, syncPlan)
+    return () => window.removeEventListener(PLAN_EVENT, syncPlan)
+  }, [userId, isSignedIn])
+
   useEffect(() => {
     if (!isSignedIn || !userId) return
     if (!pendingUpgrade) return
@@ -312,6 +330,8 @@ export function useUserPlan(): UserPlanState {
       setPendingUpgrade(pending)
       setPlan(nextPlan)
       setSyncError(null)
+      // Notify all other hook instances that the plan changed
+      dispatchPlanUpdate()
     },
     [isSignedIn, userId],
   )
@@ -348,10 +368,13 @@ export function useUserPlan(): UserPlanState {
               clearPendingUpgrade(key)
               setPendingUpgrade(null)
               setPlan(nextPlan)
+              // Notify all other hook instances (e.g. ChatPage) that the plan upgraded
+              dispatchPlanUpdate()
             } else {
               const stillPending = readPendingUpgrade(key)
               setPendingUpgrade(stillPending)
               setPlan(stillPending?.plan ?? nextPlan)
+              if (stillPending) dispatchPlanUpdate()
             }
             setSyncError(null)
             return nextPlan
