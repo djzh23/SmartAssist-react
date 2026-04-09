@@ -202,37 +202,46 @@ function HeroSection() {
 
 const FEATURES = [
   {
-    icon: '🌤️',
-    iconBg: 'bg-blue-50',
-    title: 'Wetter in Echtzeit',
-    desc: 'Präzises Wetter für jede Stadt weltweit. Einfach fragen, ganz ohne Kommandos.',
-    chip: 'Wie ist das Wetter in Casablanca?',
+    icon: '💬',
+    iconBg: 'bg-slate-100',
+    title: 'General Chat',
+    desc: 'Frei chatten, Texte schärfen, Fragen klären — dein offener KI-Assistent für alles, was keine feste Kategorie braucht.',
+    chip: 'Wie formuliere ich das professioneller?',
     highlight: false,
-  },
-  {
-    icon: '🌍',
-    iconBg: 'bg-cyan-50',
-    title: 'Sprachenlernen',
-    desc: 'Chatte in deiner Sprache und lerne eine neue. Die KI übersetzt und korrigiert dich natürlich.',
-    chip: 'Hallo → ¡Hola! + Grammatikhinweis',
-    highlight: true,
-    badge: 'Beliebt',
   },
   {
     icon: '💼',
     iconBg: 'bg-emerald-50',
-    title: 'Stellenanalyse',
-    desc: 'Füge eine Stellenanzeige ein und erhalte eine klare Zusammenfassung, Lebenslauftipps und Keywords.',
+    title: 'Job Analyzer',
+    desc: 'Stellenanzeige einfügen und sofort sehen, worauf es ankommt: Muss-Kriterien, wichtige Keywords und klarer Lebenslauf-Fokus.',
     chip: 'Analysiere diese Stelle: [Text einfügen]',
     highlight: false,
   },
   {
-    icon: '📝',
-    iconBg: 'bg-amber-50',
-    title: 'Smarte Zusammenfassungen',
-    desc: 'Fasse lange Texte in Sekunden zusammen. Ideal für Artikel, E Mails oder Dokumente.',
-    chip: 'Fasse diesen Artikel zusammen: ...',
+    icon: '🎯',
+    iconBg: 'bg-cyan-50',
+    title: 'Interview Coach',
+    desc: 'Gezielt auf Vorstellungsgespräche vorbereiten — mit realistischen Fragen, Antwortstrategien und konkretem Feedback.',
+    chip: 'Gib mir 5 Fragen für diese Stelle',
+    highlight: true,
+    badge: 'Karriere',
+  },
+  {
+    icon: '💻',
+    iconBg: 'bg-sky-50',
+    title: 'Programmierung',
+    desc: 'Code reviewen, Bugs finden, Algorithmen verstehen. Für alle Sprachen — von JavaScript bis Python, von Anfänger bis Senior.',
+    chip: 'Was ist falsch in meinem Code?',
     highlight: false,
+  },
+  {
+    icon: '🌍',
+    iconBg: 'bg-amber-50',
+    title: 'Sprachen lernen',
+    desc: 'Lerne mit natürlichen Gesprächen. Übersetzung, Grammatik und echte Audio-Aussprache zum Anhören — powered by KI.',
+    chip: '🔊 Aussprache hören + Grammatiktipp',
+    highlight: false,
+    badge: 'Audio',
   },
 ] as const
 
@@ -244,7 +253,7 @@ function FeaturesSection() {
           <h2 className="mb-3 text-3xl font-bold text-slate-800">
             Alles was du brauchst, nichts was du nicht brauchst
           </h2>
-          <p className="text-slate-500">Vier starke Werkzeuge, eine klare Oberfläche</p>
+          <p className="text-slate-500">Fünf spezialisierte Werkzeuge, eine klare Oberfläche</p>
         </div>
 
         {/* Mobile: horizontal snap-scroll  |  sm+: 2-column grid */}
@@ -297,10 +306,10 @@ interface DemoMessage {
 }
 
 const DEMO_CHIPS = [
-  { emoji: '🌤️', label: 'Wie ist das Wetter in Berlin?' },
-  { emoji: '🌍', label: 'Bring mir Spanisch bei' },
   { emoji: '💼', label: 'Analysiere diese Stellenausschreibung' },
-  { emoji: '😄', label: 'Erzähl mir einen Witz' },
+  { emoji: '🌍', label: 'Bring mir Spanisch bei' },
+  { emoji: '🎯', label: 'Bereite mich auf ein Interview vor' },
+  { emoji: '💻', label: 'Was ist falsch in meinem Code?' },
 ] as const
 
 function DemoAssistantBubble({ text }: { text: string }) {
