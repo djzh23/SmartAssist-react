@@ -11,29 +11,23 @@ import '../styles/landing.css'
 
 function LandingNav() {
   return (
-    <nav className="fixed left-0 right-0 top-0 z-[100] h-14 border-b border-slate-200/80 bg-white/95 backdrop-blur-sm sm:h-16">
-      <div className="flex h-full max-w-[1200px] items-center justify-between mx-auto px-4 sm:px-6">
-        {/* Logo */}
+    <nav className="fixed left-0 right-0 top-0 z-[100] h-14 border-b border-violet-100/50 bg-white/95 shadow-sm backdrop-blur-md sm:h-16">
+      <div className="mx-auto flex h-full max-w-[1200px] items-center justify-between px-4 sm:px-6">
         <div className="flex min-w-0 items-center gap-2">
           <img src="/favicon.png" alt="SmartAssist" className="h-7 w-7 flex-shrink-0 rounded-xl sm:h-8 sm:w-8" />
-          <span className="text-base font-bold text-slate-800 sm:text-lg">SmartAssist</span>
+          <span className="bg-gradient-to-r from-primary to-violet-500 bg-clip-text text-base font-bold text-transparent sm:text-lg">SmartAssist</span>
         </div>
-
-        {/* Actions — tighter on mobile, full size on sm+ */}
-        <div className="flex flex-shrink-0 items-center gap-2">
-          <a
-            href="/pricing"
-            className="hidden text-sm font-medium text-slate-600 transition-colors hover:text-slate-900 sm:block"
-          >
+        <div className="flex flex-shrink-0 items-center gap-2 sm:gap-3">
+          <a href="/pricing" className="hidden text-sm font-medium text-slate-500 transition-colors hover:text-primary sm:block">
             Preise
           </a>
           <SignInButton mode="modal" fallbackRedirectUrl="/tools">
-            <button className="rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:border-slate-400 sm:px-4 sm:py-2 sm:text-sm">
+            <button className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 shadow-sm transition-all hover:border-violet-200 hover:text-primary sm:px-4 sm:py-2 sm:text-sm">
               Anmelden
             </button>
           </SignInButton>
           <SignUpButton mode="modal" fallbackRedirectUrl="/tools">
-            <button className="rounded-xl bg-primary px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-primary-hover sm:px-4 sm:py-2 sm:text-sm">
+            <button className="rounded-xl bg-gradient-to-r from-primary to-violet-500 px-3 py-1.5 text-xs font-semibold text-white shadow-md shadow-violet-200 transition-all hover:shadow-lg sm:px-4 sm:py-2 sm:text-sm">
               Jetzt starten
             </button>
           </SignUpButton>
@@ -55,80 +49,56 @@ function ChatMockup() {
 
   return (
     <div className="relative mx-auto max-w-[340px]">
-      {/* Main chat window */}
-      <div
-        className="-rotate-2 overflow-hidden rounded-[20px] bg-white shadow-[0_20px_60px_rgba(124,58,237,0.15)]"
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between bg-primary px-4 py-3">
+      <div className="-rotate-2 overflow-hidden rounded-[22px] bg-white shadow-[0_24px_80px_rgba(124,58,237,0.22)]">
+        <div className="flex items-center justify-between bg-gradient-to-r from-primary to-violet-500 px-4 py-3">
           <span className="text-sm font-bold text-white">⚡ SmartAssist</span>
           <div className="flex items-center gap-1.5">
-            <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
+            <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-300" />
             <span className="text-xs text-white/80">Online</span>
           </div>
         </div>
-
-        {/* Messages */}
         <div className="space-y-3 bg-slate-50 p-4">
           <div className="flex gap-2">
-            <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-primary text-xs text-white">
-              ⚡
-            </div>
+            <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-violet-500 text-xs text-white">⚡</div>
             <div className="max-w-[200px] rounded-[12px_12px_12px_4px] bg-white px-3 py-2 text-xs text-slate-700 shadow-sm">
               ¡Hola! Ich sehe du lernst Spanisch 🌍
             </div>
           </div>
-
           <div className="flex justify-end">
-            <div className="max-w-[200px] rounded-[12px_12px_4px_12px] bg-primary px-3 py-2 text-xs text-white">
+            <div className="max-w-[200px] rounded-[12px_12px_4px_12px] bg-gradient-to-r from-primary to-violet-500 px-3 py-2 text-xs text-white">
               Ja! Wie sagt man "Guten Morgen"?
             </div>
           </div>
-
           <div className="flex gap-2">
-            <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-primary text-xs text-white">
-              ⚡
-            </div>
+            <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-violet-500 text-xs text-white">⚡</div>
             <div className="max-w-[200px] rounded-[12px_12px_12px_4px] border-l-[3px] border-l-primary bg-white px-3 py-2 text-xs shadow-sm">
               <p className="font-semibold text-slate-800">🌍 Buenos días</p>
               <p className="text-slate-600">🇩🇪 Guten Morgen</p>
-              <p className="mt-1 text-[10px] text-cyan-600">
-                💡 "buenos" = gut, "días" = Tage
-              </p>
+              <p className="mt-1 text-[10px] text-amber-600">💡 "buenos" = gut, "días" = Tage</p>
             </div>
           </div>
-
           {showTyping && (
             <div className="flex gap-2">
-              <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-primary text-xs text-white">
-                ⚡
-              </div>
+              <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-violet-500 text-xs text-white">⚡</div>
               <div className="rounded-[12px_12px_12px_4px] bg-white px-3 py-3 shadow-sm">
-                <span className="typing-dot" />
-                <span className="typing-dot" />
-                <span className="typing-dot" />
+                <span className="typing-dot" /><span className="typing-dot" /><span className="typing-dot" />
               </div>
             </div>
           )}
         </div>
-
-        {/* Input bar */}
         <div className="flex items-center gap-2 border-t border-slate-100 bg-white px-3 py-2.5">
-          <div className="flex-1 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-400">
-            Schreib eine Nachricht…
-          </div>
+          <div className="flex-1 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-400">Schreib eine Nachricht…</div>
           <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-primary">
             <Send size={12} className="text-white" />
           </div>
         </div>
       </div>
-
-      {/* Floating weather card */}
-      <div className="absolute -bottom-8 right-0 rotate-2 rounded-2xl bg-white px-3 py-2.5 shadow-[0_8px_24px_rgba(0,0,0,0.12)] flex items-center gap-2.5">
-        <span className="text-2xl">🌤️</span>
+      {/* Floating score card */}
+      <div className="absolute -bottom-6 right-0 rotate-2 flex items-center gap-2.5 rounded-2xl bg-white px-3 py-2.5 shadow-[0_8px_32px_rgba(0,0,0,0.14)]">
+        <span className="text-2xl">🎯</span>
         <div>
-          <p className="text-xs font-semibold text-slate-800">Hamburg</p>
-          <p className="text-[10px] text-slate-500">14°C · Regnerisch</p>
+          <p className="text-xs font-semibold text-slate-800">Interview Coach</p>
+          <p className="text-[10px] text-emerald-500">3 Fragen vorbereitet</p>
         </div>
       </div>
     </div>
@@ -141,52 +111,75 @@ function HeroSection() {
   return (
     <section
       className="relative overflow-hidden pt-14 sm:pt-16"
-      style={{ background: 'linear-gradient(135deg, #FAFAFA 0%, #F5F0FF 100%)', minHeight: '100vh' }}
+      style={{ background: 'linear-gradient(160deg, #FFFDF5 0%, #F7F0FF 55%, #EDE9FE 100%)', minHeight: '100vh' }}
     >
-      {/* Decorative blobs */}
+      {/* Tile dot pattern */}
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{ backgroundImage: 'radial-gradient(circle, rgba(124,58,237,0.1) 1.5px, transparent 1.5px)', backgroundSize: '36px 36px' }}
+      />
+
+      {/* Geometric decorations */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -right-40 -top-20 h-[500px] w-[500px] rounded-full bg-cyan-300/10 blur-[80px]" />
-        <div className="absolute -bottom-20 -left-40 h-[400px] w-[400px] rounded-full bg-teal-300/10 blur-[60px]" />
+        {/* Soft blobs */}
+        <div className="absolute -right-32 -top-16 h-[520px] w-[520px] rounded-full bg-violet-300/25 blur-[100px]" />
+        <div className="absolute -bottom-24 -left-24 h-[380px] w-[380px] rounded-full bg-amber-200/30 blur-[80px]" />
+        <div className="absolute right-1/3 top-1/2 h-[220px] w-[220px] rounded-full bg-cyan-200/20 blur-[60px]" />
+        {/* Sharp triangle */}
+        <div className="absolute left-[7%] top-[28%] h-14 w-14 bg-amber-400/18" style={{ clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)' }} />
+        {/* Diamond */}
+        <div className="absolute bottom-[28%] right-[10%] h-10 w-10 rotate-45 rounded-sm bg-violet-400/22" />
+        {/* Ring */}
+        <div className="absolute right-[18%] top-[20%] h-8 w-8 rounded-full border-2 border-violet-400/30" />
+        <div className="absolute left-[12%] bottom-[35%] h-16 w-16 rounded-full border border-amber-400/20" />
+        {/* Hexagon */}
+        <div className="absolute left-[18%] bottom-[18%] h-11 w-11 bg-cyan-400/15" style={{ clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' }} />
+        {/* Small diamond ring */}
+        <div className="absolute right-[30%] top-[35%] h-6 w-6 rotate-45 border border-amber-300/30" />
       </div>
 
-      <div className="relative z-10 mx-auto grid max-w-[1200px] grid-cols-1 items-center gap-[60px] px-6 pb-[60px] pt-[60px] md:grid-cols-2 md:min-h-[calc(100vh-64px)]">
+      <div className="relative z-10 mx-auto grid max-w-[1200px] grid-cols-1 items-center gap-12 px-6 pb-16 pt-16 md:grid-cols-2 md:min-h-[calc(100vh-64px)]">
         {/* Left: copy */}
         <div>
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-cyan-200 bg-cyan-50 px-4 py-1.5 text-xs font-semibold text-cyan-700">
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-violet-200 bg-violet-50 px-4 py-1.5 text-xs font-semibold text-violet-700">
             ✨ Angetrieben von Claude KI
           </div>
 
-          <h1 className="mb-4 text-[clamp(36px,5vw,56px)] font-bold leading-[1.1] text-slate-800">
+          <h1 className="mb-5 text-[clamp(36px,5vw,60px)] font-bold leading-[1.1] text-slate-900">
             Dein intelligenter
             <br />
-            <span className="text-primary">KI Assistent
+            <span className="bg-gradient-to-r from-primary via-violet-500 to-violet-400 bg-clip-text text-transparent">
+              KI Assistent
             </span>
           </h1>
 
           <p className="mb-8 max-w-[480px] text-lg leading-relaxed text-slate-500">
-            SmartAssist vereint leistungsstarke KI Werkzeuge —
-            Wetter, Sprachenlernen, Stellenanalyse und vieles mehr —
-            in einer einzigen übersichtlichen Oberfläche.
+            Fünf spezialisierte KI Werkzeuge für Karriere, Lernen und Alltag, vereint in einer einzigen übersichtlichen Oberfläche.
           </p>
 
-          <div className="mb-6 flex flex-wrap items-center gap-4">
+          <div className="mb-7 flex flex-wrap items-center gap-3">
             <SignUpButton mode="modal" fallbackRedirectUrl="/tools">
-              <button className="flex h-12 items-center gap-2 rounded-xl bg-primary px-7 text-base font-semibold text-white shadow-lg shadow-cyan-200/60 transition-colors hover:bg-primary-hover">
-                Jetzt kostenlos starten →
+              <button className="flex h-12 items-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-violet-500 px-7 text-base font-semibold text-white shadow-lg shadow-violet-300/50 transition-all hover:scale-[1.02] hover:shadow-xl">
+                Kostenlos starten
+                <span className="opacity-80">→</span>
               </button>
             </SignUpButton>
             <a
               href="#demo"
-              className="flex h-12 items-center gap-2 rounded-xl border border-slate-300 px-6 text-base font-medium text-slate-700 transition-colors hover:border-slate-400"
+              className="flex h-12 items-center gap-2 rounded-2xl border-2 border-slate-200 bg-white/80 px-6 text-base font-medium text-slate-600 backdrop-blur-sm transition-all hover:border-violet-200 hover:bg-violet-50 hover:text-primary"
             >
-              <Play size={16} className="text-slate-500" />
+              <Play size={15} className="text-primary" />
               Demo ansehen
             </a>
           </div>
 
-          <p className="text-sm text-slate-400">
-            ★★★★★&nbsp;&nbsp;Von Entwicklern geschätzt · Kostenlos starten · Keine Kreditkarte
-          </p>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-400">
+            <span>✅ Kostenlos starten</span>
+            <span className="hidden sm:inline">·</span>
+            <span>✅ Keine Kreditkarte</span>
+            <span className="hidden sm:inline">·</span>
+            <span>✅ Sofort loslegen</span>
+          </div>
         </div>
 
         {/* Right: chat mockup */}
@@ -203,14 +196,16 @@ function HeroSection() {
 const FEATURES = [
   {
     icon: '💬',
+    color: '#64748B',
     iconBg: 'bg-slate-100',
     title: 'General Chat',
-    desc: 'Frei chatten, Texte schärfen, Fragen klären — dein offener KI-Assistent für alles, was keine feste Kategorie braucht.',
+    desc: 'Frei chatten, Texte schärfen, Fragen klären. Dein offener KI-Assistent für alles, was keine feste Kategorie braucht.',
     chip: 'Wie formuliere ich das professioneller?',
     highlight: false,
   },
   {
     icon: '💼',
+    color: '#10B981',
     iconBg: 'bg-emerald-50',
     title: 'Job Analyzer',
     desc: 'Stellenanzeige einfügen und sofort sehen, worauf es ankommt: Muss-Kriterien, wichtige Keywords und klarer Lebenslauf-Fokus.',
@@ -219,26 +214,29 @@ const FEATURES = [
   },
   {
     icon: '🎯',
+    color: '#06B6D4',
     iconBg: 'bg-cyan-50',
     title: 'Interview Coach',
-    desc: 'Gezielt auf Vorstellungsgespräche vorbereiten — mit realistischen Fragen, Antwortstrategien und konkretem Feedback.',
+    desc: 'Gezielt auf Vorstellungsgespräche vorbereiten. Mit realistischen Fragen, Antwortstrategien und konkretem Feedback.',
     chip: 'Gib mir 5 Fragen für diese Stelle',
     highlight: true,
     badge: 'Karriere',
   },
   {
     icon: '💻',
+    color: '#3B82F6',
     iconBg: 'bg-sky-50',
     title: 'Programmierung',
-    desc: 'Code reviewen, Bugs finden, Algorithmen verstehen. Für alle Sprachen — von JavaScript bis Python, von Anfänger bis Senior.',
+    desc: 'Code reviewen, Bugs finden, Algorithmen verstehen. Für alle Sprachen, von JavaScript bis Python, von Anfänger bis Senior.',
     chip: 'Was ist falsch in meinem Code?',
     highlight: false,
   },
   {
     icon: '🌍',
+    color: '#F59E0B',
     iconBg: 'bg-amber-50',
     title: 'Sprachen lernen',
-    desc: 'Lerne mit natürlichen Gesprächen. Übersetzung, Grammatik und echte Audio-Aussprache zum Anhören — powered by KI.',
+    desc: 'Lerne mit natürlichen Gesprächen. Übersetzung, Grammatik und echte Audio-Aussprache mit neutralen KI-Stimmen.',
     chip: '🔊 Aussprache hören + Grammatiktipp',
     highlight: false,
     badge: 'Audio',
@@ -247,46 +245,71 @@ const FEATURES = [
 
 function FeaturesSection() {
   return (
-    <section className="bg-white px-6 py-20">
-      <div className="mx-auto max-w-[1100px]">
-        <div className="mb-12 text-center">
-          <h2 className="mb-3 text-3xl font-bold text-slate-800">
-            Alles was du brauchst, nichts was du nicht brauchst
+    <section
+      className="relative overflow-hidden px-6 py-24"
+      style={{ background: 'linear-gradient(180deg, #EDE9FE 0%, #F5F0FF 40%, #FFFFFF 100%)' }}
+    >
+      {/* Tile pattern */}
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{ backgroundImage: 'radial-gradient(circle, rgba(124,58,237,0.08) 1.5px, transparent 1.5px)', backgroundSize: '28px 28px' }}
+      />
+
+      {/* Geometric decorations */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -right-20 top-0 h-[300px] w-[300px] rounded-full bg-violet-200/20 blur-[80px]" />
+        <div className="absolute -left-10 bottom-0 h-[250px] w-[250px] rounded-full bg-amber-200/20 blur-[60px]" />
+        <div className="absolute right-[7%] top-[18%] h-14 w-14 bg-violet-400/10" style={{ clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' }} />
+        <div className="absolute left-[5%] top-[55%] h-9 w-9 bg-amber-400/15" style={{ clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' }} />
+        <div className="absolute right-[14%] bottom-[18%] h-16 w-16 rounded-full border-2 border-violet-300/20" />
+        <div className="absolute left-[9%] top-[28%] h-8 w-8 rounded-full border-2 border-amber-400/18" />
+        <div className="absolute left-[20%] bottom-[10%] h-8 w-8 rotate-45 border border-violet-400/20" />
+      </div>
+
+      <div className="relative z-10 mx-auto max-w-[1100px]">
+        <div className="mb-14 text-center">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-violet-200 bg-violet-50 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.15em] text-violet-600">
+            Werkzeuge
+          </div>
+          <h2 className="mb-3 text-[clamp(28px,4vw,44px)] font-bold text-slate-900">
+            Alles was du brauchst
           </h2>
-          <p className="text-slate-500">Fünf spezialisierte Werkzeuge, eine klare Oberfläche</p>
+          <p className="text-lg text-slate-500">Fünf spezialisierte Werkzeuge, eine klare Oberfläche</p>
         </div>
 
-        {/* Mobile: horizontal snap-scroll  |  sm+: 2-column grid */}
+        {/* Mobile: horizontal snap-scroll  |  sm+: 2-col  |  lg+: 3-col */}
         <div className={[
           'flex gap-4 overflow-x-auto pb-3 snap-x snap-mandatory scrollbar-hide',
           '-mx-6 px-6',
-          'sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-6 sm:overflow-x-visible sm:pb-0 sm:snap-none',
+          'sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-5 sm:overflow-x-visible sm:pb-0 sm:snap-none',
+          'lg:grid-cols-3',
         ].join(' ')}>
-          {FEATURES.map(f => (
+          {FEATURES.map((f) => (
             <div
               key={f.title}
               className={[
                 'w-[78vw] max-w-[300px] flex-shrink-0 snap-center',
                 'sm:w-auto sm:max-w-none',
-                'relative cursor-default rounded-2xl border bg-white p-7 transition-all duration-200 hover:-translate-y-1 hover:shadow-xl',
-                f.highlight
-                  ? 'border-2 border-primary bg-cyan-50/30'
-                  : 'border-slate-200',
+                'group relative cursor-default overflow-hidden rounded-2xl border bg-white/90 p-6 backdrop-blur-sm transition-all duration-200 hover:-translate-y-1.5',
+                f.highlight ? 'border-primary/40 shadow-lg shadow-violet-100' : 'border-white shadow-sm',
               ].join(' ')}
             >
+              {/* Warm glow on hover */}
+              <div
+                className="absolute -right-6 -top-6 h-24 w-24 rounded-full opacity-0 blur-2xl transition-opacity duration-300 group-hover:opacity-100"
+                style={{ background: `${f.color}30` }}
+              />
               {'badge' in f && f.badge && (
                 <span className="absolute right-4 top-4 rounded-full bg-primary px-2.5 py-0.5 text-[10px] font-bold text-white">
                   {f.badge}
                 </span>
               )}
-              <div
-                className={`mb-4 flex h-12 w-12 items-center justify-center rounded-2xl text-2xl ${f.iconBg}`}
-              >
+              <div className={`relative z-10 mb-4 flex h-11 w-11 items-center justify-center rounded-xl text-xl ${f.iconBg}`}>
                 {f.icon}
               </div>
-              <h3 className="mb-2 text-base font-bold text-slate-800">{f.title}</h3>
-              <p className="mb-4 text-sm leading-relaxed text-slate-500">{f.desc}</p>
-              <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1.5 font-mono text-xs text-slate-600">
+              <h3 className="relative z-10 mb-2 text-base font-bold text-slate-800">{f.title}</h3>
+              <p className="relative z-10 mb-4 text-sm leading-relaxed text-slate-500">{f.desc}</p>
+              <span className="relative z-10 inline-flex items-center rounded-xl bg-slate-50 px-3 py-1.5 font-mono text-xs text-slate-500">
                 {f.chip}
               </span>
             </div>
@@ -602,8 +625,24 @@ function LiveDemoSection() {
   }
 
   return (
-    <section id="demo" className="px-4 py-20 sm:px-6" style={{ background: '#F8F7FF' }}>
-      <div className="mx-auto max-w-[640px]">
+    <section
+      id="demo"
+      className="relative overflow-hidden px-4 py-20 sm:px-6"
+      style={{ background: 'linear-gradient(180deg, #FFFFFF 0%, #F5F0FF 30%, #EEF2FF 100%)' }}
+    >
+      {/* Tile pattern */}
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{ backgroundImage: 'radial-gradient(circle, rgba(124,58,237,0.06) 1.5px, transparent 1.5px)', backgroundSize: '30px 30px' }}
+      />
+      {/* Decorative shapes */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -left-16 top-1/4 h-[220px] w-[220px] rounded-full bg-violet-200/15 blur-[70px]" />
+        <div className="absolute -right-16 bottom-1/4 h-[200px] w-[200px] rounded-full bg-indigo-200/15 blur-[60px]" />
+        <div className="absolute right-[5%] top-[15%] h-10 w-10 rotate-45 border border-violet-300/20" />
+        <div className="absolute left-[4%] bottom-[20%] h-8 w-8 bg-violet-300/15" style={{ clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' }} />
+      </div>
+      <div className="relative z-10 mx-auto max-w-[640px]">
         <div className="mb-8 text-center">
           <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-primary">Live Demo</p>
           <h2 className="mb-3 text-3xl font-bold text-slate-800">Probiere es jetzt aus</h2>
@@ -828,41 +867,75 @@ const STEPS = [
     icon: '🔑',
     title: 'Kostenloses Konto erstellen',
     text: 'Melde dich mit einem Klick über Google an. Keine Kreditkarte nötig.',
+    color: 'from-violet-600 to-violet-500',
+    glow: 'bg-violet-500/40',
   },
   {
     num: '2',
-    icon: '💬',
-    title: 'Werkzeug auswählen',
-    text: 'Wähle aus Wetter, Sprachen lernen, Stellenanalyse und mehr.',
+    icon: '🎯',
+    title: 'Werkzeug wählen',
+    text: 'Chat, Job Analyse, Interview Vorbereitung, Programmierung oder Sprachenlernen.',
+    color: 'from-cyan-600 to-cyan-500',
+    glow: 'bg-cyan-500/40',
   },
   {
     num: '3',
     icon: '✨',
     title: 'Smarte Antworten erhalten',
-    text: 'Die KI wählt das passende Werkzeug automatisch aus. Einfach drauflosschreiben.',
+    text: 'Die KI versteht dein Anliegen und gibt präzise, hilfreiche Antworten.',
+    color: 'from-amber-500 to-amber-400',
+    glow: 'bg-amber-500/40',
   },
 ] as const
 
 function HowItWorksSection() {
   return (
-    <section className="bg-white px-6 py-20">
-      <div className="mx-auto max-w-[900px]">
-        <div className="mb-12 text-center">
-          <h2 className="text-3xl font-bold text-slate-800">In 30 Sekunden startklar</h2>
+    <section
+      className="relative overflow-hidden px-6 py-24"
+      style={{ background: 'linear-gradient(160deg, #1E1B2E 0%, #150F25 100%)' }}
+    >
+      {/* Tile pattern */}
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.05) 1.5px, transparent 1.5px)', backgroundSize: '32px 32px' }}
+      />
+
+      {/* Geometric decorations */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -left-24 top-1/4 h-[320px] w-[320px] rounded-full bg-violet-700/20 blur-[100px]" />
+        <div className="absolute -right-24 bottom-1/4 h-[280px] w-[280px] rounded-full bg-cyan-600/10 blur-[80px]" />
+        <div className="absolute right-[9%] top-[22%] h-12 w-12 bg-violet-400/18" style={{ clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)' }} />
+        <div className="absolute left-[7%] bottom-[22%] h-8 w-8 bg-cyan-400/15" style={{ clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)' }} />
+        <div className="absolute left-[18%] top-[28%] h-20 w-20 rounded-full border border-violet-500/15" />
+        <div className="absolute right-[22%] bottom-[18%] h-12 w-12 rounded-full border border-cyan-400/10" />
+        <div className="absolute right-[5%] bottom-[38%] h-8 w-8 rotate-45 border-2 border-amber-400/18" />
+        <div className="absolute left-[28%] top-[15%] h-6 w-6 rotate-45 bg-amber-400/12 rounded-sm" />
+      </div>
+
+      <div className="relative z-10 mx-auto max-w-[900px]">
+        <div className="mb-14 text-center">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.15em] text-white/50">
+            So funktioniert es
+          </div>
+          <h2 className="text-[clamp(28px,4vw,44px)] font-bold text-white">
+            In 30 Sekunden startklar
+          </h2>
         </div>
 
-        <div className="relative grid grid-cols-1 gap-10 md:grid-cols-3">
-          {/* Dashed connector line (desktop only) */}
-          <div className="absolute left-[calc(50%/3+48px)] right-[calc(50%/3+48px)] top-6 hidden h-px border-t-2 border-dashed border-cyan-300 md:block" />
+        <div className="relative grid grid-cols-1 gap-12 md:grid-cols-3">
+          <div className="absolute left-[calc(50%/3+52px)] right-[calc(50%/3+52px)] top-7 hidden h-px border-t border-dashed border-white/10 md:block" />
 
-          {STEPS.map(s => (
+          {STEPS.map((s) => (
             <div key={s.num} className="relative z-10 text-center">
-              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-xl font-bold text-white">
-                {s.num}
+              <div className="relative mx-auto mb-5 flex h-14 w-14 items-center justify-center">
+                <div className={`absolute inset-0 rounded-full blur-xl ${s.glow}`} />
+                <div className={`relative flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br ${s.color} text-lg font-bold text-white shadow-lg`}>
+                  {s.num}
+                </div>
               </div>
               <div className="mb-3 text-4xl">{s.icon}</div>
-              <h3 className="mb-2 text-base font-bold text-slate-800">{s.title}</h3>
-              <p className="text-sm leading-relaxed text-slate-500">{s.text}</p>
+              <h3 className="mb-2 text-base font-bold text-white">{s.title}</h3>
+              <p className="text-sm leading-relaxed text-white/45">{s.text}</p>
             </div>
           ))}
         </div>
@@ -881,15 +954,15 @@ const PREVIEW_PLANS = [
     period: '/für immer',
     icon: '⚡',
     borderClass: 'border-slate-200',
-    headerBg: 'bg-slate-50',
+    headerBg: 'bg-white',
     features: [
       '2 Antworten ohne Anmeldung',
       '20 Antworten pro Tag nach Login',
-      'Alle Werkzeuge',
+      'Alle 5 Werkzeuge',
       'Sitzungsspeicher im Browser',
     ],
     cta: 'Kostenlos starten',
-    ctaClass: 'border border-slate-300 bg-white text-slate-600 hover:border-slate-400',
+    ctaClass: 'border border-slate-300 bg-white text-slate-600 hover:border-violet-300 hover:text-primary',
     useSignUp: true,
     scale: false,
   },
@@ -900,17 +973,17 @@ const PREVIEW_PLANS = [
     period: '/pro Monat',
     icon: '✨',
     borderClass: 'border-primary border-2',
-    headerBg: 'bg-cyan-50',
+    headerBg: 'bg-gradient-to-br from-violet-50 to-indigo-50',
     badge: 'Am beliebtesten',
     features: [
       'Alles aus Kostenlos',
       '200 Antworten pro Tag',
-      'Stellenanalyse Werkzeug',
-      'ElevenLabs Audio',
+      'Alle 5 Werkzeuge',
+      'Azure Neural Audio',
       'Gesprächsverlauf (30 Tage)',
     ],
     cta: 'Premium starten',
-    ctaClass: 'bg-primary text-white hover:bg-primary-hover',
+    ctaClass: 'bg-gradient-to-r from-primary to-violet-500 text-white shadow-md shadow-violet-200 hover:shadow-lg',
     useSignUp: false,
     href: '/pricing',
     scale: true,
@@ -921,8 +994,8 @@ const PREVIEW_PLANS = [
     price: '9,99 €',
     period: '/pro Monat',
     icon: '👑',
-    borderClass: 'border-amber-400',
-    headerBg: 'bg-amber-50',
+    borderClass: 'border-amber-300',
+    headerBg: 'bg-gradient-to-br from-amber-50 to-orange-50',
     features: [
       'Alles aus Premium',
       'Unbegrenzte Antworten',
@@ -930,7 +1003,7 @@ const PREVIEW_PLANS = [
       'API Zugang (demnächst)',
     ],
     cta: 'Pro werden',
-    ctaClass: 'bg-amber-500 text-white hover:bg-amber-600',
+    ctaClass: 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md shadow-amber-200 hover:shadow-lg',
     useSignUp: false,
     href: '/pricing',
     scale: false,
@@ -939,13 +1012,37 @@ const PREVIEW_PLANS = [
 
 function PricingPreviewSection() {
   return (
-    <section className="bg-slate-50 px-6 py-20">
-      <div className="mx-auto max-w-[1000px]">
-        <div className="mb-10 text-center">
-          <h2 className="mb-3 text-3xl font-bold text-slate-800">
+    <section
+      className="relative overflow-hidden px-6 py-24"
+      style={{ background: 'linear-gradient(160deg, #FFFBEB 0%, #FEF3C7 50%, #FFF7ED 100%)' }}
+    >
+      {/* Tile pattern */}
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{ backgroundImage: 'radial-gradient(circle, rgba(245,158,11,0.14) 1.5px, transparent 1.5px)', backgroundSize: '30px 30px' }}
+      />
+
+      {/* Geometric decorations */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -right-20 -top-10 h-[320px] w-[320px] rounded-full bg-amber-300/25 blur-[80px]" />
+        <div className="absolute -left-20 bottom-0 h-[260px] w-[260px] rounded-full bg-orange-300/18 blur-[70px]" />
+        <div className="absolute right-[11%] top-[22%] h-10 w-10 rotate-45 rounded-sm bg-amber-400/22" />
+        <div className="absolute left-[8%] top-[38%] h-7 w-7 rotate-45 rounded-sm bg-orange-400/18" />
+        <div className="absolute right-[18%] bottom-[22%] h-8 w-8 rotate-45 rounded-sm border-2 border-amber-400/28" />
+        <div className="absolute left-[14%] top-[14%] h-12 w-12 bg-amber-300/22" style={{ clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' }} />
+        <div className="absolute right-[7%] bottom-[28%] h-16 w-16 rounded-full border-2 border-amber-400/22" />
+        <div className="absolute left-[30%] bottom-[12%] h-10 w-10 bg-amber-400/12" style={{ clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)' }} />
+      </div>
+
+      <div className="relative z-10 mx-auto max-w-[1000px]">
+        <div className="mb-12 text-center">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.15em] text-amber-700">
+            Preise
+          </div>
+          <h2 className="mb-3 text-[clamp(28px,4vw,44px)] font-bold text-slate-900">
             Einfache, transparente Preise
           </h2>
-          <p className="text-slate-500">Kostenlos starten. Upgrade, wenn du soweit bist.</p>
+          <p className="text-lg text-slate-500">Kostenlos starten. Upgrade, wenn du soweit bist.</p>
         </div>
 
         {/* Mobile: horizontal snap-scroll  |  md+: 3-column grid */}
@@ -962,12 +1059,12 @@ function PricingPreviewSection() {
                 'md:w-auto md:max-w-none',
                 'overflow-hidden rounded-3xl border bg-white shadow-sm',
                 plan.borderClass,
-                plan.scale ? 'md:scale-[1.03] shadow-lg shadow-cyan-100/50' : '',
+                plan.scale ? 'md:scale-[1.04] shadow-xl shadow-violet-100/60' : '',
               ].join(' ')}
             >
               <div className={`px-5 pb-4 pt-5 ${plan.headerBg}`}>
                 {'badge' in plan && plan.badge && (
-                  <span className="mb-2 inline-block rounded-full bg-primary px-2.5 py-0.5 text-[10px] font-bold tracking-wide text-white">
+                  <span className="mb-2 inline-block rounded-full bg-gradient-to-r from-primary to-violet-500 px-2.5 py-0.5 text-[10px] font-bold tracking-wide text-white">
                     {plan.badge}
                   </span>
                 )}
@@ -980,7 +1077,6 @@ function PricingPreviewSection() {
                   <span className="text-xs text-slate-400">{plan.period}</span>
                 </div>
               </div>
-
               <div className="space-y-2.5 px-5 py-4">
                 {plan.features.map(f => (
                   <div key={f} className="flex items-start gap-2">
@@ -989,23 +1085,14 @@ function PricingPreviewSection() {
                   </div>
                 ))}
               </div>
-
               <div className="px-5 pb-5">
                 {plan.useSignUp ? (
                   <SignUpButton mode="modal" fallbackRedirectUrl="/tools">
-                    <button
-                      className={`w-full rounded-xl py-2.5 text-sm font-semibold transition-colors ${plan.ctaClass}`}
-                    >
-                      {plan.cta}
-                    </button>
+                    <button className={`w-full rounded-xl py-2.5 text-sm font-semibold transition-all ${plan.ctaClass}`}>{plan.cta}</button>
                   </SignUpButton>
                 ) : (
                   <a href={'href' in plan ? plan.href : '/pricing'}>
-                    <button
-                      className={`w-full rounded-xl py-2.5 text-sm font-semibold transition-colors ${plan.ctaClass}`}
-                    >
-                      {plan.cta}
-                    </button>
+                    <button className={`w-full rounded-xl py-2.5 text-sm font-semibold transition-all ${plan.ctaClass}`}>{plan.cta}</button>
                   </a>
                 )}
               </div>
@@ -1013,7 +1100,7 @@ function PricingPreviewSection() {
           ))}
         </div>
 
-        <p className="mt-8 text-center text-sm text-slate-400">
+        <p className="mt-8 text-center text-sm text-slate-500">
           Alle Pläne enthalten alle Werkzeuge. Jederzeit kündbar.
         </p>
       </div>
@@ -1026,20 +1113,46 @@ function PricingPreviewSection() {
 function FinalCtaSection() {
   return (
     <section
-      className="px-6 py-20 text-center text-white"
-      style={{ background: 'linear-gradient(135deg, #06B6D4, #0E7490)' }}
+      className="relative overflow-hidden px-6 py-28 text-center text-white"
+      style={{ background: 'linear-gradient(160deg, #5B21B6 0%, #7C3AED 50%, #6D28D9 100%)' }}
     >
-      <div className="mx-auto max-w-[600px]">
+      {/* Tile pattern */}
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.1) 1.5px, transparent 1.5px)', backgroundSize: '28px 28px' }}
+      />
+
+      {/* Geometric decorations */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -left-20 top-1/2 h-[420px] w-[420px] -translate-y-1/2 rounded-full bg-white/5 blur-[80px]" />
+        <div className="absolute -right-20 top-1/2 h-[380px] w-[380px] -translate-y-1/2 rounded-full bg-violet-300/10 blur-[80px]" />
+        <div className="absolute left-1/2 top-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/5" />
+        <div className="absolute left-1/2 top-1/2 h-[360px] w-[360px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/8" />
+        {/* Sparkles */}
+        {[
+          'top-[18%] left-[14%]', 'top-[32%] right-[11%]',
+          'bottom-[22%] left-[19%]', 'top-[14%] right-[24%]',
+          'bottom-[30%] right-[16%]', 'top-[50%] left-[8%]',
+        ].map((pos, i) => (
+          <span key={i} className={`absolute ${pos} text-white/15 text-xl`}>✦</span>
+        ))}
+        <div className="absolute left-[9%] bottom-[28%] h-8 w-8 rotate-45 border border-white/15" />
+        <div className="absolute right-[9%] top-[28%] h-6 w-6 rotate-45 rounded-sm bg-white/8" />
+        <div className="absolute right-[14%] bottom-[18%] h-16 w-16 bg-white/5" style={{ clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' }} />
+      </div>
+
+      <div className="relative z-10 mx-auto max-w-[600px]">
         <div className="mb-6 text-6xl">⚡</div>
-        <h2 className="mb-4 text-3xl font-bold">Starte noch heute smarter</h2>
-        <p className="mb-8 text-lg text-white/80">
-          Schließ dich Tausenden von Nutzern an, die täglich Zeit mit SmartAssist sparen.
+        <h2 className="mb-4 text-[clamp(28px,4vw,44px)] font-bold">Starte noch heute smarter</h2>
+        <p className="mb-10 text-lg text-white/70">
+          Schließ dich Nutzern an, die täglich Zeit mit SmartAssist sparen.
         </p>
         <SignUpButton mode="modal" fallbackRedirectUrl="/tools">
-          <button className="rounded-xl bg-white px-8 py-3.5 text-base font-bold text-primary shadow-xl transition-colors hover:bg-slate-100">
+          <button className="rounded-2xl bg-white px-10 py-4 text-base font-bold text-primary shadow-2xl shadow-violet-900/50 transition-all hover:scale-[1.02] hover:shadow-3xl">
             Kostenlos starten, für immer
           </button>
         </SignUpButton>
+        <p className="mt-4 text-sm text-white/35">Keine Kreditkarte erforderlich</p>
       </div>
     </section>
   )
@@ -1049,27 +1162,30 @@ function FinalCtaSection() {
 
 function FooterSection() {
   return (
-    <footer className="px-6 py-10" style={{ background: '#1a1a2e' }}>
-      <div className="mx-auto max-w-[1200px]">
+    <footer className="relative overflow-hidden px-6 py-12" style={{ background: '#111827' }}>
+      {/* Tile pattern */}
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.025) 1.5px, transparent 1.5px)', backgroundSize: '32px 32px' }}
+      />
+      <div className="relative z-10 mx-auto max-w-[1200px]">
         <div className="mb-6 flex flex-col items-center justify-between gap-6 md:flex-row">
           <div>
             <div className="mb-1 flex items-center gap-2">
               <img src="/favicon.png" alt="SmartAssist" className="h-7 w-7 rounded-lg" />
-              <span className="text-lg font-bold text-white">SmartAssist</span>
+              <span className="bg-gradient-to-r from-violet-400 to-violet-300 bg-clip-text text-lg font-bold text-transparent">SmartAssist</span>
             </div>
-            <p className="text-sm text-slate-400">KI Werkzeuge für alle</p>
+            <p className="text-sm text-slate-500">KI Werkzeuge für alle</p>
           </div>
-          <div className="flex items-center gap-6 text-sm text-slate-400">
-            <a href="#" className="transition-colors hover:text-white">Privacy</a>
-            <a href="#" className="transition-colors hover:text-white">Terms</a>
-            <a href="#" className="transition-colors hover:text-white">Contact</a>
+          <div className="flex items-center gap-6 text-sm text-slate-500">
+            <a href="#" className="transition-colors hover:text-white">Datenschutz</a>
+            <a href="#" className="transition-colors hover:text-white">Nutzungsbedingungen</a>
+            <a href="#" className="transition-colors hover:text-white">Kontakt</a>
           </div>
         </div>
-        <div className="border-t border-white/10 pt-6 text-center">
-          <p className="mb-1 text-xs text-slate-500">
-            Built with ♥ using .NET 9 · React · Claude KI
-          </p>
-          <p className="text-xs text-slate-600">© 2026 SmartAssist. Alle Rechte vorbehalten.</p>
+        <div className="border-t border-white/5 pt-6 text-center">
+          <p className="mb-1 text-xs text-slate-600">Entwickelt mit ♥ · .NET 9 · React · Claude KI</p>
+          <p className="text-xs text-slate-700">© 2026 SmartAssist. Alle Rechte vorbehalten.</p>
         </div>
       </div>
     </footer>
