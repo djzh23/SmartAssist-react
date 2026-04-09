@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { SignInButton, SignUpButton, useUser } from '@clerk/clerk-react'
 import { Check, Loader2, Play, RotateCcw, Send } from 'lucide-react'
-import { askAgent } from '../api/client'
+import { askAgentDemo, fetchDemoTtsAudio } from '../api/client'
 import LearningResponse from '../components/chat/LearningResponse'
 import { parseLearningResponse } from '../utils/parseLearningResponse'
 import '../styles/landing.css'
@@ -393,6 +393,7 @@ function DemoAssistantBubble({ text, tool }: { text: string; tool: DemoTool }) {
           nativeLang="Deutsch"
           targetLangCode="es"
           timestamp={new Date().toISOString()}
+          fetchAudio={fetchDemoTtsAudio}
         />
       )
     }
@@ -449,15 +450,21 @@ function LiveDemoSection() {
     setInput('')
     setLoading(true)
     try {
-      const res = await askAgent(buildAskParams(activeTool, msg, sessionIds.current[activeTool]))
+      const res = await askAgentDemo(buildAskParams(activeTool, msg, sessionIds.current[activeTool]))
       const ts = new Date().toISOString()
       setMsgByTool(prev => ({ ...prev, [activeTool]: [...prev[activeTool], { role: 'assistant', text: res.reply, ts }] }))
       setTotalCount(c => c + 1)
-    } catch {
+    } catch (err: unknown) {
+      const isDemoLimit =
+        err instanceof Error && (err.message === 'demo_limit' || err.name === 'UsageLimitError')
+      const errText = isDemoLimit
+        ? 'Du hast die Demo-Nachrichten aufgebraucht. Registriere dich für unbegrenzten Zugang.'
+        : 'Etwas ist schiefgelaufen. Bitte versuche es erneut.'
       setMsgByTool(prev => ({
         ...prev,
-        [activeTool]: [...prev[activeTool], { role: 'assistant', text: 'Etwas ist schiefgelaufen. Bitte versuche es erneut.' }],
+        [activeTool]: [...prev[activeTool], { role: 'assistant', text: errText }],
       }))
+      if (isDemoLimit) setTotalCount(MAX_DEMO)
     } finally {
       setLoading(false)
     }

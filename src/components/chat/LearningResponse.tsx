@@ -10,6 +10,12 @@ interface Props {
   nativeLang: string
   targetLangCode: string
   timestamp: string
+  /**
+   * Optional audio fetch override. When provided, replaces the default
+   * authenticated backend TTS call. Used by the public landing-page demo
+   * to call /api/speech/demo-tts without a token.
+   */
+  fetchAudio?: (text: string, langCode: string) => Promise<Blob | null>
 }
 
 /** Best BCP-47 tag per language code */
@@ -57,7 +63,7 @@ function pickBestVoice(voices: SpeechSynthesisVoice[], langTag: string): SpeechS
   return [...candidates].sort((a, b) => rank(b) - rank(a))[0]
 }
 
-export default function LearningResponse({ data, targetLang, nativeLang, targetLangCode, timestamp }: Props) {
+export default function LearningResponse({ data, targetLang, nativeLang, targetLangCode, timestamp, fetchAudio }: Props) {
   const time = new Date(timestamp).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })
   const { getToken } = useAuth()
   const [isPlaying, setIsPlaying] = useState(false)
@@ -129,10 +135,11 @@ export default function LearningResponse({ data, targetLang, nativeLang, targetL
     setIsPlaying(true)
     setAudioError(null)
 
-    // ── Primary: backend TTS (OpenAI — real human voice) ──────────────────
+    // ── Primary: backend TTS (Azure Neural — real human voice) ───────────
     try {
-      const token = await getToken()
-      const blob = await fetchTtsAudio(text, targetLangCode, token)
+      const blob = fetchAudio
+        ? await fetchAudio(text, targetLangCode)
+        : await fetchTtsAudio(text, targetLangCode, await getToken())
       if (blob) {
         const url = URL.createObjectURL(blob)
         const audio = new Audio(url)
@@ -156,7 +163,7 @@ export default function LearningResponse({ data, targetLang, nativeLang, targetL
 
     // ── Fallback: browser Web Speech API ──────────────────────────────────
     speakWithBrowser(text)
-  }, [isPlaying, data.targetLanguageText, targetLangCode, getToken, stopAndCleanup, speakWithBrowser])
+  }, [isPlaying, data.targetLanguageText, targetLangCode, getToken, fetchAudio, stopAndCleanup, speakWithBrowser])
 
   return (
     <div className="flex max-w-[520px] animate-slide-up flex-col gap-1.5">

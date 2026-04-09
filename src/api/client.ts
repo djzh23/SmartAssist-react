@@ -175,7 +175,7 @@ export async function getAgentUsage(token?: string): Promise<UsageStatus> {
   }
 }
 
-// ── TTS via backend (OpenAI) ────────────────────────────────────────────────
+// ── TTS via backend ────────────────────────────────────────────────────────
 
 /**
  * Fetch synthesized speech from the backend (/api/speech/tts).
@@ -202,4 +202,59 @@ export async function fetchTtsAudio(
   } catch {
     return null
   }
+}
+
+/**
+ * Public demo TTS — calls /api/speech/demo-tts (no auth required).
+ * Limited to 8 calls per IP per day. Used by the landing-page live demo.
+ * Returns null if the limit is exceeded or on any error.
+ */
+export async function fetchDemoTtsAudio(
+  text: string,
+  languageCode: string,
+): Promise<Blob | null> {
+  try {
+    const res = await fetch(`${BASE}/api/speech/demo-tts`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, languageCode }),
+    })
+    if (!res.ok) return null
+    return await res.blob()
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Public demo agent — calls /api/agent/demo (no auth required).
+ * Limited to 5 calls per IP per day. Used by the landing-page live demo.
+ * Throws UsageLimitError on 429, generic Error on other failures.
+ */
+export async function askAgentDemo(request: AgentRequest): Promise<AgentResponse> {
+  const res = await fetch(`${BASE}/api/agent/demo`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(request),
+  })
+
+  if (res.status === 429) {
+    let reason = 'demo_limit'
+    try {
+      const err = await res.json() as Record<string, string>
+      reason = err?.reason ?? err?.error ?? 'demo_limit'
+    } catch { /* ignore */ }
+    throw new UsageLimitError(reason, 429)
+  }
+
+  if (!res.ok) {
+    let message = `Demo request failed (${res.status})`
+    try {
+      const err = await res.json() as Record<string, string>
+      if (err?.message) message = err.message
+    } catch { /* ignore */ }
+    throw new Error(message)
+  }
+
+  return await res.json() as AgentResponse
 }
