@@ -7,7 +7,66 @@ import LearningResponse from '../components/chat/LearningResponse'
 import { parseLearningResponse } from '../utils/parseLearningResponse'
 import '../styles/landing.css'
 
+// ── Section Divider ──────────────────────────────────────────────────────────
+
+function SectionDivider({
+  from,
+  to,
+  dark = false,
+}: {
+  from: string
+  to: string
+  dark?: boolean
+}) {
+  const rgb = dark ? '255,255,255' : '124,58,237'
+  const stroke = `rgba(${rgb},0.18)`
+  const dot = `rgba(${rgb},0.28)`
+  return (
+    <div
+      className="relative h-12 w-full overflow-hidden"
+      style={{ background: `linear-gradient(to bottom, ${from}, ${to})` }}
+      aria-hidden="true"
+    >
+      <svg
+        className="absolute inset-0 h-full w-full"
+        viewBox="0 0 1440 48"
+        preserveAspectRatio="xMidYMid slice"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        {/* Top fine rule */}
+        <line x1="0" y1="14" x2="1440" y2="14" stroke={stroke} strokeWidth="0.5" />
+        {/* Center dashed rule */}
+        <line x1="0" y1="24" x2="1440" y2="24" stroke={stroke} strokeWidth="0.75" strokeDasharray="6 6" />
+        {/* Bottom fine rule */}
+        <line x1="0" y1="34" x2="1440" y2="34" stroke={stroke} strokeWidth="0.5" />
+        {/* Repeating diamonds on center line */}
+        {Array.from({ length: 36 }).map((_, i) => (
+          <polygon
+            key={i}
+            points={`${i * 40 + 20},17 ${i * 40 + 27},24 ${i * 40 + 20},31 ${i * 40 + 13},24`}
+            fill="none"
+            stroke={dot}
+            strokeWidth="0.75"
+          />
+        ))}
+        {/* Dots between diamonds */}
+        {Array.from({ length: 35 }).map((_, i) => (
+          <circle key={`c${i}`} cx={i * 40 + 40} cy={24} r={1.2} fill={dot} />
+        ))}
+      </svg>
+    </div>
+  )
+}
+
 // ── Navbar ───────────────────────────────────────────────────────────────────
+
+function scrollTo(id: string) {
+  const el = document.getElementById(id)
+  if (!el) return
+  const navH = window.innerWidth >= 640 ? 64 : 56
+  const top = el.getBoundingClientRect().top + window.scrollY - navH
+  window.scrollTo({ top, behavior: 'smooth' })
+}
 
 function LandingNav() {
   return (
@@ -18,9 +77,12 @@ function LandingNav() {
           <span className="bg-gradient-to-r from-primary to-violet-500 bg-clip-text text-base font-bold text-transparent sm:text-lg">SmartAssist</span>
         </div>
         <div className="flex flex-shrink-0 items-center gap-2 sm:gap-3">
-          <a href="/pricing" className="hidden text-sm font-medium text-slate-500 transition-colors hover:text-primary sm:block">
+          <button
+            onClick={() => scrollTo('pricing')}
+            className="hidden text-sm font-medium text-slate-500 transition-colors hover:text-primary sm:block"
+          >
             Preise
-          </a>
+          </button>
           <SignInButton mode="modal" fallbackRedirectUrl="/tools">
             <button className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 shadow-sm transition-all hover:border-violet-200 hover:text-primary sm:px-4 sm:py-2 sm:text-sm">
               Anmelden
@@ -110,8 +172,9 @@ function ChatMockup() {
 function HeroSection() {
   return (
     <section
-      className="relative overflow-hidden pt-14 sm:pt-16"
-      style={{ background: 'linear-gradient(160deg, #FFFDF5 0%, #F7F0FF 55%, #EDE9FE 100%)', minHeight: '100vh' }}
+      id="hero"
+      className="relative flex flex-col justify-center overflow-hidden pt-14 scroll-mt-14 sm:pt-16 sm:scroll-mt-16"
+      style={{ background: 'linear-gradient(160deg, #FFFDF5 0%, #F7F0FF 55%, #EDE9FE 100%)', minHeight: '100svh' }}
     >
       {/* Tile dot pattern */}
       <div
@@ -164,13 +227,14 @@ function HeroSection() {
                 <span className="opacity-80">→</span>
               </button>
             </SignUpButton>
-            <a
-              href="#demo"
+            <button
+              type="button"
+              onClick={() => scrollTo('demo')}
               className="flex h-12 items-center gap-2 rounded-2xl border-2 border-slate-200 bg-white/80 px-6 text-base font-medium text-slate-600 backdrop-blur-sm transition-all hover:border-violet-200 hover:bg-violet-50 hover:text-primary"
             >
               <Play size={15} className="text-primary" />
               Demo ansehen
-            </a>
+            </button>
           </div>
 
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-400">
@@ -246,8 +310,9 @@ const FEATURES = [
 function FeaturesSection() {
   return (
     <section
-      className="relative overflow-hidden px-6 py-24"
-      style={{ background: 'linear-gradient(180deg, #EDE9FE 0%, #F5F0FF 40%, #FFFFFF 100%)' }}
+      id="features"
+      className="relative flex flex-col justify-center overflow-hidden px-6 py-16 scroll-mt-14 sm:scroll-mt-16"
+      style={{ background: 'linear-gradient(180deg, #EDE9FE 0%, #F5F0FF 40%, #FFFFFF 100%)', minHeight: '100svh' }}
     >
       {/* Tile pattern */}
       <div
@@ -627,8 +692,8 @@ function LiveDemoSection() {
   return (
     <section
       id="demo"
-      className="relative overflow-hidden px-4 py-20 sm:px-6"
-      style={{ background: 'linear-gradient(180deg, #FFFFFF 0%, #F5F0FF 30%, #EEF2FF 100%)' }}
+      className="relative flex flex-col justify-center overflow-hidden px-4 py-16 scroll-mt-14 sm:px-6 sm:scroll-mt-16"
+      style={{ background: 'linear-gradient(180deg, #FFFFFF 0%, #F5F0FF 30%, #EEF2FF 100%)', minHeight: '100svh' }}
     >
       {/* Tile pattern */}
       <div
@@ -891,8 +956,9 @@ const STEPS = [
 function HowItWorksSection() {
   return (
     <section
-      className="relative overflow-hidden px-6 py-24"
-      style={{ background: 'linear-gradient(160deg, #1E1B2E 0%, #150F25 100%)' }}
+      id="how-it-works"
+      className="relative flex flex-col justify-center overflow-hidden px-6 py-16 scroll-mt-14 sm:scroll-mt-16"
+      style={{ background: 'linear-gradient(160deg, #1E1B2E 0%, #150F25 100%)', minHeight: '100svh' }}
     >
       {/* Tile pattern */}
       <div
@@ -1013,8 +1079,9 @@ const PREVIEW_PLANS = [
 function PricingPreviewSection() {
   return (
     <section
-      className="relative overflow-hidden px-6 py-24"
-      style={{ background: 'linear-gradient(160deg, #FFFBEB 0%, #FEF3C7 50%, #FFF7ED 100%)' }}
+      id="pricing"
+      className="relative flex flex-col justify-center overflow-hidden px-6 py-16 scroll-mt-14 sm:scroll-mt-16"
+      style={{ background: 'linear-gradient(160deg, #FFFBEB 0%, #FEF3C7 50%, #FFF7ED 100%)', minHeight: '100svh' }}
     >
       {/* Tile pattern */}
       <div
@@ -1113,8 +1180,9 @@ function PricingPreviewSection() {
 function FinalCtaSection() {
   return (
     <section
-      className="relative overflow-hidden px-6 py-28 text-center text-white"
-      style={{ background: 'linear-gradient(160deg, #5B21B6 0%, #7C3AED 50%, #6D28D9 100%)' }}
+      id="cta"
+      className="relative flex flex-col items-center justify-center overflow-hidden px-6 py-20 text-center text-white scroll-mt-14 sm:scroll-mt-16"
+      style={{ background: 'linear-gradient(160deg, #5B21B6 0%, #7C3AED 50%, #6D28D9 100%)', minHeight: '100svh' }}
     >
       {/* Tile pattern */}
       <div
@@ -1208,11 +1276,17 @@ export default function LandingPage() {
     <div className="min-h-screen">
       <LandingNav />
       <HeroSection />
+      <SectionDivider from="#EDE9FE" to="#EDE9FE" />
       <FeaturesSection />
+      <SectionDivider from="#FFFFFF" to="#FFFFFF" />
       <LiveDemoSection />
+      <SectionDivider from="#EEF2FF" to="#1E1B2E" dark />
       <HowItWorksSection />
+      <SectionDivider from="#150F25" to="#FFFBEB" />
       <PricingPreviewSection />
+      <SectionDivider from="#FFF7ED" to="#5B21B6" />
       <FinalCtaSection />
+      <SectionDivider from="#6D28D9" to="#111827" dark />
       <FooterSection />
     </div>
   )

@@ -1,3 +1,8 @@
+/* Smooth scroll for anchor navigation */
+html {
+  scroll-behavior: smooth;
+}
+
 /* Typing dots for chat mockup and live demo */
 @keyframes typingBounce {
   0%, 60%, 100% { transform: translateY(0); }
