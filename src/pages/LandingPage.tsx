@@ -311,7 +311,7 @@ function FeaturesSection() {
   return (
     <section
       id="features"
-      className="relative flex flex-col justify-center overflow-hidden px-6 py-16 scroll-mt-14 sm:scroll-mt-16"
+      className="relative flex flex-col justify-center px-6 py-16 scroll-mt-14 sm:scroll-mt-16"
       style={{ background: 'linear-gradient(180deg, #EDE9FE 0%, #F5F0FF 40%, #FFFFFF 100%)', minHeight: '100svh' }}
     >
       {/* Tile pattern */}
@@ -331,7 +331,7 @@ function FeaturesSection() {
         <div className="absolute left-[20%] bottom-[10%] h-8 w-8 rotate-45 border border-violet-400/20" />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-[1100px]">
+      <div className="relative z-10 mx-auto w-full max-w-[1100px]">
         <div className="mb-14 text-center">
           <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-violet-200 bg-violet-50 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.15em] text-violet-600">
             Werkzeuge
@@ -531,7 +531,7 @@ function parseCodeBlocks(text: string): Array<{ type: 'text' | 'code'; content: 
 
 function JobResponseBubble({ text }: { text: string }) {
   return (
-    <div className="w-full max-w-[520px] overflow-hidden rounded-xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white">
+    <div className="w-full overflow-hidden rounded-xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white">
       <div className="flex items-center gap-1.5 border-b border-emerald-100 px-4 py-2">
         <span className="text-sm">💼</span>
         <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-emerald-700">Job-Analyse</span>
@@ -545,7 +545,7 @@ function JobResponseBubble({ text }: { text: string }) {
 
 function InterviewResponseBubble({ text }: { text: string }) {
   return (
-    <div className="w-full max-w-[520px] overflow-hidden rounded-xl border border-cyan-100 bg-gradient-to-br from-cyan-50 to-white">
+    <div className="w-full overflow-hidden rounded-xl border border-cyan-100 bg-gradient-to-br from-cyan-50 to-white">
       <div className="flex items-center gap-1.5 border-b border-cyan-100 px-4 py-2">
         <span className="text-sm">🎯</span>
         <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-cyan-700">Interview-Vorbereitung</span>
@@ -560,7 +560,7 @@ function InterviewResponseBubble({ text }: { text: string }) {
 function CodeResponseBubble({ text }: { text: string }) {
   const parts = parseCodeBlocks(text)
   return (
-    <div className="w-full max-w-[520px] overflow-hidden rounded-xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white">
+    <div className="w-full overflow-hidden rounded-xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white">
       <div className="flex items-center gap-1.5 border-b border-slate-200 px-4 py-2">
         <span className="text-sm">💻</span>
         <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-600">Code-Assistent</span>
@@ -584,7 +584,7 @@ function CodeResponseBubble({ text }: { text: string }) {
 
 function GeneralResponseBubble({ text }: { text: string }) {
   return (
-    <div className="w-full max-w-[520px] overflow-hidden rounded-xl border border-violet-100 bg-gradient-to-br from-violet-50 to-white">
+    <div className="w-full overflow-hidden rounded-xl border border-violet-100 bg-gradient-to-br from-violet-50 to-white">
       <div className="flex items-center gap-1.5 border-b border-violet-100 px-4 py-2">
         <span className="text-sm">💬</span>
         <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-violet-600">SmartAssist</span>
@@ -707,7 +707,7 @@ function LiveDemoSection() {
         <div className="absolute right-[5%] top-[15%] h-10 w-10 rotate-45 border border-violet-300/20" />
         <div className="absolute left-[4%] bottom-[20%] h-8 w-8 bg-violet-300/15" style={{ clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' }} />
       </div>
-      <div className="relative z-10 mx-auto max-w-[640px]">
+      <div className="relative z-10 mx-auto w-full max-w-[640px]">
         <div className="mb-8 text-center">
           <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-primary">Live Demo</p>
           <h2 className="mb-3 text-3xl font-bold text-slate-800">Probiere es jetzt aus</h2>
@@ -761,7 +761,7 @@ function LiveDemoSection() {
           </div>
 
           {/* ── Messages ── */}
-          <div className="max-h-[360px] min-h-[180px] space-y-4 overflow-y-auto p-5">
+          <div className="max-h-[360px] min-h-[180px] space-y-4 overflow-y-auto p-3 sm:p-5">
             {currentMsgs.length === 0 && !loading && (
               <div className="flex flex-col items-center gap-2 py-8 text-center">
                 <span className="text-4xl">{cfg.emoji}</span>
@@ -802,11 +802,11 @@ function LiveDemoSection() {
 
           {/* ── Chip (only when no messages yet for this tool) ── */}
           {!atToolLimit && currentMsgs.length === 0 && (
-            <div className="px-5 pb-3">
+            <div className="px-3 pb-3 sm:px-5">
               <button
                 type="button"
                 onClick={() => void send(cfg.chip)}
-                className="flex w-full items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-left text-xs text-slate-600 transition-colors hover:border-primary/40 hover:bg-primary-light hover:text-primary"
+                className="flex w-full items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-left text-xs text-slate-600 transition-colors hover:border-primary/40 hover:bg-primary-light hover:text-primary"
               >
                 <span className="flex-shrink-0">{cfg.emoji}</span>
                 <span className="truncate">{cfg.chip}</span>
@@ -819,7 +819,7 @@ function LiveDemoSection() {
 
           {/* ── Bottom area: tool exhausted / all exhausted / input ── */}
           {allExhausted ? (
-            <div className="border-t border-slate-100 px-5 py-6 text-center">
+            <div className="border-t border-slate-100 px-4 py-6 text-center sm:px-5">
               <p className="mb-1 text-sm font-semibold text-slate-800">
                 Du hast alle 5 Werkzeuge ausprobiert 🎉
               </p>
@@ -828,7 +828,7 @@ function LiveDemoSection() {
               </p>
               <SignUpButton mode="modal" fallbackRedirectUrl="/tools">
                 <button className="mb-3 w-full rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-hover sm:w-auto">
-                  Kostenlos registrieren — 20 Nachrichten/Tag
+                  Kostenlos registrieren: 20 Nachrichten pro Tag
                 </button>
               </SignUpButton>
               <p className="text-xs text-slate-400">
@@ -842,7 +842,7 @@ function LiveDemoSection() {
             </div>
           ) : atToolLimit ? (
             /* Current tool exhausted — nudge to other tools */
-            <div className="border-t border-slate-100 px-5 py-4">
+            <div className="border-t border-slate-100 px-3 py-4 sm:px-5">
               <p className="mb-3 text-center text-xs font-medium text-slate-500">
                 ✅ <strong>{cfg.label}</strong> ausprobiert! Noch {unusedTools.length} Werkzeug{unusedTools.length !== 1 ? 'e' : ''} übrig:
               </p>
@@ -868,7 +868,7 @@ function LiveDemoSection() {
               </div>
             </div>
           ) : (
-            <div className="flex items-center gap-2 border-t border-slate-100 px-4 py-3">
+            <div className="flex items-center gap-1.5 border-t border-slate-100 px-3 py-2.5 sm:gap-2 sm:px-4">
               {currentMsgs.length > 0 && (
                 <button
                   type="button"
@@ -888,7 +888,7 @@ function LiveDemoSection() {
                 }}
                 placeholder={cfg.placeholder}
                 disabled={loading}
-                className="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary/20 disabled:opacity-50"
+                className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary/20 disabled:opacity-50 sm:px-4"
                 style={{ fontSize: 'max(16px, 0.875rem)' }}
               />
               <button
@@ -904,7 +904,7 @@ function LiveDemoSection() {
 
           {/* ── Per-tool message counter ── */}
           {!atToolLimit && !allExhausted && (
-            <div className="flex items-center justify-between border-t border-slate-50 px-5 py-2">
+            <div className="flex items-center justify-between border-t border-slate-50 px-3 py-2 sm:px-5">
               <span className="text-[10px] text-slate-300">
                 {PER_TOOL_LIMIT - toolCount} von {PER_TOOL_LIMIT} Nachrichten für {cfg.label}
               </span>
@@ -978,7 +978,7 @@ function HowItWorksSection() {
         <div className="absolute left-[28%] top-[15%] h-6 w-6 rotate-45 bg-amber-400/12 rounded-sm" />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-[900px]">
+      <div className="relative z-10 mx-auto w-full max-w-[900px]">
         <div className="mb-14 text-center">
           <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.15em] text-white/50">
             So funktioniert es
@@ -1080,7 +1080,7 @@ function PricingPreviewSection() {
   return (
     <section
       id="pricing"
-      className="relative flex flex-col justify-center overflow-hidden px-6 py-16 scroll-mt-14 sm:scroll-mt-16"
+      className="relative flex flex-col justify-center px-6 py-16 scroll-mt-14 sm:scroll-mt-16"
       style={{ background: 'linear-gradient(160deg, #FFFBEB 0%, #FEF3C7 50%, #FFF7ED 100%)', minHeight: '100svh' }}
     >
       {/* Tile pattern */}
@@ -1101,7 +1101,7 @@ function PricingPreviewSection() {
         <div className="absolute left-[30%] bottom-[12%] h-10 w-10 bg-amber-400/12" style={{ clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)' }} />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-[1000px]">
+      <div className="relative z-10 mx-auto w-full max-w-[1000px]">
         <div className="mb-12 text-center">
           <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.15em] text-amber-700">
             Preise
@@ -1209,7 +1209,7 @@ function FinalCtaSection() {
         <div className="absolute right-[14%] bottom-[18%] h-16 w-16 bg-white/5" style={{ clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' }} />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-[600px]">
+      <div className="relative z-10 mx-auto w-full max-w-[600px]">
         <div className="mb-6 text-6xl">⚡</div>
         <h2 className="mb-4 text-[clamp(28px,4vw,44px)] font-bold">Starte noch heute smarter</h2>
         <p className="mb-10 text-lg text-white/70">
