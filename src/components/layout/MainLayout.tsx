@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { Outlet } from 'react-router-dom'
+import { ChatSessionsProvider } from '../../hooks/useChatSessions'
+import StreamAnswerToast from './StreamAnswerToast'
 import Sidebar from './Sidebar'
 import { Menu, X } from 'lucide-react'
 
@@ -50,8 +52,11 @@ export default function MainLayout() {
           />
         )}
 
-        <main className="flex-1 overflow-hidden">
-          <Outlet />
+        <main className="relative flex-1 overflow-hidden">
+          <ChatSessionsProvider>
+            <StreamAnswerToast />
+            <Outlet />
+          </ChatSessionsProvider>
         </main>
       </div>
     </div>

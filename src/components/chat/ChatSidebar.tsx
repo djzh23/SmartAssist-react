@@ -1,4 +1,4 @@
-import { Briefcase, Code2, Globe2, MessageCircle, Plus, Target, Trash2, X } from 'lucide-react'
+import { Briefcase, Code2, Globe2, Loader2, MessageCircle, Plus, Target, Trash2, X } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { ChatSession, ToolType } from '../../types'
 import { NATIVE_LANGS, PROGRAMMING_LANGUAGES, TARGET_LANGS } from '../../types'
@@ -58,6 +58,8 @@ interface Props {
   onNew: () => void
   onDelete: (id: string) => void
   onClear: () => void
+  /** Per-session streaming (background generation) */
+  sessionIsStreaming?: (sessionId: string) => boolean
   showLLPanel: boolean
   languageLearningMode: boolean
   nativeLangCode: string
@@ -80,6 +82,7 @@ export default function ChatSidebar({
   onNew,
   onDelete,
   onClear,
+  sessionIsStreaming,
   showLLPanel,
   languageLearningMode,
   nativeLangCode,
@@ -204,6 +207,7 @@ export default function ChatSidebar({
                 const time = new Date(session.messages[session.messages.length - 1]?.timestamp ?? session.createdAt)
                   .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                 const isActive = session.id === activeSessionId
+                const isStreaming = sessionIsStreaming?.(session.id) ?? false
 
                 const Icon = TOOL_ICON[session.toolType]
                 const theme = getTheme(idx)
@@ -236,9 +240,15 @@ export default function ChatSidebar({
                       <p className={`truncate text-[12px] font-medium ${isActive ? 'text-slate-800' : 'text-slate-600'}`}>
                         {preview.length > 28 ? `${preview.slice(0, 28)}…` : preview}
                       </p>
-                      <div className="mt-0.5 flex items-center gap-1.5">
+                      <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
                         <span className={`h-1.5 w-1.5 flex-shrink-0 rounded-full ${theme.dot} opacity-70`} />
                         <p className="text-[10px] text-slate-400">{time}</p>
+                        {isStreaming && (
+                          <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-amber-600">
+                            <Loader2 size={10} className="animate-spin" />
+                            Antwort läuft…
+                          </span>
+                        )}
                       </div>
                     </div>
 

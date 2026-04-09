@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { AlertCircle, PanelLeft, Plus, X } from 'lucide-react'
 import type { ToolType } from '../types'
@@ -370,6 +370,8 @@ export default function ChatPage() {
 
   const store = useChatSessions()
   const [isLoading, setIsLoading] = useState(false)
+  /** Session currently in handleSend (before stream finishes); allows typing in other chats */
+  const loadingSessionRef = useRef<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [showContextModal, setShowContextModal] = useState(false)
@@ -601,6 +603,7 @@ export default function ChatPage() {
     }
 
     const sessionId = store.activeSessionId ?? store.newSession(store.currentToolType)
+    const sessionToolType = store.sessions[sessionId]?.toolType ?? store.currentToolType
     const displayText = options?.displayText ?? text
     const outgoingText = options?.apiMessageOverride ?? text
 
@@ -624,6 +627,8 @@ export default function ChatPage() {
 
     const streamingMsgId = crypto.randomUUID()
     store.addMessage(sessionId, { id: streamingMsgId, text: '', isUser: false })
+    store.setSessionStreaming(sessionId, true)
+    loadingSessionRef.current = sessionId
 
     try {
       const token = await getToken()
@@ -654,6 +659,9 @@ export default function ChatPage() {
       )
 
       store.finalizeMessage(sessionId, streamingMsgId, { toolUsed: toolUsed || undefined })
+
+      const preview = accumulated.trim().split('\n')[0] ?? 'Neue Antwort'
+      store.notifyAnswerReady(sessionId, sessionToolType, preview)
 
       if (typeof serverUsageToday === 'number') {
         dispatchServerUsage(serverUsageToday)
@@ -687,9 +695,19 @@ export default function ChatPage() {
         setError(sendError instanceof Error ? sendError.message : 'Etwas ist schiefgelaufen. Bitte versuche es erneut.')
       }
     } finally {
+      store.setSessionStreaming(sessionId, false)
+      loadingSessionRef.current = null
       setIsLoading(false)
     }
   }
+
+  const activeId = store.activeSessionId
+  const inputBlocked =
+    store.isSessionStreaming(activeId)
+    || (isLoading && loadingSessionRef.current === activeId)
+  const showTypingForActive =
+    store.isSessionStreaming(activeId)
+    || (isLoading && loadingSessionRef.current === activeId)
 
   const programmingContextLabel = activeContext?.programmingLanguage
     || (activeContext?.programmingLanguageId
@@ -726,6 +744,7 @@ export default function ChatPage() {
         sessions={store.visibleSessions}
         activeSessionId={store.activeSessionId}
         currentToolType={store.currentToolType}
+        sessionIsStreaming={id => store.isSessionStreaming(id)}
         isOpen={sidebarOpen}
         onOpen={() => setSidebarOpen(true)}
         onClose={() => setSidebarOpen(false)}
@@ -851,7 +870,7 @@ export default function ChatPage() {
             <div className="mx-auto max-w-3xl px-4 py-4">
               <MessageList
                 messages={store.activeMessages}
-                isLoading={isLoading}
+                isLoading={showTypingForActive}
                 toolType={store.currentToolType}
                 targetLang={targetDisplay}
                 nativeLang={nativeDisplay}
@@ -878,7 +897,7 @@ export default function ChatPage() {
 
         <ChatInput
           toolType={store.currentToolType}
-          isLoading={isLoading}
+          isLoading={inputBlocked}
           onSend={handleSend}
         />
       </div>
