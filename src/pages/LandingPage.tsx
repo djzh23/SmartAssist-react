@@ -247,11 +247,18 @@ function FeaturesSection() {
           <p className="text-slate-500">Vier starke Werkzeuge, eine klare Oberfläche</p>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+        {/* Mobile: horizontal snap-scroll  |  sm+: 2-column grid */}
+        <div className={[
+          'flex gap-4 overflow-x-auto pb-3 snap-x snap-mandatory scrollbar-hide',
+          '-mx-6 px-6',
+          'sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-6 sm:overflow-x-visible sm:pb-0 sm:snap-none',
+        ].join(' ')}>
           {FEATURES.map(f => (
             <div
               key={f.title}
               className={[
+                'w-[78vw] max-w-[300px] flex-shrink-0 snap-center',
+                'sm:w-auto sm:max-w-none',
                 'relative cursor-default rounded-2xl border bg-white p-7 transition-all duration-200 hover:-translate-y-1 hover:shadow-xl',
                 f.highlight
                   ? 'border-2 border-primary bg-cyan-50/30'
@@ -625,11 +632,18 @@ function PricingPreviewSection() {
           <p className="text-slate-500">Kostenlos starten. Upgrade, wenn du soweit bist.</p>
         </div>
 
-        <div className="grid grid-cols-1 items-center gap-6 md:grid-cols-3">
+        {/* Mobile: horizontal snap-scroll  |  md+: 3-column grid */}
+        <div className={[
+          'flex items-stretch gap-4 overflow-x-auto pb-3 snap-x snap-mandatory scrollbar-hide',
+          '-mx-6 px-6',
+          'md:mx-0 md:grid md:grid-cols-3 md:items-center md:gap-6 md:overflow-x-visible md:pb-0 md:snap-none',
+        ].join(' ')}>
           {PREVIEW_PLANS.map(plan => (
             <div
               key={plan.id}
               className={[
+                'w-[78vw] max-w-[300px] flex-shrink-0 snap-center',
+                'md:w-auto md:max-w-none',
                 'overflow-hidden rounded-3xl border bg-white shadow-sm',
                 plan.borderClass,
                 plan.scale ? 'md:scale-[1.03] shadow-lg shadow-cyan-100/50' : '',
