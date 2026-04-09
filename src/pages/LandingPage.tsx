@@ -312,7 +312,6 @@ interface DemoToolConfig {
   label: string
   placeholder: string
   chip: string
-  isLanguage?: boolean
 }
 
 const DEMO_TOOL_CONFIG: Record<DemoTool, DemoToolConfig> = {
@@ -321,7 +320,6 @@ const DEMO_TOOL_CONFIG: Record<DemoTool, DemoToolConfig> = {
     label: 'Sprachen',
     placeholder: 'Schreib auf Deutsch…',
     chip: 'Wie sage ich "Ich suche einen neuen Job" auf Spanisch?',
-    isLanguage: true,
   },
   job: {
     emoji: '💼',
@@ -350,7 +348,7 @@ const DEMO_TOOL_CONFIG: Record<DemoTool, DemoToolConfig> = {
 }
 
 const TOOL_ORDER: DemoTool[] = ['language', 'job', 'interview', 'programming', 'general']
-const MAX_DEMO = 3
+const PER_TOOL_LIMIT = 2 // each tool gets 2 independent messages
 
 function buildAskParams(tool: DemoTool, msg: string, sessionId: string) {
   const base = { message: msg, sessionId }
@@ -378,6 +376,138 @@ function buildAskParams(tool: DemoTool, msg: string, sessionId: string) {
   }
 }
 
+// ── Markdown helpers ──────────────────────────────────────────────────────────
+
+function renderInline(text: string): React.ReactNode {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g)
+  return parts.map((p, i) =>
+    p.startsWith('**') && p.endsWith('**')
+      ? <strong key={i}>{p.slice(2, -2)}</strong>
+      : <span key={i}>{p}</span>
+  )
+}
+
+interface RichLineProps { line: string; dotColor: string; numColor: string }
+function RichLine({ line, dotColor, numColor }: RichLineProps) {
+  if (!line.trim()) return <div className="h-1" />
+  if (/^#{1,3}\s/.test(line)) {
+    return <p className="mt-1.5 font-semibold text-slate-800">{renderInline(line.replace(/^#{1,3}\s/, ''))}</p>
+  }
+  if (/^[-•*]\s/.test(line)) {
+    return (
+      <p className="flex items-start gap-2">
+        <span className={`mt-[7px] h-1.5 w-1.5 flex-shrink-0 rounded-full ${dotColor}`} />
+        <span className="leading-relaxed">{renderInline(line.replace(/^[-•*]\s/, ''))}</span>
+      </p>
+    )
+  }
+  const nm = line.match(/^(\d+)\.\s(.+)/)
+  if (nm) {
+    return (
+      <p className="flex items-start gap-2">
+        <span className={`flex-shrink-0 font-bold ${numColor}`}>{nm[1]}.</span>
+        <span className="leading-relaxed">{renderInline(nm[2])}</span>
+      </p>
+    )
+  }
+  return <p className="leading-relaxed">{renderInline(line)}</p>
+}
+
+interface RichTextProps { text: string; dotColor: string; numColor: string }
+function RichText({ text, dotColor, numColor }: RichTextProps) {
+  return (
+    <div className="space-y-0.5 text-sm text-slate-700">
+      {text.split('\n').map((line, i) => (
+        <RichLine key={i} line={line} dotColor={dotColor} numColor={numColor} />
+      ))}
+    </div>
+  )
+}
+
+function parseCodeBlocks(text: string): Array<{ type: 'text' | 'code'; content: string }> {
+  const parts: Array<{ type: 'text' | 'code'; content: string }> = []
+  const regex = /```(?:\w+)?\n?([\s\S]*?)```/g
+  let last = 0
+  let m: RegExpExecArray | null
+  // eslint-disable-next-line no-cond-assign
+  while ((m = regex.exec(text)) !== null) {
+    if (m.index > last) parts.push({ type: 'text', content: text.slice(last, m.index) })
+    parts.push({ type: 'code', content: m[1].trim() })
+    last = m.index + m[0].length
+  }
+  if (last < text.length) parts.push({ type: 'text', content: text.slice(last) })
+  return parts
+}
+
+// ── Tool-specific response cards ──────────────────────────────────────────────
+
+function JobResponseBubble({ text }: { text: string }) {
+  return (
+    <div className="w-full max-w-[520px] overflow-hidden rounded-xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white">
+      <div className="flex items-center gap-1.5 border-b border-emerald-100 px-4 py-2">
+        <span className="text-sm">💼</span>
+        <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-emerald-700">Job-Analyse</span>
+      </div>
+      <div className="px-4 py-3">
+        <RichText text={text} dotColor="bg-emerald-400" numColor="text-emerald-600" />
+      </div>
+    </div>
+  )
+}
+
+function InterviewResponseBubble({ text }: { text: string }) {
+  return (
+    <div className="w-full max-w-[520px] overflow-hidden rounded-xl border border-cyan-100 bg-gradient-to-br from-cyan-50 to-white">
+      <div className="flex items-center gap-1.5 border-b border-cyan-100 px-4 py-2">
+        <span className="text-sm">🎯</span>
+        <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-cyan-700">Interview-Vorbereitung</span>
+      </div>
+      <div className="px-4 py-3">
+        <RichText text={text} dotColor="bg-cyan-400" numColor="text-cyan-600" />
+      </div>
+    </div>
+  )
+}
+
+function CodeResponseBubble({ text }: { text: string }) {
+  const parts = parseCodeBlocks(text)
+  return (
+    <div className="w-full max-w-[520px] overflow-hidden rounded-xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white">
+      <div className="flex items-center gap-1.5 border-b border-slate-200 px-4 py-2">
+        <span className="text-sm">💻</span>
+        <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-600">Code-Assistent</span>
+      </div>
+      <div className="space-y-2 px-4 py-3">
+        {parts.map((p, i) =>
+          p.type === 'code'
+            ? (
+              <pre key={i} className="overflow-x-auto rounded-lg bg-slate-900 px-3 py-2.5 text-xs leading-relaxed text-emerald-400">
+                <code>{p.content}</code>
+              </pre>
+            )
+            : p.content.trim()
+              ? <RichText key={i} text={p.content.trim()} dotColor="bg-slate-400" numColor="text-slate-600" />
+              : null
+        )}
+      </div>
+    </div>
+  )
+}
+
+function GeneralResponseBubble({ text }: { text: string }) {
+  return (
+    <div className="w-full max-w-[520px] overflow-hidden rounded-xl border border-violet-100 bg-gradient-to-br from-violet-50 to-white">
+      <div className="flex items-center gap-1.5 border-b border-violet-100 px-4 py-2">
+        <span className="text-sm">💬</span>
+        <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-violet-600">SmartAssist</span>
+      </div>
+      <div className="px-4 py-3">
+        <RichText text={text} dotColor="bg-violet-400" numColor="text-violet-600" />
+      </div>
+    </div>
+  )
+}
+
 function DemoAssistantBubble({ text, tool }: { text: string; tool: DemoTool }) {
   if (tool === 'language') {
     const parsed = parseLearningResponse(text)
@@ -398,11 +528,10 @@ function DemoAssistantBubble({ text, tool }: { text: string; tool: DemoTool }) {
       )
     }
   }
-  return (
-    <div className="max-w-[min(100%,520px)] break-words rounded-2xl rounded-bl-sm bg-slate-100 px-4 py-2.5 text-sm text-slate-800">
-      <span className="whitespace-pre-wrap">{text}</span>
-    </div>
-  )
+  if (tool === 'job')         return <JobResponseBubble text={text} />
+  if (tool === 'interview')   return <InterviewResponseBubble text={text} />
+  if (tool === 'programming') return <CodeResponseBubble text={text} />
+  return <GeneralResponseBubble text={text} />
 }
 
 function LiveDemoSection() {
@@ -410,11 +539,13 @@ function LiveDemoSection() {
   const [msgByTool, setMsgByTool] = useState<Record<DemoTool, DemoMessage[]>>({
     language: [], job: [], interview: [], programming: [], general: [],
   })
-  const [totalCount, setTotalCount] = useState(0)
+  // per-tool independent message count (each tool has PER_TOOL_LIMIT messages)
+  const [countByTool, setCountByTool] = useState<Record<DemoTool, number>>({
+    language: 0, job: 0, interview: 0, programming: 0, general: 0,
+  })
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
 
-  // each tool gets its own session ID so context doesn't mix
   const sessionIds = useRef<Record<DemoTool, string>>({
     language:    `demo_${Math.random().toString(36).slice(2, 9)}`,
     job:         `demo_${Math.random().toString(36).slice(2, 9)}`,
@@ -428,9 +559,12 @@ function LiveDemoSection() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [msgByTool, loading])
 
-  const currentMsgs = msgByTool[activeTool]
-  const cfg = DEMO_TOOL_CONFIG[activeTool]
-  const atLimit = totalCount >= MAX_DEMO
+  const currentMsgs  = msgByTool[activeTool]
+  const cfg          = DEMO_TOOL_CONFIG[activeTool]
+  const toolCount    = countByTool[activeTool]
+  const atToolLimit  = toolCount >= PER_TOOL_LIMIT
+  const allExhausted = TOOL_ORDER.every(t => countByTool[t] >= PER_TOOL_LIMIT)
+  const unusedTools  = TOOL_ORDER.filter(t => countByTool[t] < PER_TOOL_LIMIT && t !== activeTool)
 
   const handleToolSwitch = (tool: DemoTool) => {
     setActiveTool(tool)
@@ -439,13 +573,14 @@ function LiveDemoSection() {
 
   const handleReset = () => {
     setMsgByTool(prev => ({ ...prev, [activeTool]: [] }))
+    setCountByTool(prev => ({ ...prev, [activeTool]: 0 }))
     sessionIds.current[activeTool] = `demo_${Math.random().toString(36).slice(2, 9)}`
     setInput('')
   }
 
   const send = async (text: string) => {
     const msg = text.trim()
-    if (!msg || atLimit || loading) return
+    if (!msg || atToolLimit || loading) return
     setMsgByTool(prev => ({ ...prev, [activeTool]: [...prev[activeTool], { role: 'user', text: msg }] }))
     setInput('')
     setLoading(true)
@@ -453,18 +588,14 @@ function LiveDemoSection() {
       const res = await askAgentDemo(buildAskParams(activeTool, msg, sessionIds.current[activeTool]))
       const ts = new Date().toISOString()
       setMsgByTool(prev => ({ ...prev, [activeTool]: [...prev[activeTool], { role: 'assistant', text: res.reply, ts }] }))
-      setTotalCount(c => c + 1)
+      setCountByTool(prev => ({ ...prev, [activeTool]: prev[activeTool] + 1 }))
     } catch (err: unknown) {
-      const isDemoLimit =
-        err instanceof Error && (err.message === 'demo_limit' || err.name === 'UsageLimitError')
+      const isDemoLimit = err instanceof Error && (err.message === 'demo_limit' || err.name === 'UsageLimitError')
       const errText = isDemoLimit
-        ? 'Du hast die Demo-Nachrichten aufgebraucht. Registriere dich für unbegrenzten Zugang.'
+        ? 'Demo-Limit erreicht. Registriere dich für unbegrenzten Zugang.'
         : 'Etwas ist schiefgelaufen. Bitte versuche es erneut.'
-      setMsgByTool(prev => ({
-        ...prev,
-        [activeTool]: [...prev[activeTool], { role: 'assistant', text: errText }],
-      }))
-      if (isDemoLimit) setTotalCount(MAX_DEMO)
+      setMsgByTool(prev => ({ ...prev, [activeTool]: [...prev[activeTool], { role: 'assistant', text: errText }] }))
+      if (isDemoLimit) setCountByTool(prev => ({ ...prev, [activeTool]: PER_TOOL_LIMIT }))
     } finally {
       setLoading(false)
     }
@@ -477,31 +608,48 @@ function LiveDemoSection() {
           <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-primary">Live Demo</p>
           <h2 className="mb-3 text-3xl font-bold text-slate-800">Probiere es jetzt aus</h2>
           <p className="text-slate-500">
-            {MAX_DEMO} kostenlose Nachrichten — kein Konto nötig. Wähle ein Werkzeug und starte.
+            Je 2 kostenlose Nachrichten pro Werkzeug — kein Konto nötig.
           </p>
         </div>
 
         <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl">
 
-          {/* ── Tool tabs ── */}
+          {/* ── Tool tabs with progress badges ── */}
           <div className="flex border-b border-slate-100">
             {TOOL_ORDER.map(tool => {
               const t = DEMO_TOOL_CONFIG[tool]
-              const isActive = activeTool === tool
+              const isActive   = activeTool === tool
+              const count      = countByTool[tool]
+              const exhausted  = count >= PER_TOOL_LIMIT
               return (
                 <button
                   key={tool}
                   type="button"
                   onClick={() => handleToolSwitch(tool)}
                   className={[
-                    'flex flex-1 flex-col items-center gap-0.5 py-3 text-[10px] font-semibold transition-all duration-150',
-                    isActive
-                      ? 'border-b-2 border-primary bg-white text-primary'
-                      : 'border-b-2 border-transparent text-slate-400 hover:text-slate-600',
+                    'relative flex flex-1 flex-col items-center gap-0.5 py-3 text-[10px] font-semibold transition-all duration-150',
+                    isActive && !exhausted  ? 'border-b-2 border-primary bg-white text-primary'
+                      : isActive && exhausted ? 'border-b-2 border-emerald-400 bg-white text-emerald-600'
+                        : exhausted           ? 'border-b-2 border-transparent text-slate-300 hover:text-slate-400'
+                          : 'border-b-2 border-transparent text-slate-400 hover:text-slate-600',
                   ].join(' ')}
                   title={t.label}
                 >
-                  <span className="text-[17px]">{t.emoji}</span>
+                  <span className="relative text-[17px]">
+                    {t.emoji}
+                    {/* ✓ badge when exhausted */}
+                    {exhausted && (
+                      <span className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-emerald-400 text-[7px] font-bold leading-none text-white">
+                        ✓
+                      </span>
+                    )}
+                    {/* count badge when partially used */}
+                    {!exhausted && count > 0 && (
+                      <span className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-primary text-[8px] font-bold leading-none text-white">
+                        {count}
+                      </span>
+                    )}
+                  </span>
                   <span className="hidden sm:block">{t.label}</span>
                 </button>
               )
@@ -509,14 +657,16 @@ function LiveDemoSection() {
           </div>
 
           {/* ── Messages ── */}
-          <div className="max-h-[340px] min-h-[180px] space-y-4 overflow-y-auto p-5">
+          <div className="max-h-[360px] min-h-[180px] space-y-4 overflow-y-auto p-5">
             {currentMsgs.length === 0 && !loading && (
               <div className="flex flex-col items-center gap-2 py-8 text-center">
                 <span className="text-4xl">{cfg.emoji}</span>
                 <p className="text-sm text-slate-400">
-                  {atLimit
-                    ? 'Registriere dich, um alle Werkzeuge unbegrenzt zu nutzen.'
-                    : 'Tippe eine Frage oder nutze den Vorschlag unten.'}
+                  {atToolLimit && !allExhausted
+                    ? `${cfg.label} ausprobiert! Wähle ein anderes Werkzeug.`
+                    : allExhausted
+                      ? 'Alle Werkzeuge ausprobiert. Registriere dich für unbegrenzten Zugang.'
+                      : 'Tippe eine Frage oder nutze den Vorschlag unten.'}
                 </p>
               </div>
             )}
@@ -546,8 +696,8 @@ function LiveDemoSection() {
             <div ref={bottomRef} />
           </div>
 
-          {/* ── One-click chip ── */}
-          {!atLimit && currentMsgs.length === 0 && (
+          {/* ── Chip (only when no messages yet for this tool) ── */}
+          {!atToolLimit && currentMsgs.length === 0 && (
             <div className="px-5 pb-3">
               <button
                 type="button"
@@ -563,14 +713,14 @@ function LiveDemoSection() {
             </div>
           )}
 
-          {/* ── Upgrade CTA or input ── */}
-          {atLimit ? (
+          {/* ── Bottom area: tool exhausted / all exhausted / input ── */}
+          {allExhausted ? (
             <div className="border-t border-slate-100 px-5 py-6 text-center">
               <p className="mb-1 text-sm font-semibold text-slate-800">
-                Du hast alle {MAX_DEMO} Demo-Nachrichten genutzt 🎉
+                Du hast alle 5 Werkzeuge ausprobiert 🎉
               </p>
               <p className="mb-5 text-sm leading-relaxed text-slate-500">
-                Kostenlos registrieren: täglich 20 Nachrichten, alle 5 Werkzeuge, Verlauf im Browser.
+                Kostenlos registrieren: täglich 20 Nachrichten, alle Werkzeuge, Verlauf im Browser.
               </p>
               <SignUpButton mode="modal" fallbackRedirectUrl="/tools">
                 <button className="mb-3 w-full rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-hover sm:w-auto">
@@ -585,6 +735,33 @@ function LiveDemoSection() {
                   </button>
                 </SignInButton>
               </p>
+            </div>
+          ) : atToolLimit ? (
+            /* Current tool exhausted — nudge to other tools */
+            <div className="border-t border-slate-100 px-5 py-4">
+              <p className="mb-3 text-center text-xs font-medium text-slate-500">
+                ✅ <strong>{cfg.label}</strong> ausprobiert! Noch {unusedTools.length} Werkzeug{unusedTools.length !== 1 ? 'e' : ''} übrig:
+              </p>
+              <div className="flex flex-wrap justify-center gap-2">
+                {unusedTools.map(t => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => handleToolSwitch(t)}
+                    className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-600 transition-colors hover:border-primary/40 hover:bg-primary-light hover:text-primary"
+                  >
+                    <span>{DEMO_TOOL_CONFIG[t].emoji}</span>
+                    {DEMO_TOOL_CONFIG[t].label}
+                  </button>
+                ))}
+              </div>
+              <div className="mt-3 text-center">
+                <SignUpButton mode="modal" fallbackRedirectUrl="/tools">
+                  <button className="text-xs font-medium text-primary hover:underline">
+                    Oder direkt registrieren →
+                  </button>
+                </SignUpButton>
+              </div>
             </div>
           ) : (
             <div className="flex items-center gap-2 border-t border-slate-100 px-4 py-3">
@@ -621,17 +798,17 @@ function LiveDemoSection() {
             </div>
           )}
 
-          {/* ── Message counter ── */}
-          {!atLimit && (
+          {/* ── Per-tool message counter ── */}
+          {!atToolLimit && !allExhausted && (
             <div className="flex items-center justify-between border-t border-slate-50 px-5 py-2">
               <span className="text-[10px] text-slate-300">
-                {MAX_DEMO - totalCount} Nachrichten übrig
+                {PER_TOOL_LIMIT - toolCount} von {PER_TOOL_LIMIT} Nachrichten für {cfg.label}
               </span>
               <div className="flex items-center gap-1">
-                {Array.from({ length: MAX_DEMO }).map((_, i) => (
+                {Array.from({ length: PER_TOOL_LIMIT }).map((_, i) => (
                   <span
                     key={i}
-                    className={`h-1 w-4 rounded-full transition-colors ${i < totalCount ? 'bg-primary' : 'bg-slate-100'}`}
+                    className={`h-1 w-4 rounded-full transition-colors ${i < toolCount ? 'bg-primary' : 'bg-slate-100'}`}
                   />
                 ))}
               </div>
