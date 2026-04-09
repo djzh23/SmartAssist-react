@@ -1,11 +1,13 @@
 import { useEffect, useRef } from 'react'
 import type { ChatMessage, ToolType } from '../../types'
+import type { StreamingPlaceholder } from '../../context/ChatSessionsProvider'
 import MessageBubble from './MessageBubble'
 import { MessageCircle } from 'lucide-react'
 
 interface Props {
   messages: ChatMessage[]
-  isLoading: boolean
+  viewSessionId: string | null
+  streamingPlaceholder: StreamingPlaceholder | null
   toolType?: ToolType
   targetLang?: string
   nativeLang?: string
@@ -28,16 +30,27 @@ function TypingDots() {
 }
 
 export default function MessageList({
-  messages, isLoading, toolType,
-  targetLang, nativeLang, targetLangCode, progLang,
+  messages,
+  viewSessionId,
+  streamingPlaceholder,
+  toolType,
+  targetLang,
+  nativeLang,
+  targetLangCode,
+  progLang,
 }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null)
 
+  const typingOnThisSession =
+    streamingPlaceholder !== null
+    && viewSessionId !== null
+    && streamingPlaceholder.sessionId === viewSessionId
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, isLoading])
+  }, [messages, streamingPlaceholder, typingOnThisSession])
 
-  if (messages.length === 0 && !isLoading) {
+  if (messages.length === 0 && !typingOnThisSession) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center gap-3 text-center p-8">
         <MessageCircle size={40} className="text-slate-200" />
@@ -56,6 +69,16 @@ export default function MessageList({
           const useLanguageCard = toolType === 'language' && !msg.isUser && userSeen
           if (msg.isUser) userSeen = true
 
+          const isPlaceholderTyping =
+            typingOnThisSession
+            && streamingPlaceholder!.messageId === msg.id
+            && !msg.isUser
+            && msg.text.trim() === ''
+
+          if (isPlaceholderTyping) {
+            return <TypingDots key={msg.id} />
+          }
+
           return (
             <MessageBubble
               key={msg.id}
@@ -70,7 +93,6 @@ export default function MessageList({
           )
         })
       })()}
-      {isLoading && <TypingDots />}
       <div ref={bottomRef} />
     </div>
   )

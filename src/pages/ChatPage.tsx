@@ -10,6 +10,7 @@ import ChatInput from '../components/chat/ChatInput'
 import ChatSidebar from '../components/chat/ChatSidebar'
 import ContextModal, { type ContextModalToolType, type ContextPayload } from '../components/chat/ContextModal'
 import MessageList from '../components/chat/MessageList'
+import ChatAnswerReadyBanner from '../components/chat/ChatAnswerReadyBanner'
 import UsageLimitModal from '../components/ui/UsageLimitModal'
 import { useChatSessions } from '../hooks/useChatSessions'
 import { useUserPlan, dispatchServerUsage } from '../hooks/useUserPlan'
@@ -626,7 +627,7 @@ export default function ChatPage() {
         store.addMessage(sessionId, { text: displayText, isUser: true })
       }
       store.addMessage(sessionId, { id: streamingMsgId, text: '', isUser: false })
-      store.setSessionStreaming(sessionId, true)
+      store.setSessionStreaming(sessionId, true, streamingMsgId)
     })
 
     try {
@@ -703,7 +704,6 @@ export default function ChatPage() {
   const activeId = store.activeSessionId
   /** Streaming is tracked in ChatSessionsProvider so it survives switching chats / routes. */
   const inputBlocked = store.isSessionStreaming(activeId)
-  const showTypingForActive = store.isSessionStreaming(activeId)
 
   const programmingContextLabel = activeContext?.programmingLanguage
     || (activeContext?.programmingLanguageId
@@ -861,12 +861,15 @@ export default function ChatPage() {
           </div>
         )}
 
+        <ChatAnswerReadyBanner />
+
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <div className="flex-1 overflow-y-auto">
             <div className="mx-auto max-w-3xl px-4 py-4">
               <MessageList
                 messages={store.activeMessages}
-                isLoading={showTypingForActive}
+                viewSessionId={activeId}
+                streamingPlaceholder={store.streamingPlaceholder}
                 toolType={store.currentToolType}
                 targetLang={targetDisplay}
                 nativeLang={nativeDisplay}

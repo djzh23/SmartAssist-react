@@ -97,6 +97,12 @@ export interface AnswerReadyToast {
   preview: string
 }
 
+/** Which session/message is receiving the stream (typing dots only there). */
+export interface StreamingPlaceholder {
+  sessionId: string
+  messageId: string
+}
+
 export interface SessionStore {
   sessions: Record<string, ChatSession>
   sessionOrder: string[]
@@ -115,8 +121,10 @@ export interface SessionStore {
   visibleSessions: ChatSession[]
   /** True while the assistant response is streaming for this session (survives route changes). */
   isSessionStreaming: (sessionId: string | null) => boolean
-  setSessionStreaming: (sessionId: string, streaming: boolean) => void
-  /** Show toast when answer finishes while user is elsewhere or another chat is open. */
+  /** When starting a stream, pass assistantMessageId so typing UI only shows on that bubble. */
+  setSessionStreaming: (sessionId: string, streaming: boolean, assistantMessageId?: string) => void
+  streamingPlaceholder: StreamingPlaceholder | null
+  /** In-chat banner when an answer finishes in another conversation (ChatPage reads this). */
   answerReadyToast: AnswerReadyToast | null
   dismissAnswerToast: () => void
   notifyAnswerReady: (sessionId: string, toolType: ToolType, preview: string) => void
@@ -131,6 +139,7 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
   const [activeId, setActiveId] = useState<string | null>(() => load(LS_ACTIVE, null))
   const [currentTool, setCurrentTool] = useState<ToolType>('general')
   const [streamingIds, setStreamingIds] = useState<Record<string, true>>({})
+  const [streamingPlaceholder, setStreamingPlaceholder] = useState<StreamingPlaceholder | null>(null)
   const [answerReadyToast, setAnswerReadyToast] = useState<AnswerReadyToast | null>(null)
 
   const locationRef = useRef(location)
@@ -199,6 +208,8 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
       return next
     })
 
+    setStreamingPlaceholder(prev => (prev?.sessionId === id ? null : prev))
+
     setActiveId(prev => {
       if (prev !== id) return prev
       const next = sessionOrder.find(sessionId => sessionId !== id && sessions[sessionId]?.toolType === currentTool)
@@ -211,6 +222,7 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     setSessionOrder([])
     setActiveId(null)
     setStreamingIds({})
+    setStreamingPlaceholder(null)
     localStorage.removeItem(LS_SESSIONS)
     localStorage.removeItem(LS_ORDER)
     localStorage.removeItem(LS_ACTIVE)
@@ -290,7 +302,7 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     })
   }, [])
 
-  const setSessionStreaming = useCallback((sessionId: string, streaming: boolean) => {
+  const setSessionStreaming = useCallback((sessionId: string, streaming: boolean, assistantMessageId?: string) => {
     setStreamingIds(prev => {
       if (streaming) return { ...prev, [sessionId]: true }
       if (!prev[sessionId]) return prev
@@ -298,6 +310,14 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
       delete next[sessionId]
       return next
     })
+    if (streaming && assistantMessageId) {
+      setStreamingPlaceholder({ sessionId, messageId: assistantMessageId })
+    }
+    if (!streaming) {
+      setStreamingPlaceholder(prev =>
+        prev?.sessionId === sessionId ? null : prev,
+      )
+    }
   }, [])
 
   const isSessionStreaming = useCallback((sessionId: string | null) => {
@@ -353,6 +373,7 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     visibleSessions,
     isSessionStreaming,
     setSessionStreaming,
+    streamingPlaceholder,
     answerReadyToast,
     dismissAnswerToast,
     notifyAnswerReady,
@@ -374,6 +395,7 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     visibleSessions,
     isSessionStreaming,
     setSessionStreaming,
+    streamingPlaceholder,
     answerReadyToast,
     dismissAnswerToast,
     notifyAnswerReady,
