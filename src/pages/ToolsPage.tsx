@@ -181,7 +181,16 @@ export default function ToolsPage() {
   )
 
   const renderCards = (items: ToolCardMeta[]) => (
-    <div className="grid grid-cols-1 gap-3.5 sm:gap-5 md:grid-cols-2 xl:grid-cols-3">
+    /* Mobile : horizontal snap-scroll strip (bleeds to screen edges)
+       Desktop: normal 2–3 column grid                                  */
+    <div className={[
+      // Mobile: flex row, horizontal scroll, snap, bleed to screen edges
+      'flex gap-3.5 overflow-x-auto pb-3 snap-x snap-mandatory scrollbar-hide',
+      '-mx-4 px-4 sm:-mx-6 sm:px-6',
+      // Desktop: revert to grid
+      'md:mx-0 md:grid md:grid-cols-2 md:overflow-x-visible md:pb-0 md:snap-none md:gap-5',
+      'xl:grid-cols-3',
+    ].join(' ')}>
       {items.map(tool => {
         const Icon = tool.icon
 
@@ -189,7 +198,13 @@ export default function ToolsPage() {
           <button
             key={tool.id}
             onClick={() => setSelected(tool)}
-            className="group relative overflow-hidden rounded-3xl border border-slate-200/90 bg-white/90 p-5 text-left shadow-[0_10px_34px_rgba(15,23,42,0.08)] backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_44px_rgba(15,23,42,0.12)]"
+            className={[
+              // Mobile: fixed card width so multiple cards peek
+              'w-[78vw] max-w-[290px] flex-shrink-0 snap-center',
+              // Desktop: auto width, controlled by grid
+              'md:w-auto md:max-w-none',
+              'group relative overflow-hidden rounded-3xl border border-slate-200/90 bg-white/90 p-5 text-left shadow-[0_10px_34px_rgba(15,23,42,0.08)] backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_44px_rgba(15,23,42,0.12)]',
+            ].join(' ')}
           >
             <div className="pointer-events-none absolute inset-0 opacity-80" style={{
               backgroundImage: 'radial-gradient(circle at 88% 0%, rgba(124,58,237,0.08), transparent 48%)',

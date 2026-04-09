@@ -11,14 +11,16 @@ import '../styles/landing.css'
 
 function LandingNav() {
   return (
-    <nav className="fixed left-0 right-0 top-0 z-[100] h-16 border-b border-slate-200/80 bg-white/95 backdrop-blur-sm">
-      <div className="flex h-full max-w-[1200px] items-center justify-between mx-auto px-6">
-        <div className="flex items-center gap-2">
-          <img src="/favicon.png" alt="SmartAssist" className="h-8 w-8 rounded-xl" />
-          <span className="text-lg font-bold text-slate-800">SmartAssist</span>
+    <nav className="fixed left-0 right-0 top-0 z-[100] h-14 border-b border-slate-200/80 bg-white/95 backdrop-blur-sm sm:h-16">
+      <div className="flex h-full max-w-[1200px] items-center justify-between mx-auto px-4 sm:px-6">
+        {/* Logo */}
+        <div className="flex min-w-0 items-center gap-2">
+          <img src="/favicon.png" alt="SmartAssist" className="h-7 w-7 flex-shrink-0 rounded-xl sm:h-8 sm:w-8" />
+          <span className="text-base font-bold text-slate-800 sm:text-lg">SmartAssist</span>
         </div>
 
-        <div className="flex items-center gap-3">
+        {/* Actions — tighter on mobile, full size on sm+ */}
+        <div className="flex flex-shrink-0 items-center gap-2">
           <a
             href="/pricing"
             className="hidden text-sm font-medium text-slate-600 transition-colors hover:text-slate-900 sm:block"
@@ -26,12 +28,12 @@ function LandingNav() {
             Preise
           </a>
           <SignInButton mode="modal" fallbackRedirectUrl="/tools">
-            <button className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:border-slate-400">
+            <button className="rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:border-slate-400 sm:px-4 sm:py-2 sm:text-sm">
               Anmelden
             </button>
           </SignInButton>
           <SignUpButton mode="modal" fallbackRedirectUrl="/tools">
-            <button className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-hover">
+            <button className="rounded-xl bg-primary px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-primary-hover sm:px-4 sm:py-2 sm:text-sm">
               Jetzt starten
             </button>
           </SignUpButton>
@@ -138,7 +140,7 @@ function ChatMockup() {
 function HeroSection() {
   return (
     <section
-      className="relative overflow-hidden pt-16"
+      className="relative overflow-hidden pt-14 sm:pt-16"
       style={{ background: 'linear-gradient(135deg, #FAFAFA 0%, #F5F0FF 100%)', minHeight: '100vh' }}
     >
       {/* Decorative blobs */}
