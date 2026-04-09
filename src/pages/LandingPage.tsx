@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { SignInButton, SignUpButton, useUser } from '@clerk/clerk-react'
-import { Check, Loader2, Play, Send } from 'lucide-react'
+import { Check, Loader2, Play, RotateCcw, Send } from 'lucide-react'
 import { askAgent } from '../api/client'
 import LearningResponse from '../components/chat/LearningResponse'
 import { parseLearningResponse } from '../utils/parseLearningResponse'
@@ -305,29 +305,97 @@ interface DemoMessage {
   ts?: string
 }
 
-const DEMO_CHIPS = [
-  { emoji: '💼', label: 'Analysiere diese Stellenausschreibung' },
-  { emoji: '🌍', label: 'Bring mir Spanisch bei' },
-  { emoji: '🎯', label: 'Bereite mich auf ein Interview vor' },
-  { emoji: '💻', label: 'Was ist falsch in meinem Code?' },
-] as const
+type DemoTool = 'language' | 'job' | 'interview' | 'programming' | 'general'
 
-function DemoAssistantBubble({ text }: { text: string }) {
-  const parsed = parseLearningResponse(text)
-  if (parsed?.isStructured) {
-    return (
-      <LearningResponse
-        data={{
-          targetLanguageText: parsed.targetText,
-          nativeLanguageText: parsed.translationText,
-          learnTip: parsed.tipText ?? undefined,
-        }}
-        targetLang="Spanisch"
-        nativeLang="Deutsch"
-        targetLangCode="es"
-        timestamp={new Date().toISOString()}
-      />
-    )
+interface DemoToolConfig {
+  emoji: string
+  label: string
+  placeholder: string
+  chip: string
+  isLanguage?: boolean
+}
+
+const DEMO_TOOL_CONFIG: Record<DemoTool, DemoToolConfig> = {
+  language: {
+    emoji: '🌍',
+    label: 'Sprachen',
+    placeholder: 'Schreib auf Deutsch…',
+    chip: 'Wie sage ich "Ich suche einen neuen Job" auf Spanisch?',
+    isLanguage: true,
+  },
+  job: {
+    emoji: '💼',
+    label: 'Job',
+    placeholder: 'Stellenanforderung eingeben…',
+    chip: 'Analysiere: Senior Developer, TypeScript, 5+ Jahre Erfahrung',
+  },
+  interview: {
+    emoji: '🎯',
+    label: 'Interview',
+    placeholder: 'Zielposition eingeben…',
+    chip: 'Welche Fragen bekomme ich als Frontend-Entwickler?',
+  },
+  programming: {
+    emoji: '💻',
+    label: 'Code',
+    placeholder: 'Code oder Frage eingeben…',
+    chip: 'Was ist der Unterschied zwischen async/await und Promises?',
+  },
+  general: {
+    emoji: '💬',
+    label: 'Chat',
+    placeholder: 'Stell eine Frage…',
+    chip: 'Erkläre mir künstliche Intelligenz in 2 einfachen Sätzen',
+  },
+}
+
+const TOOL_ORDER: DemoTool[] = ['language', 'job', 'interview', 'programming', 'general']
+const MAX_DEMO = 3
+
+function buildAskParams(tool: DemoTool, msg: string, sessionId: string) {
+  const base = { message: msg, sessionId }
+  switch (tool) {
+    case 'language':
+      return {
+        ...base,
+        toolType: 'language' as const,
+        languageLearningMode: true,
+        nativeLanguage: 'Deutsch',
+        targetLanguage: 'Spanisch',
+        nativeLanguageCode: 'de',
+        targetLanguageCode: 'es',
+        level: 'adaptive',
+        learningGoal: 'Kurze Sätze, Zielsprache und Übersetzung',
+      }
+    case 'job':
+      return { ...base, toolType: 'jobanalyzer' as const }
+    case 'interview':
+      return { ...base, toolType: 'interviewprep' as const }
+    case 'programming':
+      return { ...base, toolType: 'programming' as const }
+    default:
+      return { ...base, toolType: undefined }
+  }
+}
+
+function DemoAssistantBubble({ text, tool }: { text: string; tool: DemoTool }) {
+  if (tool === 'language') {
+    const parsed = parseLearningResponse(text)
+    if (parsed?.isStructured) {
+      return (
+        <LearningResponse
+          data={{
+            targetLanguageText: parsed.targetText,
+            nativeLanguageText: parsed.translationText,
+            learnTip: parsed.tipText ?? undefined,
+          }}
+          targetLang="Spanisch"
+          nativeLang="Deutsch"
+          targetLangCode="es"
+          timestamp={new Date().toISOString()}
+        />
+      )
+    }
   }
   return (
     <div className="max-w-[min(100%,520px)] break-words rounded-2xl rounded-bl-sm bg-slate-100 px-4 py-2.5 text-sm text-slate-800">
@@ -337,138 +405,169 @@ function DemoAssistantBubble({ text }: { text: string }) {
 }
 
 function LiveDemoSection() {
-  const [messages, setMessages] = useState<DemoMessage[]>([])
-  const [count, setCount] = useState(0)
+  const [activeTool, setActiveTool] = useState<DemoTool>('language')
+  const [msgByTool, setMsgByTool] = useState<Record<DemoTool, DemoMessage[]>>({
+    language: [], job: [], interview: [], programming: [], general: [],
+  })
+  const [totalCount, setTotalCount] = useState(0)
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
-  const sessionId = useRef(`demo_${Math.random().toString(36).substring(2, 10)}`)
+
+  // each tool gets its own session ID so context doesn't mix
+  const sessionIds = useRef<Record<DemoTool, string>>({
+    language:    `demo_${Math.random().toString(36).slice(2, 9)}`,
+    job:         `demo_${Math.random().toString(36).slice(2, 9)}`,
+    interview:   `demo_${Math.random().toString(36).slice(2, 9)}`,
+    programming: `demo_${Math.random().toString(36).slice(2, 9)}`,
+    general:     `demo_${Math.random().toString(36).slice(2, 9)}`,
+  })
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, loading])
+  }, [msgByTool, loading])
+
+  const currentMsgs = msgByTool[activeTool]
+  const cfg = DEMO_TOOL_CONFIG[activeTool]
+  const atLimit = totalCount >= MAX_DEMO
+
+  const handleToolSwitch = (tool: DemoTool) => {
+    setActiveTool(tool)
+    setInput('')
+  }
+
+  const handleReset = () => {
+    setMsgByTool(prev => ({ ...prev, [activeTool]: [] }))
+    sessionIds.current[activeTool] = `demo_${Math.random().toString(36).slice(2, 9)}`
+    setInput('')
+  }
 
   const send = async (text: string) => {
     const msg = text.trim()
-    if (!msg || count >= 2 || loading) return
-
-    setMessages(prev => [...prev, { role: 'user', text: msg }])
+    if (!msg || atLimit || loading) return
+    setMsgByTool(prev => ({ ...prev, [activeTool]: [...prev[activeTool], { role: 'user', text: msg }] }))
     setInput('')
     setLoading(true)
-
     try {
-      const spanischDemo =
-        /spanisch|spanish|bring mir|sprach|lerne/i.test(msg) || msg === DEMO_CHIPS[1].label
-
-      const res = await askAgent({
-        message: msg,
-        sessionId: sessionId.current,
-        toolType: spanischDemo ? 'language' : 'general',
-        ...(spanischDemo
-          ? {
-              languageLearningMode: true,
-              nativeLanguage: 'Deutsch',
-              targetLanguage: 'Spanisch',
-              nativeLanguageCode: 'de',
-              targetLanguageCode: 'es',
-              level: 'adaptive',
-              learningGoal: 'Kurze Sätze, Zielsprache und Übersetzung',
-            }
-          : {}),
-      })
+      const res = await askAgent(buildAskParams(activeTool, msg, sessionIds.current[activeTool]))
       const ts = new Date().toISOString()
-      setMessages(prev => [...prev, { role: 'assistant', text: res.reply, ts }])
-      setCount(c => c + 1)
+      setMsgByTool(prev => ({ ...prev, [activeTool]: [...prev[activeTool], { role: 'assistant', text: res.reply, ts }] }))
+      setTotalCount(c => c + 1)
     } catch {
-      setMessages(prev => [
+      setMsgByTool(prev => ({
         ...prev,
-        {
-          role: 'assistant',
-          text: 'Etwas ist schiefgelaufen. Bitte versuche es erneut.',
-        },
-      ])
+        [activeTool]: [...prev[activeTool], { role: 'assistant', text: 'Etwas ist schiefgelaufen. Bitte versuche es erneut.' }],
+      }))
     } finally {
       setLoading(false)
     }
   }
 
-  const atLimit = count >= 2
-
   return (
-    <section id="demo" className="px-6 py-20" style={{ background: '#F8F7FF' }}>
-      <div className="mx-auto max-w-[600px]">
+    <section id="demo" className="px-4 py-20 sm:px-6" style={{ background: '#F8F7FF' }}>
+      <div className="mx-auto max-w-[640px]">
         <div className="mb-8 text-center">
-          <h2 className="mb-3 text-3xl font-bold text-slate-800">Live testen</h2>
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-primary">Live Demo</p>
+          <h2 className="mb-3 text-3xl font-bold text-slate-800">Probiere es jetzt aus</h2>
           <p className="text-slate-500">
-            Zwei kostenlose Nachrichten ohne Konto. Danach einfach registrieren und mit allen Werkzeugen weitermachen.
+            {MAX_DEMO} kostenlose Nachrichten — kein Konto nötig. Wähle ein Werkzeug und starte.
           </p>
         </div>
 
-        <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-lg">
-          <div className="flex items-center border-b border-slate-100 px-5 py-4">
-            <span className="font-bold text-slate-800">⚡ Live testen</span>
-            <div className="ml-auto flex items-center gap-1.5">
-              <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
-              <span className="text-xs text-slate-400">Aktiv</span>
-            </div>
+        <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl">
+
+          {/* ── Tool tabs ── */}
+          <div className="flex border-b border-slate-100">
+            {TOOL_ORDER.map(tool => {
+              const t = DEMO_TOOL_CONFIG[tool]
+              const isActive = activeTool === tool
+              return (
+                <button
+                  key={tool}
+                  type="button"
+                  onClick={() => handleToolSwitch(tool)}
+                  className={[
+                    'flex flex-1 flex-col items-center gap-0.5 py-3 text-[10px] font-semibold transition-all duration-150',
+                    isActive
+                      ? 'border-b-2 border-primary bg-white text-primary'
+                      : 'border-b-2 border-transparent text-slate-400 hover:text-slate-600',
+                  ].join(' ')}
+                  title={t.label}
+                >
+                  <span className="text-[17px]">{t.emoji}</span>
+                  <span className="hidden sm:block">{t.label}</span>
+                </button>
+              )
+            })}
           </div>
 
-          <div className="max-h-[320px] min-h-[200px] space-y-4 overflow-y-auto p-5">
-            {messages.length === 0 && !loading && (
-              <p className="pt-8 text-center text-sm text-slate-400">
-                Schreib eine kurze Nachricht und sieh, wie SmartAssist antwortet. Tippe unten oder wähle einen Vorschlag.
-              </p>
+          {/* ── Messages ── */}
+          <div className="max-h-[340px] min-h-[180px] space-y-4 overflow-y-auto p-5">
+            {currentMsgs.length === 0 && !loading && (
+              <div className="flex flex-col items-center gap-2 py-8 text-center">
+                <span className="text-4xl">{cfg.emoji}</span>
+                <p className="text-sm text-slate-400">
+                  {atLimit
+                    ? 'Registriere dich, um alle Werkzeuge unbegrenzt zu nutzen.'
+                    : 'Tippe eine Frage oder nutze den Vorschlag unten.'}
+                </p>
+              </div>
             )}
-            {messages.map((m, i) => (
-              <div key={`${m.role}-${i}-${m.ts ?? ''}`} className={m.role === 'user' ? 'flex justify-end' : 'flex'}>
+
+            {currentMsgs.map((m, i) => (
+              <div
+                key={`${activeTool}-${m.role}-${i}`}
+                className={m.role === 'user' ? 'flex justify-end' : 'flex'}
+              >
                 {m.role === 'user' ? (
                   <div className="max-w-[85%] break-words rounded-2xl rounded-br-sm bg-primary px-4 py-2.5 text-sm text-white">
                     <span className="whitespace-pre-wrap">{m.text}</span>
                   </div>
                 ) : (
-                  <DemoAssistantBubble text={m.text} />
+                  <DemoAssistantBubble text={m.text} tool={activeTool} />
                 )}
               </div>
             ))}
+
             {loading && (
               <div className="flex">
                 <div className="rounded-2xl rounded-bl-sm bg-slate-100 px-4 py-3">
-                  <span className="typing-dot" />
-                  <span className="typing-dot" />
-                  <span className="typing-dot" />
+                  <span className="typing-dot" /><span className="typing-dot" /><span className="typing-dot" />
                 </div>
               </div>
             )}
             <div ref={bottomRef} />
           </div>
 
-          {!atLimit && messages.length === 0 && (
-            <div className="flex flex-wrap gap-2 px-5 pb-3">
-              {DEMO_CHIPS.map(c => (
-                <button
-                  key={c.label}
-                  type="button"
-                  onClick={() => setInput(c.label)}
-                  className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-600 transition-colors hover:border-cyan-200 hover:bg-cyan-50 hover:text-cyan-700"
-                >
-                  <span>{c.emoji}</span>
-                  {c.label}
-                </button>
-              ))}
+          {/* ── One-click chip ── */}
+          {!atLimit && currentMsgs.length === 0 && (
+            <div className="px-5 pb-3">
+              <button
+                type="button"
+                onClick={() => void send(cfg.chip)}
+                className="flex w-full items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-left text-xs text-slate-600 transition-colors hover:border-primary/40 hover:bg-primary-light hover:text-primary"
+              >
+                <span className="flex-shrink-0">{cfg.emoji}</span>
+                <span className="truncate">{cfg.chip}</span>
+                <span className="ml-auto flex-shrink-0 rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-white">
+                  Ausprobieren →
+                </span>
+              </button>
             </div>
           )}
 
+          {/* ── Upgrade CTA or input ── */}
           {atLimit ? (
-            <div className="border-t border-slate-100 px-5 py-5 text-center">
-              <p className="mb-2 text-sm font-medium text-slate-800">
-                Das waren deine zwei Demo Nachrichten
+            <div className="border-t border-slate-100 px-5 py-6 text-center">
+              <p className="mb-1 text-sm font-semibold text-slate-800">
+                Du hast alle {MAX_DEMO} Demo-Nachrichten genutzt 🎉
               </p>
-              <p className="mb-4 text-sm leading-relaxed text-slate-600">
-                Mit einem kostenlosen Konto erhältst du täglich 20 Nachrichten, alle Werkzeuge und deinen Verlauf im Browser.
+              <p className="mb-5 text-sm leading-relaxed text-slate-500">
+                Kostenlos registrieren: täglich 20 Nachrichten, alle 5 Werkzeuge, Verlauf im Browser.
               </p>
               <SignUpButton mode="modal" fallbackRedirectUrl="/tools">
-                <button className="mb-3 w-full rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-hover sm:w-auto">
-                  Kostenlos registrieren
+                <button className="mb-3 w-full rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-hover sm:w-auto">
+                  Kostenlos registrieren — 20 Nachrichten/Tag
                 </button>
               </SignUpButton>
               <p className="text-xs text-slate-400">
@@ -481,30 +580,54 @@ function LiveDemoSection() {
               </p>
             </div>
           ) : (
-            <div className="flex gap-2 border-t border-slate-100 px-4 py-3">
+            <div className="flex items-center gap-2 border-t border-slate-100 px-4 py-3">
+              {currentMsgs.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleReset}
+                  className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-400 transition-colors hover:border-slate-300 hover:text-slate-600"
+                  title="Gespräch zurücksetzen"
+                >
+                  <RotateCcw size={14} />
+                </button>
+              )}
               <input
                 type="text"
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={e => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault()
-                    void send(input)
-                  }
+                  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void send(input) }
                 }}
-                placeholder="Schreib eine Nachricht…"
+                placeholder={cfg.placeholder}
                 disabled={loading}
                 className="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary/20 disabled:opacity-50"
+                style={{ fontSize: 'max(16px, 0.875rem)' }}
               />
               <button
                 type="button"
                 onClick={() => void send(input)}
                 disabled={loading || !input.trim()}
-                className="flex h-10 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-primary text-white transition-colors hover:bg-primary-hover disabled:opacity-50"
-                title="Senden"
+                className="flex h-10 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-primary text-white transition-colors hover:bg-primary-hover disabled:opacity-40"
               >
                 {loading ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
               </button>
+            </div>
+          )}
+
+          {/* ── Message counter ── */}
+          {!atLimit && (
+            <div className="flex items-center justify-between border-t border-slate-50 px-5 py-2">
+              <span className="text-[10px] text-slate-300">
+                {MAX_DEMO - totalCount} Nachrichten übrig
+              </span>
+              <div className="flex items-center gap-1">
+                {Array.from({ length: MAX_DEMO }).map((_, i) => (
+                  <span
+                    key={i}
+                    className={`h-1 w-4 rounded-full transition-colors ${i < totalCount ? 'bg-primary' : 'bg-slate-100'}`}
+                  />
+                ))}
+              </div>
             </div>
           )}
         </div>
