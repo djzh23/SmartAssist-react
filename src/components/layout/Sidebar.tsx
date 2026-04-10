@@ -6,11 +6,13 @@ import {
   Globe,
   MessageCircle,
   Sparkles,
+  ShieldCheck,
   Tag,
   Target,
   User,
   Wrench,
 } from 'lucide-react'
+import { useIsAdmin } from '../../hooks/useIsAdmin'
 import { useUserPlan } from '../../hooks/useUserPlan'
 import AuthButton from '../ui/AuthButton'
 
@@ -136,6 +138,7 @@ function UsageBar() {
 
 export default function Sidebar({ onNavClick }: Props) {
   const { plan } = useUserPlan()
+  const { isAdmin } = useIsAdmin()
 
   return (
     <div className="flex h-full flex-col overflow-x-hidden overflow-y-auto">
@@ -161,6 +164,12 @@ export default function Sidebar({ onNavClick }: Props) {
         <p className="px-3 pb-1.5 pt-5 text-[10px] font-bold uppercase tracking-[1.5px] text-slate-500">Konto</p>
         <SidebarLink item={{ label: 'Mein Profil', icon: <User size={15} />, to: '/profile' }} onClick={onNavClick} />
         <SidebarLink item={{ label: 'Preise', icon: <Tag size={15} />, to: '/pricing' }} onClick={onNavClick} />
+        {isAdmin && (
+          <SidebarLink
+            item={{ label: 'Admin', icon: <ShieldCheck size={15} />, to: '/admin' }}
+            onClick={onNavClick}
+          />
+        )}
       </nav>
 
       <div className="flex-shrink-0">

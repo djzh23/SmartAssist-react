@@ -35,7 +35,7 @@ function ProtectedApp() {
   return <MainLayout />
 }
 
-/** Signed-in only, no MainLayout — for /admin (no sidebar link; direct URL only). */
+/** Signed-in only, no MainLayout — /admin (sidebar shows link only for admins). */
 function RequireSignedIn({ children }: { children: React.ReactNode }) {
   const { isSignedIn, isLoaded } = useUser()
 
