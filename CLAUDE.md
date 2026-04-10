@@ -31,6 +31,11 @@ docs/
 └── playbooks/    add-page.md, add-tool.md
 ```
 
+## Development troubleshooting
+
+- **Vite (`npm run dev`)**: If the default port is busy, Vite tries the next port (console shows the real URL, e.g. `http://localhost:5175/`). Exit code `1` after “ready” usually means the dev server was stopped (Ctrl+C), not a failed start. If you see `EADDRINUSE` and no fallback, free the port or set `server.port` in `vite.config.ts`.
+- **Backend (`dotnet build` on SmartAssistApi)**: On Windows, `MSB3492` / “Could not read … AssemblyInfoInputs.cache” is an SDK/filesystem glitch. Run `dotnet clean` in the API project (or delete the `obj` folder), then `dotnet build` again. Do not paper over API or agent failures with silent fallbacks — fix config, keys, and Redis as documented.
+
 ## Backend API
 
 Base URL: configured in `.env` as `VITE_API_BASE_URL` (default `http://localhost:5194`).

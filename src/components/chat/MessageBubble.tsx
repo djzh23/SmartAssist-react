@@ -4,8 +4,7 @@ import JobAnalysisCard from './JobAnalysisCard'
 import LearningResponse from './LearningResponse'
 import ProgrammingResponse from './ProgrammingResponse'
 import InterviewResponse from './InterviewResponse'
-import CodeBlock from './CodeBlock'
-import { parseSegments } from '../../utils/markdownRenderer'
+import { RenderedMarkdown } from './RenderedMarkdown'
 import { parseLearningResponse } from '../../utils/parseLearningResponse'
 
 interface Props {
@@ -117,19 +116,10 @@ export default function MessageBubble({
   }
 
   if (!msg.isUser) {
-    const segments = parseSegments(msg.text)
-    const hasCode = segments.some(s => s.type === 'code')
-
     return (
       <div className="self-start flex max-w-[85%] animate-slide-up flex-col gap-1">
         <div className="break-words rounded-[4px_18px_18px_18px] bg-slate-100 px-3.5 py-2.5 text-sm leading-relaxed text-slate-800">
-          {hasCode
-            ? segments.map((seg, i) =>
-                seg.type === 'code'
-                  ? <CodeBlock key={i} code={seg.content} language={seg.language} />
-                  : <span key={i} className="whitespace-pre-wrap">{seg.content}</span>,
-              )
-            : <span className="whitespace-pre-wrap">{msg.text}</span>}
+          <RenderedMarkdown content={msg.text} />
         </div>
         <div className="flex items-center gap-2 px-1">
           {msg.toolUsed && msg.toolUsed !== 'analyze_job' && (

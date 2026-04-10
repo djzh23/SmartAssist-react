@@ -49,6 +49,45 @@
   }
 }
 
+/* Rendered Markdown in general chat bubbles */
+.rendered-md {
+  font-size: 14px;
+  line-height: 1.65;
+  word-break: break-word;
+}
+
+.rendered-md > :first-child {
+  margin-top: 0;
+}
+
+.rendered-md > :last-child {
+  margin-bottom: 0;
+}
+
+.rendered-md thead {
+  background: #f8fafc;
+}
+
+.rendered-md tr:last-child td {
+  border-bottom: none;
+}
+
+.rendered-md blockquote p {
+  margin: 0;
+}
+
+.rendered-md blockquote p + p {
+  margin-top: 0.5rem;
+}
+
+.rendered-md li > p {
+  margin-bottom: 0.35rem;
+}
+
+.rendered-md li > p:last-child {
+  margin-bottom: 0;
+}
+
 /* ── Modal (ContextModal / ContextModal variants) ─────────────────────── */
 
 .modal-backdrop {
