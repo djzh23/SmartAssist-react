@@ -7,6 +7,7 @@ import ChatPage from './pages/ChatPage'
 import ToolsPage from './pages/ToolsPage'
 import PricingPage from './pages/PricingPage'
 import ProfilePage from './pages/ProfilePage'
+import AdminDashboardPage from './pages/AdminDashboardPage'
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string
 
@@ -34,6 +35,15 @@ function ProtectedApp() {
   return <MainLayout />
 }
 
+/** Signed-in only, no MainLayout — for /admin (no sidebar link; direct URL only). */
+function RequireSignedIn({ children }: { children: React.ReactNode }) {
+  const { isSignedIn, isLoaded } = useUser()
+
+  if (!isLoaded) return <LoadingScreen />
+  if (!isSignedIn) return <Navigate to="/" replace />
+  return <>{children}</>
+}
+
 function AppRoutes() {
   const { isLoaded } = useAuth()
 
@@ -51,6 +61,15 @@ function AppRoutes() {
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/pricing" element={<PricingPage />} />
       </Route>
+
+      <Route
+        path="/admin"
+        element={
+          <RequireSignedIn>
+            <AdminDashboardPage />
+          </RequireSignedIn>
+        }
+      />
 
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
