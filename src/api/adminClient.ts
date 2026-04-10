@@ -26,6 +26,8 @@ export interface UserUsageSummary {
   totalCostUsd: number
   byModel: Record<string, ModelUsage>
   byTool: Record<string, ToolUsage>
+  /** Backend: dominant tool for the requested day (from tc_* counters). */
+  topTool?: string | null
 }
 
 export interface DailyUsage {

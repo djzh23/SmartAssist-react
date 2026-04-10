@@ -60,6 +60,7 @@ function toolLabel(key: string): string {
 }
 
 function getTopTool(summary: UserUsageSummary): string {
+  if (summary.topTool) return toolLabel(summary.topTool)
   const by = summary.byTool ?? {}
   const entries = Object.entries(by)
   if (entries.length === 0) return '—'
