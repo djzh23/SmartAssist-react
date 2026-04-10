@@ -156,6 +156,7 @@ function SectionDivider({
       className={['relative w-full overflow-hidden h-5 sm:h-6', className].join(' ')}
       style={{ background: `linear-gradient(to bottom, ${from}, ${to})` }}
       aria-hidden="true"
+      {...(dark ? { 'data-nav-dark-zone': 'true' } : {})}
     >
       <svg
         className="absolute inset-0 h-full w-full"
@@ -237,16 +238,25 @@ function LandingNav() {
     const NAV_OVERLAP_PX = 104
 
     const checkDarkOverlap = () => {
+      const bandBottom = NAV_OVERLAP_PX
+      const intersectsNavBand = (rect: DOMRect) => rect.top < bandBottom && rect.bottom > 4
+
       let overlaps = false
       for (const id of DARK_NAV_SECTION_IDS) {
         const el = document.getElementById(id)
         if (!el) continue
-        const rect = el.getBoundingClientRect()
-        if (rect.top < NAV_OVERLAP_PX && rect.bottom > 6) {
+        if (intersectsNavBand(el.getBoundingClientRect())) {
           overlaps = true
           break
         }
       }
+
+      if (!overlaps) {
+        document.querySelectorAll<HTMLElement>('[data-nav-dark-zone="true"]').forEach((el) => {
+          if (intersectsNavBand(el.getBoundingClientRect())) overlaps = true
+        })
+      }
+
       setOverDarkBg(overlaps)
     }
 
@@ -291,10 +301,11 @@ function LandingNav() {
   /** Desktop: Pill + animierte Unterstreichung + klarer Hover/Fokus */
   const navLinkClass = overDarkBg
     ? [
-        'relative cursor-pointer rounded-full px-3 py-2 text-sm font-medium text-amber-100/92',
+        'relative cursor-pointer rounded-full px-3 py-2 text-sm font-medium',
+        'text-zinc-100 [text-shadow:_0_1px_2px_rgb(0_0_0_/_45%)]',
         'transition-all duration-200 ease-out',
         'after:pointer-events-none after:absolute after:inset-x-3 after:bottom-1 after:h-0.5 after:rounded-full',
-        'after:bg-gradient-to-r after:from-amber-200/95 after:to-amber-50/90 after:transition-transform after:duration-200 after:ease-out after:scale-x-0 after:origin-center',
+        'after:bg-gradient-to-r after:from-amber-200 after:to-amber-100 after:transition-transform after:duration-200 after:ease-out after:scale-x-0 after:origin-center',
         'hover:bg-white/15 hover:text-white hover:after:scale-x-100',
         'active:bg-white/12 active:scale-[0.98]',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/55 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent',
