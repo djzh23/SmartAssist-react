@@ -1,16 +1,21 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '@clerk/clerk-react'
-import { Loader2, Plus, Trash2 } from 'lucide-react'
+import { CheckCircle2, Loader2, Plus, Trash2 } from 'lucide-react'
 import type { CareerProfile, Education, ProfileLanguage, TargetJob, WorkExperience } from '../api/profileClient'
 import {
   addTargetJob,
+  completeOnboarding,
   fetchProfile,
   removeTargetJob,
   updateFullProfile,
   updateSkills,
   uploadCv,
 } from '../api/profileClient'
+
+function canMarkProfileSetupComplete(p: CareerProfile): boolean {
+  return Boolean(p.field?.trim() && p.level?.trim() && p.goals.length > 0)
+}
 
 const FIELDS: { value: string; label: string }[] = [
   { value: 'it', label: 'IT / Softwareentwicklung' },
@@ -67,6 +72,7 @@ export default function CareerProfilePage() {
   const [jobTitle, setJobTitle] = useState('')
   const [jobCompany, setJobCompany] = useState('')
   const [jobDesc, setJobDesc] = useState('')
+  const [markSetupBusy, setMarkSetupBusy] = useState(false)
 
   const load = useCallback(async () => {
     if (!isLoaded) return
@@ -109,6 +115,33 @@ export default function CareerProfilePage() {
       ? profile.goals.filter(g => g !== id)
       : [...profile.goals, id]
     void saveProfilePatch({ goals })
+  }
+
+  const handleMarkSetupComplete = async () => {
+    if (!profile || !canMarkProfileSetupComplete(profile)) return
+    const token = await getToken()
+    if (!token) return
+    setMarkSetupBusy(true)
+    setError(null)
+    try {
+      const field = profile.field!.trim()
+      const level = profile.level!.trim()
+      await completeOnboarding(token, {
+        field,
+        fieldLabel:
+          profile.fieldLabel?.trim() || FIELDS.find(f => f.value === field)?.label || field,
+        level,
+        levelLabel:
+          profile.levelLabel?.trim() || LEVELS.find(l => l.value === level)?.label || level,
+        currentRole: profile.currentRole?.trim() || undefined,
+        goals: profile.goals,
+      })
+      await load()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Markieren fehlgeschlagen')
+    } finally {
+      setMarkSetupBusy(false)
+    }
   }
 
   const addSkill = async () => {
@@ -235,14 +268,48 @@ export default function CareerProfilePage() {
           — nichts doppelt pflegen nötig.
         </p>
 
-        {!profile.onboardingCompleted && (
+        {profile.onboardingCompleted ? (
+          <div className="mb-6 flex gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-950">
+            <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-emerald-600" aria-hidden />
+            <div>
+              <p className="font-semibold text-emerald-950">Profil eingerichtet</p>
+              <p className="mt-1.5 leading-relaxed text-emerald-900/95">
+                Das Setup ist abgehakt: der Chat zeigt keinen Einrichtungs-Hinweis mehr. Ob deine Daten beim Senden
+                wirklich mit an den Assistenten gehen, siehst du im Chat an den <strong className="font-medium">Kontext</strong>
+                -Schaltern — <strong className="font-medium">farbig = aktiv</strong> (z.&nbsp;B. Profil, Skills).
+              </p>
+            </div>
+          </div>
+        ) : canMarkProfileSetupComplete(profile) ? (
+          <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+            <p className="font-semibold">Daten gespeichert — Setup noch nicht abgeschlossen</p>
+            <p className="mt-2 leading-relaxed text-amber-900/95">
+              Deine Eingaben sind schon auf dem Server. „Eingerichtet“ ist nur die Bestätigung, dass du das Onboarding
+              nicht mehr brauchst (wie der letzte Schritt der{' '}
+              <Link to="/onboarding" className="font-medium text-primary underline-offset-2 hover:underline">
+                geführten Einrichtung
+              </Link>
+              ). Danach erscheint unten die grüne Box und der Chat-Hinweis entfällt.
+            </p>
+            <button
+              type="button"
+              disabled={markSetupBusy || saving}
+              onClick={() => void handleMarkSetupComplete()}
+              className="mt-3 inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-50"
+            >
+              {markSetupBusy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
+              Profil als eingerichtet markieren
+            </button>
+          </div>
+        ) : (
           <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-            <strong className="font-medium">Hinweis:</strong> Das Profil ist noch nicht als „eingerichtet“ markiert. Du
-            kannst alles hier ausfüllen oder einmalig den{' '}
+            <strong className="font-medium">Noch nicht eingerichtet:</strong> Wähle mindestens{' '}
+            <strong className="font-medium">Berufsfeld</strong>, <strong className="font-medium">Level</strong> und ein{' '}
+            <strong className="font-medium">Ziel</strong>, dann kannst du das Setup hier oder per{' '}
             <Link to="/onboarding" className="font-medium text-primary underline-offset-2 hover:underline">
-              geführten Ablauf
+              geführtem Ablauf
             </Link>{' '}
-            nutzen — im Chat erscheint sonst ein kurzer Hinweis.
+            abschließen.
           </div>
         )}
 

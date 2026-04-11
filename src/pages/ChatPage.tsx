@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { flushSync } from 'react-dom'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { AlertCircle, PanelLeft, Plus, X } from 'lucide-react'
 import type { ToolType } from '../types'
 import { PROGRAMMING_LANGUAGES } from '../types'
@@ -926,39 +926,49 @@ export default function ChatPage() {
 
         {isSignedIn && !careerProfileLoading && (
           <div className="flex-shrink-0 border-b border-slate-200 bg-white px-4 py-2">
-            <div className="mx-auto flex max-w-3xl flex-wrap items-center gap-2">
-              <span className="mr-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Kontext</span>
-              <TogglePill
-                active={profileToggles.includeBasicProfile}
-                label="Profil"
-                onClick={() => updateToggles({ includeBasicProfile: !profileToggles.includeBasicProfile })}
-              />
-              <TogglePill
-                active={profileToggles.includeSkills}
-                label="Skills"
-                onClick={() => updateToggles({ includeSkills: !profileToggles.includeSkills })}
-              />
-              <TogglePill
-                active={profileToggles.includeExperience}
-                label="Erfahrung"
-                onClick={() => updateToggles({ includeExperience: !profileToggles.includeExperience })}
-              />
-              <TogglePill
-                active={profileToggles.includeCv}
-                label="Lebenslauf"
-                onClick={() => updateToggles({ includeCv: !profileToggles.includeCv })}
-              />
-              {(careerProfile?.targetJobs ?? []).map(job => (
+            <div className="mx-auto max-w-3xl">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="mr-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Kontext</span>
                 <TogglePill
-                  key={job.id}
-                  active={profileToggles.activeTargetJobId === job.id}
-                  label={`${job.title ?? 'Stelle'}${job.company ? ` @ ${job.company}` : ''}`}
-                  onClick={() =>
-                    updateToggles({
-                      activeTargetJobId: profileToggles.activeTargetJobId === job.id ? null : job.id,
-                    })}
+                  active={profileToggles.includeBasicProfile}
+                  label="Profil"
+                  onClick={() => updateToggles({ includeBasicProfile: !profileToggles.includeBasicProfile })}
                 />
-              ))}
+                <TogglePill
+                  active={profileToggles.includeSkills}
+                  label="Skills"
+                  onClick={() => updateToggles({ includeSkills: !profileToggles.includeSkills })}
+                />
+                <TogglePill
+                  active={profileToggles.includeExperience}
+                  label="Erfahrung"
+                  onClick={() => updateToggles({ includeExperience: !profileToggles.includeExperience })}
+                />
+                <TogglePill
+                  active={profileToggles.includeCv}
+                  label="Lebenslauf"
+                  onClick={() => updateToggles({ includeCv: !profileToggles.includeCv })}
+                />
+                {(careerProfile?.targetJobs ?? []).map(job => (
+                  <TogglePill
+                    key={job.id}
+                    active={profileToggles.activeTargetJobId === job.id}
+                    label={`${job.title ?? 'Stelle'}${job.company ? ` @ ${job.company}` : ''}`}
+                    onClick={() =>
+                      updateToggles({
+                        activeTargetJobId: profileToggles.activeTargetJobId === job.id ? null : job.id,
+                      })}
+                  />
+                ))}
+              </div>
+              <p className="mt-1.5 text-[11px] leading-snug text-slate-500">
+                <strong className="font-medium text-slate-600">Farbig = aktiv:</strong> diese Teile werden mit deiner
+                nächsten Nachricht an den Assistenten geschickt (Quelle:{' '}
+                <Link to="/career-profile" className="font-medium text-primary hover:underline">
+                  Karriereprofil
+                </Link>
+                ). Übertragung wie die restliche App (HTTPS), nur während du angemeldet bist.
+              </p>
             </div>
           </div>
         )}
