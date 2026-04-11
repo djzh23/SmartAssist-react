@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '@clerk/clerk-react'
 import { Loader2, Plus, Trash2 } from 'lucide-react'
 import type { CareerProfile, Education, ProfileLanguage, TargetJob, WorkExperience } from '../api/profileClient'
@@ -226,8 +227,24 @@ export default function CareerProfilePage() {
       <div className="mx-auto w-full max-w-3xl px-4 py-6">
         <h1 className="mb-1 text-2xl font-semibold text-slate-900">Karriereprofil</h1>
         <p className="mb-6 text-sm text-slate-600">
-          Diese Daten kannst du in den Chat-Kontext einbinden (Schalter über dem Eingabefeld).
+          Diese Daten kannst du in den Chat-Kontext einbinden (Schalter über dem Eingabefeld). Du bearbeitest hier
+          dieselben Infos wie in der{' '}
+          <Link to="/onboarding" className="font-medium text-primary hover:underline">
+            geführten Einrichtung (3 Schritte)
+          </Link>
+          — nichts doppelt pflegen nötig.
         </p>
+
+        {!profile.onboardingCompleted && (
+          <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            <strong className="font-medium">Hinweis:</strong> Das Profil ist noch nicht als „eingerichtet“ markiert. Du
+            kannst alles hier ausfüllen oder einmalig den{' '}
+            <Link to="/onboarding" className="font-medium text-primary underline-offset-2 hover:underline">
+              geführten Ablauf
+            </Link>{' '}
+            nutzen — im Chat erscheint sonst ein kurzer Hinweis.
+          </div>
+        )}
 
         {error && (
           <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">

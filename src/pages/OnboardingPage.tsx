@@ -185,7 +185,8 @@ export default function OnboardingPage() {
       <main className="mx-auto flex w-full max-w-lg flex-1 flex-col px-6 py-8">
         <h1 className="mb-2 text-xl font-semibold text-slate-900">Willkommen bei PrivatePrep</h1>
         <p className="mb-6 text-sm text-slate-600">
-          Kurz einrichten — du kannst jederzeit überspringen oder Details später im Karriereprofil ergänzen.
+          Das sind dieselben Daten wie unter <strong className="font-medium text-slate-800">Karriereprofil</strong> in der
+          Navigation — hier nur geführt in drei Schritten. Überspringen oder später ergänzen ist in Ordnung.
         </p>
 
         {formError && (

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { flushSync } from 'react-dom'
-import { Navigate, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { AlertCircle, PanelLeft, Plus, X } from 'lucide-react'
 import type { ToolType } from '../types'
 import { PROGRAMMING_LANGUAGES } from '../types'
@@ -12,6 +12,7 @@ import ChatSidebar from '../components/chat/ChatSidebar'
 import ContextModal, { type ContextModalToolType, type ContextPayload } from '../components/chat/ContextModal'
 import MessageList from '../components/chat/MessageList'
 import ChatAnswerReadyBanner from '../components/chat/ChatAnswerReadyBanner'
+import OnboardingPromptModal, { ONBOARDING_CHAT_PROMPT_DISMISS_KEY } from '../components/chat/OnboardingPromptModal'
 import UsageLimitModal from '../components/ui/UsageLimitModal'
 import { useChatSessions } from '../hooks/useChatSessions'
 import { useCareerProfile } from '../hooks/useCareerProfile'
@@ -387,6 +388,7 @@ export default function ChatPage() {
 
   const [showLimitModal, setShowLimitModal] = useState(false)
   const [checkoutBanner, setCheckoutBanner] = useState<{ type: 'success' | 'info'; text: string } | null>(null)
+  const [showOnboardingModal, setShowOnboardingModal] = useState(false)
 
   const { isAtLimit, incrementUsage, isSignedIn, email, getToken, refreshUsage } = useUserPlan()
   const {
@@ -396,7 +398,24 @@ export default function ChatPage() {
     loading: careerProfileLoading,
     error: careerProfileError,
     needsOnboarding,
+    skipOnboarding,
   } = useCareerProfile()
+
+  useEffect(() => {
+    if (!isSignedIn || careerProfileLoading || careerProfileError || !needsOnboarding) {
+      setShowOnboardingModal(false)
+      return
+    }
+    try {
+      if (sessionStorage.getItem(ONBOARDING_CHAT_PROMPT_DISMISS_KEY) === '1') {
+        setShowOnboardingModal(false)
+        return
+      }
+    } catch {
+      /* sessionStorage unavailable */
+    }
+    setShowOnboardingModal(true)
+  }, [isSignedIn, careerProfileLoading, careerProfileError, needsOnboarding])
 
   useEffect(() => {
     saveContextMap(contextBySessionKey)
@@ -746,10 +765,6 @@ export default function ChatPage() {
     }
     : undefined
 
-  if (isSignedIn && !careerProfileLoading && !careerProfileError && needsOnboarding) {
-    return <Navigate to="/onboarding" replace />
-  }
-
   return (
     <div className="relative flex min-h-0 flex-1 overflow-hidden">
       <ChatSidebar
@@ -970,6 +985,20 @@ export default function ChatPage() {
         isLoggedIn={isSignedIn}
         userEmail={email}
         onClose={() => setShowLimitModal(false)}
+      />
+
+      <OnboardingPromptModal
+        isOpen={showOnboardingModal}
+        onDismissSession={() => {
+          try {
+            sessionStorage.setItem(ONBOARDING_CHAT_PROMPT_DISMISS_KEY, '1')
+          } catch {
+            /* ignore */
+          }
+          setShowOnboardingModal(false)
+        }}
+        onSkipApi={skipOnboarding}
+        onAfterSkip={() => setShowOnboardingModal(false)}
       />
     </div>
   )
