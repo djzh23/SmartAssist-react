@@ -1,15 +1,19 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { SignInButton, SignUpButton, useUser } from '@clerk/clerk-react'
 import { Check, ChevronRight, Loader2, Menu, Play, RotateCcw, Send, X } from 'lucide-react'
 import { askAgentDemo, fetchDemoTtsAudio } from '../api/client'
 import LearningResponse from '../components/chat/LearningResponse'
+import { IconHubIcon, type IconHubName } from '../components/ui/IconHubIcon'
 import { parseLearningResponse } from '../utils/parseLearningResponse'
 import '../styles/landing.css'
 
 /** Sichtbare Knappheit; optional in `.env` als `VITE_REMAINING_FREE_SLOTS` überschreiben */
 const REMAINING_FREE_SLOTS =
   (import.meta.env.VITE_REMAINING_FREE_SLOTS as string | undefined)?.trim() || '42'
+
+/** Hero ChatMockup: Typewriter-Zeile nach der Denk-Animation */
+const CHAT_MOCKUP_ANSWER_LINE = 'Fertig in unter 10 Sekunden, inkl. Interview-Hinweisen.'
 
 // ── Section Divider: nur Wellen & Kurven (keine Raster/Hex/Balken/Punkte) ─────
 
@@ -175,7 +179,7 @@ function SectionDivider({
 function FeaturesHeadingOrnament() {
   return (
     <div className="mb-6 flex justify-center" aria-hidden="true">
-      <svg viewBox="0 0 400 40" className="h-10 w-full max-w-[min(22rem,100%)] text-amber-800/25" xmlns="http://www.w3.org/2000/svg">
+      <svg viewBox="0 0 400 40" className="h-10 w-full max-w-[min(22rem,100%)] text-white/18" xmlns="http://www.w3.org/2000/svg">
         <path
           d="M20 28 L20 14 L28 14 L28 8 L36 8 L36 28 Z M24 18 L32 18"
           fill="none"
@@ -218,61 +222,15 @@ function scrollTo(id: string) {
   window.scrollTo({ top, behavior: 'smooth' })
 }
 
-/** Sektionen mit dunklem Hintergrund — Navigation schaltet dort auf Dark-Theme */
-const DARK_NAV_SECTION_IDS = ['how-it-works', 'cta', 'footer'] as const
-
 function LandingNav() {
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [overDarkBg, setOverDarkBg] = useState(false)
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10)
     onScroll()
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
-  }, [])
-
-  useEffect(() => {
-    let raf = 0
-    const NAV_OVERLAP_PX = 104
-
-    const checkDarkOverlap = () => {
-      const bandBottom = NAV_OVERLAP_PX
-      const intersectsNavBand = (rect: DOMRect) => rect.top < bandBottom && rect.bottom > 4
-
-      let overlaps = false
-      for (const id of DARK_NAV_SECTION_IDS) {
-        const el = document.getElementById(id)
-        if (!el) continue
-        if (intersectsNavBand(el.getBoundingClientRect())) {
-          overlaps = true
-          break
-        }
-      }
-
-      if (!overlaps) {
-        document.querySelectorAll<HTMLElement>('[data-nav-dark-zone="true"]').forEach((el) => {
-          if (intersectsNavBand(el.getBoundingClientRect())) overlaps = true
-        })
-      }
-
-      setOverDarkBg(overlaps)
-    }
-
-    const onScrollOrResize = () => {
-      cancelAnimationFrame(raf)
-      raf = requestAnimationFrame(checkDarkOverlap)
-    }
-
-    checkDarkOverlap()
-    window.addEventListener('scroll', onScrollOrResize, { passive: true })
-    window.addEventListener('resize', onScrollOrResize, { passive: true })
-    return () => {
-      cancelAnimationFrame(raf)
-      window.removeEventListener('scroll', onScrollOrResize)
-      window.removeEventListener('resize', onScrollOrResize)
-    }
   }, [])
 
   useEffect(() => {
@@ -298,39 +256,33 @@ function LandingNav() {
     closeMobile()
   }
 
-  /** Desktop: Pill + animierte Unterstreichung + klarer Hover/Fokus */
-  const navLinkClass = overDarkBg
+  /** Desktop: dunkles Theme (gesamte Landing Page) */
+  const navLinkClass = [
+    'relative cursor-pointer rounded-full px-3 py-2 text-sm font-medium',
+    'text-stone-200/95 [text-shadow:_0_1px_2px_rgb(0_0_0_/_45%)]',
+    'transition-all duration-200 ease-out',
+    'after:pointer-events-none after:absolute after:inset-x-3 after:bottom-1 after:h-0.5 after:rounded-full',
+    'after:bg-gradient-to-r after:from-amber-300 after:to-amber-200 after:transition-transform after:duration-200 after:ease-out after:scale-x-0 after:origin-center',
+    'hover:bg-white/10 hover:text-white hover:after:scale-x-100',
+    'active:bg-white/8 active:scale-[0.98]',
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent',
+  ].join(' ')
+
+  const navLinkClassMobilePanel =
+    'group flex w-full cursor-pointer items-center justify-between gap-2 rounded-xl border border-transparent px-3 py-3 text-left text-sm font-medium text-stone-200 transition-all duration-200 hover:border-white/15 hover:bg-white/8 hover:shadow-sm active:scale-[0.99] active:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/45 focus-visible:ring-offset-2 focus-visible:ring-offset-[#1a1208]'
+
+  /** Eine warme Kante (kein kühles Weiß + Ring): Amber-Ton + weiches Innenlicht */
+  const shellSurface = scrolled
     ? [
-        'relative cursor-pointer rounded-full px-3 py-2 text-sm font-medium',
-        'text-zinc-100 [text-shadow:_0_1px_2px_rgb(0_0_0_/_45%)]',
-        'transition-all duration-200 ease-out',
-        'after:pointer-events-none after:absolute after:inset-x-3 after:bottom-1 after:h-0.5 after:rounded-full',
-        'after:bg-gradient-to-r after:from-amber-200 after:to-amber-100 after:transition-transform after:duration-200 after:ease-out after:scale-x-0 after:origin-center',
-        'hover:bg-white/15 hover:text-white hover:after:scale-x-100',
-        'active:bg-white/12 active:scale-[0.98]',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/55 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent',
+        'border border-stone-600/50 bg-gradient-to-b from-[#1e1610]/96 via-[#16100c]/97 to-[#0d0800]/99',
+        'shadow-landing-lg',
+        'backdrop-blur-xl backdrop-saturate-150',
       ].join(' ')
     : [
-        'relative cursor-pointer rounded-full px-3 py-2 text-sm font-medium text-slate-600',
-        'transition-all duration-200 ease-out',
-        'after:pointer-events-none after:absolute after:inset-x-3 after:bottom-1 after:h-0.5 after:rounded-full after:bg-primary',
-        'after:transition-transform after:duration-200 after:ease-out after:scale-x-0 after:origin-center',
-        'hover:bg-amber-100/80 hover:text-slate-900 hover:shadow-sm hover:after:scale-x-100',
-        'active:bg-amber-100 active:scale-[0.98]',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/45 focus-visible:ring-offset-2 focus-visible:ring-offset-amber-50/90',
+        'border border-stone-600/45 bg-gradient-to-b from-[#231a14]/92 via-[#18100c]/94 to-[#0f0a08]/97',
+        'shadow-landing-md',
+        'backdrop-blur-xl backdrop-saturate-150',
       ].join(' ')
-
-  /** Mobile Flyout: volle Zeile, Rand + Chevron — wirkt wie tippbare Liste */
-  const navLinkClassMobilePanel =
-    'group flex w-full cursor-pointer items-center justify-between gap-2 rounded-xl border border-transparent px-3 py-3 text-left text-sm font-medium text-slate-800 transition-all duration-200 hover:border-amber-200/90 hover:bg-amber-50/95 hover:shadow-sm active:scale-[0.99] active:bg-amber-100/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/45 focus-visible:ring-offset-2 focus-visible:ring-offset-white'
-
-  const shellSurface = overDarkBg
-    ? scrolled
-      ? 'border-white/20 bg-gradient-to-b from-slate-950/95 via-[#1a1208]/96 to-[#0d0800]/98 shadow-[0_16px_48px_-8px_rgba(0,0,0,0.55)] ring-1 ring-white/10'
-      : 'border-white/18 bg-gradient-to-b from-slate-900/92 via-[#1c1200]/94 to-[#0d0800]/97 shadow-[0_10px_40px_-6px_rgba(0,0,0,0.45)] ring-1 ring-white/10'
-    : scrolled
-      ? 'border-amber-300/45 bg-gradient-to-b from-white/95 via-amber-50/35 to-amber-50/20 shadow-[0_12px_40px_-6px_rgba(28,18,0,0.14)]'
-      : 'border-amber-200/35 bg-gradient-to-b from-white/92 via-white/88 to-amber-50/30 shadow-[0_4px_28px_-4px_rgba(28,18,0,0.08)]'
 
   return (
     <header className="pointer-events-none fixed left-0 right-0 top-0 z-[100] px-3 pt-3 sm:px-5 sm:pt-4">
@@ -339,14 +291,14 @@ function LandingNav() {
         <button
           type="button"
           aria-label="Menü schließen"
-          className="pointer-events-auto fixed inset-0 z-0 bg-slate-900/25 backdrop-blur-[2px] md:hidden"
+          className="pointer-events-auto fixed inset-0 z-0 bg-black/50 backdrop-blur-sm md:hidden"
           onClick={closeMobile}
         />
       )}
 
       <nav
         className={[
-          'pointer-events-auto relative z-10 mx-auto flex max-w-[1120px] items-center justify-between gap-2 rounded-2xl border px-3 py-2.5 shadow-lg backdrop-blur-xl transition-[box-shadow,border-color,background-color,ring-color] duration-300 sm:gap-4 sm:rounded-[1.35rem] sm:px-5 sm:py-3',
+          'pointer-events-auto relative z-10 mx-auto flex max-w-[1120px] items-center justify-between gap-2 rounded-2xl px-3 py-2.5 transition-[box-shadow,border-color,background-color] duration-300 sm:gap-4 sm:rounded-[1.35rem] sm:px-5 sm:py-3',
           shellSurface,
         ].join(' ')}
         aria-label="Hauptnavigation"
@@ -357,30 +309,14 @@ function LandingNav() {
             window.scrollTo({ top: 0, behavior: 'smooth' })
             closeMobile()
           }}
-          className={[
-            'flex min-w-0 items-center gap-2 rounded-xl py-1.5 pl-1 pr-2 text-left transition-all duration-200',
-            overDarkBg
-              ? 'hover:bg-white/10 active:scale-[0.98]'
-              : 'hover:bg-amber-50/90 active:scale-[0.98]',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent',
-          ].join(' ')}
+          className="flex min-w-0 items-center gap-2 rounded-xl py-1.5 pl-1 pr-2 text-left transition-all duration-200 hover:bg-white/10 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
         >
           <img
             src="/favicon.png"
             alt=""
-            className={[
-              'h-8 w-8 flex-shrink-0 rounded-xl sm:h-9 sm:w-9',
-              overDarkBg ? 'ring-1 ring-white/25' : 'ring-1 ring-amber-200/50',
-            ].join(' ')}
+            className="h-8 w-8 flex-shrink-0 rounded-xl ring-1 ring-amber-500/20 sm:h-9 sm:w-9"
           />
-          <span
-            className={[
-              'text-[15px] font-bold tracking-tight sm:text-[17px]',
-              overDarkBg
-                ? 'bg-gradient-to-r from-amber-100 via-amber-50 to-amber-50/90 bg-clip-text text-transparent'
-                : 'bg-gradient-to-r from-amber-700 via-amber-600 to-amber-500 bg-clip-text text-transparent',
-            ].join(' ')}
-          >
+          <span className="bg-gradient-to-r from-amber-200 via-amber-100 to-amber-50/90 bg-clip-text text-[15px] font-bold tracking-tight text-transparent sm:text-[17px]">
             PrivatePrep
           </span>
         </button>
@@ -401,13 +337,7 @@ function LandingNav() {
           <SignInButton mode="modal" fallbackRedirectUrl="/tools">
             <button
               type="button"
-              className={[
-                'hidden min-h-[40px] rounded-full border px-3.5 py-2 text-xs font-medium shadow-sm transition-all duration-200 sm:inline-flex sm:px-4 sm:text-sm',
-                overDarkBg
-                  ? 'border-white/25 bg-white/10 text-white hover:border-white/45 hover:bg-white/18 hover:shadow-md active:scale-[0.98]'
-                  : 'border-slate-200/90 bg-white/90 text-slate-700 hover:border-amber-400/80 hover:bg-amber-50 hover:text-slate-900 hover:shadow-md active:scale-[0.98]',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/55 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent',
-              ].join(' ')}
+              className="hidden min-h-[40px] rounded-full border border-amber-800/45 bg-white/[0.06] px-3.5 py-2 text-xs font-medium text-stone-100 shadow-sm transition-all duration-200 hover:border-amber-600/50 hover:bg-amber-950/35 hover:shadow-md active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/55 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent sm:inline-flex sm:px-4 sm:text-sm"
             >
               Anmelden
             </button>
@@ -415,7 +345,7 @@ function LandingNav() {
           <SignUpButton mode="modal" fallbackRedirectUrl="/tools">
             <button
               type="button"
-              className="inline-flex min-h-[40px] max-w-[calc(100vw-8rem)] items-center justify-center truncate rounded-full bg-gradient-to-r from-amber-600 to-amber-700 px-3 py-2 text-[11px] font-semibold text-white shadow-md shadow-amber-900/10 ring-1 ring-amber-500/20 transition-all duration-200 hover:from-amber-500 hover:to-amber-600 hover:shadow-lg hover:ring-amber-400/40 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300/80 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent sm:px-5 sm:text-sm"
+              className="inline-flex min-h-[40px] max-w-[calc(100vw-8rem)] items-center justify-center truncate rounded-full bg-gradient-to-r from-amber-400 to-amber-500 px-3 py-2 text-[11px] font-bold text-amber-950 shadow-lg shadow-black/30 ring-1 ring-amber-300/40 transition-all duration-200 hover:from-amber-300 hover:to-amber-400 hover:shadow-xl active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/80 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent sm:px-5 sm:text-sm"
             >
               Kostenlos starten
             </button>
@@ -423,13 +353,7 @@ function LandingNav() {
 
           <button
             type="button"
-            className={[
-              'inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border transition-all duration-200 md:hidden',
-              overDarkBg
-                ? 'border-white/25 bg-white/10 text-white hover:border-white/40 hover:bg-white/18 hover:shadow-md active:scale-95'
-                : 'border-amber-200/70 bg-amber-50/60 text-slate-700 hover:border-amber-400/60 hover:bg-amber-100/90 hover:shadow-sm active:scale-95',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent',
-            ].join(' ')}
+            className="inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-amber-800/45 bg-white/[0.06] text-white transition-all duration-200 hover:border-amber-600/50 hover:bg-amber-950/35 hover:shadow-md active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent md:hidden"
             aria-expanded={mobileOpen}
             aria-controls="landing-mobile-menu"
             aria-label={mobileOpen ? 'Menü schließen' : 'Menü öffnen'}
@@ -444,7 +368,7 @@ function LandingNav() {
       {mobileOpen && (
         <div
           id="landing-mobile-menu"
-          className="pointer-events-auto relative z-10 mx-auto mt-2 max-w-[1120px] overflow-hidden rounded-2xl border border-amber-200/50 bg-white/95 p-2 shadow-xl shadow-amber-900/10 backdrop-blur-xl md:hidden"
+          className="pointer-events-auto relative z-10 mx-auto mt-2 max-w-[1120px] overflow-hidden rounded-2xl border border-stone-600/45 bg-[#1a1208]/95 p-2 shadow-landing-md backdrop-blur-xl backdrop-saturate-150 md:hidden"
           role="dialog"
           aria-modal="true"
           aria-label="Navigation"
@@ -452,21 +376,21 @@ function LandingNav() {
           <div className="flex flex-col gap-1">
             <button type="button" className={navLinkClassMobilePanel} onClick={() => go('demo')}>
               <span>Live Demo</span>
-              <ChevronRight className="h-4 w-4 shrink-0 text-slate-400 transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-primary" aria-hidden />
+              <ChevronRight className="h-4 w-4 shrink-0 text-stone-500 transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-amber-400" aria-hidden />
             </button>
             <button type="button" className={navLinkClassMobilePanel} onClick={() => go('pricing')}>
               <span>Preise</span>
-              <ChevronRight className="h-4 w-4 shrink-0 text-slate-400 transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-primary" aria-hidden />
+              <ChevronRight className="h-4 w-4 shrink-0 text-stone-500 transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-amber-400" aria-hidden />
             </button>
             <button type="button" className={navLinkClassMobilePanel} onClick={() => go('faq')}>
               <span>FAQ</span>
-              <ChevronRight className="h-4 w-4 shrink-0 text-slate-400 transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-primary" aria-hidden />
+              <ChevronRight className="h-4 w-4 shrink-0 text-stone-500 transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-amber-400" aria-hidden />
             </button>
-            <div className="my-1 border-t border-amber-100" />
+            <div className="my-1 border-t border-white/10" />
             <SignInButton mode="modal" fallbackRedirectUrl="/tools">
               <button
                 type="button"
-                className="w-full rounded-xl border border-slate-200 bg-slate-50/90 px-4 py-3 text-left text-sm font-medium text-slate-800 transition-all duration-200 hover:border-amber-300/80 hover:bg-amber-50 hover:shadow-sm active:bg-amber-100/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/45 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+                className="w-full rounded-xl border border-white/18 bg-white/6 px-4 py-3 text-left text-sm font-medium text-stone-100 transition-all duration-200 hover:border-amber-400/35 hover:bg-white/10 hover:shadow-sm active:bg-white/12 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/45 focus-visible:ring-offset-2 focus-visible:ring-offset-[#1a1208]"
                 onClick={closeMobile}
               >
                 Anmelden
@@ -481,67 +405,147 @@ function LandingNav() {
 
 // ── Chat Mockup (decorative) ──────────────────────────────────────────────────
 
+type MockupVis = { m1: boolean; user: boolean; m2: boolean; typing: boolean; answer: boolean }
+
 function ChatMockup() {
-  const [showTyping, setShowTyping] = useState(true)
+  const [vis, setVis] = useState<MockupVis>({
+    m1: false,
+    user: false,
+    m2: false,
+    typing: false,
+    answer: false,
+  })
+  const [typedAnswer, setTypedAnswer] = useState('')
+
+  /** Gestaffelte „Konversation“, dann kurze Denk-Animation, dann Typewriter als fertige Antwort. Loop ohne Skalierung. */
+  useEffect(() => {
+    let alive = true
+    const timers: number[] = []
+    const after = (ms: number, fn: () => void) => {
+      timers.push(window.setTimeout(() => {
+        if (alive) fn()
+      }, ms))
+    }
+
+    function cycle() {
+      if (!alive) return
+      setVis({ m1: false, user: false, m2: false, typing: false, answer: false })
+      setTypedAnswer('')
+      after(220, () => setVis(s => ({ ...s, m1: true })))
+      after(780, () => setVis(s => ({ ...s, user: true })))
+      after(1380, () => setVis(s => ({ ...s, m2: true })))
+      after(2080, () => setVis(s => ({ ...s, typing: true })))
+      after(3180, () => setVis(s => ({ ...s, typing: false, answer: true })))
+      after(9200, cycle)
+    }
+
+    cycle()
+    return () => {
+      alive = false
+      timers.forEach(id => window.clearTimeout(id))
+    }
+  }, [])
 
   useEffect(() => {
-    const id = window.setInterval(() => setShowTyping(v => !v), 3000)
+    if (!vis.answer) {
+      setTypedAnswer('')
+      return
+    }
+    let i = 0
+    const id = window.setInterval(() => {
+      i += 1
+      setTypedAnswer(CHAT_MOCKUP_ANSWER_LINE.slice(0, i))
+      if (i >= CHAT_MOCKUP_ANSWER_LINE.length) window.clearInterval(id)
+    }, 34)
     return () => window.clearInterval(id)
-  }, [])
+  }, [vis.answer])
+
+  const avatar = (
+    <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-amber-500 to-amber-800 shadow-sm shadow-amber-950/40 ring-1 ring-amber-400/25">
+      <IconHubIcon name="lightning" tone="inverse" className="h-3.5 w-3.5" />
+    </div>
+  )
 
   return (
     <div className="relative mx-auto max-w-[340px]">
-      <div className="-rotate-2 overflow-hidden rounded-[22px] bg-white shadow-[0_24px_80px_rgba(124,58,237,0.22)]">
-        <div className="flex items-center justify-between bg-gradient-to-r from-amber-600 to-amber-700 px-4 py-3">
-          <span className="text-sm font-bold text-white">⚡ PrivatePrep</span>
+      <div className="-rotate-2 overflow-hidden rounded-[22px] border border-stone-500/35 bg-[#100d0b] shadow-landing-lg ring-1 ring-stone-700/25">
+        <div className="flex items-center justify-between bg-gradient-to-r from-[#78350f] via-amber-800 to-[#92400e] px-4 py-3">
+          <span className="flex items-center gap-1.5 text-sm font-bold tracking-tight text-amber-50">
+            <IconHubIcon name="lightning" tone="inverse" className="h-4 w-4 shrink-0 opacity-95" />
+            PrivatePrep
+          </span>
           <div className="flex items-center gap-1.5">
-            <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-300" />
-            <span className="text-xs text-white/80">Online</span>
+            <span className="h-2 w-2 rounded-full bg-teal-400 shadow-[0_0_8px_rgba(45,212,191,0.45)]" />
+            <span className="text-xs text-amber-100/85">Online</span>
           </div>
         </div>
-        <div className="space-y-3 bg-slate-50 p-4">
-          <div className="flex gap-2">
-            <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-amber-600 to-amber-700 text-xs text-white">⚡</div>
-            <div className="max-w-[220px] rounded-[12px_12px_12px_4px] bg-white px-3 py-2 text-xs text-slate-700 shadow-sm">
-              <span className="font-semibold text-emerald-700">Stellenanalyse</span>
-              <p className="mt-1 leading-snug">Top-Keywords: React, TypeScript, agile …</p>
+        <div className="space-y-3 bg-[#0c0a08] p-4">
+          {vis.m1 && (
+            <div className="chat-mockup-bubble-in flex gap-2">
+              {avatar}
+              <div className="max-w-[220px] rounded-[12px_12px_12px_4px] border border-stone-500/30 bg-[#151210] px-3 py-2 text-xs shadow-[inset_0_1px_0_0_rgba(255,251,235,0.04)]">
+                <span className="font-semibold text-teal-400/95">Stellenanalyse</span>
+                <p className="mt-1 leading-snug text-stone-400">Top-Keywords: React, TypeScript, agile …</p>
+              </div>
             </div>
-          </div>
-          <div className="flex justify-end">
-            <div className="max-w-[220px] rounded-[12px_12px_4px_12px] bg-gradient-to-r from-amber-600 to-amber-700 px-3 py-2 text-xs text-white">
-              Analysiere diese Junior-Entwickler-Stelle …
+          )}
+          {vis.user && (
+            <div className="chat-mockup-bubble-in flex justify-end">
+              <div className="max-w-[220px] rounded-[12px_12px_4px_12px] border border-amber-600/35 bg-gradient-to-br from-amber-600 to-amber-800 px-3 py-2 text-xs font-medium text-amber-50 shadow-md shadow-black/25 ring-1 ring-inset ring-white/10">
+                Analysiere diese Junior-Entwickler-Stelle …
+              </div>
             </div>
-          </div>
-          <div className="flex gap-2">
-            <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-amber-600 to-amber-700 text-xs text-white">⚡</div>
-            <div className="max-w-[220px] rounded-[12px_12px_12px_4px] border-l-[3px] border-l-emerald-500 bg-white px-3 py-2 text-xs shadow-sm">
-              <p className="font-semibold text-slate-800">Match & Lücken</p>
-              <p className="text-slate-600">12 Keywords · 3 Muss-Anforderungen</p>
-              <p className="mt-1 text-[10px] text-emerald-600">Nächster Schritt: Anschreiben</p>
+          )}
+          {vis.m2 && (
+            <div className="chat-mockup-bubble-in flex gap-2">
+              {avatar}
+              <div className="max-w-[220px] rounded-[12px_12px_12px_4px] border border-stone-500/30 border-l-[3px] border-l-teal-600/55 bg-[#151210] px-3 py-2 text-xs shadow-[inset_0_1px_0_0_rgba(255,251,235,0.04)]">
+                <p className="font-semibold text-stone-100">Match & Lücken</p>
+                <p className="text-stone-400">12 Keywords · 3 Muss-Anforderungen</p>
+                <p className="mt-1 text-[10px] font-medium text-teal-400/90">Nächster Schritt: Anschreiben</p>
+              </div>
             </div>
-          </div>
-          {showTyping && (
-            <div className="flex gap-2">
-              <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-amber-600 to-amber-700 text-xs text-white">⚡</div>
-              <div className="rounded-[12px_12px_12px_4px] bg-white px-3 py-3 shadow-sm">
-                <span className="typing-dot" /><span className="typing-dot" /><span className="typing-dot" />
+          )}
+          {vis.typing && (
+            <div className="chat-mockup-bubble-in flex gap-2">
+              {avatar}
+              <div className="rounded-[12px_12px_12px_4px] border border-stone-500/30 bg-[#151210] px-3 py-3 shadow-[inset_0_1px_0_0_rgba(255,251,235,0.04)]">
+                <span className="typing-dot" />
+                <span className="typing-dot" />
+                <span className="typing-dot" />
+              </div>
+            </div>
+          )}
+          {vis.answer && (
+            <div className="chat-mockup-bubble-in flex gap-2">
+              {avatar}
+              <div className="max-w-[220px] rounded-[12px_12px_12px_4px] border border-amber-900/35 bg-[#161008] px-3 py-2 text-xs text-stone-200 shadow-[inset_0_1px_0_0_rgba(251,191,36,0.06)]">
+                <span className="leading-relaxed">
+                  {typedAnswer}
+                  {typedAnswer.length < CHAT_MOCKUP_ANSWER_LINE.length && (
+                    <span className="ml-0.5 inline-block h-3 w-px animate-pulse bg-amber-400/80 align-middle" aria-hidden />
+                  )}
+                </span>
               </div>
             </div>
           )}
         </div>
-        <div className="flex items-center gap-2 border-t border-slate-100 bg-white px-3 py-2.5">
-          <div className="flex-1 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-400">Schreib eine Nachricht…</div>
-          <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-primary">
-            <Send size={12} className="text-white" />
+        <div className="flex items-center gap-2 border-t border-stone-600/30 bg-[#0f0c0a] px-3 py-2.5">
+          <div className="flex-1 rounded-lg border border-stone-600/35 bg-[#0a0806] px-3 py-2 text-xs text-stone-500">
+            Nachricht schreiben …
+          </div>
+          <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-amber-600 to-amber-800 shadow-sm ring-1 ring-inset ring-white/15">
+            <Send size={12} className="text-amber-50" />
           </div>
         </div>
       </div>
-      {/* Floating score card */}
-      <div className="absolute -bottom-6 right-0 rotate-2 flex items-center gap-2.5 rounded-2xl bg-white px-3 py-2.5 shadow-[0_8px_32px_rgba(0,0,0,0.14)]">
-        <span className="text-2xl">⚡</span>
+      <div className="absolute -bottom-6 right-0 rotate-2 flex items-center gap-2.5 rounded-2xl border border-stone-500/35 bg-[#14110e] px-3 py-2.5 shadow-landing-md ring-1 ring-amber-950/20">
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-950/50 ring-1 ring-amber-500/20">
+          <IconHubIcon name="lightning" tone="onDark" className="h-5 w-5 shrink-0 text-amber-200/90" />
+        </div>
         <div>
-          <p className="text-xs font-semibold text-slate-800">10 Sek. Analyse</p>
-          <p className="text-[10px] text-emerald-600">Keywords & Interview-Hinweise</p>
+          <p className="text-xs font-semibold text-stone-100">10 Sek. Analyse</p>
+          <p className="text-[10px] text-teal-400/90">Keywords & Interview-Hinweise</p>
         </div>
       </div>
     </div>
@@ -555,89 +559,126 @@ function HeroSection() {
     <section
       id="hero"
       className="relative flex flex-col justify-center overflow-hidden scroll-mt-24 pt-[5.25rem] sm:scroll-mt-28 sm:pt-28"
-      style={{ background: 'linear-gradient(160deg, #FFFDF5 0%, #FFF8E5 55%, #FEF3C7 100%)', minHeight: '100svh' }}
+      style={{ background: 'linear-gradient(165deg, #120c08 0%, #1a100a 42%, #16110d 100%)', minHeight: '100svh' }}
     >
-      {/* Tile dot pattern */}
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{ backgroundImage: 'radial-gradient(circle, rgba(180,100,0,0.1) 1.5px, transparent 1.5px)', backgroundSize: '36px 36px' }}
-      />
+      <div className="landing-dot-grid pointer-events-none absolute inset-0 opacity-[0.52] sm:opacity-75 md:opacity-90" />
 
-      {/* Große Flächen, Wellenbänder, skalierte Formen */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -right-40 -top-28 h-[min(95vw,780px)] w-[min(95vw,780px)] rounded-full bg-amber-300/22 blur-[130px]" />
-        <div className="absolute -bottom-32 -left-32 h-[min(88vw,560px)] w-[min(88vw,560px)] rounded-full bg-amber-200/28 blur-[100px]" />
-        <div className="absolute right-1/3 top-[42%] h-[min(55vw,420px)] w-[min(55vw,420px)] rounded-full bg-cyan-200/18 blur-[95px]" />
-        <div className="absolute -left-[10%] bottom-[-6%] h-[min(70vw,520px)] w-[min(70vw,520px)] rounded-full bg-violet-300/14 blur-[110px]" />
-        <svg className="absolute bottom-0 left-0 right-0 h-[38vh] min-h-[220px] max-h-[380px] w-full text-amber-400/[0.09]" viewBox="0 0 1440 200" preserveAspectRatio="none" aria-hidden="true">
+        <div className="absolute -right-40 -top-28 h-[min(95vw,780px)] w-[min(95vw,780px)] rounded-full bg-amber-600/12 blur-[130px]" />
+        <div className="absolute -bottom-32 -left-32 h-[min(88vw,560px)] w-[min(88vw,560px)] rounded-full bg-amber-500/10 blur-[100px]" />
+        <div className="absolute right-1/3 top-[42%] h-[min(55vw,420px)] w-[min(55vw,420px)] rounded-full bg-amber-400/6 blur-[95px]" />
+        <svg className="absolute bottom-0 left-0 right-0 h-[38vh] min-h-[220px] max-h-[380px] w-full text-white/[0.04]" viewBox="0 0 1440 200" preserveAspectRatio="none" aria-hidden="true">
           <path d="M0,110 Q360,70 720,110 T1440,95 L1440,200 L0,200 Z" fill="currentColor" />
         </svg>
-        <svg className="absolute bottom-0 left-0 right-0 h-[30vh] min-h-[180px] max-h-[300px] w-full text-violet-400/[0.07]" viewBox="0 0 1440 200" preserveAspectRatio="none" aria-hidden="true">
-          <path d="M0,130 Q480,90 960,125 T1440,105 L1440,200 L0,200 Z" fill="currentColor" />
+        <svg
+          className="pointer-events-none absolute left-[5%] top-[24%] h-28 w-28 text-[rgb(255_248_237)] opacity-[0.055]"
+          viewBox="0 0 100 100"
+          fill="none"
+          aria-hidden
+        >
+          <polygon
+            points="50,10 90,88 10,88"
+            stroke="currentColor"
+            strokeWidth={0.55}
+            vectorEffect="nonScalingStroke"
+            strokeLinejoin="round"
+          />
         </svg>
-        <div className="absolute left-[5%] top-[24%] h-28 w-28 bg-amber-400/16" style={{ clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)' }} />
-        <div className="absolute bottom-[24%] right-[7%] h-24 w-24 rotate-45 rounded-xl bg-amber-400/18" />
-        <div className="absolute right-[14%] top-[16%] h-20 w-20 rounded-full border-2 border-amber-400/26" />
-        <div className="absolute left-[8%] bottom-[30%] h-36 w-36 rounded-full border border-amber-400/16" />
-        <div className="absolute left-[14%] bottom-[14%] h-24 w-24 bg-amber-400/14" style={{ clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' }} />
-        <div className="absolute right-[26%] top-[30%] h-16 w-16 rotate-45 border border-amber-300/26" />
+        <div className="landing-geo-hairline-sm absolute bottom-[24%] right-[7%] h-24 w-24 rotate-45 rounded-xl" />
+        <div className="landing-geo-hairline-md absolute right-[14%] top-[16%] h-20 w-20 rounded-full" />
+        <div className="landing-geo-hairline absolute left-[8%] bottom-[30%] h-36 w-36 rounded-full" />
+        <svg
+          className="pointer-events-none absolute left-[14%] bottom-[14%] h-24 w-24 text-[rgb(255_248_237)] opacity-[0.048]"
+          viewBox="0 0 100 100"
+          fill="none"
+          aria-hidden
+        >
+          <polygon
+            points="50,4 88,25 88,75 50,96 12,75 12,25"
+            stroke="currentColor"
+            strokeWidth={0.55}
+            vectorEffect="nonScalingStroke"
+            strokeLinejoin="round"
+          />
+        </svg>
+        <div className="landing-geo-hairline-sm absolute right-[26%] top-[30%] h-16 w-16 rotate-45 rounded-md" />
       </div>
 
-      {/* Gleiche horizontale Achse wie die schwebende Nav: header px + max-w 1120 + nav-internes px */}
       <div className="relative z-10 w-full px-3 sm:px-5">
-        <div className="mx-auto grid max-w-[1120px] grid-cols-1 items-center gap-12 px-3 pb-16 pt-16 sm:px-5 md:grid-cols-2 md:min-h-[calc(100vh-64px)]">
-        {/* Left: copy */}
+        <div className="mx-auto grid max-w-[1120px] grid-cols-1 items-center gap-10 px-3 pb-16 pt-16 sm:grid-cols-2 sm:gap-10 sm:px-5 md:gap-12 md:min-h-[calc(100vh-64px)]">
         <div>
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-4 py-1.5 text-xs font-semibold text-amber-800">
-            Angetrieben von Claude KI
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-amber-500/22 bg-amber-950/30 px-4 py-1.5 text-xs font-semibold text-amber-100/90">
+            KI-gestützt für deine Bewerbung
           </div>
 
-          <h1 className="mb-5 text-[clamp(32px,4.8vw,56px)] font-bold leading-[1.12] text-slate-900">
-            Bewerbung vorbereiten.
-            <br />
-            Stelle analysieren.
-            <br />
-            <span className="bg-gradient-to-r from-amber-600 via-amber-500 to-amber-400 bg-clip-text text-transparent">
-              Interview meistern.
+          <h1 className="mb-6 text-[clamp(32px,4.8vw,56px)] font-bold leading-[1.15]">
+            <span className="mb-4 block text-stone-100 sm:mb-5">Bewerbung vorbereiten</span>
+            <span className="mb-4 block text-stone-100 sm:mb-5">Stelle analysieren</span>
+            <span className="block text-stone-100">
+              Interview{' '}
+              <span className="bg-gradient-to-r from-amber-500/75 via-amber-400/80 to-amber-600/70 bg-clip-text text-transparent">
+                meistern
+              </span>
             </span>
           </h1>
 
-          <p className="mb-8 max-w-[520px] text-lg leading-relaxed text-slate-600">
-            Stellenanzeige reinkopieren — in 10 Sekunden weißt du, welche Keywords fehlen, wo dein Lebenslauf Lücken hat,
-            und welche Interview-Fragen auf dich zukommen.
+          <p className="mb-8 max-w-[520px] text-base font-medium leading-snug text-stone-300 sm:text-lg">
+            Stellenanzeige verstehen, schneller antworten.
           </p>
 
-          <div className="mb-7 flex flex-wrap items-center gap-3">
+          <p className="mb-8 max-w-[520px] text-lg leading-relaxed text-stone-400">
+            Kopier einfach die Stellenanzeige rein. Innerhalb von zehn Sekunden siehst du, welche Keywords wirklich zählen,
+            wo dein Lebenslauf noch Lücken hat und welche Interviewfragen sehr wahrscheinlich auf dich zukommen.
+          </p>
+
+          <div className="mb-8 flex flex-col gap-4 sm:mb-7 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
             <SignUpButton mode="modal" fallbackRedirectUrl="/tools">
-              <button className="flex h-12 items-center gap-2 rounded-2xl bg-gradient-to-r from-[#1C1200] to-[#2D1C08] px-7 text-base font-semibold text-amber-300 shadow-lg shadow-black/25 transition-all hover:scale-[1.02] hover:shadow-xl">
+              <button
+                type="button"
+                className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-amber-400 to-amber-500 px-7 text-base font-bold text-amber-950 shadow-lg shadow-black/35 ring-1 ring-inset ring-white/20 transition-all hover:scale-[1.02] hover:from-amber-300 hover:to-amber-400 hover:shadow-xl sm:w-auto sm:justify-start"
+              >
                 Kostenlos ausprobieren
-                <span className="opacity-70">→</span>
+                <span className="opacity-80">→</span>
               </button>
             </SignUpButton>
             <button
               type="button"
               onClick={() => scrollTo('demo')}
-              className="flex h-12 items-center gap-2 rounded-2xl border-2 border-amber-200 bg-white/80 px-6 text-base font-medium text-amber-800 backdrop-blur-sm transition-all hover:border-amber-400 hover:bg-amber-50"
+              className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-stone-600/45 bg-white/[0.055] px-6 text-base font-medium text-stone-100 shadow-landing backdrop-blur-sm transition-all hover:border-amber-500/40 hover:bg-amber-950/20 sm:w-auto"
             >
-              <Play size={15} className="text-primary" fill="currentColor" />
+              <Play size={15} className="text-amber-400" fill="currentColor" />
               Live Demo ansehen
             </button>
           </div>
 
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-500">
-            <span>✓ Keine Kreditkarte</span>
-            <span className="hidden sm:inline text-slate-300">·</span>
-            <span>✓ In 30 Sekunden startklar</span>
-            <span className="hidden sm:inline text-slate-300">·</span>
-            <span>
-              ✓ Nur noch <span className="font-semibold text-slate-700">{REMAINING_FREE_SLOTS}</span> kostenlose Plätze
+          <div className="flex max-w-[520px] flex-col gap-2 text-sm text-stone-500 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-3 sm:gap-y-1">
+            <span className="inline-flex items-center gap-1.5">
+              <Check size={14} className="shrink-0 text-emerald-500" aria-hidden />
+              Keine Kreditkarte
+            </span>
+            <span className="hidden text-stone-700 sm:inline" aria-hidden>
+              ·
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <Check size={14} className="shrink-0 text-emerald-500" aria-hidden />
+              In 30 Sekunden startklar
+            </span>
+            <span className="hidden text-stone-700 sm:inline" aria-hidden>
+              ·
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <Check size={14} className="shrink-0 text-emerald-500" aria-hidden />
+              Kostenloser Einstieg: aktuell{' '}
+              <span className="font-semibold text-stone-300">{REMAINING_FREE_SLOTS}</span> Plätze frei
             </span>
           </div>
         </div>
 
-        {/* Right: chat mockup */}
-        <div className="hidden items-center justify-center py-16 md:flex">
-          <ChatMockup />
+        {/* Chat mockup: sichtbar ab sm (Tablet), leicht skaliert für schmalere Spalte */}
+        <div className="flex w-full justify-center pb-4 pt-2 sm:justify-end sm:pb-0 sm:pt-0 md:justify-center md:py-12">
+          <div className="origin-top scale-[0.82] sm:scale-90 md:scale-100">
+            <ChatMockup />
+          </div>
         </div>
         </div>
       </div>
@@ -652,49 +693,43 @@ function ProblemSolutionSection() {
     <section
       id="problem"
       className="relative flex flex-col justify-center px-6 py-16 scroll-mt-14 sm:scroll-mt-16"
-      style={{ background: 'linear-gradient(180deg, #FFFBEB 0%, #FEF3C7 45%, #FEF3C7 100%)', minHeight: 'min(100svh, 920px)' }}
+      style={{ background: 'linear-gradient(180deg, #14100c 0%, #1a130e 48%, #17110e 100%)', minHeight: 'min(100svh, 920px)' }}
     >
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{ backgroundImage: 'radial-gradient(circle, rgba(180,100,0,0.07) 1.5px, transparent 1.5px)', backgroundSize: '32px 32px' }}
-      />
+      <div className="landing-dot-grid-fine pointer-events-none absolute inset-0 opacity-80" />
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -left-1/4 top-1/2 h-[min(120vw,640px)] w-[min(120vw,640px)] -translate-y-1/2 rounded-full bg-amber-200/20 blur-[100px]" />
-        <div className="absolute -right-[18%] bottom-0 h-[min(90vw,480px)] w-[min(90vw,480px)] rounded-full bg-orange-200/25 blur-[90px]" />
-        <svg className="absolute bottom-0 left-0 right-0 h-[28vh] min-h-[160px] max-h-[280px] w-full text-amber-300/[0.08]" viewBox="0 0 1440 180" preserveAspectRatio="none" aria-hidden="true">
+        <div className="absolute -left-1/4 top-1/2 h-[min(120vw,640px)] w-[min(120vw,640px)] -translate-y-1/2 rounded-full bg-amber-600/8 blur-[100px]" />
+        <div className="absolute -right-[18%] bottom-0 h-[min(90vw,480px)] w-[min(90vw,480px)] rounded-full bg-amber-500/7 blur-[90px]" />
+        <svg className="absolute bottom-0 left-0 right-0 h-[28vh] min-h-[160px] max-h-[280px] w-full text-white/[0.035]" viewBox="0 0 1440 180" preserveAspectRatio="none" aria-hidden="true">
           <path d="M0,95 Q400,55 800,100 T1440,80 L1440,180 L0,180 Z" fill="currentColor" />
         </svg>
       </div>
       <div className="relative z-10 mx-auto w-full max-w-[960px]">
-        <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-white/80 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.18em] text-amber-800">
+        <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-amber-500/22 bg-amber-950/30 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.18em] text-amber-200/85">
           Das Problem
         </div>
-        <h2 className="mb-5 text-[clamp(26px,3.8vw,40px)] font-bold leading-tight text-slate-900">
+        <h2 className="mb-5 text-[clamp(26px,3.8vw,40px)] font-bold leading-tight text-stone-50">
           Bewerben kostet Zeit. Viel Zeit.
         </h2>
-        <p className="mb-12 max-w-[720px] text-lg leading-relaxed text-slate-600">
-          Durchschnittlich 45 Minuten pro Anschreiben.
-          3 Stunden Vorbereitung pro Interview.
-          Und trotzdem die Frage: Passe ich überhaupt auf diese Stelle?
-          PrivatePrep analysiert die Stellenanzeige in Sekunden —
-          nicht in Stunden. Du weißt sofort, worauf es ankommt,
-          und bereitest dich gezielt vor statt ins Blaue.
+        <p className="mb-12 max-w-[720px] text-lg leading-relaxed text-stone-400">
+          Viele investieren rund 45 Minuten in ein Anschreiben und mehrere Stunden in die Interviewvorbereitung, und fragen sich trotzdem: Passe ich überhaupt zu dieser Stelle?
+          PrivatePrep liest die Anzeige für dich in Sekunden statt in Stunden ein. Du erkennst schnell, worauf es ankommt,
+          und gehst vorbereitet ins Gespräch statt ins Blaue zu raten.
         </p>
 
         <div className="grid gap-6 sm:grid-cols-3">
-          <div className="rounded-2xl border border-amber-100 bg-white/90 p-6 shadow-sm backdrop-blur-sm">
-            <p className="mb-1 text-2xl font-bold tabular-nums text-slate-900 sm:text-3xl">
-              45 Min <span className="text-amber-600">→</span> 10 Sek
+          <div className="rounded-2xl border border-stone-600/45 bg-[#1a1512]/90 p-6 shadow-landing-md backdrop-blur-sm">
+            <p className="mb-1 text-2xl font-bold tabular-nums text-stone-50 sm:text-3xl">
+              45 Min <span className="text-amber-400">→</span> 10 Sek
             </p>
-            <p className="text-sm font-medium text-slate-700">Stellenanalyse statt manuelles Lesen</p>
+            <p className="text-sm font-medium text-stone-400">Stellenanalyse statt manuelles Lesen</p>
           </div>
-          <div className="rounded-2xl border border-amber-100 bg-white/90 p-6 shadow-sm backdrop-blur-sm">
-            <p className="mb-1 text-2xl font-bold tabular-nums text-slate-900 sm:text-3xl">12 Keywords</p>
-            <p className="text-sm font-medium text-slate-700">Durchschnittlich erkannte Schlüsselbegriffe pro Stelle</p>
+          <div className="rounded-2xl border border-stone-600/45 bg-[#1a1512]/90 p-6 shadow-landing-md backdrop-blur-sm">
+            <p className="mb-1 text-2xl font-bold tabular-nums text-stone-50 sm:text-3xl">12 Keywords</p>
+            <p className="text-sm font-medium text-stone-400">Durchschnittlich erkannte Schlüsselbegriffe pro Stelle</p>
           </div>
-          <div className="rounded-2xl border border-amber-100 bg-white/90 p-6 shadow-sm backdrop-blur-sm">
-            <p className="mb-1 text-2xl font-bold tabular-nums text-slate-900 sm:text-3xl">5 Werkzeuge</p>
-            <p className="text-sm font-medium text-slate-700">Alles in einer Oberfläche</p>
+          <div className="rounded-2xl border border-stone-600/45 bg-[#1a1512]/90 p-6 shadow-landing-md backdrop-blur-sm">
+            <p className="mb-1 text-2xl font-bold tabular-nums text-stone-50 sm:text-3xl">5 Werkzeuge</p>
+            <p className="text-sm font-medium text-stone-400">Alles in einer Oberfläche</p>
           </div>
         </div>
       </div>
@@ -704,128 +739,124 @@ function ProblemSolutionSection() {
 
 // ── Features Section ──────────────────────────────────────────────────────────
 
-const FEATURES = [
+const FEATURES: Array<{
+  icon: IconHubName
+  color: string
+  iconBg: string
+  title: string
+  desc: string
+  chip: string
+  highlight: boolean
+  badge: string
+  cardClass: string
+  chipClass: string
+}> = [
   {
-    icon: '💼',
+    icon: 'work',
     color: '#10B981',
-    iconBg: 'bg-emerald-100/90 ring-1 ring-emerald-200/60',
+    iconBg: 'bg-emerald-500/12 ring-1 ring-emerald-500/20',
     title: 'Stellenanalyse',
-    desc: 'Stellenanzeige einfügen — sofort sehen, welche Keywords zählen, wo dein Profil matcht und welche Lücken du im Anschreiben adressieren solltest.',
+    desc: 'Füg die Stellenanzeige ein und sieh direkt, welche Keywords zählen, wo dein Profil passt und welche Lücken du im Anschreiben sinnvoll erwähnen kannst.',
     chip: '„Analysiere diese Stelle: [Text einfügen]"',
     highlight: true,
     badge: 'Karriere',
-    cardClass:
-      'border-emerald-400/35 bg-gradient-to-br from-emerald-50/95 via-white/75 to-teal-100/45 shadow-[0_12px_40px_-12px_rgba(5,150,105,0.22)] ring-1 ring-emerald-300/25',
-    chipClass: 'border border-emerald-300/50 bg-emerald-100/70 text-emerald-950/80',
+    cardClass: 'bg-gradient-to-br from-[#14201c]/95 via-[#121816]/98 to-[#0f1412]/95',
+    chipClass: 'border border-stone-600/45 bg-emerald-950/35 text-emerald-100/90',
   },
   {
-    icon: '🎯',
+    icon: 'target',
     color: '#06B6D4',
-    iconBg: 'bg-cyan-100/90 ring-1 ring-cyan-200/60',
+    iconBg: 'bg-cyan-500/12 ring-1 ring-cyan-500/20',
     title: 'Interview Coach',
     desc: 'Realistische Fragen basierend auf der Stelle und deinem Profil. Mit Antwortstruktur nach der STAR-Methode und konkretem Feedback.',
     chip: '„Gib mir 5 Fragen für diese Stelle"',
     highlight: true,
     badge: 'Karriere',
-    cardClass:
-      'border-cyan-400/35 bg-gradient-to-br from-cyan-50/95 via-white/75 to-sky-100/50 shadow-[0_12px_40px_-12px_rgba(8,145,178,0.18)] ring-1 ring-cyan-300/25',
-    chipClass: 'border border-cyan-300/50 bg-cyan-100/65 text-cyan-950/85',
+    cardClass: 'bg-gradient-to-br from-[#121c22]/95 via-[#101820]/98 to-[#0e1618]/95',
+    chipClass: 'border border-stone-600/45 bg-cyan-950/32 text-cyan-100/90',
   },
   {
-    icon: '💬',
+    icon: 'chat',
     color: '#64748B',
-    iconBg: 'bg-violet-100/80 ring-1 ring-violet-200/50',
+    iconBg: 'bg-violet-500/12 ring-1 ring-violet-500/20',
     title: 'KI-Chat',
     desc: 'Texte schärfen, Fragen klären, Ideen entwickeln. Dein offener Arbeitsbereich für alles, was keine feste Kategorie braucht.',
     chip: '„Wie formuliere ich das professioneller?"',
     highlight: false,
     badge: 'Flex',
-    cardClass:
-      'border-violet-300/40 bg-gradient-to-br from-slate-100/90 via-violet-50/55 to-indigo-50/40 shadow-[0_10px_36px_-12px_rgba(99,102,241,0.14)] ring-1 ring-violet-200/30',
-    chipClass: 'border border-violet-200/60 bg-violet-100/55 text-violet-950/80',
+    cardClass: 'bg-gradient-to-br from-[#18141f]/95 via-[#14121a]/98 to-[#100e16]/95',
+    chipClass: 'border border-stone-600/45 bg-violet-950/30 text-violet-100/88',
   },
   {
-    icon: '💻',
+    icon: 'laptop',
     color: '#3B82F6',
-    iconBg: 'bg-sky-100/90 ring-1 ring-sky-200/60',
+    iconBg: 'bg-sky-500/12 ring-1 ring-sky-500/20',
     title: 'Code-Assistent',
     desc: 'Code reviewen, Bugs finden, Algorithmen verstehen. Für alle Sprachen, von JavaScript bis Python, von Anfänger bis Senior.',
     chip: '„Was ist falsch in meinem Code?"',
     highlight: false,
     badge: 'Tech',
-    cardClass:
-      'border-sky-400/35 bg-gradient-to-br from-sky-50/95 via-white/70 to-indigo-100/40 shadow-[0_12px_40px_-12px_rgba(37,99,235,0.16)] ring-1 ring-sky-300/25',
-    chipClass: 'border border-sky-300/55 bg-sky-100/70 text-sky-950/85',
+    cardClass: 'bg-gradient-to-br from-[#121a24]/95 via-[#101820]/98 to-[#0e141c]/95',
+    chipClass: 'border border-stone-600/45 bg-sky-950/32 text-sky-100/90',
   },
   {
-    icon: '🌍',
+    icon: 'world',
     color: '#F59E0B',
-    iconBg: 'bg-amber-100/90 ring-1 ring-amber-200/60',
+    iconBg: 'bg-amber-500/14 ring-1 ring-amber-500/22',
     title: 'Sprachtraining',
-    desc: 'Lerne mit echten Gesprächen. Übersetzung, Grammatik und Aussprache-Feedback — für Bewerbungen im Ausland oder den Arbeitsalltag.',
+    desc: 'Übe mit echten Gesprächen inklusive Übersetzung, Grammatik und Aussprache. Ideal für internationale Bewerbungen und für den normalen Arbeitsalltag.',
     chip: '„Wie sage ich ‚Ich suche einen neuen Job‘ auf Spanisch?"',
     highlight: false,
     badge: 'Sprache',
-    cardClass:
-      'border-amber-400/40 bg-gradient-to-br from-amber-50/95 via-orange-50/50 to-amber-100/45 shadow-[0_12px_40px_-12px_rgba(217,119,6,0.18)] ring-1 ring-amber-300/30',
-    chipClass: 'border border-amber-300/55 bg-amber-100/75 text-amber-950/85',
+    cardClass: 'bg-gradient-to-br from-[#221a12]/95 via-[#1a140e]/98 to-[#161008]/95',
+    chipClass: 'border border-stone-600/45 bg-amber-950/35 text-amber-100/90',
   },
-] as const
+]
 
 function FeaturesSection() {
   return (
     <section
       id="features"
       className="relative flex flex-col justify-center overflow-hidden px-6 py-16 scroll-mt-14 sm:scroll-mt-16"
-      style={{ minHeight: '100svh' }}
+      style={{
+        minHeight: '100svh',
+        background: 'linear-gradient(178deg, #16110d 0%, #1e140f 35%, #18100c 100%)',
+      }}
     >
-      {/* Lebendiger Basis-Gradient */}
       <div
         className="pointer-events-none absolute inset-0"
         style={{
           background: `
-            radial-gradient(ellipse 90% 55% at 50% -15%, rgba(251,191,36,0.42), transparent 52%),
-            radial-gradient(ellipse 70% 50% at 100% 40%, rgba(167,139,250,0.14), transparent 50%),
-            radial-gradient(ellipse 65% 45% at 0% 65%, rgba(52,211,153,0.13), transparent 48%),
-            linear-gradient(175deg, #fde68a 0%, #fef08a 12%, #fef3c7 38%, #fff7ed 72%, #fffdfb 100%)
+            radial-gradient(ellipse 80% 50% at 80% 20%, rgba(245,158,11,0.07), transparent 50%),
+            radial-gradient(ellipse 60% 45% at 10% 70%, rgba(52,211,153,0.05), transparent 48%)
           `,
         }}
       />
-      {/* Feines Raster */}
-      <div
-        className="pointer-events-none absolute inset-0 opacity-[0.55]"
-        style={{ backgroundImage: 'radial-gradient(circle, rgba(146,64,14,0.11) 1.5px, transparent 1.5px)', backgroundSize: '26px 26px' }}
-      />
+      <div className="landing-dot-grid pointer-events-none absolute inset-0 opacity-70" />
 
-      {/* Farbakzente: große Blobs + Wellen + größere Formen */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -right-32 top-[18%] h-[min(85vw,520px)] w-[min(85vw,520px)] rounded-full bg-amber-400/25 blur-[100px]" />
-        <div className="absolute -left-24 bottom-[8%] h-[min(78vw,460px)] w-[min(78vw,460px)] rounded-full bg-orange-300/22 blur-[95px]" />
-        <div className="absolute left-1/2 top-[45%] h-[min(55vw,420px)] w-[min(55vw,420px)] -translate-x-1/2 rounded-full bg-emerald-400/14 blur-[85px]" />
-        <div className="absolute right-[5%] top-[12%] h-[min(40vw,320px)] w-[min(40vw,320px)] rounded-full bg-violet-300/12 blur-[80px]" />
-        <svg className="absolute bottom-0 left-0 right-0 h-[36vh] min-h-[200px] max-h-[380px] w-full text-amber-400/[0.09]" viewBox="0 0 1440 220" preserveAspectRatio="none" aria-hidden="true">
+        <div className="absolute -right-32 top-[18%] h-[min(85vw,520px)] w-[min(85vw,520px)] rounded-full bg-amber-600/8 blur-[100px]" />
+        <div className="absolute -left-24 bottom-[8%] h-[min(78vw,460px)] w-[min(78vw,460px)] rounded-full bg-amber-500/6 blur-[95px]" />
+        <div className="absolute left-1/2 top-[45%] h-[min(55vw,420px)] w-[min(55vw,420px)] -translate-x-1/2 rounded-full bg-emerald-600/5 blur-[85px]" />
+        <svg className="absolute bottom-0 left-0 right-0 h-[36vh] min-h-[200px] max-h-[380px] w-full text-white/[0.04]" viewBox="0 0 1440 220" preserveAspectRatio="none" aria-hidden="true">
           <path d="M0,120 Q420,75 840,125 T1440,100 L1440,220 L0,220 Z" fill="currentColor" />
         </svg>
-        <svg className="absolute top-0 left-0 right-0 h-[22vh] min-h-[120px] max-h-[200px] w-full text-emerald-400/[0.06]" viewBox="0 0 1440 160" preserveAspectRatio="none" aria-hidden="true">
-          <path d="M0,0 L1440,0 L1440,45 Q1080,85 720,55 T0,70 L0,0 Z" fill="currentColor" />
-        </svg>
-        <div className="absolute right-[5%] top-[20%] h-28 w-28 bg-amber-500/18" style={{ clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' }} />
-        <div className="absolute left-[5%] top-[52%] h-20 w-20 bg-amber-500/16" style={{ clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' }} />
-        <div className="absolute right-[12%] bottom-[14%] h-28 w-28 rounded-full border-2 border-amber-400/22" />
-        <div className="absolute left-[8%] top-[26%] h-16 w-16 rounded-full border-2 border-amber-500/20" />
-        <div className="absolute left-[18%] bottom-[8%] h-20 w-20 rotate-45 rounded-lg border border-amber-500/22" />
+        <div className="absolute right-[5%] top-[20%] h-28 w-28 border border-white/8" style={{ clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' }} />
+        <div className="absolute right-[12%] bottom-[14%] h-28 w-28 rounded-full border border-white/10" />
+        <div className="absolute left-[8%] top-[26%] h-16 w-16 rounded-full border border-white/10" />
+        <div className="absolute left-[18%] bottom-[8%] h-20 w-20 rotate-45 rounded-lg border border-white/8" />
       </div>
 
       <div className="relative z-10 mx-auto w-full max-w-[1100px]">
         <div className="mb-14 text-center">
           <FeaturesHeadingOrnament />
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.15em] text-amber-800">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-amber-500/25 bg-amber-950/35 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.15em] text-amber-200/85">
             Werkzeuge
           </div>
-          <h2 className="mb-3 text-[clamp(28px,4vw,44px)] font-bold text-slate-900">
+          <h2 className="mb-3 text-[clamp(28px,4vw,44px)] font-bold text-stone-50">
             Alles, was du für die Bewerbung brauchst
           </h2>
-          <p className="text-lg text-slate-600">
+          <p className="text-lg text-stone-400">
             Fünf spezialisierte KI-Werkzeuge. Eine Oberfläche. Kein Tool-Hopping.
           </p>
         </div>
@@ -843,9 +874,9 @@ function FeaturesSection() {
               className={[
                 'w-[78vw] max-w-[300px] flex-shrink-0 snap-center',
                 'sm:w-auto sm:max-w-none',
-                'group relative cursor-default overflow-hidden rounded-2xl border p-6 backdrop-blur-[2px] transition-all duration-200 hover:-translate-y-1.5',
+                'group relative cursor-default overflow-hidden rounded-2xl border border-stone-600/45 p-6 shadow-landing-md backdrop-blur-[2px] transition-all duration-200 hover:-translate-y-1.5 hover:border-stone-500/50',
                 f.cardClass,
-                f.highlight ? 'sm:ring-2 sm:ring-amber-400/35' : '',
+                f.highlight ? 'sm:shadow-landing-promo sm:border-amber-500/35' : '',
               ].join(' ')}
             >
               {/* Warm glow on hover */}
@@ -858,11 +889,11 @@ function FeaturesSection() {
                   {f.badge}
                 </span>
               )}
-              <div className={`relative z-10 mb-4 flex h-11 w-11 items-center justify-center rounded-xl text-xl shadow-sm ${f.iconBg}`}>
-                {f.icon}
+              <div className={`relative z-10 mb-4 flex h-11 w-11 items-center justify-center rounded-xl shadow-sm ${f.iconBg}`}>
+                <IconHubIcon name={f.icon} className="h-6 w-6" tone="onDark" />
               </div>
-              <h3 className="relative z-10 mb-2 text-base font-bold text-slate-900">{f.title}</h3>
-              <p className="relative z-10 mb-4 text-sm leading-relaxed text-slate-600">{f.desc}</p>
+              <h3 className="relative z-10 mb-2 text-base font-bold text-stone-100">{f.title}</h3>
+              <p className="relative z-10 mb-4 text-sm leading-relaxed text-stone-400">{f.desc}</p>
               <span
                 className={[
                   'relative z-10 inline-flex w-full items-center rounded-xl px-3 py-2 font-mono text-[11px] leading-snug sm:text-xs',
@@ -890,7 +921,7 @@ interface DemoMessage {
 type DemoTool = 'language' | 'job' | 'interview' | 'programming' | 'general'
 
 interface DemoToolConfig {
-  emoji: string
+  icon: IconHubName
   label: string
   placeholder: string
   chip: string
@@ -898,31 +929,31 @@ interface DemoToolConfig {
 
 const DEMO_TOOL_CONFIG: Record<DemoTool, DemoToolConfig> = {
   job: {
-    emoji: '💼',
+    icon: 'work',
     label: 'Stellenanalyse',
     placeholder: 'Stellenanzeige oder Anforderungen einfügen…',
     chip: 'Analysiere diese Stelle: Junior Softwareentwickler (m/w/d), React, TypeScript, agile Methoden',
   },
   interview: {
-    emoji: '🎯',
+    icon: 'target',
     label: 'Interview',
     placeholder: 'Zielposition eingeben…',
     chip: 'Gib mir 5 Fragen für diese Stelle',
   },
   programming: {
-    emoji: '💻',
+    icon: 'laptop',
     label: 'Code',
     placeholder: 'Code oder Frage eingeben…',
     chip: 'Was ist der Unterschied zwischen async/await und Promises?',
   },
   language: {
-    emoji: '🌍',
+    icon: 'world',
     label: 'Sprachen',
     placeholder: 'Schreib auf Deutsch…',
     chip: 'Wie sage ich „Ich suche einen neuen Job“ auf Spanisch?',
   },
   general: {
-    emoji: '💬',
+    icon: 'chat',
     label: 'Chat',
     placeholder: 'Stell eine Frage…',
     chip: 'Wie formuliere ich das professioneller?',
@@ -973,7 +1004,7 @@ interface RichLineProps { line: string; dotColor: string; numColor: string }
 function RichLine({ line, dotColor, numColor }: RichLineProps) {
   if (!line.trim()) return <div className="h-1" />
   if (/^#{1,3}\s/.test(line)) {
-    return <p className="mt-1.5 font-semibold text-slate-800">{renderInline(line.replace(/^#{1,3}\s/, ''))}</p>
+    return <p className="mt-1.5 font-semibold text-stone-100">{renderInline(line.replace(/^#{1,3}\s/, ''))}</p>
   }
   if (/^[-•*]\s/.test(line)) {
     return (
@@ -998,7 +1029,7 @@ function RichLine({ line, dotColor, numColor }: RichLineProps) {
 interface RichTextProps { text: string; dotColor: string; numColor: string }
 function RichText({ text, dotColor, numColor }: RichTextProps) {
   return (
-    <div className="space-y-0.5 text-sm text-slate-700">
+    <div className="space-y-0.5 text-sm text-stone-300">
       {text.split('\n').map((line, i) => (
         <RichLine key={i} line={line} dotColor={dotColor} numColor={numColor} />
       ))}
@@ -1025,13 +1056,13 @@ function parseCodeBlocks(text: string): Array<{ type: 'text' | 'code'; content: 
 
 function JobResponseBubble({ text }: { text: string }) {
   return (
-    <div className="w-full overflow-hidden rounded-xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white">
-      <div className="flex items-center gap-1.5 border-b border-emerald-100 px-4 py-2">
-        <span className="text-sm">💼</span>
-        <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-emerald-700">Job-Analyse</span>
+    <div className="w-full overflow-hidden rounded-xl border border-stone-600/45 bg-gradient-to-br from-emerald-950/32 to-[#120c08] shadow-landing">
+      <div className="flex items-center gap-1.5 border-b border-stone-600/35 px-4 py-2">
+        <IconHubIcon name="work" className="h-4 w-4 shrink-0" tone="onDark" />
+        <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-emerald-300">Job-Analyse</span>
       </div>
       <div className="px-4 py-3">
-        <RichText text={text} dotColor="bg-emerald-400" numColor="text-emerald-600" />
+        <RichText text={text} dotColor="bg-emerald-400" numColor="text-emerald-400" />
       </div>
     </div>
   )
@@ -1039,13 +1070,13 @@ function JobResponseBubble({ text }: { text: string }) {
 
 function InterviewResponseBubble({ text }: { text: string }) {
   return (
-    <div className="w-full overflow-hidden rounded-xl border border-cyan-100 bg-gradient-to-br from-cyan-50 to-white">
-      <div className="flex items-center gap-1.5 border-b border-cyan-100 px-4 py-2">
-        <span className="text-sm">🎯</span>
-        <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-cyan-700">Interview-Vorbereitung</span>
+    <div className="w-full overflow-hidden rounded-xl border border-stone-600/45 bg-gradient-to-br from-cyan-950/28 to-[#120c08] shadow-landing">
+      <div className="flex items-center gap-1.5 border-b border-stone-600/35 px-4 py-2">
+        <IconHubIcon name="target" className="h-4 w-4 shrink-0" tone="onDark" />
+        <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-cyan-300">Interview-Vorbereitung</span>
       </div>
       <div className="px-4 py-3">
-        <RichText text={text} dotColor="bg-cyan-400" numColor="text-cyan-600" />
+        <RichText text={text} dotColor="bg-cyan-400" numColor="text-cyan-400" />
       </div>
     </div>
   )
@@ -1054,21 +1085,21 @@ function InterviewResponseBubble({ text }: { text: string }) {
 function CodeResponseBubble({ text }: { text: string }) {
   const parts = parseCodeBlocks(text)
   return (
-    <div className="w-full overflow-hidden rounded-xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white">
-      <div className="flex items-center gap-1.5 border-b border-slate-200 px-4 py-2">
-        <span className="text-sm">💻</span>
-        <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-600">Code-Assistent</span>
+    <div className="w-full overflow-hidden rounded-xl border border-stone-600/45 bg-gradient-to-br from-slate-900/45 to-[#120c08] shadow-landing">
+      <div className="flex items-center gap-1.5 border-b border-stone-600/35 px-4 py-2">
+        <IconHubIcon name="laptop" className="h-4 w-4 shrink-0" tone="onDark" />
+        <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-stone-400">Code-Assistent</span>
       </div>
       <div className="space-y-2 px-4 py-3">
         {parts.map((p, i) =>
           p.type === 'code'
             ? (
-              <pre key={i} className="overflow-x-auto rounded-lg bg-slate-900 px-3 py-2.5 text-xs leading-relaxed text-emerald-400">
+              <pre key={i} className="overflow-x-auto rounded-lg border border-stone-600/40 bg-slate-950/90 px-3 py-2.5 text-xs leading-relaxed text-emerald-400">
                 <code>{p.content}</code>
               </pre>
             )
             : p.content.trim()
-              ? <RichText key={i} text={p.content.trim()} dotColor="bg-slate-400" numColor="text-slate-600" />
+              ? <RichText key={i} text={p.content.trim()} dotColor="bg-slate-500" numColor="text-slate-400" />
               : null
         )}
       </div>
@@ -1078,13 +1109,13 @@ function CodeResponseBubble({ text }: { text: string }) {
 
 function GeneralResponseBubble({ text }: { text: string }) {
   return (
-    <div className="w-full overflow-hidden rounded-xl border border-amber-100 bg-gradient-to-br from-amber-50 to-white">
-      <div className="flex items-center gap-1.5 border-b border-amber-100 px-4 py-2">
-        <span className="text-sm">💬</span>
-        <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-amber-600">PrivatePrep</span>
+    <div className="w-full overflow-hidden rounded-xl border border-stone-600/45 bg-gradient-to-br from-amber-950/28 to-[#120c08] shadow-landing">
+      <div className="flex items-center gap-1.5 border-b border-stone-600/35 px-4 py-2">
+        <IconHubIcon name="chat" className="h-4 w-4 shrink-0" tone="onDark" />
+        <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-amber-300">PrivatePrep</span>
       </div>
       <div className="px-4 py-3">
-        <RichText text={text} dotColor="bg-amber-400" numColor="text-amber-600" />
+        <RichText text={text} dotColor="bg-amber-400" numColor="text-amber-400" />
       </div>
     </div>
   )
@@ -1135,11 +1166,14 @@ function LiveDemoSection() {
     programming: `demo_${Math.random().toString(36).slice(2, 9)}`,
     general:     `demo_${Math.random().toString(36).slice(2, 9)}`,
   })
-  const bottomRef = useRef<HTMLDivElement>(null)
+  const messagesScrollRef = useRef<HTMLDivElement>(null)
 
+  /** Scroll only the demo transcript pane. scrollIntoView would pull the whole window down to #demo on every load. */
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [msgByTool, loading])
+    const el = messagesScrollRef.current
+    if (!el) return
+    el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
+  }, [msgByTool, loading, activeTool])
 
   const currentMsgs  = msgByTool[activeTool]
   const cfg          = DEMO_TOOL_CONFIG[activeTool]
@@ -1187,43 +1221,35 @@ function LiveDemoSection() {
     <section
       id="demo"
       className="relative flex flex-col justify-center overflow-hidden px-4 py-16 scroll-mt-14 sm:px-6 sm:scroll-mt-16"
-      style={{ background: 'linear-gradient(180deg, #fffef4 0%, #FFFBEB 30%, #FEF9C3 100%)', minHeight: '100svh' }}
+      style={{ background: 'linear-gradient(180deg, #120c08 0%, #18100c 40%, #14100d 100%)', minHeight: '100svh' }}
     >
-      {/* Tile pattern */}
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{ backgroundImage: 'radial-gradient(circle, rgba(180,100,0,0.06) 1.5px, transparent 1.5px)', backgroundSize: '30px 30px' }}
-      />
-      {/* Große Blobs, Wellen, zweite Akzentfarbe */}
+      <div className="landing-dot-grid pointer-events-none absolute inset-0 opacity-75" />
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -left-20 top-[18%] h-[min(75vw,440px)] w-[min(75vw,440px)] rounded-full bg-amber-200/18 blur-[85px]" />
-        <div className="absolute -right-24 bottom-[20%] h-[min(82vw,480px)] w-[min(82vw,480px)] rounded-full bg-amber-200/16 blur-[80px]" />
-        <div className="absolute -right-[8%] top-[38%] h-[min(50vw,420px)] w-[min(50vw,420px)] rounded-full bg-violet-200/14 blur-[75px]" />
-        <svg className="absolute bottom-0 left-0 right-0 h-[34vh] min-h-[200px] max-h-[360px] w-full text-amber-300/[0.1]" viewBox="0 0 1440 200" preserveAspectRatio="none" aria-hidden="true">
+        <div className="absolute -left-20 top-[18%] h-[min(75vw,440px)] w-[min(75vw,440px)] rounded-full bg-amber-600/8 blur-[85px]" />
+        <div className="absolute -right-24 bottom-[20%] h-[min(82vw,480px)] w-[min(82vw,480px)] rounded-full bg-violet-600/6 blur-[80px]" />
+        <svg className="absolute bottom-0 left-0 right-0 h-[34vh] min-h-[200px] max-h-[360px] w-full text-white/[0.04]" viewBox="0 0 1440 200" preserveAspectRatio="none" aria-hidden="true">
           <path d="M0,105 Q380,65 760,110 T1440,95 L1440,200 L0,200 Z" fill="currentColor" />
         </svg>
-        <svg className="absolute top-0 left-0 right-0 h-[22vh] min-h-[120px] max-h-[200px] w-full text-violet-300/[0.06]" viewBox="0 0 1440 140" preserveAspectRatio="none" aria-hidden="true">
-          <path d="M0,0 L1440,0 L1440,38 Q960,78 480,48 T0,62 L0,0 Z" fill="currentColor" />
-        </svg>
-        <div className="absolute right-[4%] top-[12%] h-24 w-24 rotate-45 rounded-xl border border-amber-300/22" />
-        <div className="absolute left-[3%] bottom-[18%] h-28 w-28 bg-amber-300/14" style={{ clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' }} />
+        <div className="absolute right-[4%] top-[12%] h-24 w-24 rotate-45 rounded-xl border border-white/10" />
+        <div className="absolute left-[3%] bottom-[18%] h-28 w-28 border border-white/8" style={{ clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' }} />
       </div>
       <div className="relative z-10 mx-auto w-full max-w-[640px]">
         <div className="mb-8 text-center">
-          <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-primary">Probier es aus</p>
-          <h2 className="mb-3 text-3xl font-bold text-slate-800">In 10 Sekunden verstehen, was PrivatePrep kann</h2>
-          <p className="text-slate-600">
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-amber-400">Probier es aus</p>
+          <h2 className="mb-3 text-3xl font-bold text-stone-50">In 10 Sekunden verstehen, was PrivatePrep kann</h2>
+          <p className="text-stone-400">
             Keine Anmeldung nötig. Wähle ein Werkzeug und stelle eine Frage.
           </p>
-          <p className="mt-2 text-sm text-slate-500">
-            2 kostenlose Nachrichten pro Werkzeug — kein Account nötig.
+          <p className="mt-2 text-sm text-stone-500">
+            Pro Werkzeug zwei kostenlose Nachrichten, ohne Account und ohne Kleingedrucktes.
           </p>
         </div>
 
-        <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl">
+        <div className="overflow-hidden rounded-3xl border border-stone-600/45 bg-[#17120f]/98 shadow-landing-lg backdrop-blur-sm">
 
           {/* ── Tool tabs with progress badges ── */}
-          <div className="flex border-b border-slate-100">
+          <div className="relative border-b border-stone-600/35 bg-[#100d0b]">
+            <div className="flex">
             {TOOL_ORDER.map(tool => {
               const t = DEMO_TOOL_CONFIG[tool]
               const isActive   = activeTool === tool
@@ -1235,20 +1261,23 @@ function LiveDemoSection() {
                   type="button"
                   onClick={() => handleToolSwitch(tool)}
                   className={[
-                    'relative flex flex-1 flex-col items-center gap-0.5 py-3 text-[10px] font-semibold transition-all duration-150',
-                    isActive && !exhausted  ? 'border-b-2 border-primary bg-white text-primary'
-                      : isActive && exhausted ? 'border-b-2 border-emerald-400 bg-white text-emerald-600'
-                        : exhausted           ? 'border-b-2 border-transparent text-slate-300 hover:text-slate-400'
-                          : 'border-b-2 border-transparent text-slate-400 hover:text-slate-600',
+                    'relative flex flex-1 flex-col items-center gap-0.5 py-3 pb-3.5 text-[10px] font-semibold transition-all duration-150',
+                    isActive && !exhausted
+                      ? 'bg-[#0e0b09] text-amber-300 after:absolute after:inset-x-2 after:bottom-0 after:h-[3px] after:rounded-full after:bg-gradient-to-r after:from-amber-500 after:to-amber-400'
+                      : isActive && exhausted
+                        ? 'bg-[#0e0b09] text-emerald-400 after:absolute after:inset-x-2 after:bottom-0 after:h-[3px] after:rounded-full after:bg-gradient-to-r after:from-emerald-500 after:to-emerald-400'
+                        : exhausted
+                          ? 'text-stone-600 hover:bg-white/[0.03] hover:text-stone-500'
+                          : 'text-stone-500 hover:bg-white/[0.03] hover:text-stone-400',
                   ].join(' ')}
                   title={t.label}
                 >
-                  <span className="relative text-[17px]">
-                    {t.emoji}
-                    {/* ✓ badge when exhausted */}
+                  <span className="relative flex h-[17px] w-[17px] items-center justify-center">
+                    <IconHubIcon name={t.icon} className="h-[17px] w-[17px]" tone="onDark" />
+                    {/* done badge when exhausted */}
                     {exhausted && (
-                      <span className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-emerald-400 text-[7px] font-bold leading-none text-white">
-                        ✓
+                      <span className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-emerald-400 text-white">
+                        <Check size={9} strokeWidth={3} className="shrink-0" aria-hidden />
                       </span>
                     )}
                     {/* count badge when partially used */}
@@ -1262,14 +1291,18 @@ function LiveDemoSection() {
                 </button>
               )
             })}
+            </div>
           </div>
 
           {/* ── Messages ── */}
-          <div className="max-h-[360px] min-h-[180px] space-y-4 overflow-y-auto p-3 sm:p-5">
+          <div
+            ref={messagesScrollRef}
+            className="max-h-[360px] min-h-[180px] space-y-4 overflow-y-auto bg-[#0c0907] p-3 sm:p-5"
+          >
             {currentMsgs.length === 0 && !loading && (
               <div className="flex flex-col items-center gap-2 py-8 text-center">
-                <span className="text-4xl">{cfg.emoji}</span>
-                <p className="text-sm text-slate-400">
+                <IconHubIcon name={cfg.icon} className="h-14 w-14" tone="onDark" />
+                <p className="text-sm text-stone-500">
                   {atToolLimit && !allExhausted
                     ? `${cfg.label} ausprobiert! Wähle ein anderes Werkzeug.`
                     : allExhausted
@@ -1285,7 +1318,7 @@ function LiveDemoSection() {
                 className={m.role === 'user' ? 'flex justify-end' : 'flex'}
               >
                 {m.role === 'user' ? (
-                  <div className="max-w-[85%] break-words rounded-2xl rounded-br-sm bg-primary px-4 py-2.5 text-sm text-white">
+                  <div className="max-w-[85%] break-words rounded-2xl rounded-br-sm border border-primary-hover/50 bg-primary px-4 py-2.5 text-sm text-white">
                     <span className="whitespace-pre-wrap">{m.text}</span>
                   </div>
                 ) : (
@@ -1296,12 +1329,11 @@ function LiveDemoSection() {
 
             {loading && (
               <div className="flex">
-                <div className="rounded-2xl rounded-bl-sm bg-slate-100 px-4 py-3">
+                <div className="rounded-2xl rounded-bl-sm border border-stone-600/40 bg-[#1a1512] px-4 py-3 shadow-landing">
                   <span className="typing-dot" /><span className="typing-dot" /><span className="typing-dot" />
                 </div>
               </div>
             )}
-            <div ref={bottomRef} />
           </div>
 
           {/* ── Chip (only when no messages yet for this tool) ── */}
@@ -1310,9 +1342,9 @@ function LiveDemoSection() {
               <button
                 type="button"
                 onClick={() => void send(cfg.chip)}
-                className="flex w-full items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-left text-xs text-slate-600 transition-colors hover:border-amber-600/40 hover:bg-primary-light hover:text-primary"
+                className="flex w-full items-center gap-2 rounded-xl border border-stone-600/45 bg-[#1a1512] px-3 py-2.5 text-left text-xs text-stone-300 shadow-landing transition-colors hover:border-amber-500/35 hover:bg-[#1f1814] hover:text-amber-200"
               >
-                <span className="flex-shrink-0">{cfg.emoji}</span>
+                <IconHubIcon name={cfg.icon} className="h-4 w-4 shrink-0" tone="onDark" />
                 <span className="truncate">{cfg.chip}</span>
                 <span className="ml-auto flex-shrink-0 rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-white">
                   Ausprobieren →
@@ -1323,11 +1355,12 @@ function LiveDemoSection() {
 
           {/* ── Bottom area: tool exhausted / all exhausted / input ── */}
           {allExhausted ? (
-            <div className="border-t border-slate-100 px-4 py-6 text-center sm:px-5">
-              <p className="mb-1 text-sm font-semibold text-slate-800">
-                Du hast alle 5 Werkzeuge ausprobiert 🎉
+            <div className="border-t border-stone-600/35 bg-[#0f0c0a] px-4 py-6 text-center sm:px-5">
+              <p className="mb-1 flex items-center justify-center gap-2 text-sm font-semibold text-stone-100">
+                <IconHubIcon name="winner" className="h-5 w-5 shrink-0" tone="onDark" />
+                Du hast alle 5 Werkzeuge ausprobiert
               </p>
-              <p className="mb-5 text-sm leading-relaxed text-slate-500">
+              <p className="mb-5 text-sm leading-relaxed text-stone-500">
                 Kostenlos registrieren: täglich 20 Nachrichten, alle Werkzeuge, Verlauf im Browser.
               </p>
               <SignUpButton mode="modal" fallbackRedirectUrl="/tools">
@@ -1335,20 +1368,23 @@ function LiveDemoSection() {
                   Kostenlos registrieren: 20 Nachrichten pro Tag
                 </button>
               </SignUpButton>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-stone-600">
                 Bereits Konto?{' '}
                 <SignInButton mode="modal" fallbackRedirectUrl="/tools">
-                  <button type="button" className="font-medium text-primary hover:underline">
+                  <button type="button" className="font-medium text-amber-400 hover:underline">
                     Anmelden
                   </button>
                 </SignInButton>
               </p>
             </div>
           ) : atToolLimit ? (
-            /* Current tool exhausted — nudge to other tools */
-            <div className="border-t border-slate-100 px-3 py-4 sm:px-5">
-              <p className="mb-3 text-center text-xs font-medium text-slate-500">
-                ✅ <strong>{cfg.label}</strong> ausprobiert! Noch {unusedTools.length} Werkzeug{unusedTools.length !== 1 ? 'e' : ''} übrig:
+            /* Current tool exhausted: nudge to other tools */
+            <div className="border-t border-stone-600/35 bg-[#0f0c0a] px-3 py-4 sm:px-5">
+              <p className="mb-3 flex items-center justify-center gap-1.5 text-center text-xs font-medium text-stone-500">
+                <Check size={14} className="shrink-0 text-emerald-500" aria-hidden />
+                <span>
+                  <strong>{cfg.label}</strong> ausprobiert! Noch {unusedTools.length} Werkzeug{unusedTools.length !== 1 ? 'e' : ''} übrig:
+                </span>
               </p>
               <div className="flex flex-wrap justify-center gap-2">
                 {unusedTools.map(t => (
@@ -1356,28 +1392,28 @@ function LiveDemoSection() {
                     key={t}
                     type="button"
                     onClick={() => handleToolSwitch(t)}
-                    className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-600 transition-colors hover:border-amber-600/40 hover:bg-primary-light hover:text-primary"
+                    className="flex items-center gap-1.5 rounded-full border border-stone-600/45 bg-[#1a1512] px-3 py-1.5 text-xs text-stone-300 transition-colors hover:border-amber-500/35 hover:bg-[#1f1814] hover:text-amber-200"
                   >
-                    <span>{DEMO_TOOL_CONFIG[t].emoji}</span>
+                    <IconHubIcon name={DEMO_TOOL_CONFIG[t].icon} className="h-3.5 w-3.5 shrink-0" tone="onDark" />
                     {DEMO_TOOL_CONFIG[t].label}
                   </button>
                 ))}
               </div>
               <div className="mt-3 text-center">
                 <SignUpButton mode="modal" fallbackRedirectUrl="/tools">
-                  <button className="text-xs font-medium text-primary hover:underline">
+                  <button className="text-xs font-medium text-amber-400 hover:underline">
                     Oder direkt registrieren →
                   </button>
                 </SignUpButton>
               </div>
             </div>
           ) : (
-            <div className="flex items-center gap-1.5 border-t border-slate-100 px-3 py-2.5 sm:gap-2 sm:px-4">
+            <div className="flex items-center gap-1.5 border-t border-stone-600/35 bg-[#0f0c0a] px-3 py-2.5 sm:gap-2 sm:px-4">
               {currentMsgs.length > 0 && (
                 <button
                   type="button"
                   onClick={handleReset}
-                  className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-400 transition-colors hover:border-slate-300 hover:text-slate-600"
+                  className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl border border-stone-600/45 text-stone-500 transition-colors hover:border-amber-500/35 hover:text-stone-300"
                   title="Gespräch zurücksetzen"
                 >
                   <RotateCcw size={14} />
@@ -1392,7 +1428,7 @@ function LiveDemoSection() {
                 }}
                 placeholder={cfg.placeholder}
                 disabled={loading}
-                className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-amber-600/20 disabled:opacity-50 sm:px-4"
+                className="min-w-0 flex-1 rounded-xl border border-stone-600/45 bg-[#1a1512] px-3 py-2.5 text-sm text-stone-100 outline-none transition-colors placeholder:text-stone-600 focus:border-amber-500/55 focus:ring-2 focus:ring-amber-500/25 disabled:opacity-50 sm:px-4"
                 style={{ fontSize: 'max(16px, 0.875rem)' }}
               />
               <button
@@ -1408,15 +1444,15 @@ function LiveDemoSection() {
 
           {/* ── Per-tool message counter ── */}
           {!atToolLimit && !allExhausted && (
-            <div className="flex items-center justify-between border-t border-slate-50 px-3 py-2 sm:px-5">
-              <span className="text-[10px] text-slate-300">
+            <div className="flex items-center justify-between border-t border-stone-600/30 bg-[#0c0907] px-3 py-2 sm:px-5">
+              <span className="text-[10px] text-stone-600">
                 {PER_TOOL_LIMIT - toolCount} von {PER_TOOL_LIMIT} Nachrichten für {cfg.label}
               </span>
               <div className="flex items-center gap-1">
                 {Array.from({ length: PER_TOOL_LIMIT }).map((_, i) => (
                   <span
                     key={i}
-                    className={`h-1 w-4 rounded-full transition-colors ${i < toolCount ? 'bg-primary' : 'bg-slate-100'}`}
+                    className={`h-1 w-4 rounded-full transition-colors ${i < toolCount ? 'bg-primary' : 'bg-white/10'}`}
                   />
                 ))}
               </div>
@@ -1430,10 +1466,17 @@ function LiveDemoSection() {
 
 // ── How It Works Section ──────────────────────────────────────────────────────
 
-const STEPS = [
+const STEPS: Array<{
+  num: string
+  icon: IconHubName
+  title: string
+  text: string
+  color: string
+  glow: string
+}> = [
   {
     num: '1',
-    icon: '🔑',
+    icon: 'key',
     title: 'Kostenloses Konto erstellen',
     text: 'Melde dich mit einem Klick über Google an. Keine Kreditkarte nötig.',
     color: 'from-amber-400 to-amber-300',
@@ -1441,7 +1484,7 @@ const STEPS = [
   },
   {
     num: '2',
-    icon: '🎯',
+    icon: 'target',
     title: 'Werkzeug wählen',
     text: 'Stellenanalyse, Interview-Vorbereitung, Code-Hilfe, Sprachtraining oder freier Chat.',
     color: 'from-amber-500 to-amber-400',
@@ -1449,49 +1492,45 @@ const STEPS = [
   },
   {
     num: '3',
-    icon: '⚡',
+    icon: 'lightning',
     title: 'Sofort loslegen',
-    text: 'Die KI analysiert dein Anliegen und liefert eine strukturierte, umsetzbare Antwort — in Sekunden, nicht Stunden.',
+    text: 'Du schreibst, was du brauchst, und die KI antwortet mit einer klaren, umsetzbaren Struktur. In der Regel in Sekunden, nicht nach langem Hin und Her.',
     color: 'from-amber-600 to-amber-500',
     glow: 'bg-amber-600/50',
   },
-] as const
+]
 
 function HowItWorksSection() {
   return (
     <section
       id="how-it-works"
       className="relative flex flex-col justify-center overflow-hidden px-6 py-16 scroll-mt-14 sm:scroll-mt-16"
-      style={{ background: 'linear-gradient(160deg, #1C1200 0%, #0D0800 100%)', minHeight: '100svh' }}
+      style={{ background: 'linear-gradient(165deg, #0f0a08 0%, #15100c 38%, #0a0605 100%)', minHeight: '100svh' }}
     >
-      {/* Tile pattern */}
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.05) 1.5px, transparent 1.5px)', backgroundSize: '32px 32px' }}
-      />
+      <div className="landing-dot-grid-fine pointer-events-none absolute inset-0 opacity-70" />
 
       {/* Große Flächen, Wellenbänder, skalierte Akzente */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -left-32 top-[18%] h-[min(95vw,560px)] w-[min(95vw,560px)] rounded-full bg-amber-500/16 blur-[110px]" />
-        <div className="absolute -right-24 bottom-[20%] h-[min(88vw,500px)] w-[min(88vw,500px)] rounded-full bg-amber-300/12 blur-[95px]" />
-        <div className="absolute left-1/2 top-[55%] h-[min(70vw,520px)] w-[min(70vw,520px)] -translate-x-1/2 rounded-full bg-teal-500/10 blur-[100px]" />
-        <svg className="absolute top-0 left-0 right-0 h-[32vh] min-h-[180px] max-h-[320px] w-full text-amber-400/[0.07]" viewBox="0 0 1440 200" preserveAspectRatio="none" aria-hidden="true">
+        <div className="absolute -left-32 top-[18%] h-[min(95vw,560px)] w-[min(95vw,560px)] rounded-full bg-amber-600/8 blur-[110px]" />
+        <div className="absolute -right-24 bottom-[20%] h-[min(88vw,500px)] w-[min(88vw,500px)] rounded-full bg-amber-500/6 blur-[95px]" />
+        <div className="absolute left-1/2 top-[55%] h-[min(70vw,520px)] w-[min(70vw,520px)] -translate-x-1/2 rounded-full bg-teal-600/5 blur-[100px]" />
+        <svg className="absolute top-0 left-0 right-0 h-[32vh] min-h-[180px] max-h-[320px] w-full text-white/[0.04]" viewBox="0 0 1440 200" preserveAspectRatio="none" aria-hidden="true">
           <path d="M0,0 L1440,0 L1440,75 Q720,130 0,95 L0,0 Z" fill="currentColor" />
         </svg>
-        <svg className="absolute bottom-0 left-0 right-0 h-[30vh] min-h-[180px] max-h-[300px] w-full text-white/[0.04]" viewBox="0 0 1440 200" preserveAspectRatio="none" aria-hidden="true">
+        <svg className="absolute bottom-0 left-0 right-0 h-[30vh] min-h-[180px] max-h-[300px] w-full text-white/[0.035]" viewBox="0 0 1440 200" preserveAspectRatio="none" aria-hidden="true">
           <path d="M0,110 Q360,70 720,110 T1440,95 L1440,200 L0,200 Z" fill="currentColor" />
         </svg>
-        <div className="absolute right-[7%] top-[20%] h-28 w-28 bg-amber-400/16" style={{ clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)' }} />
-        <div className="absolute left-[5%] bottom-[18%] h-24 w-24 bg-amber-400/12" style={{ clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)' }} />
-        <div className="absolute left-[14%] top-[26%] h-40 w-40 rounded-full border border-amber-500/14" />
-        <div className="absolute right-[18%] bottom-[14%] h-32 w-32 rounded-full border border-amber-400/10" />
-        <div className="absolute right-[4%] bottom-[36%] h-20 w-20 rotate-45 border-2 border-amber-400/16" />
-        <div className="absolute left-[26%] top-[12%] h-24 w-24 rotate-45 rounded-lg bg-amber-400/10" />
+        <div className="absolute right-[7%] top-[20%] h-28 w-28 border border-white/8" style={{ clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)' }} />
+        <div className="absolute left-[5%] bottom-[18%] h-24 w-24 border border-white/8" style={{ clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)' }} />
+        <div className="absolute left-[14%] top-[26%] h-40 w-40 rounded-full border border-white/10" />
+        <div className="absolute right-[18%] bottom-[14%] h-32 w-32 rounded-full border border-white/8" />
+        <div className="absolute right-[4%] bottom-[36%] h-20 w-20 rotate-45 border border-white/10" />
+        <div className="absolute left-[26%] top-[12%] h-24 w-24 rotate-45 rounded-lg border border-white/8" />
       </div>
 
       <div className="relative z-10 mx-auto w-full max-w-[900px]">
         <div className="mb-14 text-center">
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.15em] text-white/55">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-amber-500/25 bg-amber-950/35 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.15em] text-amber-200/85">
             So funktioniert es
           </div>
           <h2 className="text-[clamp(28px,4vw,44px)] font-bold text-white">
@@ -1500,7 +1539,7 @@ function HowItWorksSection() {
         </div>
 
         <div className="relative grid grid-cols-1 gap-12 md:grid-cols-3">
-          <div className="absolute left-[calc(50%/3+52px)] right-[calc(50%/3+52px)] top-7 hidden h-px border-t border-dashed border-white/10 md:block" />
+          <div className="absolute left-[calc(50%/3+52px)] right-[calc(50%/3+52px)] top-7 hidden h-px border-t border-dashed border-amber-950/35 md:block" />
 
           {STEPS.map((s) => (
             <div key={s.num} className="relative z-10 text-center">
@@ -1510,7 +1549,9 @@ function HowItWorksSection() {
                   {s.num}
                 </div>
               </div>
-              <div className="mb-3 text-4xl">{s.icon}</div>
+              <div className="mb-3 flex justify-center">
+                <IconHubIcon name={s.icon} tone="onDark" className="h-12 w-12" />
+              </div>
               <h3 className="mb-2 text-base font-bold text-white">{s.title}</h3>
               <p className="text-sm leading-relaxed text-white/45">{s.text}</p>
             </div>
@@ -1526,7 +1567,7 @@ function HowItWorksSection() {
 const AUDIENCE = [
   {
     title: 'Jobsuchende',
-    text: 'Du bewirbst dich aktiv? PrivatePrep analysiert jede Stellenanzeige und bereitet dich gezielt auf das Interview vor. Kein Raten mehr — nur Fakten.',
+    text: 'Wenn du dich aktiv bewirbst, hilft dir PrivatePrep bei jeder Stellenanzeige und bringt dich gezielt auf das Interview ein. Weniger Raten, mehr konkrete Fakten.',
   },
   {
     title: 'Karrierewechsler',
@@ -1538,7 +1579,7 @@ const AUDIENCE = [
   },
   {
     title: 'Entwickler',
-    text: 'Code-Reviews, Debugging und Interview-Vorbereitung für technische Vorstellungsgespräche — mit einem Tool, das deine Sprache spricht.',
+    text: 'Von Code-Reviews und Debugging bis zur Vorbereitung auf technische Vorstellungsgespräche: ein Assistent, der sich anfühlt, als würde er deine Sprache sprechen.',
   },
 ] as const
 
@@ -1547,36 +1588,33 @@ function FuerWenSection() {
     <section
       id="audience"
       className="relative flex flex-col justify-center overflow-hidden px-6 py-16 scroll-mt-14 sm:scroll-mt-16"
-      style={{ background: 'linear-gradient(180deg, #FFF8F0 0%, #FFFBEB 50%, #FEF3C7 100%)', minHeight: 'min(100svh, 900px)' }}
+      style={{ background: 'linear-gradient(180deg, #15100c 0%, #1a130e 45%, #16100d 100%)', minHeight: 'min(100svh, 900px)' }}
     >
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{ backgroundImage: 'radial-gradient(circle, rgba(180,100,0,0.06) 1.5px, transparent 1.5px)', backgroundSize: '30px 30px' }}
-      />
+      <div className="landing-dot-grid pointer-events-none absolute inset-0 opacity-60" />
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -right-20 top-[20%] h-[min(85vw,480px)] w-[min(85vw,480px)] rounded-full bg-amber-200/22 blur-[90px]" />
-        <div className="absolute -left-24 bottom-[15%] h-[min(80vw,440px)] w-[min(80vw,440px)] rounded-full bg-orange-200/18 blur-[85px]" />
-        <svg className="absolute bottom-0 left-0 right-0 h-[30vh] min-h-[180px] max-h-[300px] w-full text-amber-300/[0.08]" viewBox="0 0 1440 200" preserveAspectRatio="none" aria-hidden="true">
+        <div className="absolute -right-20 top-[20%] h-[min(85vw,480px)] w-[min(85vw,480px)] rounded-full bg-amber-600/7 blur-[90px]" />
+        <div className="absolute -left-24 bottom-[15%] h-[min(80vw,440px)] w-[min(80vw,440px)] rounded-full bg-amber-500/6 blur-[85px]" />
+        <svg className="absolute bottom-0 left-0 right-0 h-[30vh] min-h-[180px] max-h-[300px] w-full text-white/[0.035]" viewBox="0 0 1440 200" preserveAspectRatio="none" aria-hidden="true">
           <path d="M0,100 Q400,58 800,105 T1440,88 L1440,200 L0,200 Z" fill="currentColor" />
         </svg>
       </div>
       <div className="relative z-10 mx-auto w-full max-w-[1000px]">
         <div className="mb-12 text-center">
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.15em] text-amber-800">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-amber-500/25 bg-amber-950/35 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.15em] text-amber-200/85">
             Für wen
           </div>
-          <h2 className="text-[clamp(26px,3.8vw,40px)] font-bold text-slate-900">
-            Egal wo du stehst — PrivatePrep hilft beim nächsten Schritt
+          <h2 className="text-[clamp(26px,3.8vw,40px)] font-bold text-stone-50">
+            Egal, wo du gerade stehst: PrivatePrep hilft dir beim nächsten Schritt
           </h2>
         </div>
         <div className="grid gap-5 sm:grid-cols-2">
           {AUDIENCE.map(a => (
             <div
               key={a.title}
-              className="rounded-2xl border border-amber-100 bg-white/90 p-6 shadow-sm backdrop-blur-sm"
+              className="rounded-2xl border border-stone-600/45 bg-[#1a1512]/90 p-6 shadow-landing-md backdrop-blur-sm"
             >
-              <h3 className="mb-2 text-base font-bold text-slate-900">{a.title}</h3>
-              <p className="text-sm leading-relaxed text-slate-600">{a.text}</p>
+              <h3 className="mb-2 text-base font-bold text-stone-100">{a.title}</h3>
+              <p className="text-sm leading-relaxed text-stone-400">{a.text}</p>
             </div>
           ))}
         </div>
@@ -1593,8 +1631,12 @@ const FAQ_ITEMS = [
     a: 'Nein. Du schreibst einfach auf Deutsch, was du brauchst. Die KI versteht dein Anliegen und antwortet strukturiert.',
   },
   {
+    q: 'Welche KI steckt dahinter?',
+    a: 'PrivatePrep nutzt aktuelle Sprachmodelle von Anthropic (Claude). So bekommst du verlässliche, kontextsensitive Hilfe bei Texten, Analysen und Interviewvorbereitung, ohne selbst Prompt-Experte zu sein.',
+  },
+  {
     q: 'Was unterscheidet PrivatePrep von ChatGPT?',
-    a: 'PrivatePrep ist auf Karriere-Vorbereitung spezialisiert. Die Stellenanalyse und der Interview Coach sind gezielt dafür gebaut — nicht generisch, sondern auf deinen Lebenslauf und die konkrete Stelle abgestimmt.',
+    a: 'PrivatePrep ist auf Bewerbung und Karriere ausgerichtet. Stellenanalyse und Interview Coach sind dafür gebaut, nicht als generischer Chat, sondern mit Blick auf deinen Lebenslauf und die konkrete Stelle.',
   },
   {
     q: 'Sind meine Daten sicher?',
@@ -1606,7 +1648,7 @@ const FAQ_ITEMS = [
   },
   {
     q: 'In welchen Sprachen funktioniert PrivatePrep?',
-    a: 'Die Oberfläche ist auf Deutsch. Die KI versteht und antwortet in über 50 Sprachen — ideal für Bewerbungen im internationalen Umfeld.',
+    a: 'Die Oberfläche ist auf Deutsch. Die KI versteht und antwortet in über 50 Sprachen, etwa wenn du dich international bewirbst oder fremdsprachige Texte brauchst.',
   },
   {
     q: 'Was passiert nach den kostenlosen Nachrichten?',
@@ -1619,17 +1661,18 @@ function FaqSection() {
     <section
       id="faq"
       className="relative flex flex-col justify-center overflow-hidden px-6 py-16 scroll-mt-14 sm:scroll-mt-16"
-      style={{ background: 'linear-gradient(180deg, #FFFBEB 0%, #FFF8F0 100%)' }}
+      style={{ background: 'linear-gradient(180deg, #120a08 0%, #18100e 55%, #140d0a 100%)' }}
     >
+      <div className="landing-dot-grid-fine pointer-events-none absolute inset-0 opacity-65" />
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute left-1/2 top-[30%] h-[min(90vw,520px)] w-[min(90vw,520px)] -translate-x-1/2 rounded-full bg-amber-100/35 blur-[85px]" />
-        <svg className="absolute bottom-0 left-0 right-0 h-[26vh] min-h-[150px] max-h-[260px] w-full text-amber-200/[0.35]" viewBox="0 0 1440 180" preserveAspectRatio="none" aria-hidden="true">
+        <div className="absolute left-1/2 top-[30%] h-[min(90vw,520px)] w-[min(90vw,520px)] -translate-x-1/2 rounded-full bg-amber-600/6 blur-[85px]" />
+        <svg className="absolute bottom-0 left-0 right-0 h-[26vh] min-h-[150px] max-h-[260px] w-full text-white/[0.04]" viewBox="0 0 1440 180" preserveAspectRatio="none" aria-hidden="true">
           <path d="M0,88 Q380,52 760,92 T1440,78 L1440,180 L0,180 Z" fill="currentColor" />
         </svg>
       </div>
       <div className="relative z-10 mx-auto w-full max-w-[720px]">
         <div className="mb-10 text-center">
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.15em] text-amber-800">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-amber-500/25 bg-amber-950/35 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.15em] text-amber-200/85">
             Häufige Fragen
           </div>
         </div>
@@ -1637,12 +1680,12 @@ function FaqSection() {
           {FAQ_ITEMS.map(item => (
             <details
               key={item.q}
-              className="group rounded-2xl border border-slate-200 bg-white px-5 py-3 shadow-sm open:border-amber-200 open:shadow-md"
+              className="group rounded-2xl border border-stone-600/45 bg-[#1a1512]/90 px-5 py-3 shadow-landing-md open:border-amber-500/40 open:shadow-landing-promo"
             >
-              <summary className="cursor-pointer list-none text-left text-sm font-semibold text-slate-900 after:float-right after:text-slate-400 after:content-['+'] group-open:after:content-['−']">
+              <summary className="cursor-pointer list-none text-left text-sm font-semibold text-stone-100 after:float-right after:text-stone-500 after:content-['+'] group-open:after:content-['−']">
                 {item.q}
               </summary>
-              <p className="mt-3 border-t border-slate-100 pt-3 text-sm leading-relaxed text-slate-600">{item.a}</p>
+              <p className="mt-3 border-t border-stone-600/35 pt-3 text-sm leading-relaxed text-stone-400">{item.a}</p>
             </details>
           ))}
         </div>
@@ -1660,7 +1703,7 @@ const PREVIEW_PLANS: Array<{
   name: string
   price: string
   period: string
-  icon: string
+  icon: IconHubName
   borderClass: string
   headerBg: string
   badge?: string
@@ -1676,9 +1719,9 @@ const PREVIEW_PLANS: Array<{
     name: 'Free',
     price: '0 €',
     period: '',
-    icon: '⚡',
-    borderClass: 'border-slate-200',
-    headerBg: 'bg-white',
+    icon: 'lightning',
+    borderClass: 'border-stone-600/45 bg-[#181310]/98 shadow-landing-md',
+    headerBg: 'bg-[#1c1612]/95',
     features: [
       { text: '20 Nachrichten pro Tag (nach Anmeldung)', included: true },
       { text: 'KI-Chat, Sprachtraining und Code-Assistent', included: true },
@@ -1688,7 +1731,8 @@ const PREVIEW_PLANS: Array<{
       { text: 'Gesprächsverlauf', included: false },
     ],
     cta: 'Kostenlos starten',
-    ctaClass: 'border border-slate-300 bg-white text-slate-600 hover:border-amber-300 hover:text-primary',
+    ctaClass:
+      'border border-stone-600/45 bg-white/[0.05] text-stone-200 shadow-landing hover:border-amber-500/40 hover:bg-amber-950/25 hover:text-amber-100',
     useSignUp: true,
     scale: false,
   },
@@ -1697,9 +1741,9 @@ const PREVIEW_PLANS: Array<{
     name: 'Starter',
     price: '6,90 €',
     period: '/ Monat',
-    icon: '✨',
-    borderClass: 'border-primary border-2',
-    headerBg: 'bg-gradient-to-br from-amber-50 to-amber-50',
+    icon: 'star',
+    borderClass: 'border-amber-500/45 bg-[#1a140f]/98 shadow-landing-promo',
+    headerBg: 'bg-gradient-to-br from-amber-950/50 to-[#1f1810]/95',
     badge: 'Empfohlen',
     features: [
       { text: '50 Nachrichten pro Tag', included: true },
@@ -1718,9 +1762,9 @@ const PREVIEW_PLANS: Array<{
     name: 'Pro',
     price: '14,90 €',
     period: '/ Monat',
-    icon: '👑',
-    borderClass: 'border-amber-300',
-    headerBg: 'bg-gradient-to-br from-amber-50 to-orange-50',
+    icon: 'trophy-award',
+    borderClass: 'border-stone-600/45 bg-[#181310]/98 shadow-landing-md ring-1 ring-orange-500/15',
+    headerBg: 'bg-gradient-to-br from-orange-950/35 to-[#1c1410]/95',
     features: [
       { text: '200 Nachrichten pro Tag', included: true },
       { text: 'Alle Werkzeuge + Priorität', included: true },
@@ -1740,42 +1784,37 @@ function PricingPreviewSection() {
     <section
       id="pricing"
       className="relative flex flex-col justify-center overflow-hidden px-6 py-16 scroll-mt-14 sm:scroll-mt-16"
-      style={{ background: 'linear-gradient(160deg, #FFFBEB 0%, #FEF3C7 50%, #FFF7ED 100%)', minHeight: '100svh' }}
+      style={{ background: 'linear-gradient(165deg, #130e0a 0%, #1a1210 42%, #150f0c 100%)', minHeight: '100svh' }}
     >
-      {/* Tile pattern */}
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{ backgroundImage: 'radial-gradient(circle, rgba(245,158,11,0.14) 1.5px, transparent 1.5px)', backgroundSize: '30px 30px' }}
-      />
+      <div className="landing-dot-grid pointer-events-none absolute inset-0 opacity-65" />
 
-      {/* Große Blobs, Wellen, Formen */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -right-24 -top-16 h-[min(95vw,560px)] w-[min(95vw,560px)] rounded-full bg-amber-300/26 blur-[95px]" />
-        <div className="absolute -left-28 bottom-0 h-[min(90vw,520px)] w-[min(90vw,520px)] rounded-full bg-orange-300/20 blur-[85px]" />
-        <div className="absolute left-1/2 top-[40%] h-[min(55vw,400px)] w-[min(55vw,400px)] -translate-x-1/2 rounded-full bg-rose-200/10 blur-[75px]" />
-        <svg className="absolute bottom-0 left-0 right-0 h-[34vh] min-h-[200px] max-h-[360px] w-full text-amber-400/[0.09]" viewBox="0 0 1440 220" preserveAspectRatio="none" aria-hidden="true">
+        <div className="absolute -right-24 -top-16 h-[min(95vw,560px)] w-[min(95vw,560px)] rounded-full bg-amber-600/9 blur-[95px]" />
+        <div className="absolute -left-28 bottom-0 h-[min(90vw,520px)] w-[min(90vw,520px)] rounded-full bg-orange-600/7 blur-[85px]" />
+        <div className="absolute left-1/2 top-[40%] h-[min(55vw,400px)] w-[min(55vw,400px)] -translate-x-1/2 rounded-full bg-rose-600/5 blur-[75px]" />
+        <svg className="absolute bottom-0 left-0 right-0 h-[34vh] min-h-[200px] max-h-[360px] w-full text-white/[0.04]" viewBox="0 0 1440 220" preserveAspectRatio="none" aria-hidden="true">
           <path d="M0,115 Q440,72 880,118 T1440,98 L1440,220 L0,220 Z" fill="currentColor" />
         </svg>
-        <svg className="absolute top-0 left-0 right-0 h-[20vh] min-h-[110px] max-h-[180px] w-full text-orange-300/[0.07]" viewBox="0 0 1440 150" preserveAspectRatio="none" aria-hidden="true">
+        <svg className="absolute top-0 left-0 right-0 h-[20vh] min-h-[110px] max-h-[180px] w-full text-white/[0.03]" viewBox="0 0 1440 150" preserveAspectRatio="none" aria-hidden="true">
           <path d="M0,0 L1440,0 L1440,42 Q720,88 0,58 L0,0 Z" fill="currentColor" />
         </svg>
-        <div className="absolute right-[9%] top-[20%] h-28 w-28 rotate-45 rounded-xl bg-amber-400/20" />
-        <div className="absolute left-[6%] top-[36%] h-20 w-20 rotate-45 rounded-lg bg-orange-400/16" />
-        <div className="absolute right-[16%] bottom-[18%] h-24 w-24 rotate-45 rounded-xl border-2 border-amber-400/24" />
-        <div className="absolute left-[12%] top-[12%] h-24 w-24 bg-amber-300/20" style={{ clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' }} />
-        <div className="absolute right-[5%] bottom-[26%] h-36 w-36 rounded-full border-2 border-amber-400/20" />
-        <div className="absolute left-[28%] bottom-[10%] h-28 w-28 bg-amber-400/14" style={{ clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)' }} />
+        <div className="absolute right-[9%] top-[20%] h-28 w-28 rotate-45 rounded-xl border border-white/8" />
+        <div className="absolute left-[6%] top-[36%] h-20 w-20 rotate-45 rounded-lg border border-white/8" />
+        <div className="absolute right-[16%] bottom-[18%] h-24 w-24 rotate-45 rounded-xl border border-white/10" />
+        <div className="absolute left-[12%] top-[12%] h-24 w-24 border border-white/8" style={{ clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' }} />
+        <div className="absolute right-[5%] bottom-[26%] h-36 w-36 rounded-full border border-white/10" />
+        <div className="absolute left-[28%] bottom-[10%] h-28 w-28 border border-white/6" style={{ clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)' }} />
       </div>
 
       <div className="relative z-10 mx-auto w-full max-w-[1000px]">
         <div className="mb-12 text-center">
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.15em] text-amber-800">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-amber-500/25 bg-amber-950/35 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.15em] text-amber-200/85">
             Preise
           </div>
-          <h2 className="mb-3 text-[clamp(28px,4vw,44px)] font-bold text-slate-900">
+          <h2 className="mb-3 text-[clamp(28px,4vw,44px)] font-bold text-stone-50">
             Einfach. Transparent. Fair.
           </h2>
-          <p className="text-lg text-slate-600">
+          <p className="text-lg text-stone-400">
             Starte kostenlos und upgrade, wenn du bereit bist. Kein Abo-Trick, keine versteckten Kosten. Jederzeit kündbar.
           </p>
         </div>
@@ -1792,9 +1831,9 @@ function PricingPreviewSection() {
               className={[
                 'w-[78vw] max-w-[300px] flex-shrink-0 snap-center',
                 'md:w-auto md:max-w-none',
-                'overflow-hidden rounded-3xl border bg-white shadow-sm',
+                'overflow-hidden rounded-3xl border',
                 plan.borderClass,
-                plan.scale ? 'md:scale-[1.04] shadow-xl shadow-amber-300/50' : '',
+                plan.scale ? 'md:scale-[1.04]' : '',
               ].join(' ')}
             >
               <div className={`px-5 pb-4 pt-5 ${plan.headerBg}`}>
@@ -1804,21 +1843,21 @@ function PricingPreviewSection() {
                   </span>
                 )}
                 <div className="mb-3 flex items-center gap-2">
-                  <span className="text-xl">{plan.icon}</span>
-                  <h3 className="text-lg font-bold text-slate-800">{plan.name}</h3>
+                  <IconHubIcon name={plan.icon} className="h-6 w-6 shrink-0" tone="onDark" />
+                  <h3 className="text-lg font-bold text-stone-100">{plan.name}</h3>
                 </div>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-3xl font-bold text-slate-800">{plan.price}</span>
-                  <span className="text-xs text-slate-400">{plan.period}</span>
+                  <span className="text-3xl font-bold text-stone-50">{plan.price}</span>
+                  <span className="text-xs text-stone-500">{plan.period}</span>
                 </div>
               </div>
-              <div className="space-y-2.5 px-5 py-4">
+              <div className="relative space-y-2.5 px-5 py-4 before:pointer-events-none before:absolute before:inset-x-5 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-amber-800/35 before:to-transparent">
                 {plan.features.map(f => (
                   <div key={f.text} className="flex items-start gap-2">
                     {f.included
                       ? <Check size={14} className="mt-0.5 flex-shrink-0 text-emerald-500" />
                       : <X size={14} className="mt-0.5 flex-shrink-0 text-rose-400" aria-hidden />}
-                    <span className={f.included ? 'text-xs text-slate-700' : 'text-xs text-slate-500'}>
+                    <span className={f.included ? 'text-xs text-stone-300' : 'text-xs text-stone-600'}>
                       {f.text}
                     </span>
                   </div>
@@ -1839,7 +1878,7 @@ function PricingPreviewSection() {
           ))}
         </div>
 
-        <p className="mt-8 text-center text-sm text-slate-600">
+        <p className="mt-8 text-center text-sm text-stone-500">
           Alle Pläne enthalten alle kostenlosen Werkzeuge. Jederzeit kündbar.
         </p>
       </div>
@@ -1854,46 +1893,67 @@ function FinalCtaSection() {
     <section
       id="cta"
       className="relative flex flex-col items-center justify-center overflow-hidden px-6 py-20 text-center text-white scroll-mt-14 sm:scroll-mt-16"
-      style={{ background: 'linear-gradient(160deg, #1C1200 0%, #2D1C08 50%, #3D2A10 100%)', minHeight: '100svh' }}
+      style={{ background: 'linear-gradient(160deg, #1c1200 0%, #2a1b12 48%, #3d2a10 100%)', minHeight: '100svh' }}
     >
-      {/* Tile pattern */}
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.1) 1.5px, transparent 1.5px)', backgroundSize: '28px 28px' }}
-      />
+      <div className="landing-dot-grid pointer-events-none absolute inset-0 opacity-80" />
 
       {/* Große Glows, konzentrische Wellen, weiche Formen */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -left-32 top-1/2 h-[min(110vw,720px)] w-[min(110vw,720px)] -translate-y-1/2 rounded-full bg-white/6 blur-[100px]" />
         <div className="absolute -right-28 top-1/2 h-[min(100vw,640px)] w-[min(100vw,640px)] -translate-y-1/2 rounded-full bg-amber-300/12 blur-[95px]" />
-        <div className="absolute left-1/2 top-1/2 h-[min(120vw,780px)] w-[min(120vw,780px)] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/6" />
-        <div className="absolute left-1/2 top-1/2 h-[min(95vw,620px)] w-[min(95vw,620px)] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/10" />
-        <div className="absolute left-1/2 top-1/2 h-[min(70vw,480px)] w-[min(70vw,480px)] -translate-x-1/2 -translate-y-1/2 rounded-full border border-amber-400/10" />
+        <div className="landing-geo-hairline absolute left-1/2 top-1/2 h-[min(120vw,780px)] w-[min(120vw,780px)] -translate-x-1/2 -translate-y-1/2 rounded-full" />
+        <div className="landing-geo-hairline-sm absolute left-1/2 top-1/2 h-[min(95vw,620px)] w-[min(95vw,620px)] -translate-x-1/2 -translate-y-1/2 rounded-full" />
+        <div className="landing-geo-hairline-amber absolute left-1/2 top-1/2 h-[min(70vw,480px)] w-[min(70vw,480px)] -translate-x-1/2 -translate-y-1/2 rounded-full" />
         <svg className="absolute bottom-0 left-0 right-0 h-[38vh] min-h-[220px] max-h-[400px] w-full text-white/[0.05]" viewBox="0 0 1440 240" preserveAspectRatio="none" aria-hidden="true">
           <path d="M0,130 Q420,85 840,125 T1440,105 L1440,240 L0,240 Z" fill="currentColor" />
         </svg>
         <svg className="absolute top-0 left-0 right-0 h-[28vh] min-h-[160px] max-h-[280px] w-full text-amber-400/[0.06]" viewBox="0 0 1440 200" preserveAspectRatio="none" aria-hidden="true">
           <path d="M0,0 L1440,0 L1440,55 Q720,115 0,75 L0,0 Z" fill="currentColor" />
         </svg>
-        <div className="absolute left-[8%] bottom-[24%] h-32 w-32 rotate-45 rounded-2xl border border-white/12" />
-        <div className="absolute right-[8%] top-[26%] h-28 w-28 rotate-45 rounded-xl bg-white/[0.06]" />
-        <div className="absolute right-[12%] bottom-[16%] h-40 w-40 bg-white/[0.05]" style={{ clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' }} />
+        <div className="landing-geo-hairline-md absolute left-[8%] bottom-[24%] h-32 w-32 rotate-45 rounded-2xl" />
+        <div className="landing-geo-hairline-sm absolute right-[8%] top-[26%] h-28 w-28 rotate-45 rounded-xl" />
+        <svg
+          className="pointer-events-none absolute right-[12%] bottom-[16%] h-40 w-40 text-[rgb(255_248_237)] opacity-[0.055]"
+          viewBox="0 0 100 100"
+          fill="none"
+          aria-hidden
+        >
+          <polygon
+            points="50,3 88,24.5 88,75.5 50,97 12,75.5 12,24.5"
+            stroke="currentColor"
+            strokeWidth={0.55}
+            vectorEffect="nonScalingStroke"
+            strokeLinejoin="round"
+          />
+        </svg>
       </div>
 
-      <div className="relative z-10 mx-auto w-full max-w-[600px]">
-        <div className="mb-6 text-6xl">⚡</div>
-        <h2 className="mb-4 text-[clamp(28px,4vw,44px)] font-bold">
-          Deine nächste Bewerbung — besser vorbereitet als je zuvor.
-        </h2>
-        <p className="mb-10 text-lg text-white/75">
-          Schließ dich Nutzern an, die ihre Bewerbungen gezielt statt auf gut Glück vorbereiten.
-        </p>
-        <SignUpButton mode="modal" fallbackRedirectUrl="/tools">
-          <button className="rounded-2xl bg-gradient-to-r from-amber-400 to-amber-500 px-10 py-4 text-base font-bold text-amber-950 shadow-2xl shadow-black/40 transition-all hover:scale-[1.02] hover:brightness-105">
-            Kostenlos starten →
-          </button>
-        </SignUpButton>
-        <p className="mt-4 text-sm text-white/40">Keine Kreditkarte erforderlich</p>
+      <div className="relative z-10 mx-auto w-full max-w-[640px] px-4">
+        <div className="relative py-4 sm:py-8">
+          <div
+            className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+            aria-hidden
+          >
+            <div className="landing-geo-hairline-cta-ring aspect-square w-[min(92vw,520px)] rounded-full" />
+          </div>
+          <div className="relative z-10 flex flex-col items-center text-center">
+            <div className="mb-6 flex justify-center">
+              <IconHubIcon name="lightning" tone="onDark" className="h-16 w-16 sm:h-20 sm:w-20" />
+            </div>
+            <h2 className="mb-4 text-[clamp(28px,4vw,44px)] font-bold text-stone-50">
+              Deine nächste Bewerbung: besser vorbereitet als je zuvor.
+            </h2>
+            <p className="mb-10 max-w-[480px] text-lg text-stone-400">
+              Mach mit bei Menschen, die ihre Bewerbungen bewusst vorbereiten und nicht nur aufs Glück hoffen.
+            </p>
+            <SignUpButton mode="modal" fallbackRedirectUrl="/tools">
+              <button className="rounded-2xl bg-gradient-to-r from-amber-400 to-amber-500 px-10 py-4 text-base font-bold text-amber-950 shadow-2xl shadow-black/50 transition-all hover:scale-[1.02] hover:from-amber-300 hover:to-amber-400">
+                Kostenlos starten →
+              </button>
+            </SignUpButton>
+            <p className="mt-4 text-sm text-stone-600">Keine Kreditkarte erforderlich</p>
+          </div>
+        </div>
       </div>
     </section>
   )
@@ -1916,17 +1976,16 @@ function FooterSection() {
               <img src="/favicon.png" alt="PrivatePrep" className="h-7 w-7 rounded-lg" />
               <span className="bg-gradient-to-r from-amber-400 to-amber-300 bg-clip-text text-lg font-bold text-transparent">PrivatePrep</span>
             </div>
-            <p className="text-sm text-slate-500">KI-Werkzeuge für deine Karriere</p>
+            <p className="text-sm text-stone-500">KI-Werkzeuge für deine Karriere</p>
           </div>
-          <div className="flex items-center gap-6 text-sm text-slate-500">
+          <div className="flex items-center gap-6 text-sm text-stone-500">
             <a href="#" className="transition-colors hover:text-white">Datenschutz</a>
             <a href="#" className="transition-colors hover:text-white">Nutzungsbedingungen</a>
             <a href="#" className="transition-colors hover:text-white">Kontakt</a>
           </div>
         </div>
         <div className="border-t border-white/5 pt-6 text-center">
-          <p className="mb-1 text-xs text-slate-600">Entwickelt mit .NET 9, React und Claude KI</p>
-          <p className="text-xs text-slate-700">© 2026 PrivatePrep. Alle Rechte vorbehalten.</p>
+          <p className="text-xs text-stone-700">© 2026 PrivatePrep. Alle Rechte vorbehalten.</p>
         </div>
       </div>
     </footer>
@@ -1939,6 +1998,16 @@ export default function LandingPage() {
   const { isSignedIn, isLoaded } = useUser()
   const navigate = useNavigate()
 
+  /** Let the browser restore scroll on reload (F5). Global `scroll-behavior: smooth` breaks that in many engines. */
+  useLayoutEffect(() => {
+    const html = document.documentElement
+    const previous = html.style.scrollBehavior
+    html.style.scrollBehavior = 'auto'
+    return () => {
+      html.style.scrollBehavior = previous
+    }
+  }, [])
+
   useEffect(() => {
     if (isLoaded && isSignedIn) {
       navigate('/tools', { replace: true })
@@ -1946,26 +2015,26 @@ export default function LandingPage() {
   }, [isLoaded, isSignedIn, navigate])
 
   return (
-    <div className="min-h-screen">
+    <div className="landing-page-root min-h-screen">
       <LandingNav />
       <HeroSection />
-      <SectionDivider from="#FEF3C7" to="#FEF3C7" variant="wave" />
+      <SectionDivider from="#16110d" to="#14100c" dark variant="wave" />
       <ProblemSolutionSection />
-      <SectionDivider from="#FEF3C7" to="#FEF3C7" variant="microdots" />
+      <SectionDivider from="#17110e" to="#16110d" dark variant="microdots" />
       <FeaturesSection />
-      <SectionDivider from="#fffdfb" to="#fffef4" variant="hatch" />
+      <SectionDivider from="#18100c" to="#120c08" dark variant="hatch" />
       <LiveDemoSection />
-      <SectionDivider from="#FEF9C3" to="#1C1200" dark variant="blend" />
+      <SectionDivider from="#14100d" to="#0f0a08" dark variant="blend" />
       <HowItWorksSection />
-      <SectionDivider from="#0D0800" to="#FFFBEB" dark variant="sunrise" />
+      <SectionDivider from="#0a0605" to="#15100c" dark variant="sunrise" />
       <FuerWenSection />
-      <SectionDivider from="#FEF3C7" to="#FFFBEB" variant="mesh" />
+      <SectionDivider from="#16100d" to="#130e0a" dark variant="mesh" />
       <PricingPreviewSection />
-      <SectionDivider from="#FFF7ED" to="#FFFBEB" variant="grain" />
+      <SectionDivider from="#150f0c" to="#120a08" dark variant="grain" />
       <FaqSection />
-      <SectionDivider from="#FFF8F0" to="#1C1200" dark variant="thread" />
+      <SectionDivider from="#140d0a" to="#1c1200" dark variant="thread" />
       <FinalCtaSection />
-      <SectionDivider from="#3D2A10" to="#0D0800" dark variant="night" />
+      <SectionDivider from="#3d2a10" to="#0d0800" dark variant="night" />
       <FooterSection />
     </div>
   )

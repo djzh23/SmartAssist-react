@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@clerk/clerk-react'
 import { ArrowRight, BarChart2, Calendar, Crown, Loader2, Sparkles, Star, Zap } from 'lucide-react'
+import { IconHubIcon } from '../components/ui/IconHubIcon'
 import { useUserPlan, getPlanColors, getPlanLabel } from '../hooks/useUserPlan'
 import { confirmPlanFromSession, createPortalSession, syncPlanFromStripe } from '../services/StripeService'
 
@@ -248,7 +249,7 @@ export default function ProfilePage() {
 
         {justUpgraded && (
           <div className="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-            <span>🎉</span>
+            <IconHubIcon name="winner" className="h-5 w-5 shrink-0" />
             <span>Willkommen bei Premium! Dein Plan wurde aktualisiert.</span>
           </div>
         )}

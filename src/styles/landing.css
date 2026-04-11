@@ -1,6 +1,20 @@
-/* Smooth scroll for anchor navigation */
-html {
-  scroll-behavior: smooth;
+/* Document smooth scroll lives in index.css; LandingPage overrides to `auto` while mounted
+   so reload restores scroll position. In-page nav still uses JS scrollTo({ behavior: 'smooth' }). */
+
+/* Landing: dark sepia base + subtle technical grid */
+.landing-page-root {
+  background-color: #120c08;
+  color: #fafaf9;
+}
+
+.landing-dot-grid {
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.055) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+.landing-dot-grid-fine {
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+  background-size: 32px 32px;
 }
 
 /* Typing dots for chat mockup and live demo */
@@ -20,3 +34,49 @@ html {
 }
 .typing-dot:nth-child(2) { animation-delay: 0.2s; }
 .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+.landing-page-root .typing-dot {
+  background: rgba(255, 255, 255, 0.32);
+}
+
+/* Hero ChatMockup: bubbles ease in (no scale pop) */
+@keyframes chat-mockup-bubble-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.chat-mockup-bubble-in {
+  animation: chat-mockup-bubble-in 0.48s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/*
+ * Decorative geometry (Final CTA): sub-pixel “hairline” rings.
+ * CSS borders are always ≥1px — these read lighter and more premium.
+ */
+.landing-geo-hairline {
+  border: none;
+  box-shadow: 0 0 0 0.4px rgb(255 250 245 / 0.038);
+}
+.landing-geo-hairline-sm {
+  border: none;
+  box-shadow: 0 0 0 0.45px rgb(255 250 245 / 0.055);
+}
+.landing-geo-hairline-md {
+  border: none;
+  box-shadow: 0 0 0 0.45px rgb(255 250 245 / 0.072);
+}
+.landing-geo-hairline-amber {
+  border: none;
+  box-shadow: 0 0 0 0.45px rgb(253 230 168 / 0.08);
+}
+/* Large ring behind CTA headline — extra fine */
+.landing-geo-hairline-cta-ring {
+  border: none;
+  box-shadow: 0 0 0 0.35px rgb(255 248 237 / 0.05);
+}

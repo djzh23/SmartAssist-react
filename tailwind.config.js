@@ -30,6 +30,12 @@ export default {
       boxShadow: {
         'chat': '0 2px 16px rgba(0,0,0,0.08)',
         'card': '0 4px 24px rgba(0,0,0,0.06)',
+        /** Landing dark panels: one inset highlight + soft elevation (avoid stacked arbitrary shadows) */
+        'landing': 'inset 0 1px 0 0 rgb(255 251 235 / 6%), 0 12px 36px -8px rgb(0 0 0 / 45%)',
+        'landing-md': 'inset 0 1px 0 0 rgb(255 251 235 / 6.5%), 0 16px 44px -10px rgb(0 0 0 / 50%)',
+        'landing-lg': 'inset 0 1px 0 0 rgb(255 251 235 / 7%), 0 22px 50px -12px rgb(0 0 0 / 52%)',
+        'landing-promo':
+          'inset 0 1px 0 0 rgb(255 251 235 / 7%), 0 22px 50px -12px rgb(0 0 0 / 55%), 0 0 36px -8px rgb(245 158 11 / 16%)',
       },
       animation: {
         'fade-in':   'fadeIn 0.18s ease',
