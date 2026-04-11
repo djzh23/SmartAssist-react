@@ -188,7 +188,7 @@ export default function PricingPage() {
 
   if (!isLoaded) {
     return (
-      <div className="flex h-full items-center justify-center bg-[#f5f6fb]">
+      <div className="flex min-h-0 flex-1 items-center justify-center bg-[#f5f6fb]">
         <Clock size={22} className="animate-pulse text-slate-400" />
       </div>
     )
@@ -196,7 +196,7 @@ export default function PricingPage() {
 
   return (
     <div
-      className="relative h-full overflow-y-auto"
+      className="relative min-h-0 flex-1 overflow-y-auto"
       style={{
         backgroundColor: '#f5f6fb',
         backgroundImage:

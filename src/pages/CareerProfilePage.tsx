@@ -195,7 +195,7 @@ export default function CareerProfilePage() {
 
   if (!isLoaded || loading) {
     return (
-      <div className="flex flex-1 items-center justify-center text-slate-500">
+      <div className="flex min-h-0 flex-1 items-center justify-center text-slate-500">
         <Loader2 className="animate-spin" size={28} />
       </div>
     )
@@ -203,7 +203,7 @@ export default function CareerProfilePage() {
 
   if (error && !profile) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6">
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 p-6">
         <p className="text-sm text-red-600">{error}</p>
         <button
           type="button"
@@ -222,7 +222,7 @@ export default function CareerProfilePage() {
   const level = profile.level ?? ''
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-slate-50">
+    <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden bg-slate-50">
       <div className="mx-auto w-full max-w-3xl px-4 py-6">
         <h1 className="mb-1 text-2xl font-semibold text-slate-900">Karriereprofil</h1>
         <p className="mb-6 text-sm text-slate-600">

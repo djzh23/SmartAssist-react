@@ -751,7 +751,7 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="relative flex h-full overflow-hidden">
+    <div className="relative flex min-h-0 flex-1 overflow-hidden">
       <ChatSidebar
         sessions={store.visibleSessions}
         activeSessionId={store.activeSessionId}

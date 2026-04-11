@@ -51,7 +51,7 @@ export default function MainLayout() {
           />
         )}
 
-        <main className="relative flex-1 overflow-hidden">
+        <main className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
           <ChatSessionsProvider>
             <Outlet />
           </ChatSessionsProvider>

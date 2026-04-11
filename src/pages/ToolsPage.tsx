@@ -247,7 +247,7 @@ export default function ToolsPage() {
 
   return (
     <div
-      className="relative h-full overflow-y-auto"
+      className="relative min-h-0 flex-1 overflow-y-auto"
       style={{
         backgroundColor: '#f5f6fb',
         backgroundImage: 'linear-gradient(to right, rgba(100,116,139,0.09) 1px, transparent 1px), linear-gradient(to bottom, rgba(100,116,139,0.09) 1px, transparent 1px)',
