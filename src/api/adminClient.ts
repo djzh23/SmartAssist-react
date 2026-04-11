@@ -2,6 +2,8 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || ''
 
 export interface ModelUsage {
   model: string
+  /** Groq vs Anthropic (from backend Redis model key). */
+  provider?: string
   messages: number
   inputTokens: number
   outputTokens: number
@@ -46,6 +48,10 @@ export interface AdminDashboardData {
   totalMessagesThisMonth: number
   totalInputTokensToday: number
   totalOutputTokensToday: number
+  /** Messages attributed to Groq models today (primary path). */
+  groqMessagesToday: number
+  /** Messages via Anthropic / fallback models today. */
+  otherLlmMessagesToday: number
   activeUsersToday: number
   totalRegisteredUsers: number
   payingUsers: number

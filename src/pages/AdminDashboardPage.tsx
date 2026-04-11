@@ -33,6 +33,7 @@ import {
 
 const C = {
   teal: '#0d9488',
+  groq: '#059669',
   orange: '#ea580c',
   indigo: '#4f46e5',
   slate: '#64748b',
@@ -41,6 +42,14 @@ const C = {
   tokenIn: '#93c5fd',
   tokenOut: '#1e40af',
 } as const
+
+type PieModelRow = {
+  name: string
+  value: number
+  messages: number
+  pct: number
+  metric: 'usd' | 'tokens'
+}
 
 const TOOL_LABELS: Record<string, string> = {
   general: 'Chat',
@@ -96,14 +105,18 @@ function getTopTool(summary: UserUsageSummary): string {
 
 function modelSliceColor(name: string, index: number): string {
   const n = name.toLowerCase()
+  if (n.startsWith('groq_') || n.startsWith('groq')) return C.groq
   if (n.includes('haiku')) return C.teal
   if (n.includes('sonnet')) return C.indigo
   return index % 2 === 0 ? C.teal : C.indigo
 }
 
 function shortModelLabel(name: string): string {
-  if (name.toLowerCase().includes('haiku')) return 'Haiku 4.5'
-  if (name.toLowerCase().includes('sonnet')) return 'Sonnet 4'
+  const n = name.toLowerCase()
+  if (n.startsWith('groq_')) return `Groq · ${name.slice(5)}`
+  if (n.startsWith('groq')) return `Groq · ${name.slice(4)}`
+  if (n.includes('haiku')) return 'Haiku 4.5'
+  if (n.includes('sonnet')) return 'Sonnet 4'
   return name.length > 18 ? `${name.slice(0, 16)}…` : name
 }
 
@@ -253,17 +266,31 @@ export default function AdminDashboardPage() {
     return { yesterdayCost: yest.costUsd, deltaPct: delta }
   }, [lineData])
 
-  const pieModelData = useMemo(() => {
+  const pieModelData = useMemo((): PieModelRow[] => {
     if (!data?.byModel) return []
-    const totalCost = Object.values(data.byModel).reduce((s, m) => s + m.costUsd, 0)
-    return Object.entries(data.byModel)
-      .map(([name, m]) => ({
-        name,
-        value: m.costUsd,
-        messages: m.messages,
-        pct: totalCost > 0 ? (m.costUsd / totalCost) * 100 : 0,
-      }))
-      .filter(x => x.value > 0)
+    const rows = Object.entries(data.byModel).map(([name, m]) => ({
+      name,
+      messages: m.messages,
+      costUsd: m.costUsd,
+      tokens: m.inputTokens + m.outputTokens,
+    }))
+    const withData = rows.filter(r => r.costUsd > 0 || r.tokens > 0)
+    if (withData.length === 0) return []
+    const anyUsd = withData.some(r => r.costUsd > 0)
+    const total = anyUsd
+      ? withData.reduce((s, r) => s + r.costUsd, 0)
+      : withData.reduce((s, r) => s + r.tokens, 0) || 1
+    return withData
+      .map(r => {
+        const value = anyUsd ? r.costUsd : r.tokens
+        return {
+          name: r.name,
+          value,
+          messages: r.messages,
+          pct: total > 0 ? (value / total) * 100 : 0,
+          metric: anyUsd ? ('usd' as const) : ('tokens' as const),
+        }
+      })
       .sort((a, b) => b.value - a.value)
   }, [data])
 
@@ -280,12 +307,15 @@ export default function AdminDashboardPage() {
 
   const modelTokenBars = useMemo(() => {
     if (!data?.byModel) return []
-    return Object.entries(data.byModel).map(([model, m]) => ({
-      model: model.length > 22 ? `${model.slice(0, 20)}…` : model,
-      fullModel: model,
-      input: m.inputTokens,
-      output: m.outputTokens,
-    }))
+    return Object.entries(data.byModel).map(([model, m]) => {
+      const label = shortModelLabel(model)
+      return {
+        model: label.length > 22 ? `${label.slice(0, 20)}…` : label,
+        fullModel: model,
+        input: m.inputTokens,
+        output: m.outputTokens,
+      }
+    })
   }, [data])
 
   const sortedTopUsers = useMemo(() => {
@@ -484,6 +514,20 @@ export default function AdminDashboardPage() {
                 <p className="mt-0.5 text-[11px] text-[#64748b]">Ziel: unter $0.01</p>
               </div>
             </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-xl bg-slate-50 p-3">
+                <p className="text-xs text-[#64748b]">Nachrichten heute (Groq primär)</p>
+                <p className="mt-1 text-xl font-semibold tabular-nums text-[#059669]">
+                  {(data.groqMessagesToday ?? 0).toLocaleString('de-DE')}
+                </p>
+              </div>
+              <div className="rounded-xl bg-slate-50 p-3">
+                <p className="text-xs text-[#64748b]">Nachrichten heute (Haiku / Fallback)</p>
+                <p className="mt-1 text-xl font-semibold tabular-nums text-[#0d9488]">
+                  {(data.otherLlmMessagesToday ?? 0).toLocaleString('de-DE')}
+                </p>
+              </div>
+            </div>
           </div>
         ) : null}
 
@@ -597,7 +641,21 @@ export default function AdminDashboardPage() {
                             <Cell key={entry.name} fill={modelSliceColor(entry.name, i)} />
                           ))}
                         </Pie>
-                        <Tooltip formatter={v => fmt(typeof v === 'number' ? v : Number(v) || 0, 'usd')} />
+                        <Tooltip
+                          content={({ active, payload }) => {
+                            if (!active || !payload?.length) return null
+                            const row = payload[0]?.payload as PieModelRow
+                            const v = row?.value ?? 0
+                            return (
+                              <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs shadow-md">
+                                <p className="font-medium text-slate-800">{shortModelLabel(row.name)}</p>
+                                <p className="text-slate-600">
+                                  {row.metric === 'usd' ? fmt(v, 'usd') : fmt(v, 'tokens')}
+                                </p>
+                              </div>
+                            )
+                          }}
+                        />
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
@@ -611,10 +669,11 @@ export default function AdminDashboardPage() {
                         <div>
                           <p className="font-medium text-slate-800">{shortModelLabel(entry.name)}</p>
                           <p className="text-lg font-semibold tabular-nums text-[#ea580c]">
-                            {fmt(entry.value, 'usd')}
+                            {entry.metric === 'usd' ? fmt(entry.value, 'usd') : fmt(entry.value, 'tokens')}
                           </p>
                           <p className="text-xs text-[#64748b]">
-                            {entry.messages.toLocaleString('de-DE')} Msgs ({fmt(entry.pct, 'pct')})
+                            {entry.messages.toLocaleString('de-DE')} Nachr. · {fmt(entry.pct, 'pct')}{' '}
+                            {entry.metric === 'usd' ? '(Kosten)' : '(Tokens)'}
                           </p>
                         </div>
                       </li>
@@ -838,7 +897,18 @@ export default function AdminDashboardPage() {
                     <ul className="max-h-32 space-y-1 overflow-y-auto text-xs">
                       {Object.entries(selectedUser.byModel ?? {}).map(([k, m]) => (
                         <li key={k} className="flex justify-between gap-2 border-b border-slate-100 py-1">
-                          <span className="truncate text-slate-700">{k}</span>
+                          <span className="min-w-0 truncate text-slate-700" title={k}>
+                            <span
+                              className={`mr-1.5 inline-block rounded px-1.5 py-0.5 text-[10px] font-medium ${
+                                (m.provider ?? '').toLowerCase() === 'groq'
+                                  ? 'bg-emerald-100 text-emerald-800'
+                                  : 'bg-slate-200 text-slate-700'
+                              }`}
+                            >
+                              {(m.provider ?? '').toLowerCase() === 'groq' ? 'Groq' : 'Anthropic'}
+                            </span>
+                            {shortModelLabel(k)}
+                          </span>
                           <span className="shrink-0 tabular-nums text-slate-600">{fmt(m.costUsd, 'usd')}</span>
                         </li>
                       ))}
