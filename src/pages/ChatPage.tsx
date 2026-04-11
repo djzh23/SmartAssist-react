@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { Link, useSearchParams } from 'react-router-dom'
 import { AlertCircle, PanelLeft, Plus, X } from 'lucide-react'
-import type { ToolType } from '../types'
+import type { CareerProfile } from '../api/profileClient'
+import type { ProfileContextToggles, ToolType } from '../types'
 import { PROGRAMMING_LANGUAGES } from '../types'
 import { UsageLimitError, askAgentStream } from '../api/client'
 import { syncPlanFromStripe } from '../services/StripeService'
@@ -17,6 +18,7 @@ import UsageLimitModal from '../components/ui/UsageLimitModal'
 import { useChatSessions } from '../hooks/useChatSessions'
 import { useCareerProfile } from '../hooks/useCareerProfile'
 import { useUserPlan, dispatchServerUsage } from '../hooks/useUserPlan'
+import { buildCareerProfilePromptAppendix } from '../utils/careerProfilePromptSnippet'
 import { sanitizeTechnicalContext } from '../utils/cvTechnicalContext'
 import { applyStreamText } from '../chat/streamTextBridge'
 import { sessionListLabel } from '../utils/sessionTitle'
@@ -53,6 +55,7 @@ const INTERVIEW_PROMPT_LIMIT = 3900
 const JOB_ANALYZER_PROMPT_LIMIT = 3900
 const LS_CONTEXT = 'smartassist_context_by_tool_and_session'
 const LS_CONTEXT_DISMISSED = 'smartassist_context_modal_dismissed'
+const LS_KONTEXT_HINT_DISMISSED = 'privateprep_kontext_hint_dismissed'
 
 type ContextToolType = 'jobanalyzer' | 'interview' | 'programming'
 
@@ -294,36 +297,68 @@ function interviewBaseInstruction(language: string, hasCv: boolean, alias: strin
   ].join('\n')
 }
 
-function buildInterviewPrompt(userMessage: string, language: string, setup: InterviewPromptContext): string {
-  const base = interviewBaseInstruction(language, !!setup.cvText.trim(), setup.alias.trim())
+function buildInterviewPrompt(
+  userMessage: string,
+  language: string,
+  setup: InterviewPromptContext,
+  careerProfile: CareerProfile | null,
+  profileToggles: ProfileContextToggles | null,
+): string {
   const jobUrl = setup.jobUrl.trim().slice(0, 220)
-
   let safeUser = userMessage.trim().slice(0, 1400)
-  let remaining = INTERVIEW_PROMPT_LIMIT - (base.length + safeUser.length + 120)
 
+  const fixedReserve = 850
+  let remaining = INTERVIEW_PROMPT_LIMIT - safeUser.length - jobUrl.length - fixedReserve
   if (remaining < 900) {
     safeUser = safeUser.slice(0, Math.max(280, safeUser.length - (900 - remaining)))
-    remaining = INTERVIEW_PROMPT_LIMIT - (base.length + safeUser.length + 120)
+    remaining = INTERVIEW_PROMPT_LIMIT - safeUser.length - jobUrl.length - fixedReserve
   }
 
   const cvMax = Math.max(280, Math.floor(remaining * 0.52))
   const jobMax = Math.max(220, remaining - cvMax)
 
-  const cvText = compactLines(sanitizeTechnicalContext(setup.cvText), 20, cvMax)
+  const modalBudget =
+    careerProfile && profileToggles ? Math.max(200, Math.floor(cvMax * 0.38)) : cvMax
+  const profileBudget =
+    careerProfile && profileToggles ? Math.max(0, cvMax - modalBudget - 60) : 0
+
+  const modalCv = compactLines(sanitizeTechnicalContext(setup.cvText), 20, modalBudget)
+  const savedCv =
+    careerProfile && profileToggles && profileBudget > 0
+      ? buildCareerProfilePromptAppendix(careerProfile, profileToggles, profileBudget)
+      : ''
+
+  const cvParts = [
+    modalCv && `From setup modal:\n${modalCv}`,
+    savedCv && `From saved career profile:\n${savedCv}`,
+  ].filter(Boolean)
+  const cvMerged = cvParts.join('\n\n---\n\n')
+
+  const base = interviewBaseInstruction(language, Boolean(cvMerged.trim()), setup.alias.trim())
   const jobText = compactLines(setup.jobText, 12, jobMax)
 
-  const cvBlock = cvText ? `\nCANDIDATE PROFILE:\n${cvText}` : ''
+  const cvBlock = cvMerged ? `\nCANDIDATE PROFILE:\n${cvMerged}` : ''
   const roleBlock = (jobText || jobUrl)
     ? `\nTARGET ROLE CONTEXT:\n${jobUrl ? `URL: ${jobUrl}\n` : ''}${jobText ? `JOB DETAILS:\n${jobText}\n` : ''}`
     : ''
 
-  const prompt = `${base}${cvBlock}${roleBlock}\nUser: ${safeUser}`
+  let prompt = `${base}${cvBlock}${roleBlock}\nUser: ${safeUser}`
+  if (prompt.length > INTERVIEW_PROMPT_LIMIT) {
+    const over = prompt.length - INTERVIEW_PROMPT_LIMIT + 1
+    safeUser = safeUser.slice(0, Math.max(80, safeUser.length - over))
+    prompt = `${base}${cvBlock}${roleBlock}\nUser: ${safeUser}`
+  }
   return prompt.length <= INTERVIEW_PROMPT_LIMIT
     ? prompt
     : prompt.slice(0, INTERVIEW_PROMPT_LIMIT - 1)
 }
 
-function buildJobAnalyzerPrompt(userMessage: string, setup: JobAnalyzerPromptContext): string {
+function buildJobAnalyzerPrompt(
+  userMessage: string,
+  setup: JobAnalyzerPromptContext,
+  careerProfile: CareerProfile | null,
+  profileToggles: ProfileContextToggles | null,
+): string {
   const title = setup.jobTitle
     ? `${setup.jobTitle}${setup.companyName ? ` bei ${setup.companyName}` : ''}`
     : (setup.companyName ? `Rolle bei ${setup.companyName}` : '')
@@ -341,29 +376,53 @@ function buildJobAnalyzerPrompt(userMessage: string, setup: JobAnalyzerPromptCon
     '- Keine Wiederholung des gesamten Originaltexts.',
     '- Keine langen Absätze, nur präzise Aussagen.',
     '- Begründe den Match Score mit 2 bis 4 klaren Gründen.',
+    'Bei Nachfragen:',
+    '- Wenn der User „nochmal prüfen“, „Fokus auf Erfahrung“ oder ähnliches schreibt, nutze den **aktuellen** BEWERBERPROFIL-Block und formuliere die Analyse **neu** (keine wortgleiche Wiederholung der vorherigen Antwort).',
   ].join('\n')
 
   let safeUser = userMessage.trim().slice(0, 700)
   if (!safeUser) safeUser = 'Bitte starte jetzt die Erstanalyse.'
 
   const titleLine = title ? `\nZielrolle: ${title}` : ''
-  let remaining = JOB_ANALYZER_PROMPT_LIMIT - (baseInstruction.length + safeUser.length + titleLine.length + 120)
+  let remaining =
+    JOB_ANALYZER_PROMPT_LIMIT - (baseInstruction.length + safeUser.length + titleLine.length + 120)
 
   if (remaining < 1100) {
     safeUser = safeUser.slice(0, Math.max(220, safeUser.length - (1100 - remaining)))
-    remaining = JOB_ANALYZER_PROMPT_LIMIT - (baseInstruction.length + safeUser.length + titleLine.length + 120)
+    remaining =
+      JOB_ANALYZER_PROMPT_LIMIT - (baseInstruction.length + safeUser.length + titleLine.length + 120)
   }
 
   const jobMax = Math.max(700, Math.floor(remaining * 0.62))
   const cvMax = Math.max(360, remaining - jobMax)
 
+  const modalBudget =
+    careerProfile && profileToggles ? Math.max(180, Math.floor(cvMax * 0.35)) : cvMax
+  const profileBudget =
+    careerProfile && profileToggles ? Math.max(0, cvMax - modalBudget - 80) : 0
+
   const compactJob = compactLines(setup.jobText, 36, jobMax)
-  const compactCv = compactLines(setup.cvText, 20, cvMax)
+  const modalCv = compactLines(setup.cvText, 16, modalBudget)
+  const savedProfile =
+    careerProfile && profileToggles && profileBudget > 0
+      ? buildCareerProfilePromptAppendix(careerProfile, profileToggles, profileBudget)
+      : ''
+
+  const cvParts = [
+    modalCv && `Aus Stellenanalyse-Setup:\n${modalCv}`,
+    savedProfile && `Aus gespeichertem Karriereprofil (jeweils aktuell bei dieser Nachricht):\n${savedProfile}`,
+  ].filter(Boolean)
+  const cvMerged = cvParts.join('\n\n---\n\n')
 
   const jobBlock = compactJob ? `\nSTELLENKONTEXT:\n${compactJob}` : ''
-  const cvBlock = compactCv ? `\nBEWERBERPROFIL (technischer Auszug):\n${compactCv}` : ''
+  const cvBlock = cvMerged ? `\nBEWERBERPROFIL:\n${cvMerged}` : ''
 
-  const prompt = `${baseInstruction}${titleLine}${jobBlock}${cvBlock}\nUser: ${safeUser}`
+  let prompt = `${baseInstruction}${titleLine}${jobBlock}${cvBlock}\nUser: ${safeUser}`
+  if (prompt.length > JOB_ANALYZER_PROMPT_LIMIT) {
+    const over = prompt.length - JOB_ANALYZER_PROMPT_LIMIT + 1
+    safeUser = safeUser.slice(0, Math.max(80, safeUser.length - over))
+    prompt = `${baseInstruction}${titleLine}${jobBlock}${cvBlock}\nUser: ${safeUser}`
+  }
   return prompt.length <= JOB_ANALYZER_PROMPT_LIMIT
     ? prompt
     : prompt.slice(0, JOB_ANALYZER_PROMPT_LIMIT - 1)
@@ -389,6 +448,13 @@ export default function ChatPage() {
   const [showLimitModal, setShowLimitModal] = useState(false)
   const [checkoutBanner, setCheckoutBanner] = useState<{ type: 'success' | 'info'; text: string } | null>(null)
   const [showOnboardingModal, setShowOnboardingModal] = useState(false)
+  const [kontextHintOpen, setKontextHintOpen] = useState(() => {
+    try {
+      return localStorage.getItem(LS_KONTEXT_HINT_DISMISSED) !== '1'
+    } catch {
+      return true
+    }
+  })
 
   const { isAtLimit, incrementUsage, isSignedIn, email, getToken, refreshUsage } = useUserPlan()
   const {
@@ -617,6 +683,15 @@ export default function ChatPage() {
     })
   }
 
+  const dismissKontextHint = () => {
+    try {
+      localStorage.setItem(LS_KONTEXT_HINT_DISMISSED, '1')
+    } catch {
+      /* ignore */
+    }
+    setKontextHintOpen(false)
+  }
+
   const handleClear = () => {
     if (!window.confirm('Alle Konversationen löschen?')) return
     store.clearHistory()
@@ -645,10 +720,19 @@ export default function ChatPage() {
     const interviewLangCode = interviewSetup.language === 'en' ? 'en' : 'de'
     const interviewLangName = interviewLangCode === 'de' ? 'German' : 'English'
 
+    const profileForPrompt = isSignedIn ? careerProfile : null
+    const togglesForPrompt = isSignedIn ? profileToggles : null
+
     const apiMessage = isInterview
-      ? buildInterviewPrompt(outgoingText, interviewLangName, interviewSetup)
+      ? buildInterviewPrompt(
+        outgoingText,
+        interviewLangName,
+        interviewSetup,
+        profileForPrompt,
+        togglesForPrompt,
+      )
       : (store.currentToolType === 'jobanalyzer'
-        ? buildJobAnalyzerPrompt(outgoingText, jobAnalyzerSetup)
+        ? buildJobAnalyzerPrompt(outgoingText, jobAnalyzerSetup, profileForPrompt, togglesForPrompt)
         : outgoingText)
 
     const streamingMsgId = crypto.randomUUID()
@@ -961,14 +1045,27 @@ export default function ChatPage() {
                   />
                 ))}
               </div>
-              <p className="mt-1.5 text-[11px] leading-snug text-slate-500">
-                <strong className="font-medium text-slate-600">Farbig = aktiv:</strong> diese Teile werden mit deiner
-                nächsten Nachricht an den Assistenten geschickt (Quelle:{' '}
-                <Link to="/career-profile" className="font-medium text-primary hover:underline">
-                  Karriereprofil
-                </Link>
-                ). Übertragung wie die restliche App (HTTPS), nur während du angemeldet bist.
-              </p>
+              {kontextHintOpen ? (
+                <div className="mt-1.5 flex items-start gap-1 rounded-lg bg-slate-50/90 py-0.5 pl-0 pr-0.5">
+                  <p className="min-w-0 flex-1 text-[11px] leading-snug text-slate-500">
+                    <strong className="font-medium text-slate-600">Farbig = aktiv:</strong> diese Teile stecken in der
+                    nächsten Nachricht (Quelle:{' '}
+                    <Link to="/career-profile" className="font-medium text-primary hover:underline">
+                      Karriereprofil
+                    </Link>
+                    ; Stellenanalyse mixt zusätzlich Setup-Modal + Profil). HTTPS, nur angemeldet. Nach Profil-Änderungen:
+                    Seite neu laden, damit der Chat den neuesten Stand nutzt.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={dismissKontextHint}
+                    className="mt-0.5 flex-shrink-0 rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-200/80 hover:text-slate-600"
+                    aria-label="Hinweis schließen"
+                  >
+                    <X size={14} strokeWidth={2} />
+                  </button>
+                </div>
+              ) : null}
             </div>
           </div>
         )}

@@ -8,7 +8,7 @@ const TOGGLES_KEY = 'privateprep_profile_toggles'
 const defaultToggles = (): ProfileContextToggles => ({
   includeBasicProfile: true,
   includeSkills: true,
-  includeExperience: false,
+  includeExperience: true,
   includeCv: false,
   activeTargetJobId: null,
 })
