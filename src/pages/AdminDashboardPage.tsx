@@ -352,6 +352,18 @@ export default function AdminDashboardPage() {
     return data.totalCostToday / data.totalMessagesToday
   }, [data])
 
+  const llmModelRows = useMemo(() => {
+    if (!data?.byModel) return []
+    return Object.entries(data.byModel)
+      .map(([key, m]) => ({ key, m }))
+      .sort((a, b) => {
+        const pa = (a.m.provider ?? '').toLowerCase() === 'groq' ? 0 : 1
+        const pb = (b.m.provider ?? '').toLowerCase() === 'groq' ? 0 : 1
+        if (pa !== pb) return pa - pb
+        return shortModelLabel(a.key).localeCompare(shortModelLabel(b.key), 'de')
+      })
+  }, [data])
+
   const monthSpendPct = useMemo(() => {
     if (!data) return 0
     return Math.min(100, (data.totalCostThisMonth / monthlyBudget) * 100)
@@ -437,6 +449,11 @@ export default function AdminDashboardPage() {
           </div>
         ) : data ? (
           <div className="space-y-3">
+            {data.llmCostPolicyNote ? (
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50/90 px-4 py-3 text-sm leading-snug text-slate-700">
+                {data.llmCostPolicyNote}
+              </div>
+            ) : null}
             <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
               <div className="rounded-xl bg-slate-50 p-4">
                 <p className="text-xs font-medium text-[#64748b]">API-Kosten heute</p>
@@ -526,6 +543,49 @@ export default function AdminDashboardPage() {
                 <p className="mt-1 text-xl font-semibold tabular-nums text-[#0d9488]">
                   {(data.otherLlmMessagesToday ?? 0).toLocaleString('de-DE')}
                 </p>
+              </div>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+              <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-[#64748b]">
+                LLM-Endpunkte (konfiguriert · heute)
+              </h2>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[560px] text-left text-sm">
+                  <thead className="border-b border-slate-200 text-xs font-semibold text-[#64748b]">
+                    <tr>
+                      <th className="py-2 pr-3">Anbieter</th>
+                      <th className="py-2 pr-3">Modell</th>
+                      <th className="py-2 pr-3 text-right">Nachr.</th>
+                      <th className="py-2 pr-3 text-right">Tokens</th>
+                      <th className="py-2 text-right">Kosten (SmartAssist)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {llmModelRows.map(({ key, m }) => {
+                      const tok = m.inputTokens + m.outputTokens
+                      const prov = (m.provider ?? '').toLowerCase() === 'groq' ? 'Groq' : 'Anthropic'
+                      return (
+                        <tr key={key} className="text-slate-800">
+                          <td className="py-2 pr-3">
+                            <span
+                              className={`inline-block rounded-md px-2 py-0.5 text-xs font-medium ${
+                                prov === 'Groq' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-700'
+                              }`}
+                            >
+                              {prov}
+                            </span>
+                          </td>
+                          <td className="max-w-[220px] truncate py-2 pr-3 font-mono text-xs" title={key}>
+                            {shortModelLabel(key)}
+                          </td>
+                          <td className="py-2 pr-3 text-right tabular-nums">{m.messages.toLocaleString('de-DE')}</td>
+                          <td className="py-2 pr-3 text-right tabular-nums">{fmt(tok, 'tokens')}</td>
+                          <td className="py-2 text-right tabular-nums text-[#ea580c]">{fmt(m.costUsd, 'usd')}</td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>

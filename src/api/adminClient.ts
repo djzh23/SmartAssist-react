@@ -61,6 +61,8 @@ export interface AdminDashboardData {
   byModel: Record<string, ModelUsage>
   byTool: Record<string, ToolUsage>
   last30Days: DailyUsage[]
+  /** Backend: how LLM rows are priced (Groq 0 USD, Anthropic billed). */
+  llmCostPolicyNote?: string
 }
 
 export async function fetchDashboard(token: string): Promise<AdminDashboardData> {
