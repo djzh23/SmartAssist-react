@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { flushSync } from 'react-dom'
-import { useSearchParams } from 'react-router-dom'
+import { Navigate, useSearchParams } from 'react-router-dom'
 import { AlertCircle, PanelLeft, Plus, X } from 'lucide-react'
 import type { ToolType } from '../types'
 import { PROGRAMMING_LANGUAGES } from '../types'
 import { UsageLimitError, askAgentStream } from '../api/client'
 import { syncPlanFromStripe } from '../services/StripeService'
+import TogglePill from '../components/chat/TogglePill'
 import ChatInput from '../components/chat/ChatInput'
 import ChatSidebar from '../components/chat/ChatSidebar'
 import ContextModal, { type ContextModalToolType, type ContextPayload } from '../components/chat/ContextModal'
@@ -13,6 +14,7 @@ import MessageList from '../components/chat/MessageList'
 import ChatAnswerReadyBanner from '../components/chat/ChatAnswerReadyBanner'
 import UsageLimitModal from '../components/ui/UsageLimitModal'
 import { useChatSessions } from '../hooks/useChatSessions'
+import { useCareerProfile } from '../hooks/useCareerProfile'
 import { useUserPlan, dispatchServerUsage } from '../hooks/useUserPlan'
 import { sanitizeTechnicalContext } from '../utils/cvTechnicalContext'
 import { applyStreamText } from '../chat/streamTextBridge'
@@ -387,6 +389,14 @@ export default function ChatPage() {
   const [checkoutBanner, setCheckoutBanner] = useState<{ type: 'success' | 'info'; text: string } | null>(null)
 
   const { isAtLimit, incrementUsage, isSignedIn, email, getToken, refreshUsage } = useUserPlan()
+  const {
+    toggles: profileToggles,
+    updateToggles,
+    profile: careerProfile,
+    loading: careerProfileLoading,
+    error: careerProfileError,
+    needsOnboarding,
+  } = useCareerProfile()
 
   useEffect(() => {
     saveContextMap(contextBySessionKey)
@@ -651,6 +661,7 @@ export default function ChatPage() {
           programmingLanguage: isProgramming ? progMeta?.label : undefined,
           interviewMode: isInterview ? true : undefined,
           interviewLanguage: isInterview ? (interviewLangCode === 'de' ? 'German' : 'English') : undefined,
+          profileToggles: isSignedIn ? profileToggles : undefined,
         },
         token,
         (chunk) => {
@@ -734,6 +745,10 @@ export default function ChatPage() {
       programmingLanguageId: activeContext.programmingLanguageId,
     }
     : undefined
+
+  if (isSignedIn && !careerProfileLoading && !careerProfileError && needsOnboarding) {
+    return <Navigate to="/onboarding" replace />
+  }
 
   return (
     <div className="relative flex h-full overflow-hidden">
@@ -890,6 +905,45 @@ export default function ChatPage() {
               <button onClick={() => setError(null)} className="text-red-500 hover:text-red-700">
                 <X size={15} />
               </button>
+            </div>
+          </div>
+        )}
+
+        {isSignedIn && !careerProfileLoading && (
+          <div className="flex-shrink-0 border-b border-slate-200 bg-white px-4 py-2">
+            <div className="mx-auto flex max-w-3xl flex-wrap items-center gap-2">
+              <span className="mr-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Kontext</span>
+              <TogglePill
+                active={profileToggles.includeBasicProfile}
+                label="Profil"
+                onClick={() => updateToggles({ includeBasicProfile: !profileToggles.includeBasicProfile })}
+              />
+              <TogglePill
+                active={profileToggles.includeSkills}
+                label="Skills"
+                onClick={() => updateToggles({ includeSkills: !profileToggles.includeSkills })}
+              />
+              <TogglePill
+                active={profileToggles.includeExperience}
+                label="Erfahrung"
+                onClick={() => updateToggles({ includeExperience: !profileToggles.includeExperience })}
+              />
+              <TogglePill
+                active={profileToggles.includeCv}
+                label="Lebenslauf"
+                onClick={() => updateToggles({ includeCv: !profileToggles.includeCv })}
+              />
+              {(careerProfile?.targetJobs ?? []).map(job => (
+                <TogglePill
+                  key={job.id}
+                  active={profileToggles.activeTargetJobId === job.id}
+                  label={`${job.title ?? 'Stelle'}${job.company ? ` @ ${job.company}` : ''}`}
+                  onClick={() =>
+                    updateToggles({
+                      activeTargetJobId: profileToggles.activeTargetJobId === job.id ? null : job.id,
+                    })}
+                />
+              ))}
             </div>
           </div>
         )}

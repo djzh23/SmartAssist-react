@@ -2,6 +2,7 @@ import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import {
   ArrowRight,
   Briefcase,
+  ClipboardList,
   Code2,
   Globe,
   MessageCircle,
@@ -163,6 +164,10 @@ export default function Sidebar({ onNavClick }: Props) {
 
         <p className="px-3 pb-1.5 pt-5 text-[10px] font-bold uppercase tracking-[1.5px] text-slate-500">Konto</p>
         <SidebarLink item={{ label: 'Mein Profil', icon: <User size={15} />, to: '/profile' }} onClick={onNavClick} />
+        <SidebarLink
+          item={{ label: 'Karriereprofil', icon: <ClipboardList size={15} />, to: '/career-profile' }}
+          onClick={onNavClick}
+        />
         <SidebarLink item={{ label: 'Preise', icon: <Tag size={15} />, to: '/pricing' }} onClick={onNavClick} />
         {isAdmin && (
           <SidebarLink

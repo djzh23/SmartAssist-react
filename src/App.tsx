@@ -7,6 +7,8 @@ import ChatPage from './pages/ChatPage'
 import ToolsPage from './pages/ToolsPage'
 import PricingPage from './pages/PricingPage'
 import ProfilePage from './pages/ProfilePage'
+import OnboardingPage from './pages/OnboardingPage'
+import CareerProfilePage from './pages/CareerProfilePage'
 import AdminDashboardPage from './pages/AdminDashboardPage'
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string
@@ -54,11 +56,21 @@ function AppRoutes() {
       {/* Public standalone pages */}
       <Route path="/" element={<LandingPage />} />
 
+      <Route
+        path="/onboarding"
+        element={
+          <RequireSignedIn>
+            <OnboardingPage />
+          </RequireSignedIn>
+        }
+      />
+
       {/* Protected app — requires sign in, renders MainLayout with sidebar */}
       <Route element={<ProtectedApp />}>
         <Route path="/chat" element={<ChatPage />} />
         <Route path="/tools" element={<ToolsPage />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/career-profile" element={<CareerProfilePage />} />
         <Route path="/pricing" element={<PricingPage />} />
       </Route>
 

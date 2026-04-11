@@ -82,6 +82,15 @@ export interface ChatSession {
 }
 
 // ── API types ─────────────────────────────────────────────
+/** Karriereprofil-Kontext für /api/agent (camelCase wie Backend JSON). */
+export interface ProfileContextToggles {
+  includeBasicProfile: boolean
+  includeSkills: boolean
+  includeExperience: boolean
+  includeCv: boolean
+  activeTargetJobId: string | null
+}
+
 export interface AgentRequest {
   message: string
   sessionId?: string
@@ -98,6 +107,7 @@ export interface AgentRequest {
   programmingLanguage?: string
   interviewMode?: boolean
   interviewLanguage?: string
+  profileToggles?: ProfileContextToggles
 }
 
 export interface AgentResponse {
