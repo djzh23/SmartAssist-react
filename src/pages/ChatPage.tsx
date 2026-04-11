@@ -358,14 +358,24 @@ function buildJobAnalyzerPrompt(
   setup: JobAnalyzerPromptContext,
   careerProfile: CareerProfile | null,
   profileToggles: ProfileContextToggles | null,
+  /** User messages already in this session before the current send (0 = erste Nachricht). */
+  priorUserMessageCount: number,
 ): string {
   const title = setup.jobTitle
     ? `${setup.jobTitle}${setup.companyName ? ` bei ${setup.companyName}` : ''}`
     : (setup.companyName ? `Rolle bei ${setup.companyName}` : '')
 
-  const baseInstruction = [
+  const isFollowUp = priorUserMessageCount > 0
+
+  const toneAndGrounding = [
+    'Ton: menschlich, sachlich, moderat — weder Marketing-Sprech noch übertriebene Begeisterung.',
+    'Nur Aussagen, die sich aus STELLENKONTEXT und BEWERBERPROFIL begründen lassen; fehlende Infos ehrlich als Lücke benennen — nichts erfinden oder raten.',
+  ].join('\n')
+
+  const baseInstructionInitial = [
     '[SYSTEM - JOB ANALYZER] Antworte nur auf Deutsch.',
-    'Nutze eine klare, kurze und professionelle Struktur mit genau diesen Sektionen:',
+    toneAndGrounding,
+    'Erste Analyse in dieser Unterhaltung — nutze eine klare Struktur mit genau diesen Sektionen:',
     '## Match Score',
     '## Stärken des Profils',
     '## Lücken / Risiken',
@@ -373,12 +383,23 @@ function buildJobAnalyzerPrompt(
     '## Konkrete nächste Schritte',
     'Regeln:',
     '- Maximal 5 Stichpunkte pro Sektion.',
-    '- Keine Wiederholung des gesamten Originaltexts.',
-    '- Keine langen Absätze, nur präzise Aussagen.',
+    '- Keine Wiederholung des gesamten Stellentexts.',
+    '- Kurz und präzise; vermeide generische Floskeln, die bei jeder Analyse gleich klingen.',
     '- Begründe den Match Score mit 2 bis 4 klaren Gründen.',
-    'Bei Nachfragen:',
-    '- Wenn der User „nochmal prüfen“, „Fokus auf Erfahrung“ oder ähnliches schreibt, nutze den **aktuellen** BEWERBERPROFIL-Block und formuliere die Analyse **neu** (keine wortgleiche Wiederholung der vorherigen Antwort).',
   ].join('\n')
+
+  const baseInstructionFollowUp = [
+    '[SYSTEM - JOB ANALYZER] Antworte nur auf Deutsch.',
+    toneAndGrounding,
+    `Kontext: Die aktuelle Eingabe ist User-Nachricht #${priorUserMessageCount + 1} in dieser Session (Folgefrage).`,
+    'Du führst ein **laufendes** Gespräch zur Stellenanalyse; es gibt bereits frühere Nachrichten in dieser Session.',
+    'Priorität: Beantworte **zuerst** die konkrete Frage oder den Wunsch in der letzten User-Nachricht — nicht mit einer Standard-Gesamt-Analyse „von vorn“, es sei denn, der User verlangt ausdrücklich eine komplette Neu-Analyse.',
+    'Struktur: 2–5 kurze Abschnitte mit ##-Überschriften, **passend zur Frage**. Du musst **nicht** erneut alle fünf Standard-Sektionen (Match Score, Stärken, Lücken, Keywords, Schritte) füllen.',
+    'Anti-Wiederholung: Nutze den bisherigen Chat. Wiederhole **keine** Sätze oder Stichpunkte wörtlich aus deiner letzten Antwort; formuliere neu, vertiefe oder fokussiere schmaler — je nachdem, was der User will.',
+    'Wenn der User nur einen Aspekt will (z. B. Erfahrung, eine Sektion kürzer, Risiken vertiefen), liefere genau das.',
+  ].join('\n')
+
+  const baseInstruction = isFollowUp ? baseInstructionFollowUp : baseInstructionInitial
 
   let safeUser = userMessage.trim().slice(0, 700)
   if (!safeUser) safeUser = 'Bitte starte jetzt die Erstanalyse.'
@@ -711,6 +732,7 @@ export default function ChatPage() {
     const sessionToolType = store.sessions[sessionId]?.toolType ?? store.currentToolType
     const displayText = options?.displayText ?? text
     const outgoingText = options?.apiMessageOverride ?? text
+    const priorUserMessageCount = (store.sessions[sessionId]?.messages ?? []).filter(m => m.isUser).length
 
     setError(null)
 
@@ -732,7 +754,13 @@ export default function ChatPage() {
         togglesForPrompt,
       )
       : (store.currentToolType === 'jobanalyzer'
-        ? buildJobAnalyzerPrompt(outgoingText, jobAnalyzerSetup, profileForPrompt, togglesForPrompt)
+        ? buildJobAnalyzerPrompt(
+          outgoingText,
+          jobAnalyzerSetup,
+          profileForPrompt,
+          togglesForPrompt,
+          priorUserMessageCount,
+        )
         : outgoingText)
 
     const streamingMsgId = crypto.randomUUID()
