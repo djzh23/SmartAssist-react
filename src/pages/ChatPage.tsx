@@ -2,8 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { Link, useSearchParams } from 'react-router-dom'
 import { AlertCircle, PanelLeft, Plus, X } from 'lucide-react'
-import type { CareerProfile } from '../api/profileClient'
-import type { ProfileContextToggles, ToolType } from '../types'
+import type { ToolType } from '../types'
 import { PROGRAMMING_LANGUAGES } from '../types'
 import { UsageLimitError, askAgentStream } from '../api/client'
 import { syncPlanFromStripe } from '../services/StripeService'
@@ -18,7 +17,6 @@ import UsageLimitModal from '../components/ui/UsageLimitModal'
 import { useChatSessions } from '../hooks/useChatSessions'
 import { useCareerProfile } from '../hooks/useCareerProfile'
 import { useUserPlan, dispatchServerUsage } from '../hooks/useUserPlan'
-import { buildCareerProfilePromptAppendix } from '../utils/careerProfilePromptSnippet'
 import { sanitizeTechnicalContext } from '../utils/cvTechnicalContext'
 import { applyStreamText } from '../chat/streamTextBridge'
 import { sessionListLabel } from '../utils/sessionTitle'
@@ -301,8 +299,6 @@ function buildInterviewPrompt(
   userMessage: string,
   language: string,
   setup: InterviewPromptContext,
-  careerProfile: CareerProfile | null,
-  profileToggles: ProfileContextToggles | null,
 ): string {
   const jobUrl = setup.jobUrl.trim().slice(0, 220)
   let safeUser = userMessage.trim().slice(0, 1400)
@@ -317,22 +313,9 @@ function buildInterviewPrompt(
   const cvMax = Math.max(280, Math.floor(remaining * 0.52))
   const jobMax = Math.max(220, remaining - cvMax)
 
-  const modalBudget =
-    careerProfile && profileToggles ? Math.max(200, Math.floor(cvMax * 0.38)) : cvMax
-  const profileBudget =
-    careerProfile && profileToggles ? Math.max(0, cvMax - modalBudget - 60) : 0
-
-  const modalCv = compactLines(sanitizeTechnicalContext(setup.cvText), 20, modalBudget)
-  const savedCv =
-    careerProfile && profileToggles && profileBudget > 0
-      ? buildCareerProfilePromptAppendix(careerProfile, profileToggles, profileBudget)
-      : ''
-
-  const cvParts = [
-    modalCv && `From setup modal:\n${modalCv}`,
-    savedCv && `From saved career profile:\n${savedCv}`,
-  ].filter(Boolean)
-  const cvMerged = cvParts.join('\n\n---\n\n')
+  // Gespeichertes Karriereprofil: nur im API-System-Prompt (ProfileToggles), nicht hier doppeln.
+  const modalCv = compactLines(sanitizeTechnicalContext(setup.cvText), 20, cvMax)
+  const cvMerged = modalCv ? `From setup modal:\n${modalCv}` : ''
 
   const base = interviewBaseInstruction(language, Boolean(cvMerged.trim()), setup.alias.trim())
   const jobText = compactLines(setup.jobText, 12, jobMax)
@@ -356,8 +339,6 @@ function buildInterviewPrompt(
 function buildJobAnalyzerPrompt(
   userMessage: string,
   setup: JobAnalyzerPromptContext,
-  careerProfile: CareerProfile | null,
-  profileToggles: ProfileContextToggles | null,
   /** User messages already in this session before the current send (0 = erste Nachricht). */
   priorUserMessageCount: number,
 ): string {
@@ -417,23 +398,10 @@ function buildJobAnalyzerPrompt(
   const jobMax = Math.max(700, Math.floor(remaining * 0.62))
   const cvMax = Math.max(360, remaining - jobMax)
 
-  const modalBudget =
-    careerProfile && profileToggles ? Math.max(180, Math.floor(cvMax * 0.35)) : cvMax
-  const profileBudget =
-    careerProfile && profileToggles ? Math.max(0, cvMax - modalBudget - 80) : 0
-
   const compactJob = compactLines(setup.jobText, 36, jobMax)
-  const modalCv = compactLines(setup.cvText, 16, modalBudget)
-  const savedProfile =
-    careerProfile && profileToggles && profileBudget > 0
-      ? buildCareerProfilePromptAppendix(careerProfile, profileToggles, profileBudget)
-      : ''
-
-  const cvParts = [
-    modalCv && `Aus Stellenanalyse-Setup:\n${modalCv}`,
-    savedProfile && `Aus gespeichertem Karriereprofil (jeweils aktuell bei dieser Nachricht):\n${savedProfile}`,
-  ].filter(Boolean)
-  const cvMerged = cvParts.join('\n\n---\n\n')
+  // Gespeichertes Karriereprofil: nur im API-System-Prompt (ProfileToggles / Backend), nicht hier doppeln.
+  const modalCv = compactLines(setup.cvText, 20, cvMax)
+  const cvMerged = modalCv ? `Aus Stellenanalyse-Setup:\n${modalCv}` : ''
 
   const jobBlock = compactJob ? `\nSTELLENKONTEXT:\n${compactJob}` : ''
   const cvBlock = cvMerged ? `\nBEWERBERPROFIL:\n${cvMerged}` : ''
@@ -742,25 +710,10 @@ export default function ChatPage() {
     const interviewLangCode = interviewSetup.language === 'en' ? 'en' : 'de'
     const interviewLangName = interviewLangCode === 'de' ? 'German' : 'English'
 
-    const profileForPrompt = isSignedIn ? careerProfile : null
-    const togglesForPrompt = isSignedIn ? profileToggles : null
-
     const apiMessage = isInterview
-      ? buildInterviewPrompt(
-        outgoingText,
-        interviewLangName,
-        interviewSetup,
-        profileForPrompt,
-        togglesForPrompt,
-      )
+      ? buildInterviewPrompt(outgoingText, interviewLangName, interviewSetup)
       : (store.currentToolType === 'jobanalyzer'
-        ? buildJobAnalyzerPrompt(
-          outgoingText,
-          jobAnalyzerSetup,
-          profileForPrompt,
-          togglesForPrompt,
-          priorUserMessageCount,
-        )
+        ? buildJobAnalyzerPrompt(outgoingText, jobAnalyzerSetup, priorUserMessageCount)
         : outgoingText)
 
     const streamingMsgId = crypto.randomUUID()
@@ -1076,13 +1029,14 @@ export default function ChatPage() {
               {kontextHintOpen ? (
                 <div className="mt-1.5 flex items-start gap-1 rounded-lg bg-slate-50/90 py-0.5 pl-0 pr-0.5">
                   <p className="min-w-0 flex-1 text-[11px] leading-snug text-slate-500">
-                    <strong className="font-medium text-slate-600">Farbig = aktiv:</strong> diese Teile stecken in der
-                    nächsten Nachricht (Quelle:{' '}
+                    <strong className="font-medium text-slate-600">Farbig = aktiv:</strong> diese Profilteile steckt der
+                    Server im <strong className="font-medium text-slate-600">System-Prompt</strong> (nicht doppelt im
+                    Nachrichtentext). Stellenanalyse/Interview: in der Nachricht nur ggf. Text aus dem{' '}
+                    <strong className="font-medium text-slate-600">Setup-Modal</strong>. Bearbeiten unter{' '}
                     <Link to="/career-profile" className="font-medium text-primary hover:underline">
                       Karriereprofil
                     </Link>
-                    ; Stellenanalyse mixt zusätzlich Setup-Modal + Profil). HTTPS, nur angemeldet. Nach Profil-Änderungen:
-                    Seite neu laden, damit der Chat den neuesten Stand nutzt.
+                    . HTTPS, nur angemeldet; nach Profil-Änderungen Seite neu laden.
                   </p>
                   <button
                     type="button"
