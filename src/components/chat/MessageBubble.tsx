@@ -6,6 +6,7 @@ import ProgrammingResponse from './ProgrammingResponse'
 import InterviewResponse from './InterviewResponse'
 import { RenderedMarkdown } from './RenderedMarkdown'
 import { parseLearningResponse } from '../../utils/parseLearningResponse'
+import StreamingTextCursor from './StreamingTextCursor'
 
 interface Props {
   msg: ChatMessage
@@ -15,6 +16,8 @@ interface Props {
   targetLangCode?: string
   progLang?: string
   useLanguageCard?: boolean
+  /** Blinkender Cursor während gedrosseltem Stream-Rendering */
+  showStreamCursor?: boolean
 }
 
 export default function MessageBubble({
@@ -25,6 +28,7 @@ export default function MessageBubble({
   targetLangCode = 'es',
   progLang = 'csharp',
   useLanguageCard = false,
+  showStreamCursor = false,
 }: Props) {
   const time = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   const isJobAnalyzerReply = !msg.isUser && (toolType === 'jobanalyzer' || msg.toolUsed === 'analyze_job')
@@ -46,6 +50,7 @@ export default function MessageBubble({
           nativeLang={nativeLang}
           targetLangCode={targetLangCode}
           timestamp={msg.timestamp}
+          showStreamCursor={showStreamCursor}
         />
       )
     }
@@ -59,6 +64,7 @@ export default function MessageBubble({
           nativeLang={nativeLang}
           targetLangCode={targetLangCode}
           timestamp={msg.timestamp}
+          showStreamCursor={showStreamCursor}
         />
       )
     }
@@ -78,6 +84,7 @@ export default function MessageBubble({
           nativeLang={nativeLang}
           targetLangCode={targetLangCode}
           timestamp={msg.timestamp}
+          showStreamCursor={showStreamCursor}
         />
       )
     }
@@ -86,7 +93,7 @@ export default function MessageBubble({
   if (isJobAnalyzerReply) {
     return (
       <div className="flex w-full animate-slide-up flex-col items-start gap-1">
-        <JobAnalysisCard text={msg.text} />
+        <JobAnalysisCard text={msg.text} showStreamCursor={showStreamCursor} />
         <div className="flex items-center gap-2 pl-1">
           <span className="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[11px] font-medium text-sky-600">
             <BriefcaseBusiness size={11} />
@@ -104,6 +111,7 @@ export default function MessageBubble({
         text={msg.text}
         progLang={progLang}
         timestamp={msg.timestamp}
+        showStreamCursor={showStreamCursor}
       />
     )
   }
@@ -113,6 +121,7 @@ export default function MessageBubble({
       <InterviewResponse
         text={msg.text}
         timestamp={msg.timestamp}
+        showStreamCursor={showStreamCursor}
       />
     )
   }
@@ -122,6 +131,7 @@ export default function MessageBubble({
       <div className="self-start flex max-w-[85%] animate-slide-up flex-col gap-1">
         <div className="break-words rounded-[4px_18px_18px_18px] bg-slate-100 px-3.5 py-2.5 text-sm leading-relaxed text-slate-800">
           <RenderedMarkdown content={msg.text} />
+          {showStreamCursor ? <StreamingTextCursor /> : null}
         </div>
         <div className="flex items-center gap-2 px-1">
           {msg.toolUsed && msg.toolUsed !== 'analyze_job' && (

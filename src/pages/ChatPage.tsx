@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { Link, useSearchParams } from 'react-router-dom'
 import { AlertCircle, PanelLeft, Plus, X } from 'lucide-react'
@@ -11,16 +11,18 @@ import ChatInput from '../components/chat/ChatInput'
 import ChatSidebar from '../components/chat/ChatSidebar'
 import ContextModal, { type ContextModalToolType, type ContextPayload } from '../components/chat/ContextModal'
 import MessageList from '../components/chat/MessageList'
+import { ThinkingIndicator, shouldSkipThinkingUi, STREAM_CHARS_PER_SECOND } from '../components/chat/ThinkingIndicator'
 import ChatAnswerReadyBanner from '../components/chat/ChatAnswerReadyBanner'
 import OnboardingPromptModal, { ONBOARDING_CHAT_PROMPT_DISMISS_KEY } from '../components/chat/OnboardingPromptModal'
 import UsageLimitModal from '../components/ui/UsageLimitModal'
+import { useDeliberateStream } from '../hooks/useDeliberateStream'
 import { useChatSessions } from '../hooks/useChatSessions'
 import { useCareerProfile } from '../hooks/useCareerProfile'
 import { useUserPlan, dispatchServerUsage } from '../hooks/useUserPlan'
 import { sanitizeTechnicalContext } from '../utils/cvTechnicalContext'
 import { applyStreamText } from '../chat/streamTextBridge'
 import { sessionListLabel } from '../utils/sessionTitle'
-import { getProfileCompleteness, getProfileCompletenessGapHint } from '../utils/profileCompleteness'
+import { buildProfileStatsLine, getProfileCompleteness, getProfileCompletenessGapHint } from '../utils/profileCompleteness'
 
 /** German UI labels shown in sidebar / header chips */
 const LANG_DISPLAY: Record<string, string> = {
@@ -457,6 +459,59 @@ export default function ChatPage() {
     skipOnboarding,
   } = useCareerProfile()
 
+  const streamCtxRef = useRef<{
+    sessionId: string
+    msgId: string
+    sessionToolType: ToolType
+  } | null>(null)
+  const streamResultRef = useRef<{ toolUsed: string; serverUsageToday?: number } | null>(null)
+  const incrementUsageRef = useRef(incrementUsage)
+  incrementUsageRef.current = incrementUsage
+
+  const onDisplayUpdateStable = useCallback((text: string) => {
+    const c = streamCtxRef.current
+    if (c) applyStreamText(c.sessionId, c.msgId, text)
+  }, [])
+
+  const onRevealCompleteStable = useCallback((finalText: string) => {
+    const c = streamCtxRef.current
+    const r = streamResultRef.current
+    if (!c) return
+    flushSync(() => {
+      store.finalizeMessage(c.sessionId, c.msgId, { toolUsed: r?.toolUsed || undefined })
+    })
+    const preview = finalText.trim().split('\n')[0] ?? 'Neue Antwort'
+    store.notifyAnswerReady(c.sessionId, c.sessionToolType, preview)
+    if (typeof r?.serverUsageToday === 'number') {
+      dispatchServerUsage(r.serverUsageToday)
+    } else {
+      incrementUsageRef.current()
+    }
+    store.setSessionStreaming(c.sessionId, false)
+    streamCtxRef.current = null
+    streamResultRef.current = null
+  }, [store])
+
+  const deliberate = useDeliberateStream({
+    charsPerSecond: 80,
+    initialDelayMs: 200,
+    onDisplayUpdate: onDisplayUpdateStable,
+    onRevealComplete: onRevealCompleteStable,
+  })
+
+  const [thinkingSession, setThinkingSession] = useState<{
+    sessionId: string
+    messageId: string
+    toolType: ToolType
+  } | null>(null)
+
+  const handleThinkingComplete = useCallback(() => {
+    setThinkingSession(null)
+    const c = streamCtxRef.current
+    const cps = c ? STREAM_CHARS_PER_SECOND[c.sessionToolType] ?? 80 : 80
+    deliberate.startReveal(cps)
+  }, [deliberate])
+
   useEffect(() => {
     if (!isSignedIn || careerProfileLoading || careerProfileError || !needsOnboarding) {
       setShowOnboardingModal(false)
@@ -756,49 +811,106 @@ export default function ChatPage() {
       store.setSessionStreaming(sessionId, true, streamingMsgId)
     })
 
+    const skipThinkingUi = shouldSkipThinkingUi(outgoingText, sessionToolType)
+    let usedDeliberatePath = false
+
     try {
       const token = await getToken()
-      let accumulated = ''
 
-      const { toolUsed, serverUsageToday } = await askAgentStream(
-        {
-          message: apiMessage,
-          sessionId,
-          toolType: apiToolTypeForChat(store.currentToolType),
-          languageLearningMode: llMode,
-          targetLanguage: llMode ? targetApiName : undefined,
-          nativeLanguage: llMode ? nativeApiName : undefined,
-          targetLanguageCode: llMode ? targetLang : undefined,
-          nativeLanguageCode: llMode ? nativeLang : undefined,
-          level: llMode ? 'adaptive' : undefined,
-          learningGoal: llMode ? 'Kurze Sätze, Zielsprache und Übersetzung' : undefined,
-          programmingMode: isProgramming ? true : undefined,
-          programmingLanguage: isProgramming ? progMeta?.label : undefined,
-          interviewMode: isInterview ? true : undefined,
-          interviewLanguage: isInterview ? (interviewLangCode === 'de' ? 'German' : 'English') : undefined,
-          profileToggles: isSignedIn ? profileToggles : undefined,
-        },
-        token,
-        (chunk) => {
-          accumulated += chunk
-          applyStreamText(sessionId, streamingMsgId, accumulated)
-        },
-      )
+      if (skipThinkingUi) {
+        let accumulated = ''
 
-      flushSync(() => {
-        store.finalizeMessage(sessionId, streamingMsgId, { toolUsed: toolUsed || undefined })
-      })
+        const { toolUsed, serverUsageToday } = await askAgentStream(
+          {
+            message: apiMessage,
+            sessionId,
+            toolType: apiToolTypeForChat(store.currentToolType),
+            languageLearningMode: llMode,
+            targetLanguage: llMode ? targetApiName : undefined,
+            nativeLanguage: llMode ? nativeApiName : undefined,
+            targetLanguageCode: llMode ? targetLang : undefined,
+            nativeLanguageCode: llMode ? nativeLang : undefined,
+            level: llMode ? 'adaptive' : undefined,
+            learningGoal: llMode ? 'Kurze Sätze, Zielsprache und Übersetzung' : undefined,
+            programmingMode: isProgramming ? true : undefined,
+            programmingLanguage: isProgramming ? progMeta?.label : undefined,
+            interviewMode: isInterview ? true : undefined,
+            interviewLanguage: isInterview ? (interviewLangCode === 'de' ? 'German' : 'English') : undefined,
+            profileToggles: isSignedIn ? profileToggles : undefined,
+          },
+          token,
+          (chunk) => {
+            accumulated += chunk
+            applyStreamText(sessionId, streamingMsgId, accumulated)
+          },
+        )
 
-      const preview = accumulated.trim().split('\n')[0] ?? 'Neue Antwort'
-      store.notifyAnswerReady(sessionId, sessionToolType, preview)
+        flushSync(() => {
+          store.finalizeMessage(sessionId, streamingMsgId, { toolUsed: toolUsed || undefined })
+        })
 
-      if (typeof serverUsageToday === 'number') {
-        dispatchServerUsage(serverUsageToday)
+        const preview = accumulated.trim().split('\n')[0] ?? 'Neue Antwort'
+        store.notifyAnswerReady(sessionId, sessionToolType, preview)
+
+        if (typeof serverUsageToday === 'number') {
+          dispatchServerUsage(serverUsageToday)
+        } else {
+          incrementUsage()
+        }
       } else {
-        incrementUsage()
+        usedDeliberatePath = true
+        deliberate.reset()
+        streamCtxRef.current = {
+          sessionId,
+          msgId: streamingMsgId,
+          sessionToolType,
+        }
+        streamResultRef.current = null
+        setThinkingSession({
+          sessionId,
+          messageId: streamingMsgId,
+          toolType: sessionToolType,
+        })
+
+        const { toolUsed, serverUsageToday } = await askAgentStream(
+          {
+            message: apiMessage,
+            sessionId,
+            toolType: apiToolTypeForChat(store.currentToolType),
+            languageLearningMode: llMode,
+            targetLanguage: llMode ? targetApiName : undefined,
+            nativeLanguage: llMode ? nativeApiName : undefined,
+            targetLanguageCode: llMode ? targetLang : undefined,
+            nativeLanguageCode: llMode ? nativeLang : undefined,
+            level: llMode ? 'adaptive' : undefined,
+            learningGoal: llMode ? 'Kurze Sätze, Zielsprache und Übersetzung' : undefined,
+            programmingMode: isProgramming ? true : undefined,
+            programmingLanguage: isProgramming ? progMeta?.label : undefined,
+            interviewMode: isInterview ? true : undefined,
+            interviewLanguage: isInterview ? (interviewLangCode === 'de' ? 'German' : 'English') : undefined,
+            profileToggles: isSignedIn ? profileToggles : undefined,
+          },
+          token,
+          (chunk) => {
+            deliberate.appendFromNetwork(chunk)
+          },
+        )
+
+        streamResultRef.current = {
+          toolUsed: toolUsed || '',
+          serverUsageToday,
+        }
+        deliberate.markNetworkComplete()
       }
     } catch (sendError) {
       store.deleteMessage(sessionId, streamingMsgId)
+      if (usedDeliberatePath) {
+        deliberate.reset()
+        setThinkingSession(null)
+        streamCtxRef.current = null
+        streamResultRef.current = null
+        store.setSessionStreaming(sessionId, false)
+      }
       if (sendError instanceof UsageLimitError) {
         // Before showing the modal, re-check the plan from the server.
         // If the backend returned 429 due to a stale "free" plan right after a Stripe
@@ -824,13 +936,37 @@ export default function ChatPage() {
         setError(sendError instanceof Error ? sendError.message : 'Etwas ist schiefgelaufen. Bitte versuche es erneut.')
       }
     } finally {
-      store.setSessionStreaming(sessionId, false)
+      if (!usedDeliberatePath) {
+        store.setSessionStreaming(sessionId, false)
+      }
     }
   }
 
   const activeId = store.activeSessionId
   /** Streaming is tracked in ChatSessionsProvider so it survives switching chats / routes. */
   const inputBlocked = store.isSessionStreaming(activeId)
+
+  const thinkingSlot =
+    thinkingSession
+    && activeId === thinkingSession.sessionId
+    && store.streamingPlaceholder?.messageId === thinkingSession.messageId
+      ? (
+          <ThinkingIndicator
+            key={`${thinkingSession.sessionId}-${thinkingSession.messageId}`}
+            toolType={thinkingSession.toolType}
+            includeProfileStep={
+              isSignedIn
+              && (profileToggles.includeBasicProfile
+                || profileToggles.includeSkills
+                || profileToggles.includeExperience
+                || profileToggles.includeCv)
+            }
+            hasTargetJob={Boolean(profileToggles.activeTargetJobId)}
+            profileStatsLine={buildProfileStatsLine(careerProfile ?? null)}
+            onComplete={handleThinkingComplete}
+          />
+        )
+      : undefined
 
   const programmingContextLabel = activeContext?.programmingLanguage
     || (activeContext?.programmingLanguageId
@@ -1001,6 +1137,9 @@ export default function ChatPage() {
                 nativeLang={nativeDisplay}
                 targetLangCode={targetLang}
                 progLang={progLang}
+                thinkingSlot={thinkingSlot}
+                streamCursorActive={deliberate.isRevealing}
+                streamCursorMessageId={store.streamingPlaceholder?.messageId ?? null}
               />
             </div>
           </div>

@@ -21,6 +21,18 @@ export function getProfileCompleteness(profile: CareerProfile): number {
 }
 
 /** Kurzer Hinweis, welche Bereiche noch fehlen (für UI unter der Progress-Bar). */
+/** Kurzzeile für Thinking-UI, z. B. "8 Skills · 2 Erfahrungen". */
+export function buildProfileStatsLine(profile: CareerProfile | null): string | null {
+  if (!profile) return null
+  const nSk = profile.skills?.length ?? 0
+  const nEx = profile.experience?.length ?? 0
+  if (nSk === 0 && nEx === 0) return null
+  const parts: string[] = []
+  if (nSk) parts.push(`${nSk} Skill${nSk === 1 ? '' : 's'}`)
+  if (nEx) parts.push(`${nEx} Erfahrung${nEx === 1 ? '' : 'en'}`)
+  return parts.join(' · ')
+}
+
 export function getProfileCompletenessGapHint(profile: CareerProfile): string | null {
   const parts: string[] = []
   if (!profile.skills.length) parts.push('Skills fehlen noch')

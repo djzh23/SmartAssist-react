@@ -11,9 +11,11 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { bodyToHtml, parseJobAnalysis, pickOverallScore, type JobSectionTone } from '../../utils/jobMarkdown'
+import StreamingTextCursor from './StreamingTextCursor'
 
 interface Props {
   text: string
+  showStreamCursor?: boolean
 }
 
 const ICON_BY_TONE: Record<JobSectionTone, LucideIcon> = {
@@ -45,13 +47,18 @@ function scoreBarClasses(score?: number): string {
   return 'bg-rose-500'
 }
 
-export default function JobAnalysisCard({ text }: Props) {
+export default function JobAnalysisCard({ text, showStreamCursor = false }: Props) {
   const sections = parseJobAnalysis(text)
   const nonEmptySections = sections.filter(section => section.body.trim().length > 0)
   const visibleSections = nonEmptySections.length > 0 ? nonEmptySections : sections
 
   if (visibleSections.length === 0) {
-    return <p className="whitespace-pre-wrap text-sm text-slate-700">{text}</p>
+    return (
+      <p className="whitespace-pre-wrap text-sm text-slate-700">
+        {text}
+        {showStreamCursor ? <StreamingTextCursor /> : null}
+      </p>
+    )
   }
 
   const overallScore = pickOverallScore(visibleSections)
@@ -128,6 +135,11 @@ export default function JobAnalysisCard({ text }: Props) {
           )
         })}
       </div>
+      {showStreamCursor ? (
+        <div className="pl-1 pt-1">
+          <StreamingTextCursor />
+        </div>
+      ) : null}
     </div>
   )
 }

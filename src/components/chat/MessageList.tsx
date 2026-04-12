@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, type ReactNode } from 'react'
 import type { ChatMessage, ToolType } from '../../types'
 import type { StreamingPlaceholder } from '../../context/ChatSessionsProvider'
 import MessageBubble from './MessageBubble'
@@ -13,6 +13,10 @@ interface Props {
   nativeLang?: string
   targetLangCode?: string
   progLang?: string
+  /** Ersetzt Typing-Dots während der Thinking-Phase (leerer Assistant-Placeholder). */
+  thinkingSlot?: ReactNode
+  streamCursorActive?: boolean
+  streamCursorMessageId?: string | null
 }
 
 function TypingDots() {
@@ -38,6 +42,9 @@ export default function MessageList({
   nativeLang,
   targetLangCode,
   progLang,
+  thinkingSlot,
+  streamCursorActive = false,
+  streamCursorMessageId = null,
 }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null)
 
@@ -76,8 +83,21 @@ export default function MessageList({
             && msg.text.trim() === ''
 
           if (isPlaceholderTyping) {
+            if (thinkingSlot) {
+              return (
+                <div key={msg.id} className="self-start">
+                  {thinkingSlot}
+                </div>
+              )
+            }
             return <TypingDots key={msg.id} />
           }
+
+          const showStreamCursor =
+            streamCursorActive
+            && streamCursorMessageId !== null
+            && streamCursorMessageId === msg.id
+            && !msg.isUser
 
           return (
             <MessageBubble
@@ -89,6 +109,7 @@ export default function MessageList({
               targetLangCode={targetLangCode}
               progLang={progLang}
               useLanguageCard={useLanguageCard}
+              showStreamCursor={showStreamCursor}
             />
           )
         })

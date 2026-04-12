@@ -3,6 +3,7 @@ import { useAuth } from '@clerk/clerk-react'
 import { Square, Volume2, VolumeX } from 'lucide-react'
 import { fetchTtsAudio } from '../../api/client'
 import type { LearningData } from '../../types'
+import StreamingTextCursor from './StreamingTextCursor'
 
 interface Props {
   data: LearningData
@@ -16,6 +17,7 @@ interface Props {
    * to call /api/speech/demo-tts without a token.
    */
   fetchAudio?: (text: string, langCode: string) => Promise<Blob | null>
+  showStreamCursor?: boolean
 }
 
 /** Best BCP-47 tag per language code */
@@ -63,7 +65,15 @@ function pickBestVoice(voices: SpeechSynthesisVoice[], langTag: string): SpeechS
   return [...candidates].sort((a, b) => rank(b) - rank(a))[0]
 }
 
-export default function LearningResponse({ data, targetLang, nativeLang, targetLangCode, timestamp, fetchAudio }: Props) {
+export default function LearningResponse({
+  data,
+  targetLang,
+  nativeLang,
+  targetLangCode,
+  timestamp,
+  fetchAudio,
+  showStreamCursor = false,
+}: Props) {
   const time = new Date(timestamp).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })
   const { getToken } = useAuth()
   const [isPlaying, setIsPlaying] = useState(false)
@@ -199,6 +209,7 @@ export default function LearningResponse({ data, targetLang, nativeLang, targetL
         </div>
         <p className="font-serif text-lg font-medium leading-relaxed text-[#2D1B69]">
           {data.targetLanguageText}
+          {showStreamCursor ? <StreamingTextCursor /> : null}
         </p>
       </div>
 

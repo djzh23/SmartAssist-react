@@ -3,6 +3,7 @@ import { MessageCircleMore } from 'lucide-react'
 import CodeBlock from './CodeBlock'
 import { parseBlocks, parseSegments } from '../../utils/markdownRenderer'
 import type { Block } from '../../utils/markdownRenderer'
+import StreamingTextCursor from './StreamingTextCursor'
 
 function renderInline(text: string): ReactNode[] {
   const nodes: ReactNode[] = []
@@ -165,9 +166,10 @@ function renderBlock(block: Block, style: typeof STYLES[SectionKind], index: num
 interface Props {
   text: string
   timestamp: string
+  showStreamCursor?: boolean
 }
 
-export default function InterviewResponse({ text, timestamp }: Props) {
+export default function InterviewResponse({ text, timestamp, showStreamCursor = false }: Props) {
   const time = new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   const segments = parseSegments(text)
   const hasStructure = segments.some(seg => seg.type === 'text' && seg.content.includes('## '))
@@ -195,6 +197,11 @@ export default function InterviewResponse({ text, timestamp }: Props) {
               })
             ),
           )}
+          {showStreamCursor ? (
+            <div className="mt-1">
+              <StreamingTextCursor />
+            </div>
+          ) : null}
         </div>
       </div>
 

@@ -3,6 +3,7 @@ import CodeBlock from './CodeBlock'
 import { PROGRAMMING_LANGUAGES } from '../../types'
 import { parseBlocks, parseSegments } from '../../utils/markdownRenderer'
 import type { Block } from '../../utils/markdownRenderer'
+import StreamingTextCursor from './StreamingTextCursor'
 
 // ── Inline markdown renderer ───────────────────────────────
 function renderInline(text: string): ReactNode[] {
@@ -83,9 +84,10 @@ interface Props {
   text: string
   progLang: string
   timestamp: string
+  showStreamCursor?: boolean
 }
 
-export default function ProgrammingResponse({ text, progLang, timestamp }: Props) {
+export default function ProgrammingResponse({ text, progLang, timestamp, showStreamCursor = false }: Props) {
   const meta = PROGRAMMING_LANGUAGES.find(l => l.id === progLang)
   const syntaxLang = meta?.syntaxLang ?? progLang
   const segments = parseSegments(text, syntaxLang)
@@ -103,6 +105,11 @@ export default function ProgrammingResponse({ text, progLang, timestamp }: Props
             </div>
           )
         )}
+        {showStreamCursor ? (
+          <div className="mt-1">
+            <StreamingTextCursor />
+          </div>
+        ) : null}
       </div>
       <span className="text-[11px] text-slate-400 pl-1">{time}</span>
     </div>
