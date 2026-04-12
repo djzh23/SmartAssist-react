@@ -3,8 +3,6 @@ import { FileUp, Loader2 } from 'lucide-react'
 import type { Education, ParsedCvData, ProfileLanguage, WorkExperience } from '../../api/profileClient'
 import { uploadCvPdfForParsing } from '../../api/profileClient'
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ? `${import.meta.env.VITE_API_BASE_URL}` : ''
-
 interface FieldOpt {
   value: string
   label: string
@@ -82,10 +80,6 @@ export default function CvUploader({
     }
     if (file.size > 5 * 1024 * 1024) {
       setError('Die Datei darf maximal 5 MB groß sein.')
-      return
-    }
-    if (!API_BASE) {
-      setError('API-Basis-URL fehlt (VITE_API_BASE_URL).')
       return
     }
 
