@@ -20,6 +20,7 @@ import { useUserPlan, dispatchServerUsage } from '../hooks/useUserPlan'
 import { sanitizeTechnicalContext } from '../utils/cvTechnicalContext'
 import { applyStreamText } from '../chat/streamTextBridge'
 import { sessionListLabel } from '../utils/sessionTitle'
+import { getProfileCompleteness, getProfileCompletenessGapHint } from '../utils/profileCompleteness'
 
 /** German UI labels shown in sidebar / header chips */
 const LANG_DISPLAY: Record<string, string> = {
@@ -516,6 +517,36 @@ export default function ChatPage() {
   const isProgramming = store.currentToolType === 'programming'
   const isInterview = store.currentToolType === 'interview'
 
+  const profileCompletenessPct = careerProfile ? getProfileCompleteness(careerProfile) : 0
+  const profileGapHint = careerProfile ? getProfileCompletenessGapHint(careerProfile) : null
+
+  const kontextPillLabels = useMemo(() => {
+    const p = careerProfile
+    if (!p) {
+      return {
+        basic: 'Profil',
+        skills: 'Skills',
+        exp: 'Erfahrung',
+        cv: 'Lebenslauf',
+      }
+    }
+    const basicBits = [p.fieldLabel, p.levelLabel, p.currentRole].filter(Boolean) as string[]
+    const basic =
+      basicBits.length > 0 ? `Profil: ${basicBits.join(', ')}` : 'Profil (Basis)'
+    const sk = p.skills
+    const skills =
+      sk.length > 0
+        ? `Skills: ${sk.slice(0, 2).join(', ')}${sk.length > 2 ? ` +${sk.length - 2} weitere` : ''}`
+        : 'Skills'
+    const cvLen = p.cvRawText?.trim().length ?? 0
+    const cv = cvLen > 0 ? `Lebenslauf: ${cvLen} Zeichen` : 'Lebenslauf'
+    const exp =
+      p.experience.length > 0
+        ? `Erfahrung: ${p.experience.length} ${p.experience.length === 1 ? 'Eintrag' : 'Einträge'}`
+        : 'Erfahrung'
+    return { basic, skills, exp, cv }
+  }, [careerProfile])
+
   const llMode = isLanguage
   /** For display in UI (German labels) */
   const nativeDisplay = LANG_DISPLAY[nativeLang] ?? nativeLang
@@ -992,33 +1023,63 @@ export default function ChatPage() {
         {isSignedIn && !careerProfileLoading && (
           <div className="flex-shrink-0 border-b border-slate-200 bg-white px-4 py-2">
             <div className="mx-auto max-w-3xl">
+              {careerProfile && (
+                <div className="mb-2 flex flex-wrap items-center gap-2">
+                  <span className="text-[11px] font-medium text-slate-500">Profil</span>
+                  <div className="flex gap-0.5" aria-hidden>
+                    {Array.from({ length: 10 }).map((_, i) => (
+                      <div
+                        key={i}
+                        className={[
+                          'h-2 w-2 rounded-sm',
+                          i < Math.ceil(profileCompletenessPct / 10) ? 'bg-teal-500' : 'bg-slate-200',
+                        ].join(' ')}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-[11px] font-semibold text-slate-700">{profileCompletenessPct}%</span>
+                  {profileGapHint ? (
+                    <span className="min-w-0 text-[11px] text-slate-500">— {profileGapHint}</span>
+                  ) : null}
+                </div>
+              )}
+              {careerProfile && profileCompletenessPct < 50 && (
+                <div className="mb-2 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-[11px] text-amber-900">
+                  Je vollständiger dein Profil, desto besser die Antworten. Ergänze fehlende Bereiche unter{' '}
+                  <Link to="/career-profile" className="font-medium text-primary hover:underline">
+                    Karriereprofil
+                  </Link>
+                  .
+                </div>
+              )}
               <div className="flex flex-wrap items-center gap-2">
                 <span className="mr-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Kontext</span>
                 <TogglePill
                   active={profileToggles.includeBasicProfile}
-                  label="Profil"
+                  label={kontextPillLabels.basic}
                   onClick={() => updateToggles({ includeBasicProfile: !profileToggles.includeBasicProfile })}
                 />
                 <TogglePill
                   active={profileToggles.includeSkills}
-                  label="Skills"
+                  label={kontextPillLabels.skills}
                   onClick={() => updateToggles({ includeSkills: !profileToggles.includeSkills })}
                 />
                 <TogglePill
                   active={profileToggles.includeExperience}
-                  label="Erfahrung"
+                  label={kontextPillLabels.exp}
                   onClick={() => updateToggles({ includeExperience: !profileToggles.includeExperience })}
                 />
                 <TogglePill
                   active={profileToggles.includeCv}
-                  label="Lebenslauf"
+                  label={kontextPillLabels.cv}
                   onClick={() => updateToggles({ includeCv: !profileToggles.includeCv })}
                 />
                 {(careerProfile?.targetJobs ?? []).map(job => (
                   <TogglePill
                     key={job.id}
                     active={profileToggles.activeTargetJobId === job.id}
-                    label={`${job.title ?? 'Stelle'}${job.company ? ` @ ${job.company}` : ''}`}
+                    label={`Zielstelle: ${job.title ?? 'Stelle'}${job.company ? ` @ ${job.company}` : ''}`}
+                    title={`Zielstelle: ${job.title ?? ''}${job.company ? ` @ ${job.company}` : ''}`}
                     onClick={() =>
                       updateToggles({
                         activeTargetJobId: profileToggles.activeTargetJobId === job.id ? null : job.id,

@@ -213,6 +213,24 @@ export default function LearningResponse({ data, targetLang, nativeLang, targetL
         </div>
       )}
 
+      {data.learnContext && (
+        <div className="rounded-xl border-l-[3px] border-l-sky-400 bg-sky-50/80 px-4 py-3">
+          <div className="mb-1.5 text-[10px] font-bold uppercase tracking-[1.2px] text-sky-700">
+            Kontext
+          </div>
+          <p className="text-sm leading-relaxed text-slate-700">{data.learnContext}</p>
+        </div>
+      )}
+
+      {data.learnVariants && (
+        <div className="rounded-xl border-l-[3px] border-l-violet-400 bg-violet-50/80 px-4 py-3">
+          <div className="mb-1.5 text-[10px] font-bold uppercase tracking-[1.2px] text-violet-800">
+            Varianten
+          </div>
+          <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-700">{data.learnVariants}</p>
+        </div>
+      )}
+
       {data.learnTip && (
         <div className="learning-card-tip rounded-xl border-l-[3px] border-l-amber-500 bg-[#FFFBEB] px-3.5 py-2 transition-transform duration-100 hover:translate-x-0.5">
           <p className="font-mono text-[13px] leading-snug text-amber-900">

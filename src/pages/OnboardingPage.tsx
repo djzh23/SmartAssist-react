@@ -1,7 +1,14 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@clerk/clerk-react'
-import { completeOnboarding, uploadCv } from '../api/profileClient'
+import {
+  completeOnboarding,
+  fetchProfile,
+  updateFullProfile,
+  uploadCv,
+  type ParsedCvData,
+} from '../api/profileClient'
+import CvUploader from '../components/profile/CvUploader'
 import { useCareerProfile } from '../hooks/useCareerProfile'
 import LoadingScreen from '../components/LoadingScreen'
 
@@ -49,6 +56,7 @@ export default function OnboardingPage() {
   const [currentRole, setCurrentRole] = useState('')
   const [goals, setGoals] = useState<string[]>([])
   const [cvText, setCvText] = useState('')
+  const [cvStepChoice, setCvStepChoice] = useState<'pick' | 'pdf' | 'paste'>('pick')
   const [busy, setBusy] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
 
@@ -134,14 +142,67 @@ export default function OnboardingPage() {
     }
   }
 
-  const handleFile = (file: File | null) => {
-    if (!file) return
-    const reader = new FileReader()
-    reader.onload = () => {
-      const t = typeof reader.result === 'string' ? reader.result : ''
-      setCvText(t.slice(0, 120_000))
+  const applyParsedCvAndFinish = async (draft: ParsedCvData) => {
+    setFormError(null)
+    setBusy(true)
+    try {
+      const token = await getToken()
+      if (!token) throw new Error('Kein Anmelde-Token')
+
+      const effField = (draft.field?.trim() || field).trim()
+      const effLevel = (draft.level?.trim() || level).trim()
+      const effFieldLabel = FIELDS.find(f => f.value === effField)?.label ?? fieldLabel
+      const effLevelLabel = LEVELS.find(l => l.value === effLevel)?.label ?? levelLabel
+      const effRole = (draft.currentRole?.trim() || currentRole.trim()) || undefined
+
+      await completeOnboarding(token, {
+        field: effField,
+        fieldLabel: effFieldLabel,
+        level: effLevel,
+        levelLabel: effLevelLabel,
+        currentRole: effRole,
+        goals,
+      })
+
+      const fresh = await fetchProfile(token)
+      await updateFullProfile(token, {
+        ...fresh,
+        field: effField,
+        fieldLabel: effFieldLabel,
+        level: effLevel,
+        levelLabel: effLevelLabel,
+        currentRole: effRole ?? fresh.currentRole,
+        skills: draft.skills.length > 0 ? draft.skills : fresh.skills,
+        experience:
+          draft.experience.filter(e => (e.title ?? '').trim() || (e.company ?? '').trim()).length > 0
+            ? draft.experience.filter(e => (e.title ?? '').trim() || (e.company ?? '').trim())
+            : fresh.experience,
+        educationEntries:
+          draft.education.filter(e => (e.degree ?? '').trim() || (e.institution ?? '').trim()).length > 0
+            ? draft.education.filter(e => (e.degree ?? '').trim() || (e.institution ?? '').trim())
+            : fresh.educationEntries,
+        languages:
+          draft.languages.filter(l => (l.name ?? '').trim()).length > 0
+            ? draft.languages.filter(l => (l.name ?? '').trim())
+            : fresh.languages,
+      })
+
+      await reload()
+      navigate('/chat', { replace: true })
+    } catch (e) {
+      setFormError(e instanceof Error ? e.message : 'Speichern fehlgeschlagen')
+    } finally {
+      setBusy(false)
     }
-    reader.readAsText(file)
+  }
+
+  const handleManualAdjustFromCv = (draft: ParsedCvData) => {
+    try {
+      sessionStorage.setItem('privateprep_pending_cv_parsed', JSON.stringify(draft))
+    } catch {
+      /* ignore */
+    }
+    navigate('/career-profile', { replace: false })
   }
 
   if (profileError) {
@@ -304,59 +365,144 @@ export default function OnboardingPage() {
 
         {step === 3 && (
           <div className="flex flex-1 flex-col gap-4">
-            <p className="text-sm text-slate-600">
-              Lebenslauf als Text einfügen oder .txt-Datei wählen (optional).
-            </p>
-            <textarea
-              value={cvText}
-              onChange={e => setCvText(e.target.value)}
-              rows={10}
-              placeholder="CV-Text hier einfügen…"
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800"
-            />
-            <label className="block">
-              <span className="mb-1 block text-sm font-medium text-slate-700">Datei (.txt)</span>
-              <input
-                type="file"
-                accept=".txt,text/plain"
-                onChange={e => handleFile(e.target.files?.[0] ?? null)}
-                className="w-full text-sm text-slate-600"
-              />
-            </label>
-            <div className="mt-auto flex flex-col gap-2 pt-6">
-              <button
-                type="button"
-                onClick={() => void finishOnboarding(true)}
-                disabled={busy}
-                className="rounded-xl bg-primary py-3 text-sm font-medium text-white hover:bg-primary-hover disabled:opacity-50"
-              >
-                Fertig
-              </button>
-              <button
-                type="button"
-                onClick={() => void finishOnboarding(false)}
-                disabled={busy}
-                className="py-2 text-sm text-slate-500 hover:text-slate-700"
-              >
-                Kein CV — zum Chat
-              </button>
-              <button
-                type="button"
-                onClick={() => setStep(2)}
-                disabled={busy}
-                className="py-2 text-sm text-slate-500 hover:text-slate-700"
-              >
-                Zurück
-              </button>
-              <button
-                type="button"
-                onClick={handleSkipAll}
-                disabled={busy}
-                className="py-2 text-sm text-slate-500 hover:text-slate-700"
-              >
-                Alles überspringen
-              </button>
-            </div>
+            {cvStepChoice === 'pick' && (
+              <>
+                <p className="text-sm text-slate-600">
+                  Optional: Lebenslauf hinterlegen — PDF mit automatischer Erkennung, Text manuell, oder überspringen.
+                </p>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                  <button
+                    type="button"
+                    onClick={() => setCvStepChoice('pdf')}
+                    disabled={busy}
+                    className="flex flex-col items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-5 text-sm font-medium text-slate-800 shadow-sm transition-colors hover:border-primary hover:bg-primary-light/20 disabled:opacity-50"
+                  >
+                    <span className="text-2xl" aria-hidden>
+                      📄
+                    </span>
+                    PDF hochladen
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCvStepChoice('paste')}
+                    disabled={busy}
+                    className="flex flex-col items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-5 text-sm font-medium text-slate-800 shadow-sm transition-colors hover:border-primary hover:bg-primary-light/20 disabled:opacity-50"
+                  >
+                    <span className="text-2xl" aria-hidden>
+                      ✏️
+                    </span>
+                    Manuell eingeben
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void finishOnboarding(false)}
+                    disabled={busy}
+                    className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-5 text-sm font-medium text-slate-600 transition-colors hover:border-slate-400 hover:bg-slate-100 disabled:opacity-50"
+                  >
+                    <span className="text-2xl" aria-hidden>
+                      ⏭
+                    </span>
+                    Überspringen
+                  </button>
+                </div>
+              </>
+            )}
+
+            {cvStepChoice === 'pdf' && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setCvStepChoice('pick')}
+                  className="self-start text-xs text-slate-500 hover:text-slate-800"
+                >
+                  ← Zurück zur Auswahl
+                </button>
+                <CvUploader
+                  getToken={getToken}
+                  fieldOptions={FIELDS}
+                  levelOptions={LEVELS}
+                  cvPasteText={cvText}
+                  onCvPasteTextChange={setCvText}
+                  onApplyParsed={applyParsedCvAndFinish}
+                  onManualAdjust={handleManualAdjustFromCv}
+                />
+              </>
+            )}
+
+            {cvStepChoice === 'paste' && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setCvStepChoice('pick')}
+                  className="self-start text-xs text-slate-500 hover:text-slate-800"
+                >
+                  ← Zurück zur Auswahl
+                </button>
+                <p className="text-sm text-slate-600">Lebenslauf als Text einfügen (optional).</p>
+                <textarea
+                  value={cvText}
+                  onChange={e => setCvText(e.target.value)}
+                  rows={10}
+                  placeholder="CV-Text hier einfügen…"
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800"
+                />
+                <div className="mt-auto flex flex-col gap-2 pt-6">
+                  <button
+                    type="button"
+                    onClick={() => void finishOnboarding(true)}
+                    disabled={busy}
+                    className="rounded-xl bg-primary py-3 text-sm font-medium text-white hover:bg-primary-hover disabled:opacity-50"
+                  >
+                    Fertig
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void finishOnboarding(false)}
+                    disabled={busy}
+                    className="py-2 text-sm text-slate-500 hover:text-slate-700"
+                  >
+                    Kein CV — zum Chat
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setStep(2)}
+                    disabled={busy}
+                    className="py-2 text-sm text-slate-500 hover:text-slate-700"
+                  >
+                    Zurück
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSkipAll}
+                    disabled={busy}
+                    className="py-2 text-sm text-slate-500 hover:text-slate-700"
+                  >
+                    Alles überspringen
+                  </button>
+                </div>
+              </>
+            )}
+
+            {cvStepChoice === 'pick' && (
+              <div className="mt-auto flex flex-col gap-2 pt-6">
+                <button
+                  type="button"
+                  onClick={() => setStep(2)}
+                  disabled={busy}
+                  className="py-2 text-sm text-slate-500 hover:text-slate-700"
+                >
+                  Zurück
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSkipAll}
+                  disabled={busy}
+                  className="py-2 text-sm text-slate-500 hover:text-slate-700"
+                >
+                  Alles überspringen
+                </button>
+              </div>
+            )}
           </div>
         )}
       </main>

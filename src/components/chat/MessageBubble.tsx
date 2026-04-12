@@ -38,6 +38,8 @@ export default function MessageBubble({
           data={{
             targetLanguageText: structured.targetText,
             nativeLanguageText: structured.translationText,
+            learnContext: structured.contextText ?? undefined,
+            learnVariants: structured.variantsText ?? undefined,
             learnTip: structured.tipText ?? undefined,
           }}
           targetLang={targetLang}

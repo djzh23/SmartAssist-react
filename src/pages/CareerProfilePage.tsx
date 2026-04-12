@@ -1,8 +1,15 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '@clerk/clerk-react'
 import { CheckCircle2, Loader2, Plus, Trash2 } from 'lucide-react'
-import type { CareerProfile, Education, ProfileLanguage, TargetJob, WorkExperience } from '../api/profileClient'
+import type {
+  CareerProfile,
+  Education,
+  ParsedCvData,
+  ProfileLanguage,
+  TargetJob,
+  WorkExperience,
+} from '../api/profileClient'
 import {
   addTargetJob,
   completeOnboarding,
@@ -62,8 +69,11 @@ function emptyLang(): ProfileLanguage {
   return { name: '', level: '' }
 }
 
+const PENDING_CV_KEY = 'privateprep_pending_cv_parsed'
+
 export default function CareerProfilePage() {
   const { getToken, isLoaded } = useAuth()
+  const mergedPendingCv = useRef(false)
   const [profile, setProfile] = useState<CareerProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -93,6 +103,43 @@ export default function CareerProfilePage() {
   useEffect(() => {
     void load()
   }, [load])
+
+  useEffect(() => {
+    if (!profile || mergedPendingCv.current) return
+    let raw: string | null = null
+    try {
+      raw = sessionStorage.getItem(PENDING_CV_KEY)
+    } catch {
+      return
+    }
+    if (!raw) return
+    mergedPendingCv.current = true
+    try {
+      sessionStorage.removeItem(PENDING_CV_KEY)
+      const draft = JSON.parse(raw) as ParsedCvData
+      const effField = (draft.field?.trim() || profile.field)?.trim() || profile.field
+      const effLevel = (draft.level?.trim() || profile.level)?.trim() || profile.level
+      const exFiltered =
+        draft.experience?.filter(e => (e.title ?? '').trim() || (e.company ?? '').trim()) ?? []
+      const eduFiltered =
+        draft.education?.filter(e => (e.degree ?? '').trim() || (e.institution ?? '').trim()) ?? []
+      const langFiltered = draft.languages?.filter(l => (l.name ?? '').trim()) ?? []
+      setProfile({
+        ...profile,
+        field: effField ?? profile.field,
+        fieldLabel: FIELDS.find(f => f.value === effField)?.label ?? profile.fieldLabel,
+        level: effLevel ?? profile.level,
+        levelLabel: LEVELS.find(l => l.value === effLevel)?.label ?? profile.levelLabel,
+        currentRole: draft.currentRole?.trim() || profile.currentRole,
+        skills: draft.skills?.length ? draft.skills : profile.skills,
+        experience: exFiltered.length > 0 ? exFiltered : profile.experience,
+        educationEntries: eduFiltered.length > 0 ? eduFiltered : profile.educationEntries,
+        languages: langFiltered.length > 0 ? langFiltered : profile.languages,
+      })
+    } catch {
+      /* ignore corrupt payload */
+    }
+  }, [profile])
 
   const saveProfilePatch = async (patch: Partial<CareerProfile>) => {
     const token = await getToken()

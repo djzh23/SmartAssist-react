@@ -53,6 +53,17 @@ export interface TargetJob {
   addedAt: string
 }
 
+/** KI-geparste CV-Daten (Antwort von POST /api/profile/cv/upload-pdf). */
+export interface ParsedCvData {
+  currentRole?: string | null
+  field?: string | null
+  level?: string | null
+  skills: string[]
+  experience: WorkExperience[]
+  education: Education[]
+  languages: ProfileLanguage[]
+}
+
 async function readError(res: Response, fallback: string): Promise<string> {
   try {
     const j = await res.json() as { error?: string; message?: string }
@@ -113,6 +124,29 @@ export async function uploadCv(token: string, text: string): Promise<void> {
     body: JSON.stringify({ text }),
   })
   if (!res.ok) throw new Error(await readError(res, `CV upload failed (${res.status})`))
+}
+
+export async function uploadCvPdfForParsing(
+  token: string,
+  base64Pdf: string,
+): Promise<{ rawTextLength: number; parsed: ParsedCvData }> {
+  const res = await fetch(`${API_BASE}/api/profile/cv/upload-pdf`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ base64Pdf }),
+  })
+  if (!res.ok) throw new Error(await readError(res, `PDF-Analyse fehlgeschlagen (${res.status})`))
+  const body = (await res.json()) as { rawTextLength?: number; parsed?: ParsedCvData }
+  return {
+    rawTextLength: body.rawTextLength ?? 0,
+    parsed: {
+      skills: [],
+      experience: [],
+      education: [],
+      languages: [],
+      ...body.parsed,
+    },
+  }
 }
 
 export async function addTargetJob(

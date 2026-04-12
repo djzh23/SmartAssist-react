@@ -60,6 +60,8 @@ export const INTERVIEW_LANGS: LangOption[] = [
 export interface LearningData {
   targetLanguageText: string
   nativeLanguageText: string
+  learnContext?: string
+  learnVariants?: string
   learnTip?: string
 }
 
