@@ -19,6 +19,7 @@ import {
   updateSkills,
   uploadCv,
 } from '../api/profileClient'
+import CvUploader from '../components/profile/CvUploader'
 
 function canMarkProfileSetupComplete(p: CareerProfile): boolean {
   return Boolean(p.field?.trim() && p.level?.trim() && p.goals.length > 0)
@@ -71,6 +72,32 @@ function emptyLang(): ProfileLanguage {
 
 const PENDING_CV_KEY = 'privateprep_pending_cv_parsed'
 
+function mergeParsedDraftIntoProfile(
+  profile: CareerProfile,
+  draft: ParsedCvData,
+): CareerProfile {
+  const effField = (draft.field?.trim() || profile.field)?.trim() || profile.field
+  const effLevel = (draft.level?.trim() || profile.level)?.trim() || profile.level
+  const exFiltered =
+    draft.experience?.filter(e => (e.title ?? '').trim() || (e.company ?? '').trim()) ?? []
+  const eduFiltered =
+    draft.education?.filter(e => (e.degree ?? '').trim() || (e.institution ?? '').trim()) ?? []
+  const langFiltered = draft.languages?.filter(l => (l.name ?? '').trim()) ?? []
+
+  return {
+    ...profile,
+    field: effField ?? null,
+    fieldLabel: FIELDS.find(f => f.value === effField)?.label ?? profile.fieldLabel,
+    level: effLevel ?? null,
+    levelLabel: LEVELS.find(l => l.value === effLevel)?.label ?? profile.levelLabel,
+    currentRole: draft.currentRole?.trim() || profile.currentRole,
+    skills: draft.skills?.length ? draft.skills : profile.skills,
+    experience: exFiltered.length > 0 ? exFiltered : profile.experience,
+    educationEntries: eduFiltered.length > 0 ? eduFiltered : profile.educationEntries,
+    languages: langFiltered.length > 0 ? langFiltered : profile.languages,
+  }
+}
+
 export default function CareerProfilePage() {
   const { getToken, isLoaded } = useAuth()
   const mergedPendingCv = useRef(false)
@@ -83,6 +110,9 @@ export default function CareerProfilePage() {
   const [jobCompany, setJobCompany] = useState('')
   const [jobDesc, setJobDesc] = useState('')
   const [markSetupBusy, setMarkSetupBusy] = useState(false)
+  /** Oben: PDF/KI-Import oder klassisches Formular darunter */
+  const [dataEntryTab, setDataEntryTab] = useState<'pdf' | 'manual'>('manual')
+  const [cvPasteForUploader, setCvPasteForUploader] = useState('')
 
   const load = useCallback(async () => {
     if (!isLoaded) return
@@ -117,25 +147,8 @@ export default function CareerProfilePage() {
     try {
       sessionStorage.removeItem(PENDING_CV_KEY)
       const draft = JSON.parse(raw) as ParsedCvData
-      const effField = (draft.field?.trim() || profile.field)?.trim() || profile.field
-      const effLevel = (draft.level?.trim() || profile.level)?.trim() || profile.level
-      const exFiltered =
-        draft.experience?.filter(e => (e.title ?? '').trim() || (e.company ?? '').trim()) ?? []
-      const eduFiltered =
-        draft.education?.filter(e => (e.degree ?? '').trim() || (e.institution ?? '').trim()) ?? []
-      const langFiltered = draft.languages?.filter(l => (l.name ?? '').trim()) ?? []
-      setProfile({
-        ...profile,
-        field: effField ?? profile.field,
-        fieldLabel: FIELDS.find(f => f.value === effField)?.label ?? profile.fieldLabel,
-        level: effLevel ?? profile.level,
-        levelLabel: LEVELS.find(l => l.value === effLevel)?.label ?? profile.levelLabel,
-        currentRole: draft.currentRole?.trim() || profile.currentRole,
-        skills: draft.skills?.length ? draft.skills : profile.skills,
-        experience: exFiltered.length > 0 ? exFiltered : profile.experience,
-        educationEntries: eduFiltered.length > 0 ? eduFiltered : profile.educationEntries,
-        languages: langFiltered.length > 0 ? langFiltered : profile.languages,
-      })
+      setProfile(mergeParsedDraftIntoProfile(profile, draft))
+      setDataEntryTab('manual')
     } catch {
       /* ignore corrupt payload */
     }
@@ -239,6 +252,27 @@ export default function CareerProfilePage() {
     }
   }
 
+  /** Geparste CV-Daten ins Profil schreiben (Rohtext ist nach PDF-Upload schon auf dem Server). */
+  const saveParsedDraftToProfile = async (draft: ParsedCvData) => {
+    if (!profile) return
+    const token = await getToken()
+    if (!token) throw new Error('Nicht angemeldet')
+    setSaving(true)
+    setError(null)
+    try {
+      const merged = mergeParsedDraftIntoProfile(profile, draft)
+      await updateFullProfile(token, merged)
+      await load()
+      setDataEntryTab('manual')
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Speichern fehlgeschlagen'
+      setError(msg)
+      throw e
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const addJob = async () => {
     const token = await getToken()
     if (!token || !jobTitle.trim()) return
@@ -314,6 +348,63 @@ export default function CareerProfilePage() {
           </Link>
           — nichts doppelt pflegen nötig.
         </p>
+
+        <section className="mb-8 rounded-xl border border-violet-200 bg-white p-5 shadow-sm">
+          <h2 className="mb-1 text-sm font-semibold text-slate-900">Profil ausfüllen</h2>
+          <p className="mb-4 text-sm text-slate-600">
+            Wähle, wie du startest: PDF-Lebenslauf hochladen — wir extrahieren Text und schlagen Felder vor (du bestätigst
+            vor dem Speichern). Oder trägst du die Daten direkt im Formular unten ein; viele Felder speichern beim
+            Verlassen automatisch.
+          </p>
+          <div className="mb-4 flex rounded-lg border border-slate-200 bg-slate-100 p-0.5 text-xs font-semibold sm:text-sm">
+            <button
+              type="button"
+              onClick={() => setDataEntryTab('pdf')}
+              className={[
+                'flex-1 rounded-md py-2.5 transition-colors',
+                dataEntryTab === 'pdf'
+                  ? 'bg-white text-slate-900 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-700',
+              ].join(' ')}
+            >
+              PDF hochladen &amp; erkennen
+            </button>
+            <button
+              type="button"
+              onClick={() => setDataEntryTab('manual')}
+              className={[
+                'flex-1 rounded-md py-2.5 transition-colors',
+                dataEntryTab === 'manual'
+                  ? 'bg-white text-slate-900 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-700',
+              ].join(' ')}
+            >
+              Manuell ausfüllen
+            </button>
+          </div>
+          {dataEntryTab === 'pdf' && (
+            <CvUploader
+              getToken={getToken}
+              fieldOptions={FIELDS}
+              levelOptions={LEVELS}
+              cvPasteText={cvPasteForUploader}
+              onCvPasteTextChange={setCvPasteForUploader}
+              onApplyParsed={saveParsedDraftToProfile}
+              onManualAdjust={d => {
+                void saveParsedDraftToProfile(d)
+              }}
+            />
+          )}
+          {dataEntryTab === 'manual' && (
+            <p className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2.5 text-sm text-slate-600">
+              Nutze die Abschnitte <strong className="font-medium text-slate-800">Basis</strong>,{' '}
+              <strong className="font-medium text-slate-800">Skills</strong>,{' '}
+              <strong className="font-medium text-slate-800">Berufserfahrung</strong> usw. unten auf dieser Seite. Zum
+              Vorbelegen per KI kannst du jederzeit auf <strong className="font-medium text-slate-800">PDF hochladen</strong>{' '}
+              wechseln.
+            </p>
+          )}
+        </section>
 
         {profile.onboardingCompleted ? (
           <div className="mb-6 flex gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-950">
