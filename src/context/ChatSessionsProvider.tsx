@@ -9,14 +9,19 @@ import {
   type ReactNode,
 } from 'react'
 import { useLocation } from 'react-router-dom'
+import { useUser } from '@clerk/clerk-react'
 import { setStreamTextApplier } from '../chat/streamTextBridge'
 import { reorderSessionOrderForTool } from '../utils/sessionOrder'
 import { suggestSessionTitle } from '../utils/sessionTitle'
 import type { ChatSession, ChatMessage, ToolType } from '../types'
 
-const LS_SESSIONS = 'smartassist_react_sessions'
-const LS_ORDER = 'smartassist_react_order'
-const LS_ACTIVE = 'smartassist_react_active'
+function lsKeys(scopeId: string) {
+  return {
+    sessions: `smartassist_react_sessions_${scopeId}`,
+    order: `smartassist_react_order_${scopeId}`,
+    active: `smartassist_react_active_${scopeId}`,
+  }
+}
 
 /** URL query value for each tool (matches ChatPage). */
 export const TOOL_TO_QUERY: Record<ToolType, string> = {
@@ -137,9 +142,12 @@ const ChatSessionsContext = createContext<SessionStore | null>(null)
 
 export function ChatSessionsProvider({ children }: { children: ReactNode }) {
   const location = useLocation()
-  const [sessions, setSessions] = useState<Record<string, ChatSession>>(() => sanitizeSessions(load(LS_SESSIONS, {})))
-  const [sessionOrder, setSessionOrder] = useState<string[]>(() => load(LS_ORDER, []))
-  const [activeId, setActiveId] = useState<string | null>(() => load(LS_ACTIVE, null))
+  const { user, isLoaded: clerkLoaded } = useUser()
+  const scopeId = !clerkLoaded ? '_loading' : (user?.id ?? 'guest')
+
+  const [sessions, setSessions] = useState<Record<string, ChatSession>>({})
+  const [sessionOrder, setSessionOrder] = useState<string[]>([])
+  const [activeId, setActiveId] = useState<string | null>(null)
   const [currentTool, setCurrentTool] = useState<ToolType>('general')
   const [streamingIds, setStreamingIds] = useState<Record<string, true>>({})
   const [streamingPlaceholder, setStreamingPlaceholder] = useState<StreamingPlaceholder | null>(null)
@@ -153,14 +161,33 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
   sessionsRef.current = sessions
 
   useEffect(() => {
+    if (scopeId === '_loading') return
+    const k = lsKeys(scopeId)
+    setSessions(sanitizeSessions(load(k.sessions, {})))
+    setSessionOrder(load(k.order, []))
+    setActiveId(load(k.active, null))
+  }, [scopeId])
+
+  useEffect(() => {
     if (activeId && sessions[activeId]) {
       setCurrentTool(sessions[activeId].toolType)
     }
   }, [activeId, sessions])
 
-  useEffect(() => { save(LS_SESSIONS, sessions) }, [sessions])
-  useEffect(() => { save(LS_ORDER, sessionOrder) }, [sessionOrder])
-  useEffect(() => { save(LS_ACTIVE, activeId) }, [activeId])
+  useEffect(() => {
+    if (scopeId === '_loading') return
+    save(lsKeys(scopeId).sessions, sessions)
+  }, [sessions, scopeId])
+
+  useEffect(() => {
+    if (scopeId === '_loading') return
+    save(lsKeys(scopeId).order, sessionOrder)
+  }, [sessionOrder, scopeId])
+
+  useEffect(() => {
+    if (scopeId === '_loading') return
+    save(lsKeys(scopeId).active, activeId)
+  }, [activeId, scopeId])
 
   const createSession = useCallback((tool: ToolType = 'general'): string => {
     const id = uid()
@@ -223,15 +250,17 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
   }, [sessions, sessionOrder, currentTool])
 
   const clearHistory = useCallback(() => {
+    if (scopeId === '_loading') return
+    const k = lsKeys(scopeId)
     setSessions({})
     setSessionOrder([])
     setActiveId(null)
     setStreamingIds({})
     setStreamingPlaceholder(null)
-    localStorage.removeItem(LS_SESSIONS)
-    localStorage.removeItem(LS_ORDER)
-    localStorage.removeItem(LS_ACTIVE)
-  }, [])
+    localStorage.removeItem(k.sessions)
+    localStorage.removeItem(k.order)
+    localStorage.removeItem(k.active)
+  }, [scopeId])
 
   const addMessage = useCallback((
     sessionId: string,

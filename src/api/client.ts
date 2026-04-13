@@ -1,4 +1,4 @@
-import type { AgentRequest, AgentResponse } from '../types'
+import type { AgentRequest, AgentResponse, LearningInsight, SkillSummary } from '../types'
 
 const BASE = import.meta.env.VITE_API_BASE_URL
   ? `${import.meta.env.VITE_API_BASE_URL}`
@@ -172,6 +172,38 @@ export async function getAgentUsage(token?: string): Promise<UsageStatus> {
     usageToday: data.usageToday,
     dailyLimit: data.dailyLimit,
     plan: data.plan,
+  }
+}
+
+export async function fetchSkills(token?: string | null): Promise<SkillSummary[]> {
+  const res = await fetch(`${BASE}/api/skills`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  })
+  if (!res.ok) {
+    throw new Error(await readApiError(res, `Failed to fetch skills (${res.status})`))
+  }
+  const data = await res.json() as SkillSummary[]
+  return Array.isArray(data) ? data : []
+}
+
+export async function fetchLearningInsights(token: string): Promise<LearningInsight[]> {
+  const res = await fetch(`${BASE}/api/learning/insights`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok) {
+    throw new Error(await readApiError(res, `Failed to fetch insights (${res.status})`))
+  }
+  const data = await res.json() as LearningInsight[]
+  return Array.isArray(data) ? data : []
+}
+
+export async function resolveLearningInsight(token: string, insightId: string): Promise<void> {
+  const res = await fetch(`${BASE}/api/learning/insights/${encodeURIComponent(insightId)}/resolve`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok) {
+    throw new Error(await readApiError(res, `Resolve insight failed (${res.status})`))
   }
 }
 

@@ -1,31 +1,36 @@
 import { useEffect, useState } from 'react'
-import { useAuth } from '@clerk/clerk-react'
+import { useAuth, useUser } from '@clerk/clerk-react'
 
 /**
- * Prüft ob der aktuelle User Admin ist,
- * indem ein GET auf /api/admin/dashboard gemacht wird.
- * Bei 200 → Admin. Bei 403/401 → kein Admin.
- *
- * Das Ergebnis wird für die Session gecacht,
- * damit nicht bei jedem Sidebar-Render ein API-Call passiert.
+ * Prüft ob der aktuelle User Admin ist (GET /api/admin/dashboard).
+ * Ergebnis wird pro Clerk userId gecacht — bei Userwechsel wird neu geprüft.
  */
-let cachedResult: boolean | null = null
+let cachedResult: { userId: string; isAdmin: boolean } | null = null
 
 export function useIsAdmin(): { isAdmin: boolean; loading: boolean } {
   const { getToken, isSignedIn } = useAuth()
-  const [isAdmin, setIsAdmin] = useState(cachedResult ?? false)
-  const [loading, setLoading] = useState(cachedResult === null && !!isSignedIn)
+  const { user } = useUser()
+  const currentUserId = user?.id ?? null
+
+  const [isAdmin, setIsAdmin] = useState(() => {
+    if (!currentUserId || !cachedResult || cachedResult.userId !== currentUserId) return false
+    return cachedResult.isAdmin
+  })
+  const [loading, setLoading] = useState(() => {
+    if (!isSignedIn) return false
+    if (!currentUserId) return true
+    return cachedResult?.userId !== currentUserId
+  })
 
   useEffect(() => {
-    if (!isSignedIn) {
-      cachedResult = null
+    if (!isSignedIn || !currentUserId) {
       setIsAdmin(false)
       setLoading(false)
       return
     }
 
-    if (cachedResult !== null) {
-      setIsAdmin(cachedResult)
+    if (cachedResult?.userId === currentUserId) {
+      setIsAdmin(cachedResult.isAdmin)
       setLoading(false)
       return
     }
@@ -36,7 +41,7 @@ export function useIsAdmin(): { isAdmin: boolean; loading: boolean } {
       try {
         const token = await getToken()
         if (!token) {
-          cachedResult = false
+          cachedResult = { userId: currentUserId, isAdmin: false }
           setIsAdmin(false)
           return
         }
@@ -47,10 +52,11 @@ export function useIsAdmin(): { isAdmin: boolean; loading: boolean } {
           headers: { Authorization: `Bearer ${token}` },
         })
 
-        cachedResult = res.ok
-        setIsAdmin(cachedResult)
+        const admin = res.ok
+        cachedResult = { userId: currentUserId, isAdmin: admin }
+        setIsAdmin(admin)
       } catch {
-        cachedResult = false
+        cachedResult = { userId: currentUserId, isAdmin: false }
         setIsAdmin(false)
       } finally {
         setLoading(false)
@@ -58,7 +64,7 @@ export function useIsAdmin(): { isAdmin: boolean; loading: boolean } {
     }
 
     void check()
-  }, [isSignedIn, getToken])
+  }, [isSignedIn, currentUserId, getToken])
 
   return { isAdmin, loading }
 }

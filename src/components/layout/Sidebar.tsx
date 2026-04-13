@@ -1,20 +1,30 @@
+import { useMemo } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import {
   ArrowRight,
-  Briefcase,
   ClipboardList,
-  Code2,
-  Globe,
-  MessageCircle,
+  Loader2,
   Sparkles,
   ShieldCheck,
   Tag,
-  Target,
   User,
   Wrench,
+  Briefcase,
+  Mic,
+  MessageCircle,
+  Code2,
+  Globe,
+  Cloud,
+  Smile,
+  FileText,
+  TrendingUp,
+  Linkedin,
+  type LucideIcon,
 } from 'lucide-react'
 import { useIsAdmin } from '../../hooks/useIsAdmin'
 import { useUserPlan } from '../../hooks/useUserPlan'
+import { useSkills } from '../../hooks/useSkills'
+import type { SkillSummary } from '../../types'
 import AuthButton from '../ui/AuthButton'
 
 interface Props {
@@ -32,13 +42,34 @@ const mainLinks: NavItem[] = [
   { label: 'Startseite', icon: <Wrench size={15} />, to: '/tools' },
 ]
 
-const chatLinks: NavItem[] = [
-  { label: 'Allgemeiner Chat', icon: <MessageCircle size={15} />, to: '/chat' },
-  { label: 'Stellenanalyse', icon: <Briefcase size={15} />, to: '/chat?tool=jobanalyzer' },
-  { label: 'Vorstellungsgespräch', icon: <Target size={15} />, to: '/chat?tool=interviewprep' },
-  { label: 'Programmieren', icon: <Code2 size={15} />, to: '/chat?tool=programming' },
-  { label: 'Sprachen lernen', icon: <Globe size={15} />, to: '/chat?tool=language' },
-]
+function iconForSkill(icon: string): LucideIcon {
+  const map: Record<string, LucideIcon> = {
+    briefcase: Briefcase,
+    mic: Mic,
+    'message-circle': MessageCircle,
+    code: Code2,
+    globe: Globe,
+    cloud: Cloud,
+    smile: Smile,
+    'file-text': FileText,
+    'trending-up': TrendingUp,
+    linkedin: Linkedin,
+  }
+  return map[icon] ?? Sparkles
+}
+
+function badgeColorClass(color: string): string {
+  switch (color) {
+    case 'orange':
+      return 'bg-orange-500/25 text-orange-200'
+    case 'teal':
+      return 'bg-teal-500/25 text-teal-200'
+    case 'blue':
+      return 'bg-blue-500/25 text-blue-200'
+    default:
+      return 'bg-white/10 text-slate-300'
+  }
+}
 
 function SidebarLink({ item, onClick }: { item: NavItem; onClick?: () => void }) {
   const navigate = useNavigate()
@@ -94,6 +125,81 @@ function SidebarLink({ item, onClick }: { item: NavItem; onClick?: () => void })
   )
 }
 
+function SkillSidebarRow({
+  skill,
+  onNavClick,
+}: {
+  skill: SkillSummary
+  onNavClick?: () => void
+}) {
+  const navigate = useNavigate()
+  const location = useLocation()
+  const searchParams = new URLSearchParams(location.search)
+  const toolFromUrl = location.pathname === '/chat' ? (searchParams.get('tool') ?? 'general') : null
+
+  const href =
+    skill.apiToolType === 'general'
+      ? '/chat'
+      : `/chat?tool=${encodeURIComponent(skill.apiToolType)}`
+
+  const isActive =
+    location.pathname === '/chat'
+    && (skill.apiToolType === 'general'
+      ? toolFromUrl === 'general'
+      : toolFromUrl === skill.apiToolType)
+
+  const base = 'mb-0.5 flex items-center gap-2.5 rounded-lg border-l-[3px] px-4 py-2.5 text-sm font-medium no-underline transition-all duration-150'
+  const active = 'border-primary bg-sidebar-active text-white'
+  const inactive = 'border-transparent text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-text'
+  const locked = !skill.isEnabled || !skill.isAccessible
+
+  const Icon = iconForSkill(skill.icon)
+
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    if (!skill.isEnabled) {
+      window.alert(`${skill.name} ist bald verfügbar.`)
+      onNavClick?.()
+      return
+    }
+    if (!skill.isAccessible) {
+      window.alert('Für dieses Werkzeug ist ein höherer Tarif nötig. Siehe Preise.')
+      onNavClick?.()
+      return
+    }
+    navigate(href)
+    onNavClick?.()
+  }
+
+  return (
+    <a
+      href={href}
+      onClick={handleClick}
+      className={[
+        base,
+        isActive && !locked ? active : inactive,
+        locked ? 'opacity-55' : '',
+      ].join(' ')}
+    >
+      <span className="flex w-4 flex-shrink-0 items-center justify-center">
+        <Icon size={15} />
+      </span>
+      <span className="min-w-0 flex-1 truncate">{skill.name}</span>
+      {skill.badge ? (
+        <span
+          className={[
+            'flex-shrink-0 rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide',
+            badgeColorClass(skill.badgeColor),
+          ].join(' ')}
+        >
+          {skill.badge}
+        </span>
+      ) : null}
+      {locked ? <span className="flex-shrink-0 text-[10px] opacity-80" aria-hidden>🔒</span> : null}
+    </a>
+  )
+}
+
 function UsageBanner() {
   const navigate = useNavigate()
   const { plan, responsesLeft } = useUserPlan()
@@ -137,9 +243,35 @@ function UsageBar() {
   )
 }
 
+function groupLabel(category: string): string {
+  switch (category) {
+    case 'career':
+      return 'Karriere'
+    case 'productivity':
+      return 'Allgemein'
+    case 'learning':
+      return 'Lernen'
+    default:
+      return category
+  }
+}
+
 export default function Sidebar({ onNavClick }: Props) {
   const { plan } = useUserPlan()
   const { isAdmin } = useIsAdmin()
+  const { skills, loading: skillsLoading } = useSkills()
+
+  const grouped = useMemo(() => {
+    if (!skills?.length) return []
+    const order = ['career', 'productivity', 'learning']
+    const map = new Map<string, SkillSummary[]>()
+    for (const s of skills) {
+      const list = map.get(s.category) ?? []
+      list.push(s)
+      map.set(s.category, list)
+    }
+    return order.filter(c => map.has(c)).map(c => ({ category: c, items: map.get(c)! }))
+  }, [skills])
 
   return (
     <div className="flex h-full flex-col overflow-x-hidden overflow-y-auto">
@@ -158,8 +290,21 @@ export default function Sidebar({ onNavClick }: Props) {
         ))}
 
         <p className="px-3 pb-1.5 pt-5 text-[10px] font-bold uppercase tracking-[1.5px] text-slate-500">Chat und Karriere</p>
-        {chatLinks.map(link => (
-          <SidebarLink key={link.to} item={link} onClick={onNavClick} />
+        {skillsLoading && (
+          <div className="flex items-center gap-2 px-4 py-2 text-xs text-slate-500">
+            <Loader2 size={14} className="animate-spin" />
+            Tools laden…
+          </div>
+        )}
+        {!skillsLoading && grouped.map(({ category, items }) => (
+          <div key={category}>
+            <p className="px-3 pb-1 pt-2 text-[9px] font-semibold uppercase tracking-wider text-slate-500">
+              {groupLabel(category)}
+            </p>
+            {items.map(skill => (
+              <SkillSidebarRow key={skill.id} skill={skill} onNavClick={onNavClick} />
+            ))}
+          </div>
         ))}
 
         <p className="px-3 pb-1.5 pt-5 text-[10px] font-bold uppercase tracking-[1.5px] text-slate-500">Konto</p>

@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '@clerk/clerk-react'
-import { CheckCircle2, Loader2, Plus, Trash2 } from 'lucide-react'
+import { CheckCircle2, Lightbulb, Loader2, Plus, Trash2 } from 'lucide-react'
+import { fetchLearningInsights, resolveLearningInsight } from '../api/client'
+import type { LearningInsight as LearningInsightRow } from '../types'
 import type {
   CareerProfile,
   Education,
@@ -23,6 +25,104 @@ import CvUploader from '../components/profile/CvUploader'
 
 function canMarkProfileSetupComplete(p: CareerProfile): boolean {
   return Boolean(p.field?.trim() && p.level?.trim() && p.goals.length > 0)
+}
+
+function LearningInsightsPanel() {
+  const { getToken, isSignedIn } = useAuth()
+  const [rows, setRows] = useState<LearningInsightRow[]>([])
+  const [loading, setLoading] = useState(true)
+  const [err, setErr] = useState<string | null>(null)
+  const [busyId, setBusyId] = useState<string | null>(null)
+
+  const load = useCallback(async () => {
+    if (!isSignedIn) {
+      setRows([])
+      setLoading(false)
+      return
+    }
+    setLoading(true)
+    setErr(null)
+    try {
+      const token = await getToken()
+      if (!token) {
+        setRows([])
+        return
+      }
+      const data = await fetchLearningInsights(token)
+      setRows(data.filter(r => !r.resolved))
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Erkenntnisse konnten nicht geladen werden')
+      setRows([])
+    } finally {
+      setLoading(false)
+    }
+  }, [getToken, isSignedIn])
+
+  useEffect(() => {
+    void load()
+  }, [load])
+
+  const onResolve = async (id: string) => {
+    const token = await getToken()
+    if (!token) return
+    setBusyId(id)
+    try {
+      await resolveLearningInsight(token, id)
+      await load()
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Konnte nicht speichern')
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  if (!isSignedIn) return null
+
+  return (
+    <section className="mb-8 rounded-xl border border-amber-200/80 bg-amber-50/40 p-5 shadow-sm">
+      <div className="mb-3 flex items-center gap-2">
+        <Lightbulb className="h-5 w-5 text-amber-600" aria-hidden />
+        <h2 className="text-sm font-semibold text-slate-900">Erkenntnisse aus Chats</h2>
+      </div>
+      <p className="mb-4 text-sm text-slate-600">
+        Die KI merkt sich Lücken und nächste Schritte aus Stellenanalyse und Interview-Coach und bezieht sich im Chat
+        darauf. Hier kannst du Einträge als erledigt markieren — dann fließen sie nicht mehr in den Kontext ein.
+      </p>
+      {loading && (
+        <div className="flex items-center gap-2 text-sm text-slate-500">
+          <Loader2 className="animate-spin" size={18} />
+          Lade…
+        </div>
+      )}
+      {err && <p className="text-sm text-red-600">{err}</p>}
+      {!loading && !err && rows.length === 0 && (
+        <p className="text-sm text-slate-500">Noch keine offenen Erkenntnisse.</p>
+      )}
+      {!loading && rows.length > 0 && (
+        <ul className="flex flex-col gap-2">
+          {rows.map(r => (
+            <li
+              key={r.id}
+              className="flex flex-col gap-2 rounded-lg border border-amber-100 bg-white px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between"
+            >
+              <div className="min-w-0 text-sm text-slate-800">
+                <span className="mr-2 text-[10px] font-bold uppercase text-amber-700">{r.category}</span>
+                <span className="text-slate-700">{r.content}</span>
+              </div>
+              <button
+                type="button"
+                disabled={busyId === r.id}
+                onClick={() => void onResolve(r.id)}
+                className="flex-shrink-0 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+              >
+                {busyId === r.id ? '…' : 'Erledigt'}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  )
 }
 
 const FIELDS: { value: string; label: string }[] = [
@@ -348,6 +448,8 @@ export default function CareerProfilePage() {
           </Link>
           — nichts doppelt pflegen nötig.
         </p>
+
+        <LearningInsightsPanel />
 
         <section className="mb-8 rounded-xl border border-violet-200 bg-white p-5 shadow-sm">
           <h2 className="mb-1 text-sm font-semibold text-slate-900">Profil ausfüllen</h2>

@@ -124,3 +124,31 @@ export interface SpeechRequest {
   voiceId?: string
   modelId?: string
 }
+
+/** /api/skills — dynamic career modules */
+export interface SkillSummary {
+  id: string
+  name: string
+  description: string
+  icon: string
+  category: string
+  badge: string
+  badgeColor: string
+  isEnabled: boolean
+  isBeta: boolean
+  minPlan: string
+  apiToolType: string
+  isAccessible: boolean
+}
+
+/** /api/learning/insights */
+export interface LearningInsight {
+  id: string
+  category: string
+  content: string
+  sourceTool?: string
+  sourceContext?: string
+  createdAt: string
+  resolved: boolean
+  resolvedAt?: string
+}
