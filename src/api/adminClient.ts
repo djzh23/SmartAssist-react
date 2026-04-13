@@ -74,10 +74,20 @@ export async function fetchDashboard(token: string): Promise<AdminDashboardData>
   return res.json() as Promise<AdminDashboardData>
 }
 
-export async function fetchTopUsers(token: string, date?: string, limit = 20): Promise<UserUsageSummary[]> {
+export type FetchTopUsersOptions = {
+  /** Single day yyyy-MM-dd (ignored if from+to are set). */
+  date?: string
+  from?: string
+  to?: string
+  limit?: number
+}
+
+export async function fetchTopUsers(token: string, options?: FetchTopUsersOptions): Promise<UserUsageSummary[]> {
   const params = new URLSearchParams()
-  if (date) params.set('date', date)
-  params.set('limit', limit.toString())
+  if (options?.date) params.set('date', options.date)
+  if (options?.from) params.set('from', options.from)
+  if (options?.to) params.set('to', options.to)
+  params.set('limit', String(options?.limit ?? 100))
   const res = await fetch(`${API_BASE}/api/admin/top-users?${params}`, {
     headers: { Authorization: `Bearer ${token}` },
   })

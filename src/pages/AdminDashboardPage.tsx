@@ -26,6 +26,7 @@ import {
 } from 'recharts'
 import {
   fetchDashboard,
+  fetchTopUsers,
   fetchUserUsage,
   type AdminDashboardData,
   type UserUsageSummary,
@@ -42,6 +43,14 @@ const C = {
   tokenIn: '#93c5fd',
   tokenOut: '#1e40af',
 } as const
+
+/** Matches Redis token key retention (see SmartAssistApi TokenTrackingService). */
+const USAGE_RETENTION_DAYS = 90
+
+const chartGrid = '#334155'
+const chartTick = '#94a3b8'
+
+type TopUserRangePreset = 'retention' | '30d' | '7d' | 'today'
 
 type PieModelRow = {
   name: string
@@ -138,9 +147,9 @@ function truncateEmail(email: string, max = 20): string {
 
 function planBadgeClass(plan: string): string {
   const p = (plan || '').toLowerCase()
-  if (p === 'pro') return 'bg-[#fef3c7] text-[#92400e]'
-  if (p === 'premium') return 'bg-[#e0e7ff] text-[#3730a3]'
-  return 'bg-[#f1f5f9] text-[#475569]'
+  if (p === 'pro') return 'bg-amber-500/15 text-amber-200 ring-1 ring-amber-400/35'
+  if (p === 'premium') return 'bg-violet-500/15 text-violet-200 ring-1 ring-violet-400/30'
+  return 'bg-slate-600/40 text-slate-300 ring-1 ring-slate-500/35'
 }
 
 function planDisplayLabel(plan: string): string {
@@ -153,10 +162,10 @@ function planDisplayLabel(plan: string): string {
 function MetricSkeleton({ tall }: { tall?: boolean }) {
   return (
     <div
-      className={`animate-pulse rounded-xl bg-slate-50 p-4 ${tall ? 'min-h-[132px]' : 'min-h-[88px]'}`}
+      className={`animate-pulse rounded-xl border border-slate-700/60 bg-slate-900/50 p-4 ${tall ? 'min-h-[132px]' : 'min-h-[88px]'}`}
     >
-      <div className="mb-2 h-3 w-24 rounded bg-slate-200/80" />
-      <div className="h-8 w-36 rounded bg-slate-200/80" />
+      <div className="mb-2 h-3 w-24 rounded bg-slate-700/80" />
+      <div className="h-8 w-36 rounded bg-slate-700/80" />
     </div>
   )
 }
@@ -164,9 +173,9 @@ function MetricSkeleton({ tall }: { tall?: boolean }) {
 function ChartSkeleton({ tall }: { tall?: boolean }) {
   return (
     <div
-      className={`animate-pulse rounded-xl border border-slate-200 bg-slate-50 p-4 ${tall ? 'min-h-[320px]' : 'min-h-[280px]'}`}
+      className={`animate-pulse rounded-xl border border-slate-700/60 bg-slate-900/40 p-4 ${tall ? 'min-h-[320px]' : 'min-h-[280px]'}`}
     >
-      <div className="h-[240px] rounded bg-slate-100/80" />
+      <div className="h-[240px] rounded bg-slate-800/60" />
     </div>
   )
 }
@@ -182,6 +191,13 @@ export default function AdminDashboardPage() {
   const [detailLoading, setDetailLoading] = useState(false)
   const [detailError, setDetailError] = useState<string | null>(null)
   const [costSortDesc, setCostSortDesc] = useState(true)
+  const [topUsersList, setTopUsersList] = useState<UserUsageSummary[]>([])
+  const [topUsersLoading, setTopUsersLoading] = useState(false)
+  const [topUsersError, setTopUsersError] = useState<string | null>(null)
+  const [topRange, setTopRange] = useState<TopUserRangePreset>('retention')
+  const [userSearch, setUserSearch] = useState('')
+  const [planFilter, setPlanFilter] = useState<'all' | 'free' | 'starter' | 'pro'>('all')
+  const [detailRangeLabel, setDetailRangeLabel] = useState('')
 
   const fixedMonthlyCosts = useMemo(() => {
     const raw = import.meta.env.VITE_ADMIN_FIXED_COSTS_USD_MONTHLY
@@ -194,6 +210,39 @@ export default function AdminDashboardPage() {
     const n = raw != null && raw !== '' ? Number(raw) : 50
     return Number.isFinite(n) && n > 0 ? n : 50
   }, [])
+
+  const daysForPreset = useCallback((preset: TopUserRangePreset) => {
+    switch (preset) {
+      case 'retention':
+        return USAGE_RETENTION_DAYS - 1
+      case '30d':
+        return 29
+      case '7d':
+        return 6
+      case 'today':
+        return 0
+      default:
+        return USAGE_RETENTION_DAYS - 1
+    }
+  }, [])
+
+  const loadTopUsers = useCallback(async () => {
+    try {
+      setTopUsersError(null)
+      const token = await getToken()
+      if (!token) return
+      setTopUsersLoading(true)
+      const days = daysForPreset(topRange)
+      const from = isoDateDaysAgo(days)
+      const to = todayIso()
+      const list = await fetchTopUsers(token, { from, to, limit: 250 })
+      setTopUsersList(list)
+    } catch (e) {
+      setTopUsersError(e instanceof Error ? e.message : 'Top-Nutzer konnten nicht geladen werden.')
+    } finally {
+      setTopUsersLoading(false)
+    }
+  }, [getToken, topRange, daysForPreset])
 
   const load = useCallback(async (isInitial: boolean) => {
     try {
@@ -226,11 +275,16 @@ export default function AdminDashboardPage() {
   }, [load])
 
   useEffect(() => {
+    void loadTopUsers()
+  }, [loadTopUsers])
+
+  useEffect(() => {
     const id = window.setInterval(() => {
       void load(false)
+      void loadTopUsers()
     }, 60_000)
     return () => window.clearInterval(id)
-  }, [load])
+  }, [load, loadTopUsers])
 
   const openUserDetail = async (userId: string) => {
     setDetailError(null)
@@ -239,8 +293,10 @@ export default function AdminDashboardPage() {
     try {
       const token = await getToken()
       if (!token) throw new Error('Kein Token')
-      const from = isoDateDaysAgo(29)
+      const days = daysForPreset(topRange)
+      const from = isoDateDaysAgo(days)
       const to = todayIso()
+      setDetailRangeLabel(`${from} → ${to}`)
       const summary = await fetchUserUsage(token, userId, from, to)
       setSelectedUser(summary)
     } catch (e) {
@@ -318,16 +374,37 @@ export default function AdminDashboardPage() {
     })
   }, [data])
 
-  const sortedTopUsers = useMemo(() => {
-    if (!data?.topUsers) return []
-    return [...data.topUsers].sort((a, b) =>
-      costSortDesc ? b.totalCostUsd - a.totalCostUsd : a.totalCostUsd - b.totalCostUsd,
-    )
-  }, [data, costSortDesc])
+  const sortedTopUsers = useMemo(
+    () =>
+      [...topUsersList].sort((a, b) =>
+        costSortDesc ? b.totalCostUsd - a.totalCostUsd : a.totalCostUsd - b.totalCostUsd,
+      ),
+    [topUsersList, costSortDesc],
+  )
 
-  const totalTopCostToday = useMemo(
-    () => sortedTopUsers.reduce((s, u) => s + u.totalCostUsd, 0),
-    [sortedTopUsers],
+  const filteredTopUsers = useMemo(() => {
+    let rows = sortedTopUsers
+    const q = userSearch.trim().toLowerCase()
+    if (q) {
+      rows = rows.filter(
+        u =>
+          u.userId.toLowerCase().includes(q) ||
+          Boolean(u.userEmail?.trim() && u.userEmail.toLowerCase().includes(q)),
+      )
+    }
+    if (planFilter === 'free') {
+      rows = rows.filter(u => !(u.plan || '').trim() || (u.plan || '').toLowerCase() === 'free')
+    } else if (planFilter === 'starter') {
+      rows = rows.filter(u => (u.plan || '').toLowerCase() === 'premium')
+    } else if (planFilter === 'pro') {
+      rows = rows.filter(u => (u.plan || '').toLowerCase() === 'pro')
+    }
+    return rows
+  }, [sortedTopUsers, userSearch, planFilter])
+
+  const totalFilteredCost = useMemo(
+    () => filteredTopUsers.reduce((s, u) => s + u.totalCostUsd, 0),
+    [filteredTopUsers],
   )
 
   const payingSubtitle = useMemo(() => {
@@ -371,10 +448,10 @@ export default function AdminDashboardPage() {
 
   if (forbidden) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 px-4">
-        <ShieldAlert className="mb-4 text-[#ea580c]" size={48} />
-        <h1 className="mb-2 text-xl font-semibold text-slate-800">Kein Zugriff</h1>
-        <p className="mb-6 max-w-md text-center text-sm text-slate-600">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-slate-950 px-4 text-slate-200">
+        <ShieldAlert className="mb-4 text-orange-400" size={48} />
+        <h1 className="mb-2 text-xl font-semibold text-slate-100">Kein Zugriff</h1>
+        <p className="mb-6 max-w-md text-center text-sm text-slate-400">
           Du bist nicht als Administrator eingetragen. Der Endpunkt hat mit 403 geantwortet.
         </p>
         <Link
@@ -389,35 +466,41 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/95 backdrop-blur">
+    <div className="min-h-screen bg-slate-950 text-slate-200">
+      <header className="sticky top-0 z-10 border-b border-slate-800 bg-slate-900/90 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3">
           <div className="flex items-center gap-3">
             <Link
               to="/chat"
-              className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700"
+              className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-600 text-slate-400 transition-colors hover:border-slate-500 hover:bg-slate-800 hover:text-slate-200"
               aria-label="Zurück"
             >
               <ArrowLeft size={18} />
             </Link>
-            <h1 className="text-lg font-bold tracking-tight text-slate-900">Admin dashboard</h1>
+            <div>
+              <h1 className="text-lg font-bold tracking-tight text-slate-100">Admin dashboard</h1>
+              <p className="text-[11px] text-slate-500">Kosten, Modelle, Nutzer – kompakte Übersicht</p>
+            </div>
           </div>
           <div className="flex items-center gap-3">
-            <span className="inline-flex items-center gap-1.5 text-xs text-[#64748b]">
-              <span className="h-2 w-2 rounded-full bg-[#0d9488]" aria-hidden />
+            <span className="inline-flex items-center gap-1.5 text-xs text-slate-400">
+              <span className="h-2 w-2 rounded-full bg-teal-400 shadow-[0_0_8px_rgba(45,212,191,0.6)]" aria-hidden />
               Live
             </span>
             {refreshing && (
-              <span className="flex items-center gap-1 text-xs text-[#64748b]">
+              <span className="flex items-center gap-1 text-xs text-slate-500">
                 <Loader2 size={14} className="animate-spin" />
                 Aktualisiere…
               </span>
             )}
             <button
               type="button"
-              onClick={() => void load(false)}
+              onClick={() => {
+                void load(false)
+                void loadTopUsers()
+              }}
               disabled={refreshing || initialLoad}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-600 bg-slate-800/80 px-3 py-1.5 text-xs font-medium text-slate-200 transition-colors hover:bg-slate-800 disabled:opacity-50"
             >
               <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
               Jetzt
@@ -426,9 +509,9 @@ export default function AdminDashboardPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl space-y-4 px-4 py-6">
+      <main className="mx-auto max-w-7xl space-y-5 px-4 py-6">
         {error && (
-          <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-[#ea580c]">
+          <div className="rounded-xl border border-orange-500/40 bg-orange-950/50 px-4 py-3 text-sm text-orange-200">
             {error}
           </div>
         )}
@@ -450,108 +533,108 @@ export default function AdminDashboardPage() {
         ) : data ? (
           <div className="space-y-3">
             {data.llmCostPolicyNote ? (
-              <div className="rounded-xl border border-emerald-200 bg-emerald-50/90 px-4 py-3 text-sm leading-snug text-slate-700">
+              <div className="rounded-xl border border-emerald-500/30 bg-emerald-950/40 px-4 py-3 text-sm leading-snug text-emerald-100/90">
                 {data.llmCostPolicyNote}
               </div>
             ) : null}
             <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-              <div className="rounded-xl bg-slate-50 p-4">
-                <p className="text-xs font-medium text-[#64748b]">API-Kosten heute</p>
-                <p className="mt-1 text-[26px] font-bold tabular-nums leading-tight text-[#ea580c]">
+              <div className="rounded-xl border border-slate-700/60 bg-slate-900/60 p-4 shadow-md shadow-black/20">
+                <p className="text-xs font-medium text-slate-400">API-Kosten heute</p>
+                <p className="mt-1 text-[26px] font-bold tabular-nums leading-tight text-orange-400">
                   {fmt(data.totalCostToday, 'usd')}
                 </p>
                 {yesterdayCompare ? (
-                  <p className="mt-2 text-[11px] text-[#64748b]">
+                  <p className="mt-2 text-[11px] text-slate-500">
                     Gestern: {fmt(yesterdayCompare.yesterdayCost, 'usd')}
-                    <span className={yesterdayCompare.deltaPct >= 0 ? ' text-[#ea580c]' : ' text-[#0d9488]'}>
+                    <span className={yesterdayCompare.deltaPct >= 0 ? ' text-orange-400' : ' text-teal-400'}>
                       {' '}
                       ({yesterdayCompare.deltaPct >= 0 ? '+' : ''}
                       {fmt(yesterdayCompare.deltaPct, 'pct')} vs. Gestern)
                     </span>
                   </p>
                 ) : (
-                  <p className="mt-2 text-[11px] text-[#64748b]">Kein Vortagesvergleich</p>
+                  <p className="mt-2 text-[11px] text-slate-500">Kein Vortagesvergleich</p>
                 )}
               </div>
-              <div className="rounded-xl bg-slate-50 p-4">
-                <p className="text-xs font-medium text-[#64748b]">API-Kosten Monat</p>
-                <p className="mt-1 text-[26px] font-bold tabular-nums leading-tight text-[#ea580c]">
+              <div className="rounded-xl border border-slate-700/60 bg-slate-900/60 p-4 shadow-md shadow-black/20">
+                <p className="text-xs font-medium text-slate-400">API-Kosten Monat</p>
+                <p className="mt-1 text-[26px] font-bold tabular-nums leading-tight text-orange-400">
                   {fmt(data.totalCostThisMonth, 'usd')}
                 </p>
-                <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-slate-200/80">
+                <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-slate-800">
                   <div
-                    className="h-full rounded-full bg-[#ea580c] transition-all duration-300"
+                    className="h-full rounded-full bg-gradient-to-r from-orange-600 to-amber-500 transition-all duration-300"
                     style={{ width: `${monthSpendPct}%` }}
                   />
                 </div>
-                <p className="mt-1.5 text-[11px] text-[#64748b]">
+                <p className="mt-1.5 text-[11px] text-slate-500">
                   Budget {fmt(monthlyBudget, 'usd')} · {fmt(monthSpendPct, 'pct')} verbraucht
                 </p>
               </div>
-              <div className="rounded-xl bg-slate-50 p-4">
-                <p className="text-xs font-medium text-[#64748b]">Geschätzter Gewinn</p>
+              <div className="rounded-xl border border-slate-700/60 bg-slate-900/60 p-4 shadow-md shadow-black/20">
+                <p className="text-xs font-medium text-slate-400">Geschätzter Gewinn</p>
                 <p
                   className={`mt-1 text-[26px] font-bold tabular-nums leading-tight ${
-                    estimatedMonthlyProfit >= 0 ? 'text-[#0d9488]' : 'text-[#ea580c]'
+                    estimatedMonthlyProfit >= 0 ? 'text-teal-400' : 'text-orange-400'
                   }`}
                 >
                   {fmt(estimatedMonthlyProfit, 'usd')}
                 </p>
-                <p className="mt-2 text-[11px] leading-snug text-[#64748b]">
+                <p className="mt-2 text-[11px] leading-snug text-slate-500">
                   Umsatz {fmt(data.monthlyRevenue, 'usd')} − API {fmt(data.totalCostThisMonth, 'usd')} − Fix{' '}
                   {fmt(fixedMonthlyCosts, 'usd')} = {fmt(estimatedMonthlyProfit, 'usd')}
                 </p>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-              <div className="rounded-xl bg-slate-50 p-3">
-                <p className="text-xs text-[#64748b]">Nachrichten heute</p>
-                <p className="mt-1 text-xl font-semibold tabular-nums text-[#4f46e5]">
+              <div className="rounded-xl border border-slate-700/50 bg-slate-900/40 p-3">
+                <p className="text-xs text-slate-500">Nachrichten heute</p>
+                <p className="mt-1 text-xl font-semibold tabular-nums text-indigo-300">
                   {data.totalMessagesToday.toLocaleString('de-DE')}
                 </p>
               </div>
-              <div className="rounded-xl bg-slate-50 p-3">
-                <p className="text-xs text-[#64748b]">Aktive User heute</p>
-                <p className="mt-1 text-xl font-semibold tabular-nums text-[#4f46e5]">
+              <div className="rounded-xl border border-slate-700/50 bg-slate-900/40 p-3">
+                <p className="text-xs text-slate-500">Aktive User heute</p>
+                <p className="mt-1 text-xl font-semibold tabular-nums text-indigo-300">
                   {data.activeUsersToday.toLocaleString('de-DE')}
                 </p>
               </div>
-              <div className="rounded-xl bg-slate-50 p-3">
-                <p className="text-xs text-[#64748b]">Zahlende User</p>
-                <p className="mt-1 text-xl font-semibold tabular-nums text-[#4f46e5]">
+              <div className="rounded-xl border border-slate-700/50 bg-slate-900/40 p-3">
+                <p className="text-xs text-slate-500">Zahlende User</p>
+                <p className="mt-1 text-xl font-semibold tabular-nums text-indigo-300">
                   {data.payingUsers.toLocaleString('de-DE')}
                 </p>
-                <p className="mt-0.5 text-[11px] text-[#64748b]">{payingSubtitle}</p>
+                <p className="mt-0.5 text-[11px] text-slate-500">{payingSubtitle}</p>
               </div>
-              <div className="rounded-xl bg-slate-50 p-3">
-                <p className="text-xs text-[#64748b]">Ø Kosten/Nachricht</p>
-                <p className="mt-1 text-xl font-semibold tabular-nums text-[#ea580c]">
+              <div className="rounded-xl border border-slate-700/50 bg-slate-900/40 p-3">
+                <p className="text-xs text-slate-500">Ø Kosten/Nachricht</p>
+                <p className="mt-1 text-xl font-semibold tabular-nums text-orange-400">
                   {fmt(avgCostPerMsg, 'usd')}
                 </p>
-                <p className="mt-0.5 text-[11px] text-[#64748b]">Ziel: unter $0.01</p>
+                <p className="mt-0.5 text-[11px] text-slate-500">Ziel: unter $0.01</p>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-xl bg-slate-50 p-3">
-                <p className="text-xs text-[#64748b]">Nachrichten heute (Groq primär)</p>
-                <p className="mt-1 text-xl font-semibold tabular-nums text-[#059669]">
+              <div className="rounded-xl border border-slate-700/50 bg-slate-900/40 p-3">
+                <p className="text-xs text-slate-500">Nachrichten heute (Groq primär)</p>
+                <p className="mt-1 text-xl font-semibold tabular-nums text-emerald-400">
                   {(data.groqMessagesToday ?? 0).toLocaleString('de-DE')}
                 </p>
               </div>
-              <div className="rounded-xl bg-slate-50 p-3">
-                <p className="text-xs text-[#64748b]">Nachrichten heute (Haiku / Fallback)</p>
-                <p className="mt-1 text-xl font-semibold tabular-nums text-[#0d9488]">
+              <div className="rounded-xl border border-slate-700/50 bg-slate-900/40 p-3">
+                <p className="text-xs text-slate-500">Nachrichten heute (Haiku / Fallback)</p>
+                <p className="mt-1 text-xl font-semibold tabular-nums text-teal-400">
                   {(data.otherLlmMessagesToday ?? 0).toLocaleString('de-DE')}
                 </p>
               </div>
             </div>
-            <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-              <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-[#64748b]">
+            <div className="rounded-xl border border-slate-700/70 bg-slate-900/50 p-4 shadow-lg shadow-black/25">
+              <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
                 LLM-Endpunkte (konfiguriert · heute)
               </h2>
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[560px] text-left text-sm">
-                  <thead className="border-b border-slate-200 text-xs font-semibold text-[#64748b]">
+                  <thead className="border-b border-slate-700 text-xs font-semibold text-slate-400">
                     <tr>
                       <th className="py-2 pr-3">Anbieter</th>
                       <th className="py-2 pr-3">Modell</th>
@@ -560,16 +643,18 @@ export default function AdminDashboardPage() {
                       <th className="py-2 text-right">Kosten (SmartAssist)</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-slate-700/60">
                     {llmModelRows.map(({ key, m }) => {
                       const tok = m.inputTokens + m.outputTokens
                       const prov = (m.provider ?? '').toLowerCase() === 'groq' ? 'Groq' : 'Anthropic'
                       return (
-                        <tr key={key} className="text-slate-800">
+                        <tr key={key} className="text-slate-200">
                           <td className="py-2 pr-3">
                             <span
                               className={`inline-block rounded-md px-2 py-0.5 text-xs font-medium ${
-                                prov === 'Groq' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-700'
+                                prov === 'Groq'
+                                  ? 'bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/30'
+                                  : 'bg-slate-600/40 text-slate-200 ring-1 ring-slate-500/35'
                               }`}
                             >
                               {prov}
@@ -578,9 +663,11 @@ export default function AdminDashboardPage() {
                           <td className="max-w-[220px] truncate py-2 pr-3 font-mono text-xs" title={key}>
                             {shortModelLabel(key)}
                           </td>
-                          <td className="py-2 pr-3 text-right tabular-nums">{m.messages.toLocaleString('de-DE')}</td>
-                          <td className="py-2 pr-3 text-right tabular-nums">{fmt(tok, 'tokens')}</td>
-                          <td className="py-2 text-right tabular-nums text-[#ea580c]">{fmt(m.costUsd, 'usd')}</td>
+                          <td className="py-2 pr-3 text-right tabular-nums text-slate-300">
+                            {m.messages.toLocaleString('de-DE')}
+                          </td>
+                          <td className="py-2 pr-3 text-right tabular-nums text-slate-300">{fmt(tok, 'tokens')}</td>
+                          <td className="py-2 text-right tabular-nums text-orange-400">{fmt(m.costUsd, 'usd')}</td>
                         </tr>
                       )
                     })}
@@ -599,36 +686,40 @@ export default function AdminDashboardPage() {
           </div>
         ) : data ? (
           <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <div className="rounded-xl border border-slate-700/70 bg-slate-900/50 p-4 shadow-lg shadow-black/20">
+              <div className="mb-2 flex items-baseline justify-between gap-2">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400">Trend (30 Tage)</h3>
+                <span className="text-[10px] text-slate-500">Kosten + Nachrichten</span>
+              </div>
               <div className="mb-1 h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <ComposedChart data={lineData} margin={{ top: 8, right: 12, left: 0, bottom: 4 }}>
                     <defs>
                       <linearGradient id="costFill" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={C.orange} stopOpacity={0.12} />
+                        <stop offset="0%" stopColor={C.orange} stopOpacity={0.35} />
                         <stop offset="100%" stopColor={C.orange} stopOpacity={0.02} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                    <CartesianGrid strokeDasharray="3 6" stroke={chartGrid} opacity={0.6} />
                     <XAxis
                       dataKey="label"
-                      tick={{ fontSize: 10, fill: C.slate }}
-                      stroke="#cbd5e1"
+                      tick={{ fontSize: 10, fill: chartTick }}
+                      stroke={chartGrid}
                       interval={0}
                       tickFormatter={(value, index) => (index % 5 === 0 ? value : '')}
                     />
                     <YAxis
                       yAxisId="cost"
-                      tick={{ fontSize: 10, fill: C.orange }}
-                      stroke={C.orange}
+                      tick={{ fontSize: 10, fill: '#fb923c' }}
+                      stroke="#9a3412"
                       tickFormatter={v => fmt(Number(v), 'usd')}
                       width={56}
                     />
                     <YAxis
                       yAxisId="msg"
                       orientation="right"
-                      tick={{ fontSize: 10, fill: C.indigo }}
-                      stroke={C.indigo}
+                      tick={{ fontSize: 10, fill: '#a5b4fc' }}
+                      stroke="#4f46e5"
                       tickFormatter={v => Math.round(Number(v)).toLocaleString('de-DE')}
                       width={40}
                     />
@@ -637,10 +728,10 @@ export default function AdminDashboardPage() {
                         if (!active || !payload?.length) return null
                         const row = payload[0]?.payload as { costUsd?: number; messages?: number; date?: string }
                         return (
-                          <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs shadow-md">
-                            <p className="mb-1 font-medium text-slate-700">{row.date ?? label}</p>
-                            <p className="text-[#ea580c]">Kosten: {fmt(row.costUsd ?? 0, 'usd')}</p>
-                            <p className="text-[#4f46e5]">
+                          <div className="rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-xs shadow-xl shadow-black/40">
+                            <p className="mb-1 font-medium text-slate-200">{row.date ?? label}</p>
+                            <p className="text-orange-400">Kosten: {fmt(row.costUsd ?? 0, 'usd')}</p>
+                            <p className="text-indigo-300">
                               Nachrichten: {(row.messages ?? 0).toLocaleString('de-DE')}
                             </p>
                           </div>
@@ -678,12 +769,16 @@ export default function AdminDashboardPage() {
                 </ResponsiveContainer>
               </div>
             </div>
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <div className="rounded-xl border border-slate-700/70 bg-slate-900/50 p-4 shadow-lg shadow-black/20">
+              <div className="mb-2 flex items-baseline justify-between gap-2">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400">Modell-Mix (heute)</h3>
+                <span className="text-[10px] text-slate-500">Kosten oder Tokens</span>
+              </div>
               {pieModelData.length === 0 ? (
-                <p className="flex h-[300px] items-center justify-center text-sm text-[#64748b]">Noch keine Daten</p>
+                <p className="flex h-[300px] items-center justify-center text-sm text-slate-500">Noch keine Daten</p>
               ) : (
                 <div className="flex flex-wrap items-center justify-center gap-6 lg:flex-nowrap lg:justify-start">
-                  <div className="h-[140px] w-[140px] flex-shrink-0">
+                  <div className="h-[160px] w-[160px] flex-shrink-0">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
@@ -692,10 +787,11 @@ export default function AdminDashboardPage() {
                           nameKey="name"
                           cx="50%"
                           cy="50%"
-                          innerRadius={45}
-                          outerRadius={70}
+                          innerRadius={48}
+                          outerRadius={72}
                           paddingAngle={2}
-                          stroke="none"
+                          stroke="rgba(15,23,42,0.9)"
+                          strokeWidth={2}
                         >
                           {pieModelData.map((entry, i) => (
                             <Cell key={entry.name} fill={modelSliceColor(entry.name, i)} />
@@ -707,9 +803,9 @@ export default function AdminDashboardPage() {
                             const row = payload[0]?.payload as PieModelRow
                             const v = row?.value ?? 0
                             return (
-                              <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs shadow-md">
-                                <p className="font-medium text-slate-800">{shortModelLabel(row.name)}</p>
-                                <p className="text-slate-600">
+                              <div className="rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-xs shadow-xl shadow-black/40">
+                                <p className="font-medium text-slate-100">{shortModelLabel(row.name)}</p>
+                                <p className="text-slate-300">
                                   {row.metric === 'usd' ? fmt(v, 'usd') : fmt(v, 'tokens')}
                                 </p>
                               </div>
@@ -719,19 +815,19 @@ export default function AdminDashboardPage() {
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
-                  <ul className="min-w-0 flex-1 space-y-4 text-sm">
+                  <ul className="min-w-0 flex-1 space-y-3 text-sm">
                     {pieModelData.map((entry, i) => (
-                      <li key={entry.name} className="flex gap-3">
+                      <li key={entry.name} className="flex gap-3 rounded-lg border border-slate-700/40 bg-slate-950/40 px-2 py-2">
                         <span
-                          className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full"
+                          className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full ring-2 ring-slate-700"
                           style={{ backgroundColor: modelSliceColor(entry.name, i) }}
                         />
                         <div>
-                          <p className="font-medium text-slate-800">{shortModelLabel(entry.name)}</p>
-                          <p className="text-lg font-semibold tabular-nums text-[#ea580c]">
+                          <p className="font-medium text-slate-200">{shortModelLabel(entry.name)}</p>
+                          <p className="text-lg font-semibold tabular-nums text-orange-400">
                             {entry.metric === 'usd' ? fmt(entry.value, 'usd') : fmt(entry.value, 'tokens')}
                           </p>
-                          <p className="text-xs text-[#64748b]">
+                          <p className="text-xs text-slate-500">
                             {entry.messages.toLocaleString('de-DE')} Nachr. · {fmt(entry.pct, 'pct')}{' '}
                             {entry.metric === 'usd' ? '(Kosten)' : '(Tokens)'}
                           </p>
@@ -753,25 +849,44 @@ export default function AdminDashboardPage() {
           </div>
         ) : data ? (
           <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <div className="rounded-xl border border-slate-700/70 bg-slate-900/50 p-4 shadow-lg shadow-black/20">
+              <div className="mb-2 flex items-baseline justify-between gap-2">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400">Kosten nach Werkzeug</h3>
+                <span className="text-[10px] text-slate-500">Heute · USD</span>
+              </div>
               <div className="h-[280px] w-full">
                 {toolBarData.length === 0 ? (
-                  <p className="flex h-full items-center justify-center text-sm text-[#64748b]">Noch keine Daten</p>
+                  <p className="flex h-full items-center justify-center text-sm text-slate-500">Noch keine Daten</p>
                 ) : (
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={toolBarData} layout="vertical" margin={{ left: 8, right: 56, top: 4, bottom: 4 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                      <XAxis type="number" tick={{ fontSize: 10, fill: C.slate }} tickFormatter={v => fmt(Number(v), 'usd')} />
-                      <YAxis type="category" dataKey="name" width={108} tick={{ fontSize: 11, fill: C.slate }} />
-                      <Tooltip formatter={v => fmt(typeof v === 'number' ? v : Number(v) || 0, 'usd')} />
-                      <Bar dataKey="costUsd" radius={[0, 4, 4, 0]} barSize={22}>
+                      <CartesianGrid strokeDasharray="3 6" stroke={chartGrid} opacity={0.6} horizontal={false} />
+                      <XAxis
+                        type="number"
+                        tick={{ fontSize: 10, fill: chartTick }}
+                        stroke={chartGrid}
+                        tickFormatter={v => fmt(Number(v), 'usd')}
+                      />
+                      <YAxis type="category" dataKey="name" width={108} tick={{ fontSize: 11, fill: chartTick }} stroke={chartGrid} />
+                      <Tooltip
+                        cursor={{ fill: 'rgba(148,163,184,0.08)' }}
+                        formatter={v => fmt(typeof v === 'number' ? v : Number(v) || 0, 'usd')}
+                        contentStyle={{
+                          backgroundColor: '#0f172a',
+                          border: '1px solid #475569',
+                          borderRadius: '8px',
+                          fontSize: '12px',
+                          color: '#e2e8f0',
+                        }}
+                      />
+                      <Bar dataKey="costUsd" radius={[0, 6, 6, 0]} barSize={24}>
                         {toolBarData.map(row => (
                           <Cell key={row.key} fill={getToolBarColor(row.key)} />
                         ))}
                         <LabelList
                           dataKey="costUsd"
                           position="right"
-                          fill="#475569"
+                          fill="#cbd5e1"
                           fontSize={11}
                           formatter={(v: unknown) => fmt(Number(v), 'usd')}
                         />
@@ -781,10 +896,14 @@ export default function AdminDashboardPage() {
                 )}
               </div>
             </div>
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <div className="rounded-xl border border-slate-700/70 bg-slate-900/50 p-4 shadow-lg shadow-black/20">
+              <div className="mb-2 flex items-baseline justify-between gap-2">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400">Tokens nach Modell</h3>
+                <span className="text-[10px] text-slate-500">Input vs. Output</span>
+              </div>
               <div className="h-[280px] w-full">
                 {modelTokenBars.length === 0 ? (
-                  <p className="flex h-full items-center justify-center text-sm text-[#64748b]">Noch keine Daten</p>
+                  <p className="flex h-full items-center justify-center text-sm text-slate-500">Noch keine Daten</p>
                 ) : (
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
@@ -792,14 +911,34 @@ export default function AdminDashboardPage() {
                       margin={{ bottom: 48, left: 4, right: 8, top: 8 }}
                       barSize={modelTokenBars.length <= 2 ? 40 : undefined}
                     >
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                      <XAxis dataKey="model" tick={{ fontSize: 10, fill: C.slate }} angle={-24} textAnchor="end" height={52} interval={0} />
-                      <YAxis tick={{ fontSize: 10, fill: C.slate }} tickFormatter={v => fmt(Number(v), 'tokens')} width={44} />
+                      <CartesianGrid strokeDasharray="3 6" stroke={chartGrid} opacity={0.6} />
+                      <XAxis
+                        dataKey="model"
+                        tick={{ fontSize: 10, fill: chartTick }}
+                        stroke={chartGrid}
+                        angle={-24}
+                        textAnchor="end"
+                        height={52}
+                        interval={0}
+                      />
+                      <YAxis
+                        tick={{ fontSize: 10, fill: chartTick }}
+                        stroke={chartGrid}
+                        tickFormatter={v => fmt(Number(v), 'tokens')}
+                        width={44}
+                      />
                       <Tooltip
                         formatter={(value, name) => [fmt(Number(value), 'tokens'), String(name)]}
+                        contentStyle={{
+                          backgroundColor: '#0f172a',
+                          border: '1px solid #475569',
+                          borderRadius: '8px',
+                          fontSize: '12px',
+                          color: '#e2e8f0',
+                        }}
                       />
-                      <Bar dataKey="input" name="Input" fill={C.tokenIn} radius={[4, 4, 0, 0]} />
-                      <Bar dataKey="output" name="Output" fill={C.tokenOut} radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="input" name="Input" fill="#7dd3fc" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="output" name="Output" fill="#2563eb" radius={[4, 4, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 )}
@@ -810,14 +949,68 @@ export default function AdminDashboardPage() {
 
         {/* Top users */}
         {initialLoad ? (
-          <div className="animate-pulse rounded-xl border border-slate-200 bg-slate-50 p-4">
-            <div className="h-40 rounded bg-slate-100/80" />
+          <div className="animate-pulse rounded-xl border border-slate-700/60 bg-slate-900/40 p-4">
+            <div className="h-40 rounded bg-slate-800/60" />
           </div>
         ) : data ? (
-          <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50 shadow-sm">
+          <div className="overflow-hidden rounded-xl border border-slate-700/70 bg-slate-900/50 shadow-lg shadow-black/30">
+            <div className="flex flex-col gap-3 border-b border-slate-700/60 px-4 py-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
+              <div>
+                <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-400">Top-Nutzer</h2>
+                <p className="mt-0.5 text-[11px] text-slate-500">
+                  Aggregiert nach Zeitraum (Redis max. {USAGE_RETENTION_DAYS} Tage). Anteil relativ zur gefilterten Liste.
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <label className="sr-only" htmlFor="admin-top-range">
+                  Zeitraum
+                </label>
+                <select
+                  id="admin-top-range"
+                  value={topRange}
+                  onChange={e => setTopRange(e.target.value as TopUserRangePreset)}
+                  className="rounded-lg border border-slate-600 bg-slate-950 px-2.5 py-1.5 text-xs font-medium text-slate-200 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+                >
+                  <option value="retention">Gesamt ({USAGE_RETENTION_DAYS} Tage)</option>
+                  <option value="30d">Letzte 30 Tage</option>
+                  <option value="7d">Letzte 7 Tage</option>
+                  <option value="today">Heute</option>
+                </select>
+                <label className="sr-only" htmlFor="admin-plan-filter">
+                  Plan
+                </label>
+                <select
+                  id="admin-plan-filter"
+                  value={planFilter}
+                  onChange={e => setPlanFilter(e.target.value as typeof planFilter)}
+                  className="rounded-lg border border-slate-600 bg-slate-950 px-2.5 py-1.5 text-xs font-medium text-slate-200 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+                >
+                  <option value="all">Alle Pläne</option>
+                  <option value="free">Free</option>
+                  <option value="starter">Starter</option>
+                  <option value="pro">Pro</option>
+                </select>
+                <input
+                  type="search"
+                  value={userSearch}
+                  onChange={e => setUserSearch(e.target.value)}
+                  placeholder="Suche ID / E-Mail…"
+                  className="min-w-[10rem] flex-1 rounded-lg border border-slate-600 bg-slate-950 px-2.5 py-1.5 text-xs text-slate-200 placeholder:text-slate-500 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 sm:max-w-[220px]"
+                />
+                {topUsersLoading ? (
+                  <span className="flex items-center gap-1 text-[11px] text-slate-500">
+                    <Loader2 size={12} className="animate-spin" />
+                    Nutzer…
+                  </span>
+                ) : null}
+              </div>
+            </div>
+            {topUsersError ? (
+              <p className="border-b border-amber-500/30 bg-amber-950/40 px-4 py-2 text-xs text-amber-200">{topUsersError}</p>
+            ) : null}
             <div className="overflow-x-auto">
               <table className="w-full min-w-[800px] text-left text-sm">
-                <thead className="border-b border-slate-200 text-xs font-semibold text-[#64748b]">
+                <thead className="border-b border-slate-700/80 text-xs font-semibold text-slate-400">
                   <tr>
                     <th className="px-4 py-3">Nutzer</th>
                     <th className="px-4 py-3">Plan</th>
@@ -828,7 +1021,7 @@ export default function AdminDashboardPage() {
                       <button
                         type="button"
                         onClick={() => setCostSortDesc(d => !d)}
-                        className="font-semibold text-[#64748b] hover:text-[#4f46e5]"
+                        className="font-semibold text-slate-400 hover:text-teal-300"
                       >
                         Kosten {costSortDesc ? '↓' : '↑'}
                       </button>
@@ -836,26 +1029,28 @@ export default function AdminDashboardPage() {
                     <th className="px-4 py-3">Top-Tool</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200/80">
-                  {sortedTopUsers.length === 0 ? (
+                <tbody className="divide-y divide-slate-700/50">
+                  {filteredTopUsers.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="px-4 py-8 text-center text-[#64748b]">
-                        Keine Nutzer aktiv heute
+                      <td colSpan={7} className="px-4 py-8 text-center text-slate-500">
+                        {topUsersList.length === 0 && !topUsersLoading
+                          ? 'Keine Nutzungsdaten im gewählten Zeitraum.'
+                          : 'Keine Treffer für die aktuellen Filter.'}
                       </td>
                     </tr>
                   ) : (
-                    sortedTopUsers.map(u => {
-                      const denom = data.totalCostToday > 0 ? data.totalCostToday : totalTopCostToday
+                    filteredTopUsers.map(u => {
+                      const denom = totalFilteredCost > 0 ? totalFilteredCost : 0
                       const sharePct = denom > 0 ? (u.totalCostUsd / denom) * 100 : 0
                       const tokensSum = u.totalInputTokens + u.totalOutputTokens
                       const display = u.userEmail?.trim() ? truncateEmail(u.userEmail) : u.userId
                       return (
                         <tr
                           key={u.userId}
-                          className="cursor-pointer transition-colors hover:bg-white/80"
+                          className="cursor-pointer transition-colors hover:bg-slate-800/70"
                           onClick={() => void openUserDetail(u.userId)}
                         >
-                          <td className="px-4 py-3 font-mono text-xs text-slate-800">{display}</td>
+                          <td className="px-4 py-3 font-mono text-xs text-slate-200">{display}</td>
                           <td className="px-4 py-3">
                             <span
                               className={`inline-block rounded-md px-2 py-0.5 text-xs font-medium ${planBadgeClass(u.plan)}`}
@@ -863,25 +1058,28 @@ export default function AdminDashboardPage() {
                               {planDisplayLabel(u.plan)}
                             </span>
                           </td>
-                          <td className="px-4 py-3 text-right tabular-nums text-slate-700">
+                          <td className="px-4 py-3 text-right tabular-nums text-slate-300">
                             {u.totalMessages.toLocaleString('de-DE')}
                           </td>
-                          <td className="px-4 py-3 text-right font-medium tabular-nums text-slate-800">
+                          <td className="px-4 py-3 text-right font-medium tabular-nums text-slate-200">
                             {fmt(tokensSum, 'tokens')}
                           </td>
                           <td className="px-4 py-3">
-                            <div className="h-1.5 w-[60px] overflow-hidden rounded-full bg-slate-200/90">
+                            <div className="h-1.5 w-[72px] overflow-hidden rounded-full bg-slate-700">
                               <div
-                                className="h-full rounded-full bg-[#ea580c]"
+                                className="h-full rounded-full bg-gradient-to-r from-orange-600 to-amber-500"
                                 style={{ width: `${Math.min(100, sharePct)}%` }}
                               />
                             </div>
+                            <span className="mt-0.5 block text-[10px] tabular-nums text-slate-500">
+                              {fmt(sharePct, 'pct')}
+                            </span>
                             <span className="sr-only">{fmt(sharePct, 'pct')} Anteil</span>
                           </td>
-                          <td className="px-4 py-3 text-right text-base font-bold tabular-nums text-[#ea580c]">
+                          <td className="px-4 py-3 text-right text-base font-bold tabular-nums text-orange-400">
                             {fmt(u.totalCostUsd, 'usd')}
                           </td>
-                          <td className="px-4 py-3 text-slate-600">{getTopTool(u)}</td>
+                          <td className="px-4 py-3 text-slate-400">{getTopTool(u)}</td>
                         </tr>
                       )
                     })
@@ -889,8 +1087,8 @@ export default function AdminDashboardPage() {
                 </tbody>
               </table>
             </div>
-            <p className="border-t border-slate-200 px-4 py-2 text-[11px] text-[#64748b]">
-              Zeile anklicken: Detail (letzte 30 Tage) · Aktualisierung alle 60s
+            <p className="border-t border-slate-700/60 px-4 py-2 text-[11px] text-slate-500">
+              Zeile anklicken: Nutzungsdetails (gleicher Zeitraum wie oben) · Dashboard &amp; Tabelle alle 60s
             </p>
           </div>
         ) : null}
@@ -898,89 +1096,93 @@ export default function AdminDashboardPage() {
 
       {(selectedUser || detailLoading || detailError) && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
           role="dialog"
           aria-modal="true"
         >
-          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-xl">
-            <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
-              <h3 className="text-sm font-semibold text-slate-900">Nutzungsdetails</h3>
+          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl border border-slate-600 bg-slate-900 shadow-2xl shadow-black/50">
+            <div className="flex items-center justify-between border-b border-slate-700 px-4 py-3">
+              <h3 className="text-sm font-semibold text-slate-100">Nutzungsdetails</h3>
               <button
                 type="button"
                 onClick={() => {
                   setSelectedUser(null)
                   setDetailError(null)
                 }}
-                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                className="rounded-lg p-1 text-slate-400 hover:bg-slate-800 hover:text-slate-200"
                 aria-label="Schließen"
               >
                 <X size={18} />
               </button>
             </div>
-            <div className="space-y-4 p-4 text-sm">
+            <div className="space-y-4 p-4 text-sm text-slate-200">
               {detailLoading && (
                 <div className="flex items-center justify-center gap-2 py-12 text-slate-500">
                   <Loader2 className="animate-spin" size={20} />
                   Lade…
                 </div>
               )}
-              {detailError && <p className="text-[#ea580c]">{detailError}</p>}
+              {detailError && <p className="text-orange-400">{detailError}</p>}
               {selectedUser && !detailLoading && (
                 <>
-                  <p className="text-xs text-[#64748b]">Zeitraum: letzte 30 Tage</p>
-                  <p className="font-mono text-xs text-slate-700">{selectedUser.userId}</p>
+                  <p className="text-xs text-slate-500">
+                    Zeitraum: {detailRangeLabel || '—'} (wie Tabellen-Filter)
+                  </p>
+                  <p className="font-mono text-xs text-slate-300">{selectedUser.userId}</p>
                   {selectedUser.userEmail?.trim() ? (
-                    <p className="text-slate-800">{selectedUser.userEmail}</p>
+                    <p className="text-slate-200">{selectedUser.userEmail}</p>
                   ) : null}
                   <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div className="rounded-xl bg-slate-50 p-2">
-                      <span className="text-[#64748b]">Nachrichten</span>
-                      <p className="font-semibold tabular-nums">{selectedUser.totalMessages.toLocaleString('de-DE')}</p>
+                    <div className="rounded-xl border border-slate-700/60 bg-slate-950/50 p-2">
+                      <span className="text-slate-500">Nachrichten</span>
+                      <p className="font-semibold tabular-nums text-slate-100">
+                        {selectedUser.totalMessages.toLocaleString('de-DE')}
+                      </p>
                     </div>
-                    <div className="rounded-xl bg-slate-50 p-2">
-                      <span className="text-[#64748b]">Kosten</span>
-                      <p className="font-semibold tabular-nums text-[#ea580c]">
+                    <div className="rounded-xl border border-slate-700/60 bg-slate-950/50 p-2">
+                      <span className="text-slate-500">Kosten</span>
+                      <p className="font-semibold tabular-nums text-orange-400">
                         {fmt(selectedUser.totalCostUsd, 'usd')}
                       </p>
                     </div>
-                    <div className="rounded-xl bg-slate-50 p-2">
-                      <span className="text-[#64748b]">Input-Tokens</span>
+                    <div className="rounded-xl border border-slate-700/60 bg-slate-950/50 p-2">
+                      <span className="text-slate-500">Input-Tokens</span>
                       <p className="font-semibold tabular-nums">{fmt(selectedUser.totalInputTokens, 'tokens')}</p>
                     </div>
-                    <div className="rounded-xl bg-slate-50 p-2">
-                      <span className="text-[#64748b]">Output-Tokens</span>
+                    <div className="rounded-xl border border-slate-700/60 bg-slate-950/50 p-2">
+                      <span className="text-slate-500">Output-Tokens</span>
                       <p className="font-semibold tabular-nums">{fmt(selectedUser.totalOutputTokens, 'tokens')}</p>
                     </div>
                   </div>
                   <div>
-                    <h4 className="mb-2 text-xs font-medium text-[#64748b]">Nach Modell</h4>
+                    <h4 className="mb-2 text-xs font-medium text-slate-500">Nach Modell</h4>
                     <ul className="max-h-32 space-y-1 overflow-y-auto text-xs">
                       {Object.entries(selectedUser.byModel ?? {}).map(([k, m]) => (
-                        <li key={k} className="flex justify-between gap-2 border-b border-slate-100 py-1">
-                          <span className="min-w-0 truncate text-slate-700" title={k}>
+                        <li key={k} className="flex justify-between gap-2 border-b border-slate-700/60 py-1">
+                          <span className="min-w-0 truncate text-slate-300" title={k}>
                             <span
                               className={`mr-1.5 inline-block rounded px-1.5 py-0.5 text-[10px] font-medium ${
                                 (m.provider ?? '').toLowerCase() === 'groq'
-                                  ? 'bg-emerald-100 text-emerald-800'
-                                  : 'bg-slate-200 text-slate-700'
+                                  ? 'bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/25'
+                                  : 'bg-slate-600/40 text-slate-200 ring-1 ring-slate-500/35'
                               }`}
                             >
                               {(m.provider ?? '').toLowerCase() === 'groq' ? 'Groq' : 'Anthropic'}
                             </span>
                             {shortModelLabel(k)}
                           </span>
-                          <span className="shrink-0 tabular-nums text-slate-600">{fmt(m.costUsd, 'usd')}</span>
+                          <span className="shrink-0 tabular-nums text-slate-400">{fmt(m.costUsd, 'usd')}</span>
                         </li>
                       ))}
                     </ul>
                   </div>
                   <div>
-                    <h4 className="mb-2 text-xs font-medium text-[#64748b]">Nach Werkzeug</h4>
+                    <h4 className="mb-2 text-xs font-medium text-slate-500">Nach Werkzeug</h4>
                     <ul className="max-h-32 space-y-1 overflow-y-auto text-xs">
                       {Object.entries(selectedUser.byTool ?? {}).map(([k, t]) => (
-                        <li key={k} className="flex justify-between gap-2 border-b border-slate-100 py-1">
-                          <span className="text-slate-700">{toolLabel(k)}</span>
-                          <span className="shrink-0 tabular-nums text-slate-600">{fmt(t.costUsd, 'usd')}</span>
+                        <li key={k} className="flex justify-between gap-2 border-b border-slate-700/60 py-1">
+                          <span className="text-slate-300">{toolLabel(k)}</span>
+                          <span className="shrink-0 tabular-nums text-slate-400">{fmt(t.costUsd, 'usd')}</span>
                         </li>
                       ))}
                     </ul>
