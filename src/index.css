@@ -462,10 +462,90 @@
   color: #166534;
 }
 
+.job-analysis-body .job-md-table-wrap {
+  margin: 0 0 10px;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 10px;
+  border: 1px solid #E2E8F0;
+  background: #fff;
+}
+
+.job-analysis-body .job-md-table-wrap:last-child {
+  margin-bottom: 0;
+}
+
+.job-analysis-body .job-md-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.job-analysis-body .job-md-table th,
+.job-analysis-body .job-md-table td {
+  border: 1px solid #E2E8F0;
+  padding: 8px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.job-analysis-body .job-md-table th {
+  background: #F8FAFC;
+  font-weight: 700;
+  color: #0F172A;
+  white-space: nowrap;
+}
+
+.job-analysis-body .job-md-table tbody tr:nth-child(even) {
+  background: #FAFAFA;
+}
+
+.job-analysis-body .job-md-td-status {
+  text-align: center;
+  white-space: nowrap;
+  width: 3rem;
+}
+
+.job-analysis-body .job-cell-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.75rem;
+  min-height: 1.75rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.job-analysis-body .job-cell-status-yes {
+  background: #DCFCE7;
+  border: 1px solid #BBF7D0;
+  color: #166534;
+}
+
+.job-analysis-body .job-cell-status-no {
+  background: #FEE2E2;
+  border: 1px solid #FECACA;
+  color: #991B1B;
+}
+
+.job-analysis-body .job-cell-status-empty {
+  color: #94A3B8;
+  font-weight: 600;
+}
+
 @media (max-width: 640px) {
   .job-analysis-body .job-ul,
   .job-analysis-body .job-ol {
     padding-left: 16px;
+  }
+
+  .job-analysis-body .job-md-table th,
+  .job-analysis-body .job-md-table td {
+    padding: 6px 8px;
+    font-size: 0.78rem;
   }
 }
 

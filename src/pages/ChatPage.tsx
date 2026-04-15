@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
-import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { AlertCircle, CheckCircle2, PanelLeft, Plus, RefreshCw, X } from 'lucide-react'
 import type { ToolType } from '../types'
 import { PROGRAMMING_LANGUAGES } from '../types'
 import { UsageLimitError, askAgentStream, linkJobApplicationSession } from '../api/client'
 import { syncPlanFromStripe } from '../services/StripeService'
-import TogglePill from '../components/chat/TogglePill'
 import ChatInput from '../components/chat/ChatInput'
+import ChatContextBar from '../components/chat/ChatContextBar'
 import ChatSidebar from '../components/chat/ChatSidebar'
 import ContextModal, { type ContextModalToolType, type ContextPayload } from '../components/chat/ContextModal'
 import MessageList from '../components/chat/MessageList'
@@ -439,6 +439,9 @@ export default function ChatPage() {
     Record<string, { id: string; label: string }>
   >({})
   const [skipContextModalForSessions, setSkipContextModalForSessions] = useState<Record<string, boolean>>({})
+
+  const chatScrollRef = useRef<HTMLDivElement>(null)
+  const [scrollToBottomSeq, setScrollToBottomSeq] = useState(0)
 
   const [nativeLang, setNativeLang] = useState('de')
   const [targetLang, setTargetLang] = useState('es')
@@ -909,6 +912,7 @@ export default function ChatPage() {
       store.addMessage(sessionId, { id: streamingMsgId, text: '', isUser: false })
       store.setSessionStreaming(sessionId, true, streamingMsgId)
     })
+    setScrollToBottomSeq(s => s + 1)
 
     const skipThinkingUi = shouldSkipThinkingUi(outgoingText, sessionToolType)
     let usedDeliberatePath = false
@@ -1277,7 +1281,7 @@ export default function ChatPage() {
         <ChatAnswerReadyBanner />
 
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          <div className="flex-1 overflow-y-auto">
+          <div ref={chatScrollRef} className="min-h-0 flex-1 overflow-y-auto">
             <div className="mx-auto max-w-3xl px-4 py-4">
               <MessageList
                 messages={store.activeMessages}
@@ -1291,6 +1295,8 @@ export default function ChatPage() {
                 thinkingSlot={thinkingSlot}
                 streamCursorActive={deliberate.isRevealing}
                 streamCursorMessageId={store.streamingPlaceholder?.messageId ?? null}
+                scrollContainerRef={chatScrollRef}
+                scrollToBottomSeq={scrollToBottomSeq}
               />
             </div>
           </div>
@@ -1312,94 +1318,16 @@ export default function ChatPage() {
 
         {isSignedIn && !careerProfileLoading && (
           <div className="flex-shrink-0 border-b border-slate-200 bg-white px-4 py-2">
-            <div className="mx-auto max-w-3xl">
-              {careerProfile && (
-                <div className="mb-2 flex flex-wrap items-center gap-2">
-                  <span className="text-[11px] font-medium text-slate-500">Profil</span>
-                  <div className="flex gap-0.5" aria-hidden>
-                    {Array.from({ length: 10 }).map((_, i) => (
-                      <div
-                        key={i}
-                        className={[
-                          'h-2 w-2 rounded-sm',
-                          i < Math.ceil(profileCompletenessPct / 10) ? 'bg-teal-500' : 'bg-slate-200',
-                        ].join(' ')}
-                      />
-                    ))}
-                  </div>
-                  <span className="text-[11px] font-semibold text-slate-700">{profileCompletenessPct}%</span>
-                  {profileGapHint ? (
-                    <span className="min-w-0 text-[11px] text-slate-500">— {profileGapHint}</span>
-                  ) : null}
-                </div>
-              )}
-              {careerProfile && profileCompletenessPct < 50 && (
-                <div className="mb-2 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-[11px] text-amber-900">
-                  Je vollständiger dein Profil, desto besser die Antworten. Ergänze fehlende Bereiche unter{' '}
-                  <Link to="/career-profile" className="font-medium text-primary hover:underline">
-                    Karriereprofil
-                  </Link>
-                  .
-                </div>
-              )}
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="mr-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Kontext</span>
-                <TogglePill
-                  active={profileToggles.includeBasicProfile}
-                  label={kontextPillLabels.basic}
-                  onClick={() => updateToggles({ includeBasicProfile: !profileToggles.includeBasicProfile })}
-                />
-                <TogglePill
-                  active={profileToggles.includeSkills}
-                  label={kontextPillLabels.skills}
-                  onClick={() => updateToggles({ includeSkills: !profileToggles.includeSkills })}
-                />
-                <TogglePill
-                  active={profileToggles.includeExperience}
-                  label={kontextPillLabels.exp}
-                  onClick={() => updateToggles({ includeExperience: !profileToggles.includeExperience })}
-                />
-                <TogglePill
-                  active={profileToggles.includeCv}
-                  label={kontextPillLabels.cv}
-                  onClick={() => updateToggles({ includeCv: !profileToggles.includeCv })}
-                />
-                {(careerProfile?.targetJobs ?? []).map(job => (
-                  <TogglePill
-                    key={job.id}
-                    active={profileToggles.activeTargetJobId === job.id}
-                    label={`Zielstelle: ${job.title ?? 'Stelle'}${job.company ? ` @ ${job.company}` : ''}`}
-                    title={`Zielstelle: ${job.title ?? ''}${job.company ? ` @ ${job.company}` : ''}`}
-                    onClick={() =>
-                      updateToggles({
-                        activeTargetJobId: profileToggles.activeTargetJobId === job.id ? null : job.id,
-                      })}
-                  />
-                ))}
-              </div>
-              {kontextHintOpen ? (
-                <div className="mt-1.5 flex items-start gap-1 rounded-lg bg-slate-50/90 py-0.5 pl-0 pr-0.5">
-                  <p className="min-w-0 flex-1 text-[11px] leading-snug text-slate-500">
-                    <strong className="font-medium text-slate-600">Farbig = aktiv:</strong> diese Profilteile steckt der
-                    Server im <strong className="font-medium text-slate-600">System-Prompt</strong> (nicht doppelt im
-                    Nachrichtentext). Stellenanalyse/Interview: in der Nachricht nur ggf. Text aus dem{' '}
-                    <strong className="font-medium text-slate-600">Setup-Modal</strong>. Bearbeiten unter{' '}
-                    <Link to="/career-profile" className="font-medium text-primary hover:underline">
-                      Karriereprofil
-                    </Link>
-                    . HTTPS, nur angemeldet; nach Profil-Änderungen Seite neu laden.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={dismissKontextHint}
-                    className="mt-0.5 flex-shrink-0 rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-200/80 hover:text-slate-600"
-                    aria-label="Hinweis schließen"
-                  >
-                    <X size={14} strokeWidth={2} />
-                  </button>
-                </div>
-              ) : null}
-            </div>
+            <ChatContextBar
+              careerProfile={careerProfile}
+              profileCompletenessPct={profileCompletenessPct}
+              profileGapHint={profileGapHint}
+              profileToggles={profileToggles}
+              updateToggles={updateToggles}
+              kontextPillLabels={kontextPillLabels}
+              kontextHintOpen={kontextHintOpen}
+              dismissKontextHint={dismissKontextHint}
+            />
           </div>
         )}
 

@@ -329,6 +329,82 @@ function formatInline(input: string): string {
   return value
 }
 
+/** Split a Markdown pipe row into cells (min 2). Returns null if not a pipe row. */
+function splitPipeCells(line: string): string[] | null {
+  const t = line.trim()
+  if (!t.includes('|')) return null
+  const rawParts = t.split('|').map(c => c.trim())
+  let cells = [...rawParts]
+  if (cells[0] === '') cells.shift()
+  if (cells.length > 0 && cells[cells.length - 1] === '') cells.pop()
+  if (cells.length < 2) return null
+  return cells
+}
+
+function isMarkdownTableSeparatorCell(cell: string): boolean {
+  return /^:?-{3,}:?$/.test(cell.trim())
+}
+
+function isMarkdownTableSeparatorRow(cells: string[]): boolean {
+  return cells.length >= 2 && cells.every(isMarkdownTableSeparatorCell)
+}
+
+function statusCellMarkup(raw: string): string | null {
+  const t = normalizeBrokenText(raw).trim()
+  if (t === '' || t === '—' || t === '-') return '<span class="job-cell-status job-cell-status-empty">—</span>'
+  if (/^[✓✔\u2713\u2714]$/.test(t)) return '<span class="job-cell-status job-cell-status-yes" title="vorhanden">✓</span>'
+  if (/^[✗✘xX]$/.test(t)) return '<span class="job-cell-status job-cell-status-no" title="fehlt">✗</span>'
+  return null
+}
+
+function padRow(cells: string[], len: number): string[] {
+  const row = [...cells]
+  while (row.length < len) row.push('')
+  return row.slice(0, len)
+}
+
+function buildMarkdownTableHtml(header: string[], body: string[][]): string {
+  const colCount = header.length
+  const thead = `<thead><tr>${header.map(h => `<th scope="col">${formatInline(h)}</th>`).join('')}</tr></thead>`
+  const tbodyRows = body.map(row => {
+    const cells = padRow(row, colCount)
+    return `<tr>${cells.map(cell => {
+      const status = statusCellMarkup(cell)
+      if (status) return `<td class="job-md-td job-md-td-status">${status}</td>`
+      return `<td class="job-md-td">${formatInline(cell)}</td>`
+    }).join('')}</tr>`
+  }).join('')
+  return `<div class="job-md-table-wrap"><table class="job-md-table">${thead}<tbody>${tbodyRows}</tbody></table></div>`
+}
+
+/**
+ * If lines[start] begins a GFM-style pipe table, return HTML and number of lines consumed; else null.
+ */
+function tryConsumeMarkdownTable(lines: string[], start: number): { html: string; consumed: number } | null {
+  if (start >= lines.length) return null
+  const row0 = splitPipeCells(lines[start].trim())
+  if (!row0) return null
+  if (start + 1 >= lines.length) return null
+  const row1 = splitPipeCells(lines[start + 1].trim())
+  if (!row1 || row1.length !== row0.length) return null
+  if (!isMarkdownTableSeparatorRow(row1)) return null
+
+  const colCount = row0.length
+  const body: string[][] = []
+  let j = start + 2
+  while (j < lines.length) {
+    const raw = lines[j]
+    const trimmed = raw.trim()
+    if (!trimmed) break
+    const cells = splitPipeCells(trimmed)
+    if (!cells) break
+    body.push(padRow(cells, colCount))
+    j++
+  }
+
+  return { html: buildMarkdownTableHtml(row0, body), consumed: j - start }
+}
+
 export function bodyToHtml(text: string): string {
   const lines = normalizeBrokenText(text).split('\n')
   const parts: string[] = []
@@ -340,15 +416,26 @@ export function bodyToHtml(text: string): string {
     listMode = null
   }
 
-  for (const rawLine of lines) {
-    const line = rawLine.trim()
+  let i = 0
+  while (i < lines.length) {
+    const line = lines[i].trim()
     if (!line) {
       closeList()
+      i++
+      continue
+    }
+
+    const table = tryConsumeMarkdownTable(lines, i)
+    if (table) {
+      closeList()
+      parts.push(table.html)
+      i += table.consumed
       continue
     }
 
     if (/^[-]{3,}$/.test(line)) {
       closeList()
+      i++
       continue
     }
 
@@ -360,6 +447,7 @@ export function bodyToHtml(text: string): string {
         listMode = 'ul'
       }
       parts.push(`<li>${formatInline(unordered[1])}</li>`)
+      i++
       continue
     }
 
@@ -371,6 +459,7 @@ export function bodyToHtml(text: string): string {
         listMode = 'ol'
       }
       parts.push(`<li value="${ordered[1]}">${formatInline(ordered[2])}</li>`)
+      i++
       continue
     }
 
@@ -379,16 +468,19 @@ export function bodyToHtml(text: string): string {
     const keyValue = line.match(/^([A-Za-z0-9][^:]{1,60}):\s+(.+)$/)
     if (keyValue && !/^https?:\/\//i.test(line)) {
       parts.push(`<p class="job-kv"><span class="job-kv-key">${formatInline(keyValue[1])}:</span> ${formatInline(keyValue[2])}</p>`)
+      i++
       continue
     }
 
     const subHeading = line.match(/^([A-Za-z0-9][^:]{1,60}):$/)
     if (subHeading) {
       parts.push(`<h4 class="job-subhead">${formatInline(subHeading[1])}</h4>`)
+      i++
       continue
     }
 
     parts.push(`<p class="job-p">${formatInline(line)}</p>`)
+    i++
   }
 
   closeList()

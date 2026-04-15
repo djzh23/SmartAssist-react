@@ -1,8 +1,11 @@
-import { useEffect, useRef, type ReactNode } from 'react'
+import { useEffect, useRef, type ReactNode, type RefObject } from 'react'
 import type { ChatMessage, ToolType } from '../../types'
 import type { StreamingPlaceholder } from '../../context/ChatSessionsProvider'
 import MessageBubble from './MessageBubble'
 import { MessageCircle } from 'lucide-react'
+
+/** Pixels from bottom to still treat as "following" the stream (auto-scroll). */
+const STICK_THRESHOLD_PX = 120
 
 interface Props {
   messages: ChatMessage[]
@@ -17,6 +20,10 @@ interface Props {
   thinkingSlot?: ReactNode
   streamCursorActive?: boolean
   streamCursorMessageId?: string | null
+  /** Scroll area (e.g. ChatPage); stick-to-bottom uses this element. */
+  scrollContainerRef?: RefObject<HTMLDivElement | null>
+  /** Increment after each send to force scroll to latest (user message + reply). */
+  scrollToBottomSeq?: number
 }
 
 function TypingDots() {
@@ -45,8 +52,10 @@ export default function MessageList({
   thinkingSlot,
   streamCursorActive = false,
   streamCursorMessageId = null,
+  scrollContainerRef,
+  scrollToBottomSeq = 0,
 }: Props) {
-  const bottomRef = useRef<HTMLDivElement>(null)
+  const prevSeqRef = useRef(0)
 
   const typingOnThisSession =
     streamingPlaceholder !== null
@@ -54,21 +63,40 @@ export default function MessageList({
     && streamingPlaceholder.sessionId === viewSessionId
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, streamingPlaceholder, typingOnThisSession])
+    const el = scrollContainerRef?.current
+    if (!el) return
+
+    const forced = scrollToBottomSeq > prevSeqRef.current
+    prevSeqRef.current = scrollToBottomSeq
+
+    const distance = el.scrollHeight - el.scrollTop - el.clientHeight
+    if (forced || distance <= STICK_THRESHOLD_PX) {
+      el.scrollTo({
+        top: el.scrollHeight,
+        behavior: forced ? 'smooth' : 'auto',
+      })
+    }
+  }, [
+    messages,
+    streamingPlaceholder,
+    typingOnThisSession,
+    streamCursorActive,
+    scrollToBottomSeq,
+    scrollContainerRef,
+  ])
 
   if (messages.length === 0 && !typingOnThisSession) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center gap-3 text-center p-8">
+      <div className="flex flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
         <MessageCircle size={40} className="text-slate-200" />
-        <p className="text-slate-400 font-medium">Starte ein neues Gespräch</p>
-        <p className="text-slate-300 text-sm">Schreib eine Nachricht unten oder tippe auf Neues Gespräch</p>
+        <p className="font-medium text-slate-400">Starte ein neues Gespräch</p>
+        <p className="text-sm text-slate-300">Schreib eine Nachricht unten oder tippe auf Neues Gespräch</p>
       </div>
     )
   }
 
   return (
-    <div className="flex-1 overflow-y-auto px-4 py-6 flex flex-col gap-4">
+    <div className="flex w-full flex-col gap-4 py-2">
       {(() => {
         let userSeen = false
 
@@ -114,7 +142,6 @@ export default function MessageList({
           )
         })
       })()}
-      <div ref={bottomRef} />
     </div>
   )
 }

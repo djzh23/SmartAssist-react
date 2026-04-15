@@ -290,6 +290,15 @@ export default function Sidebar({ onNavClick }: Props) {
         {mainLinks.map(link => (
           <SidebarLink key={link.to} item={link} onClick={onNavClick} />
         ))}
+        <SidebarLink
+          item={{ label: 'Karriereprofil', icon: <ClipboardList size={15} />, to: '/career-profile' }}
+          onClick={onNavClick}
+        />
+        <SidebarLink
+          item={{ label: 'Meine Bewerbungen', icon: <FolderOpen size={15} />, to: '/applications' }}
+          onClick={onNavClick}
+        />
+        <SidebarLink item={{ label: 'Ratgeber', icon: <BookOpen size={15} />, to: '/guides' }} onClick={onNavClick} />
 
         <p className="px-3 pb-1.5 pt-5 text-[10px] font-bold uppercase tracking-[1.5px] text-slate-500">Coaching und Chat</p>
         {skillsLoading && (
@@ -308,19 +317,6 @@ export default function Sidebar({ onNavClick }: Props) {
             ))}
           </div>
         ))}
-
-        <p className="px-3 pb-1.5 pt-5 text-[10px] font-bold uppercase tracking-[1.5px] text-slate-500">Organisation</p>
-        <SidebarLink
-          item={{ label: 'Karriereprofil', icon: <ClipboardList size={15} />, to: '/career-profile' }}
-          onClick={onNavClick}
-        />
-        <SidebarLink
-          item={{ label: 'Meine Bewerbungen', icon: <FolderOpen size={15} />, to: '/applications' }}
-          onClick={onNavClick}
-        />
-
-        <p className="px-3 pb-1.5 pt-5 text-[10px] font-bold uppercase tracking-[1.5px] text-slate-500">Hilfe</p>
-        <SidebarLink item={{ label: 'Ratgeber', icon: <BookOpen size={15} />, to: '/guides' }} onClick={onNavClick} />
 
         <p className="px-3 pb-1.5 pt-5 text-[10px] font-bold uppercase tracking-[1.5px] text-slate-500">Konto</p>
         <SidebarLink item={{ label: 'Mein Profil', icon: <User size={15} />, to: '/profile' }} onClick={onNavClick} />
