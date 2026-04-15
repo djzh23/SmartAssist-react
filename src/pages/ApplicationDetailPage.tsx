@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '@clerk/clerk-react'
-import { ArrowLeft, Copy, Loader2, Trash2 } from 'lucide-react'
+import { ArrowLeft, ChevronDown, Copy, Loader2, Trash2 } from 'lucide-react'
 import {
   type ApplicationStatusApi,
   type JobApplicationApi,
@@ -24,6 +24,10 @@ const STATUS_OPTIONS: { value: ApplicationStatusApi; label: string }[] = [
   { value: 'withdrawn', label: 'Zurückgezogen' },
 ]
 
+function statusLabelFor(status: ApplicationStatusApi): string {
+  return STATUS_OPTIONS.find(o => o.value === status)?.label ?? status
+}
+
 function interviewSeedText(app: JobApplicationApi): string {
   const role = app.jobTitle
     ? `ROLE: ${app.jobTitle}${app.company ? ` at ${app.company}` : ''}`
@@ -43,6 +47,9 @@ export default function ApplicationDetailPage() {
   const [savingCover, setSavingCover] = useState(false)
   const [interviewNotes, setInterviewNotes] = useState('')
   const [savingInterview, setSavingInterview] = useState(false)
+  const [statusMenuOpen, setStatusMenuOpen] = useState(false)
+  const [statusSaving, setStatusSaving] = useState(false)
+  const statusMenuRef = useRef<HTMLDivElement>(null)
 
   const load = useCallback(async () => {
     if (!id) return
@@ -69,6 +76,17 @@ export default function ApplicationDetailPage() {
   useEffect(() => {
     void load()
   }, [load])
+
+  useEffect(() => {
+    if (!statusMenuOpen) return
+    const onPointerDown = (e: PointerEvent) => {
+      const el = statusMenuRef.current
+      if (el && !el.contains(e.target as Node))
+        setStatusMenuOpen(false)
+    }
+    document.addEventListener('pointerdown', onPointerDown, true)
+    return () => document.removeEventListener('pointerdown', onPointerDown, true)
+  }, [statusMenuOpen])
 
   const timelineSorted = useMemo(() => {
     if (!app) return []
@@ -105,16 +123,26 @@ export default function ApplicationDetailPage() {
     })
   }
 
-  const onStatusChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
-    if (!app || !id) return
-    const next = e.target.value as ApplicationStatusApi
+  const pickStatus = async (next: ApplicationStatusApi) => {
+    if (!app || !id || next === app.status) {
+      setStatusMenuOpen(false)
+      return
+    }
+    setStatusSaving(true)
+    setError(null)
     try {
       const token = await getToken()
-      if (!token) return
+      if (!token) {
+        setError('Bitte anmelden.')
+        return
+      }
       await updateJobApplicationStatus(token, id, { status: next })
       await load()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Status speichern fehlgeschlagen')
+    } finally {
+      setStatusSaving(false)
+      setStatusMenuOpen(false)
     }
   }
 
@@ -210,17 +238,48 @@ export default function ApplicationDetailPage() {
             )}
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <label className="sr-only" htmlFor="app-status">Status</label>
-            <select
-              id="app-status"
-              value={app.status}
-              onChange={onStatusChange}
-              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 outline-none ring-primary focus:ring-2"
-            >
-              {STATUS_OPTIONS.map(o => (
-                <option key={o.value} value={o.value}>{o.label}</option>
-              ))}
-            </select>
+            <span className="sr-only" id="app-status-label">Status</span>
+            <div className="relative" ref={statusMenuRef}>
+              <button
+                type="button"
+                id="app-status"
+                aria-labelledby="app-status-label"
+                aria-haspopup="listbox"
+                aria-expanded={statusMenuOpen}
+                disabled={statusSaving}
+                onClick={() => setStatusMenuOpen(v => !v)}
+                className="inline-flex min-w-[12rem] items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-left text-sm font-medium text-slate-800 shadow-sm outline-none ring-primary transition hover:border-slate-300 focus-visible:ring-2 disabled:opacity-60"
+              >
+                <span className="truncate">{statusLabelFor(app.status)}</span>
+                {statusSaving
+                  ? <Loader2 className="shrink-0 animate-spin text-slate-500" size={18} aria-hidden />
+                  : <ChevronDown className={`shrink-0 text-slate-500 transition ${statusMenuOpen ? 'rotate-180' : ''}`} size={18} aria-hidden />}
+              </button>
+              {statusMenuOpen && (
+                <ul
+                  role="listbox"
+                  aria-labelledby="app-status-label"
+                  className="absolute right-0 z-[120] mt-1 max-h-72 min-w-[12rem] overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 shadow-lg"
+                >
+                  {STATUS_OPTIONS.map(o => (
+                    <li key={o.value} role="presentation">
+                      <button
+                        type="button"
+                        role="option"
+                        aria-selected={o.value === app.status}
+                        className={[
+                          'w-full px-3 py-2.5 text-left text-sm text-slate-800 transition hover:bg-slate-100',
+                          o.value === app.status ? 'bg-amber-50 font-semibold text-amber-900' : '',
+                        ].join(' ')}
+                        onClick={() => void pickStatus(o.value)}
+                      >
+                        {o.label}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
             <button
               type="button"
               onClick={() => void removeApp()}
