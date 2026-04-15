@@ -11,6 +11,8 @@ import {
   saveJobApplicationInterviewNotes,
   updateJobApplicationStatus,
 } from '../api/client'
+import { useCareerProfile } from '../hooks/useCareerProfile'
+import { getProfileCompleteness, getProfileCompletenessGapHint } from '../utils/profileCompleteness'
 
 const STATUS_OPTIONS: { value: ApplicationStatusApi; label: string }[] = [
   { value: 'draft', label: 'Entwurf' },
@@ -39,6 +41,7 @@ function interviewSeedText(app: JobApplicationApi): string {
 export default function ApplicationDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { getToken } = useAuth()
+  const { profile: careerProfile, loading: careerProfileLoading } = useCareerProfile()
   const navigate = useNavigate()
   const [app, setApp] = useState<JobApplicationApi | null>(null)
   const [loading, setLoading] = useState(true)
@@ -220,6 +223,18 @@ export default function ApplicationDetailPage() {
   return (
     <div className="min-h-0 flex-1 overflow-y-auto bg-slate-50">
       <div className="mx-auto max-w-3xl px-4 py-8">
+        {!careerProfileLoading && careerProfile && getProfileCompleteness(careerProfile) < 90 && (
+          <div className="mb-4 rounded-xl border border-teal-200 bg-teal-50/80 px-4 py-3 text-sm text-teal-900">
+            <span className="font-semibold">Profil {getProfileCompleteness(careerProfile)}%</span>
+            {getProfileCompletenessGapHint(careerProfile)
+              ? <> — {getProfileCompletenessGapHint(careerProfile)}</>
+              : null}
+            {' '}
+            <Link to="/career-profile" className="font-medium text-primary hover:underline">
+              Profil stärken
+            </Link>
+          </div>
+        )}
         <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
           <div>
             <Link

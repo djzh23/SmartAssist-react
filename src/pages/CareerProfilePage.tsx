@@ -2,7 +2,13 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '@clerk/clerk-react'
 import { CheckCircle2, Lightbulb, Loader2, Plus, Trash2 } from 'lucide-react'
-import { fetchLearningInsights, resolveLearningInsight } from '../api/client'
+import {
+  fetchJobApplications,
+  fetchLearningInsights,
+  patchLearningInsight,
+  resolveLearningInsight,
+  type JobApplicationApi,
+} from '../api/client'
 import type { LearningInsight as LearningInsightRow } from '../types'
 import type {
   CareerProfile,
@@ -30,6 +36,8 @@ function canMarkProfileSetupComplete(p: CareerProfile): boolean {
 function LearningInsightsPanel() {
   const { getToken, isSignedIn } = useAuth()
   const [rows, setRows] = useState<LearningInsightRow[]>([])
+  const [applications, setApplications] = useState<JobApplicationApi[]>([])
+  const [filterAppId, setFilterAppId] = useState<string>('')
   const [loading, setLoading] = useState(true)
   const [err, setErr] = useState<string | null>(null)
   const [busyId, setBusyId] = useState<string | null>(null)
@@ -37,6 +45,7 @@ function LearningInsightsPanel() {
   const load = useCallback(async () => {
     if (!isSignedIn) {
       setRows([])
+      setApplications([])
       setLoading(false)
       return
     }
@@ -46,9 +55,16 @@ function LearningInsightsPanel() {
       const token = await getToken()
       if (!token) {
         setRows([])
+        setApplications([])
         return
       }
-      const data = await fetchLearningInsights(token)
+      const [data, apps] = await Promise.all([
+        fetchLearningInsights(token, {
+          applicationId: filterAppId.trim() || undefined,
+        }),
+        fetchJobApplications(token),
+      ])
+      setApplications(apps)
       setRows(data.filter(r => !r.resolved))
     } catch (e) {
       setErr(e instanceof Error ? e.message : 'Erkenntnisse konnten nicht geladen werden')
@@ -56,7 +72,7 @@ function LearningInsightsPanel() {
     } finally {
       setLoading(false)
     }
-  }, [getToken, isSignedIn])
+  }, [getToken, isSignedIn, filterAppId])
 
   useEffect(() => {
     void load()
@@ -76,18 +92,59 @@ function LearningInsightsPanel() {
     }
   }
 
+  const onPatchBlur = async (id: string, patch: { title?: string; content?: string }) => {
+    const token = await getToken()
+    if (!token) return
+    try {
+      await patchLearningInsight(token, id, patch)
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Speichern fehlgeschlagen')
+    }
+  }
+
   if (!isSignedIn) return null
+
+  const grouped = new Map<string, LearningInsightRow[]>()
+  for (const r of rows) {
+    const key = r.jobApplicationId?.trim() || '_general'
+    const list = grouped.get(key) ?? []
+    list.push(r)
+    grouped.set(key, list)
+  }
+
+  const appLabel = (id: string) => {
+    if (id === '_general') return 'Allgemein (nicht an eine Bewerbung gebunden)'
+    const a = applications.find(x => x.id === id)
+    return a ? `${a.jobTitle} · ${a.company}` : `Bewerbung ${id}`
+  }
 
   return (
     <section className="mb-8 rounded-xl border border-amber-200/80 bg-amber-50/40 p-5 shadow-sm">
       <div className="mb-3 flex items-center gap-2">
         <Lightbulb className="h-5 w-5 text-amber-600" aria-hidden />
-        <h2 className="text-sm font-semibold text-slate-900">Erkenntnisse aus Chats</h2>
+        <h2 className="text-sm font-semibold text-slate-900">To-dos aus Chats</h2>
       </div>
       <p className="mb-4 text-sm text-slate-600">
-        Die KI merkt sich Lücken und nächste Schritte aus Stellenanalyse und Interview-Coach und bezieht sich im Chat
-        darauf. Hier kannst du Einträge als erledigt markieren — dann fließen sie nicht mehr in den Kontext ein.
+        Einträge aus Stellenanalyse und Interview-Coach — gebündelt pro Bewerbung, wenn die Session verknüpft war.
+        Bearbeite Titel oder Text; „Erledigt“ entfernt den Eintrag aus dem KI-Kontext.
       </p>
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <label className="flex items-center gap-2 text-xs text-slate-600">
+          <span className="font-medium text-slate-700">Filter</span>
+          <select
+            value={filterAppId}
+            onChange={e => setFilterAppId(e.target.value)}
+            className="rounded-md border border-amber-200/80 bg-white px-2 py-1 text-xs text-slate-800"
+          >
+            <option value="">Alle offenen + passende allgemeine</option>
+            {applications.map(a => (
+              <option key={a.id} value={a.id}>
+                {a.jobTitle} · {a.company}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
       {loading && (
         <div className="flex items-center gap-2 text-sm text-slate-500">
           <Loader2 className="animate-spin" size={18} />
@@ -96,30 +153,61 @@ function LearningInsightsPanel() {
       )}
       {err && <p className="text-sm text-red-600">{err}</p>}
       {!loading && !err && rows.length === 0 && (
-        <p className="text-sm text-slate-500">Noch keine offenen Erkenntnisse.</p>
+        <p className="text-sm text-slate-500">Noch keine offenen To-dos für diesen Filter.</p>
       )}
       {!loading && rows.length > 0 && (
-        <ul className="flex flex-col gap-2">
-          {rows.map(r => (
-            <li
-              key={r.id}
-              className="flex flex-col gap-2 rounded-lg border border-amber-100 bg-white px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between"
-            >
-              <div className="min-w-0 text-sm text-slate-800">
-                <span className="mr-2 text-[10px] font-bold uppercase text-amber-700">{r.category}</span>
-                <span className="text-slate-700">{r.content}</span>
-              </div>
-              <button
-                type="button"
-                disabled={busyId === r.id}
-                onClick={() => void onResolve(r.id)}
-                className="flex-shrink-0 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
-              >
-                {busyId === r.id ? '…' : 'Erledigt'}
-              </button>
-            </li>
+        <div className="flex flex-col gap-5">
+          {[...grouped.entries()].map(([gid, list]) => (
+            <div key={gid}>
+              <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-amber-800/90">
+                {appLabel(gid)}
+              </p>
+              <ul className="flex flex-col gap-2">
+                {list.map(r => (
+                  <li
+                    key={r.id}
+                    className="rounded-lg border border-amber-100 bg-white px-3 py-2.5 shadow-sm"
+                  >
+                    <div className="mb-2 flex flex-wrap items-center gap-2">
+                      <span className="text-[10px] font-bold uppercase text-amber-700">{r.category}</span>
+                    </div>
+                    <input
+                      type="text"
+                      defaultValue={r.title ?? ''}
+                      placeholder="Kurztitel (optional)"
+                      onBlur={e => {
+                        const v = e.target.value.trim()
+                        if (v !== (r.title ?? '').trim())
+                          void onPatchBlur(r.id, { title: v || undefined })
+                      }}
+                      className="mb-2 w-full rounded border border-slate-200 px-2 py-1 text-xs text-slate-800"
+                    />
+                    <textarea
+                      defaultValue={r.content}
+                      rows={3}
+                      onBlur={e => {
+                        const v = e.target.value.trim()
+                        if (v && v !== r.content.trim())
+                          void onPatchBlur(r.id, { content: v })
+                      }}
+                      className="mb-2 w-full resize-y rounded border border-slate-200 px-2 py-1 text-sm text-slate-800"
+                    />
+                    <div className="flex justify-end">
+                      <button
+                        type="button"
+                        disabled={busyId === r.id}
+                        onClick={() => void onResolve(r.id)}
+                        className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                      >
+                        {busyId === r.id ? '…' : 'Erledigt'}
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
           ))}
-        </ul>
+        </div>
       )}
     </section>
   )

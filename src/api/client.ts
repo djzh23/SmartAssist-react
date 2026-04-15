@@ -186,8 +186,22 @@ export async function fetchSkills(token?: string | null): Promise<SkillSummary[]
   return Array.isArray(data) ? data : []
 }
 
-export async function fetchLearningInsights(token: string): Promise<LearningInsight[]> {
-  const res = await fetch(`${BASE}/api/learning/insights`, {
+export interface FetchLearningInsightsParams {
+  applicationId?: string
+  includeResolved?: boolean
+}
+
+export async function fetchLearningInsights(
+  token: string,
+  params?: FetchLearningInsightsParams,
+): Promise<LearningInsight[]> {
+  const q = new URLSearchParams()
+  if (params?.applicationId?.trim())
+    q.set('applicationId', params.applicationId.trim())
+  if (params?.includeResolved)
+    q.set('includeResolved', 'true')
+  const qs = q.toString()
+  const res = await fetch(`${BASE}/api/learning/insights${qs ? `?${qs}` : ''}`, {
     headers: { Authorization: `Bearer ${token}` },
   })
   if (!res.ok) {
@@ -195,6 +209,21 @@ export async function fetchLearningInsights(token: string): Promise<LearningInsi
   }
   const data = await res.json() as LearningInsight[]
   return Array.isArray(data) ? data : []
+}
+
+export async function patchLearningInsight(
+  token: string,
+  insightId: string,
+  body: { title?: string; content?: string; resolved?: boolean },
+): Promise<void> {
+  const res = await fetch(`${BASE}/api/learning/insights/${encodeURIComponent(insightId)}`, {
+    method: 'PATCH',
+    headers: authHeaders(token),
+    body: JSON.stringify(body),
+  })
+  if (!res.ok) {
+    throw new Error(await readApiError(res, `Insight update failed (${res.status})`))
+  }
 }
 
 export async function resolveLearningInsight(token: string, insightId: string): Promise<void> {

@@ -37,7 +37,7 @@ const PLANS: Plan[] = [
     features: [
       { text: '2 Antworten ohne Anmeldung', included: true },
       { text: '20 Antworten pro Tag nach Anmeldung', included: true },
-      { text: 'Alle Tools (Wetter, Witze, Sprachen)', included: true },
+      { text: 'Karriere-Tools und Sprachtraining', included: true },
       { text: 'Browser-Sitzungsspeicher', included: true },
       { text: 'Stellenanalyse', included: false },
       { text: 'Audio Aussprache', included: false },

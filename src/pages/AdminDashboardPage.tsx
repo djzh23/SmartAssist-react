@@ -67,8 +67,6 @@ const TOOL_LABELS: Record<string, string> = {
   interviewprep: 'Interview',
   interview: 'Interview',
   programming: 'Code',
-  weather: 'Wetter',
-  jokes: 'Witze',
 }
 
 function fmt(value: number, type: 'usd' | 'tokens' | 'pct'): string {

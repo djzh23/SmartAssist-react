@@ -16,7 +16,12 @@ export function useSkills() {
     try {
       const token = isSignedIn ? await getToken() : null
       const data = await fetchSkills(token ?? undefined)
-      setSkills(data)
+      const filtered = data.filter(s => {
+        const t = s.apiToolType.toLowerCase()
+        const id = s.id.toLowerCase()
+        return t !== 'weather' && t !== 'jokes' && id !== 'weather' && id !== 'jokes'
+      })
+      setSkills(filtered)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Skills konnten nicht geladen werden')
       setSkills(null)

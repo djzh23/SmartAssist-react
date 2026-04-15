@@ -15,6 +15,8 @@ import {
   type JobApplicationApi,
   fetchJobApplications,
 } from '../api/client'
+import { useCareerProfile } from '../hooks/useCareerProfile'
+import { getProfileCompleteness, getProfileCompletenessGapHint } from '../utils/profileCompleteness'
 
 /** Active pipeline (left → right). */
 const PIPELINE: ApplicationStatusApi[] = [
@@ -72,6 +74,7 @@ function isActiveStatus(s: ApplicationStatusApi): boolean {
 
 export default function ApplicationsPage() {
   const { getToken } = useAuth()
+  const { profile: careerProfile, loading: careerProfileLoading } = useCareerProfile()
   const [apps, setApps] = useState<JobApplicationApi[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -179,6 +182,26 @@ export default function ApplicationsPage() {
         {error && (
           <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
             {error}
+          </div>
+        )}
+
+        {!careerProfileLoading && careerProfile && getProfileCompleteness(careerProfile) < 90 && (
+          <div className="mb-6 rounded-xl border border-teal-200 bg-teal-50/80 px-4 py-3 text-sm text-teal-900">
+            <span className="font-semibold">Karriereprofil {getProfileCompleteness(careerProfile)}%</span>
+            {getProfileCompletenessGapHint(careerProfile)
+              ? (
+                  <>
+                    {' '}
+                    — fehlt u. a.: {getProfileCompletenessGapHint(careerProfile)}
+                  </>
+                )
+              : null}
+            {' '}
+            <Link to="/career-profile" className="font-medium text-primary underline-offset-2 hover:underline">
+              Jetzt vervollständigen
+            </Link>
+            {' '}
+            für bessere KI-Antworten in Analyse und Chat.
           </div>
         )}
 

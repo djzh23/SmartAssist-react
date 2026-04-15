@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@clerk/clerk-react'
 import {
   completeOnboarding,
@@ -7,6 +7,7 @@ import {
   updateFullProfile,
   uploadCv,
   type ParsedCvData,
+  type CareerProfile,
 } from '../api/profileClient'
 import CvUploader from '../components/profile/CvUploader'
 import { useCareerProfile } from '../hooks/useCareerProfile'
@@ -36,6 +37,16 @@ const LEVELS: { value: string; label: string }[] = [
   { value: 'career_change', label: 'Karrierewechsler' },
 ]
 
+function postOnboardingPath(profile: CareerProfile): string {
+  const hasTarget = profile.targetJobs.length > 0
+  const cvOk = (profile.cvRawText ?? '').trim().length >= 80
+  if (!hasTarget || !cvOk)
+    return '/career-profile'
+  if (profile.goals.some(g => g === 'new_job' || g === 'career_switch'))
+    return '/applications'
+  return '/chat'
+}
+
 const GOALS: { id: string; label: string }[] = [
   { id: 'new_job', label: 'Neuen Job finden' },
   { id: 'career_switch', label: 'Karrierewechsel' },
@@ -48,7 +59,7 @@ const GOALS: { id: string; label: string }[] = [
 export default function OnboardingPage() {
   const navigate = useNavigate()
   const { getToken, isLoaded, isSignedIn } = useAuth()
-  const { skipOnboarding, loading: profileLoading, needsOnboarding, reload, error: profileError } = useCareerProfile()
+  const { skipOnboarding, loading: profileLoading, needsOnboarding, reload, error: profileError, profile } = useCareerProfile()
 
   const [step, setStep] = useState(1)
   const [field, setField] = useState('')
@@ -67,9 +78,10 @@ export default function OnboardingPage() {
       return
     }
     if (!needsOnboarding && !profileError) {
-      navigate('/chat', { replace: true })
+      const dest = profile ? postOnboardingPath(profile) : '/chat'
+      navigate(dest, { replace: true })
     }
-  }, [isLoaded, profileLoading, isSignedIn, needsOnboarding, profileError, navigate])
+  }, [isLoaded, profileLoading, isSignedIn, needsOnboarding, profileError, profile, navigate])
 
   if (!isLoaded || profileLoading) return <LoadingScreen />
   if (!isSignedIn) return <LoadingScreen />
@@ -83,7 +95,9 @@ export default function OnboardingPage() {
     try {
       await skipOnboarding()
       await reload()
-      navigate('/chat', { replace: true })
+      const t = await getToken()
+      const p = t ? await fetchProfile(t) : null
+      navigate(p ? postOnboardingPath(p) : '/career-profile', { replace: true })
     } catch (e) {
       setFormError(e instanceof Error ? e.message : 'Überspringen fehlgeschlagen')
     } finally {
@@ -134,7 +148,8 @@ export default function OnboardingPage() {
       }
 
       await reload()
-      navigate('/chat', { replace: true })
+      const fresh = await fetchProfile(token)
+      navigate(postOnboardingPath(fresh), { replace: true })
     } catch (e) {
       setFormError(e instanceof Error ? e.message : 'Speichern fehlgeschlagen')
     } finally {
@@ -188,7 +203,8 @@ export default function OnboardingPage() {
       })
 
       await reload()
-      navigate('/chat', { replace: true })
+      const freshAfter = await fetchProfile(token)
+      navigate(postOnboardingPath(freshAfter), { replace: true })
     } catch (e) {
       setFormError(e instanceof Error ? e.message : 'Speichern fehlgeschlagen')
     } finally {
@@ -248,6 +264,13 @@ export default function OnboardingPage() {
         <p className="mb-6 text-sm text-slate-600">
           Das sind dieselben Daten wie unter <strong className="font-medium text-slate-800">Karriereprofil</strong> in der
           Navigation — hier nur geführt in drei Schritten. Überspringen oder später ergänzen ist in Ordnung.
+        </p>
+        <p className="mb-6 text-sm text-slate-600">
+          <Link to="/guides" className="font-medium text-primary hover:underline">
+            Ratgeber lesen
+          </Link>
+          {' '}
+          — App-Workflow, Bewerbungen und Prompting.
         </p>
 
         {formError && (

@@ -110,6 +110,8 @@ export interface AgentRequest {
   interviewMode?: boolean
   interviewLanguage?: string
   profileToggles?: ProfileContextToggles
+  /** When set, backend loads Bewerbungskontext for this application id. */
+  jobApplicationId?: string
 }
 
 export interface AgentResponse {
@@ -146,9 +148,14 @@ export interface LearningInsight {
   id: string
   category: string
   content: string
+  title?: string
   sourceTool?: string
   sourceContext?: string
+  jobApplicationId?: string
+  targetJobId?: string
+  sortOrder?: number
   createdAt: string
+  updatedAt?: string
   resolved: boolean
   resolvedAt?: string
 }

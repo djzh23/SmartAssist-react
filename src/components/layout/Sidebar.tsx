@@ -20,6 +20,7 @@ import {
   TrendingUp,
   Linkedin,
   FolderOpen,
+  BookOpen,
   type LucideIcon,
 } from 'lucide-react'
 import { useIsAdmin } from '../../hooks/useIsAdmin'
@@ -247,9 +248,9 @@ function UsageBar() {
 function groupLabel(category: string): string {
   switch (category) {
     case 'career':
-      return 'Karriere'
+      return 'Coaching'
     case 'productivity':
-      return 'Allgemein'
+      return 'Tools'
     case 'learning':
       return 'Lernen'
     default:
@@ -285,12 +286,12 @@ export default function Sidebar({ onNavClick }: Props) {
       {plan !== 'pro' && <UsageBanner />}
 
       <nav className="flex flex-1 flex-col px-2">
-        <p className="px-3 pb-1.5 pt-3 text-[10px] font-bold uppercase tracking-[1.5px] text-slate-500">Hauptmenü</p>
+        <p className="px-3 pb-1.5 pt-3 text-[10px] font-bold uppercase tracking-[1.5px] text-slate-500">Überblick</p>
         {mainLinks.map(link => (
           <SidebarLink key={link.to} item={link} onClick={onNavClick} />
         ))}
 
-        <p className="px-3 pb-1.5 pt-5 text-[10px] font-bold uppercase tracking-[1.5px] text-slate-500">Chat und Karriere</p>
+        <p className="px-3 pb-1.5 pt-5 text-[10px] font-bold uppercase tracking-[1.5px] text-slate-500">Coaching und Chat</p>
         {skillsLoading && (
           <div className="flex items-center gap-2 px-4 py-2 text-xs text-slate-500">
             <Loader2 size={14} className="animate-spin" />
@@ -308,8 +309,7 @@ export default function Sidebar({ onNavClick }: Props) {
           </div>
         ))}
 
-        <p className="px-3 pb-1.5 pt-5 text-[10px] font-bold uppercase tracking-[1.5px] text-slate-500">Konto</p>
-        <SidebarLink item={{ label: 'Mein Profil', icon: <User size={15} />, to: '/profile' }} onClick={onNavClick} />
+        <p className="px-3 pb-1.5 pt-5 text-[10px] font-bold uppercase tracking-[1.5px] text-slate-500">Organisation</p>
         <SidebarLink
           item={{ label: 'Karriereprofil', icon: <ClipboardList size={15} />, to: '/career-profile' }}
           onClick={onNavClick}
@@ -318,6 +318,12 @@ export default function Sidebar({ onNavClick }: Props) {
           item={{ label: 'Meine Bewerbungen', icon: <FolderOpen size={15} />, to: '/applications' }}
           onClick={onNavClick}
         />
+
+        <p className="px-3 pb-1.5 pt-5 text-[10px] font-bold uppercase tracking-[1.5px] text-slate-500">Hilfe</p>
+        <SidebarLink item={{ label: 'Ratgeber', icon: <BookOpen size={15} />, to: '/guides' }} onClick={onNavClick} />
+
+        <p className="px-3 pb-1.5 pt-5 text-[10px] font-bold uppercase tracking-[1.5px] text-slate-500">Konto</p>
+        <SidebarLink item={{ label: 'Mein Profil', icon: <User size={15} />, to: '/profile' }} onClick={onNavClick} />
         <SidebarLink item={{ label: 'Preise', icon: <Tag size={15} />, to: '/pricing' }} onClick={onNavClick} />
         {isAdmin && (
           <SidebarLink

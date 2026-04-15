@@ -435,6 +435,10 @@ export default function ChatPage() {
   const [showContextModal, setShowContextModal] = useState(false)
   const [dismissedContextKeys, setDismissedContextKeys] = useState<DismissedContextMap>(() => loadDismissedContextMap())
   const [contextBySessionKey, setContextBySessionKey] = useState<SessionContextMap>(() => loadContextMap())
+  const [linkedJobApplicationBySession, setLinkedJobApplicationBySession] = useState<
+    Record<string, { id: string; label: string }>
+  >({})
+  const [skipContextModalForSessions, setSkipContextModalForSessions] = useState<Record<string, boolean>>({})
 
   const [nativeLang, setNativeLang] = useState('de')
   const [targetLang, setTargetLang] = useState('es')
@@ -461,6 +465,9 @@ export default function ChatPage() {
     needsOnboarding,
     skipOnboarding,
   } = useCareerProfile()
+
+  const careerProfileRef = useRef(careerProfile)
+  careerProfileRef.current = careerProfile
 
   const streamCtxRef = useRef<{
     sessionId: string
@@ -577,6 +584,31 @@ export default function ChatPage() {
               updatedAt: new Date().toISOString(),
             }),
           }))
+          setLinkedJobApplicationBySession(prev => ({
+            ...prev,
+            [sid]: {
+              id: seed.applicationId,
+              label: [seed.jobTitle, seed.company].filter(Boolean).join(' · '),
+            },
+          }))
+          setSkipContextModalForSessions(prev => ({ ...prev, [sid]: true }))
+          const profileSnapshot = careerProfileRef.current
+          if (profileSnapshot?.targetJobs?.length) {
+            const norm = (s: string) => s.trim().toLowerCase().replace(/\s+/g, ' ')
+            const jt = norm(seed.jobTitle)
+            const jc = norm(seed.company)
+            const hit =
+              profileSnapshot.targetJobs.find(
+                j => norm(j.title ?? '') === jt && norm(j.company ?? '') === jc,
+              )
+              ?? profileSnapshot.targetJobs.find(
+                j =>
+                  (jt && norm(j.title ?? '').includes(jt))
+                  || (norm(j.title ?? '').length > 2 && jt.includes(norm(j.title ?? ''))),
+              )
+            if (hit)
+              updateToggles({ activeTargetJobId: hit.id })
+          }
           store.setActiveSession(sid)
           navigate('.', { replace: true, state: {} })
           const token = await getToken()
@@ -689,6 +721,10 @@ export default function ChatPage() {
       return
     }
 
+    if (store.activeSessionId && skipContextModalForSessions[store.activeSessionId]) {
+      return
+    }
+
     const timer = window.setTimeout(() => setShowContextModal(true), 500)
     return () => window.clearTimeout(timer)
   }, [
@@ -697,6 +733,7 @@ export default function ChatPage() {
     activeContextTool,
     dismissedContextKeys,
     hasUserMessages,
+    skipContextModalForSessions,
     store.activeSessionId,
   ])
 
@@ -844,6 +881,7 @@ export default function ChatPage() {
     }
 
     const sessionId = store.activeSessionId ?? await store.newSession(store.currentToolType)
+    const linkedAppForSend = linkedJobApplicationBySession[sessionId]
     const sessionToolType = store.sessions[sessionId]?.toolType ?? store.currentToolType
     const displayText = options?.displayText ?? text
     const outgoingText = options?.apiMessageOverride ?? text
@@ -898,6 +936,7 @@ export default function ChatPage() {
             interviewMode: isInterview ? true : undefined,
             interviewLanguage: isInterview ? (interviewLangCode === 'de' ? 'German' : 'English') : undefined,
             profileToggles: isSignedIn ? profileToggles : undefined,
+            jobApplicationId: isSignedIn && linkedAppForSend ? linkedAppForSend.id : undefined,
           },
           token,
           (chunk) => {
@@ -950,6 +989,7 @@ export default function ChatPage() {
             interviewMode: isInterview ? true : undefined,
             interviewLanguage: isInterview ? (interviewLangCode === 'de' ? 'German' : 'English') : undefined,
             profileToggles: isSignedIn ? profileToggles : undefined,
+            jobApplicationId: isSignedIn && linkedAppForSend ? linkedAppForSend.id : undefined,
           },
           token,
           (chunk) => {
@@ -1166,6 +1206,18 @@ export default function ChatPage() {
               >
                 <X size={15} />
               </button>
+            </div>
+          </div>
+        )}
+
+        {isSignedIn && store.activeSessionId && linkedJobApplicationBySession[store.activeSessionId] && (
+          <div className="flex-shrink-0 px-4 pb-0 pt-3">
+            <div className="mx-auto max-w-3xl">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-xs font-medium text-violet-800">
+                Bewerbung:
+                {' '}
+                {linkedJobApplicationBySession[store.activeSessionId].label}
+              </span>
             </div>
           </div>
         )}

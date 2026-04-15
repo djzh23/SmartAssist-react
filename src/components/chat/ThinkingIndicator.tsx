@@ -230,5 +230,5 @@ export function shouldSkipThinkingUi(message: string, toolType: ToolType): boole
   if (toolType !== 'general') return false
   const t = message.trim()
   if (t.length > 140) return false
-  return /\b(wetter|weather|forecast|witz|joke|tell me a joke|erzähl.*witz)\b/i.test(t)
+  return false
 }
