@@ -19,6 +19,7 @@ import {
   FileText,
   TrendingUp,
   Linkedin,
+  FolderOpen,
   type LucideIcon,
 } from 'lucide-react'
 import { useIsAdmin } from '../../hooks/useIsAdmin'
@@ -311,6 +312,10 @@ export default function Sidebar({ onNavClick }: Props) {
         <SidebarLink item={{ label: 'Mein Profil', icon: <User size={15} />, to: '/profile' }} onClick={onNavClick} />
         <SidebarLink
           item={{ label: 'Karriereprofil', icon: <ClipboardList size={15} />, to: '/career-profile' }}
+          onClick={onNavClick}
+        />
+        <SidebarLink
+          item={{ label: 'Meine Bewerbungen', icon: <FolderOpen size={15} />, to: '/applications' }}
           onClick={onNavClick}
         />
         <SidebarLink item={{ label: 'Preise', icon: <Tag size={15} />, to: '/pricing' }} onClick={onNavClick} />

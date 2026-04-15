@@ -9,8 +9,16 @@ import {
   type ReactNode,
 } from 'react'
 import { useLocation } from 'react-router-dom'
-import { useUser } from '@clerk/clerk-react'
+import { useAuth, useUser } from '@clerk/clerk-react'
 import { setStreamTextApplier } from '../chat/streamTextBridge'
+import {
+  createChatSessionRemote,
+  deleteChatSessionRemote,
+  fetchChatSessions,
+  fetchSessionTranscript,
+  putChatSessionOrder,
+  putSessionTranscript,
+} from '../api/client'
 import { reorderSessionOrderForTool } from '../utils/sessionOrder'
 import { suggestSessionTitle } from '../utils/sessionTitle'
 import type { ChatSession, ChatMessage, ToolType } from '../types'
@@ -59,21 +67,31 @@ function sanitizeSessions(raw: Record<string, ChatSession>): Record<string, Chat
   return out
 }
 
-function load<T>(key: string, fallback: T): T {
-  try {
-    const raw = localStorage.getItem(key)
-    return raw ? (JSON.parse(raw) as T) : fallback
-  } catch {
-    return fallback
-  }
+function normalizeToolFromApi(t: string | undefined | null): ToolType {
+  const x = (t ?? 'general').toLowerCase()
+  if (x === 'interviewprep') return 'interview'
+  if (x === 'general' || x === 'jobanalyzer' || x === 'language' || x === 'programming' || x === 'interview')
+    return x
+  return 'general'
 }
 
-function save(key: string, value: unknown): void {
-  try {
-    localStorage.setItem(key, JSON.stringify(value))
-  } catch {
-    // storage full
+function parseTranscriptMessages(raw: unknown): ChatMessage[] {
+  if (!Array.isArray(raw)) return []
+  const out: ChatMessage[] = []
+  for (const row of raw) {
+    if (!row || typeof row !== 'object') continue
+    const o = row as Record<string, unknown>
+    const id = typeof o.id === 'string' ? o.id : uid()
+    const text = typeof o.text === 'string' ? fixMojibake(o.text) : ''
+    const isUser = Boolean(o.isUser)
+    const timestamp = typeof o.timestamp === 'string' ? o.timestamp : new Date().toISOString()
+    const toolUsed = typeof o.toolUsed === 'string' ? o.toolUsed : undefined
+    const learningData = o.learningData && typeof o.learningData === 'object'
+      ? (o.learningData as ChatMessage['learningData'])
+      : undefined
+    out.push({ id, text, isUser, timestamp, toolUsed, learningData })
   }
+  return out
 }
 
 function welcomeFor(tool: ToolType): string | null {
@@ -98,13 +116,19 @@ Wähle eine Sprache oder sende direkt deinen Code. Ich unterstütze dich bei:
   }
 }
 
+function welcomeMessages(tool: ToolType): ChatMessage[] {
+  const w = welcomeFor(tool)
+  return w
+    ? [{ id: uid(), text: w, isUser: false, timestamp: new Date().toISOString() }]
+    : []
+}
+
 export interface AnswerReadyToast {
   sessionId: string
   toolType: ToolType
   preview: string
 }
 
-/** Which session/message is receiving the stream (typing dots only there). */
 export interface StreamingPlaceholder {
   sessionId: string
   messageId: string
@@ -115,33 +139,85 @@ export interface SessionStore {
   sessionOrder: string[]
   activeSessionId: string | null
   currentToolType: ToolType
+  /** True while loading sessions/transcripts from the API after sign-in or account switch. */
+  sessionsRemoteLoading: boolean
   setActiveSession: (id: string) => void
-  newSession: (tool?: ToolType) => string
-  deleteSession: (id: string) => void
-  clearHistory: () => void
-  switchToTool: (tool: ToolType) => void
+  newSession: (tool?: ToolType) => Promise<string>
+  deleteSession: (id: string) => Promise<void>
+  clearHistory: () => Promise<void>
+  switchToTool: (tool: ToolType) => Promise<void>
   addMessage: (sessionId: string, msg: Partial<ChatMessage> & { text: string; isUser: boolean }) => void
   updateMessageText: (sessionId: string, msgId: string, text: string) => void
   finalizeMessage: (sessionId: string, msgId: string, meta: { toolUsed?: string }) => void
   deleteMessage: (sessionId: string, msgId: string) => void
   activeMessages: ChatMessage[]
   visibleSessions: ChatSession[]
-  /** True while the assistant response is streaming for this session (survives route changes). */
   isSessionStreaming: (sessionId: string | null) => boolean
-  /** When starting a stream, pass assistantMessageId so typing UI only shows on that bubble. */
   setSessionStreaming: (sessionId: string, streaming: boolean, assistantMessageId?: string) => void
   streamingPlaceholder: StreamingPlaceholder | null
-  /** In-chat banner when an answer finishes in another conversation (ChatPage reads this). */
   answerReadyToast: AnswerReadyToast | null
   dismissAnswerToast: () => void
   notifyAnswerReady: (sessionId: string, toolType: ToolType, preview: string) => void
-  reorderSessionsForTool: (toolType: ToolType, fromIndex: number, toIndex: number) => void
+  reorderSessionsForTool: (toolType: ToolType, fromIndex: number, toIndex: number) => Promise<void>
 }
 
 const ChatSessionsContext = createContext<SessionStore | null>(null)
 
+async function migrateLocalSessionsOnce(scopeId: string, token: string): Promise<void> {
+  const flag = `sessions_migrated_${scopeId}`
+  if (localStorage.getItem(flag)) return
+
+  const k = lsKeys(scopeId)
+  const legacyChatSessions = localStorage.getItem('chat_sessions')
+  if (legacyChatSessions) {
+    try {
+      const parsed = JSON.parse(legacyChatSessions) as unknown
+      const rows: Array<{ toolType?: string; title?: string }> = Array.isArray(parsed) ? parsed : []
+      for (const row of rows) {
+        const toolType = normalizeToolFromApi(row.toolType)
+        const rec = await createChatSessionRemote(token, {
+          toolType,
+          title: typeof row.title === 'string' ? row.title : undefined,
+        })
+        await putSessionTranscript(token, rec.id, { toolType, messages: welcomeMessages(toolType) })
+      }
+    } catch (e) {
+      console.warn('[sessions] Legacy chat_sessions migration failed', e)
+    }
+    localStorage.removeItem('chat_sessions')
+  }
+
+  const rawSessions = localStorage.getItem(k.sessions)
+  if (rawSessions) {
+    try {
+      const parsed = sanitizeSessions(JSON.parse(rawSessions) as Record<string, ChatSession>)
+      const orderRaw = localStorage.getItem(k.order)
+      const order = (orderRaw ? JSON.parse(orderRaw) as string[] : Object.keys(parsed)).filter(
+        id => Boolean(parsed[id]),
+      )
+      for (const id of order) {
+        const s = parsed[id]
+        if (!s) continue
+        const rec = await createChatSessionRemote(token, {
+          toolType: s.toolType,
+          title: s.title,
+        })
+        await putSessionTranscript(token, rec.id, { toolType: s.toolType, messages: s.messages })
+      }
+    } catch (e) {
+      console.warn('[sessions] LocalStorage migration failed', e)
+    }
+    localStorage.removeItem(k.sessions)
+    localStorage.removeItem(k.order)
+    localStorage.removeItem(k.active)
+  }
+
+  localStorage.setItem(flag, 'true')
+}
+
 export function ChatSessionsProvider({ children }: { children: ReactNode }) {
   const location = useLocation()
+  const { getToken } = useAuth()
   const { user, isLoaded: clerkLoaded } = useUser()
   const scopeId = !clerkLoaded ? '_loading' : (user?.id ?? 'guest')
 
@@ -152,6 +228,7 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
   const [streamingIds, setStreamingIds] = useState<Record<string, true>>({})
   const [streamingPlaceholder, setStreamingPlaceholder] = useState<StreamingPlaceholder | null>(null)
   const [answerReadyToast, setAnswerReadyToast] = useState<AnswerReadyToast | null>(null)
+  const [sessionsRemoteLoading, setSessionsRemoteLoading] = useState(true)
 
   const locationRef = useRef(location)
   locationRef.current = location
@@ -159,147 +236,259 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
   activeIdRef.current = activeId
   const sessionsRef = useRef(sessions)
   sessionsRef.current = sessions
+  const sessionOrderRef = useRef(sessionOrder)
+  sessionOrderRef.current = sessionOrder
+  const currentToolRef = useRef(currentTool)
+  currentToolRef.current = currentTool
+
+  const persistIdsRef = useRef(new Set<string>())
+  const persistTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const flushPersist = useCallback(async () => {
+    const token = await getToken()
+    if (!token) return
+    const ids = [...persistIdsRef.current]
+    persistIdsRef.current.clear()
+    for (const sessionId of ids) {
+      const s = sessionsRef.current[sessionId]
+      if (!s) continue
+      try {
+        await putSessionTranscript(token, sessionId, { toolType: s.toolType, messages: s.messages })
+      } catch (e) {
+        console.warn('[sessions] Transcript sync failed', sessionId, e)
+      }
+    }
+  }, [getToken])
+
+  const schedulePersist = useCallback(
+    (sessionId: string) => {
+      persistIdsRef.current.add(sessionId)
+      if (persistTimerRef.current) clearTimeout(persistTimerRef.current)
+      persistTimerRef.current = setTimeout(() => {
+        persistTimerRef.current = null
+        void flushPersist()
+      }, 550)
+    },
+    [flushPersist],
+  )
 
   useEffect(() => {
     if (scopeId === '_loading') return
-    const k = lsKeys(scopeId)
-    setSessions(sanitizeSessions(load(k.sessions, {})))
-    setSessionOrder(load(k.order, []))
-    setActiveId(load(k.active, null))
-  }, [scopeId])
+
+    let cancelled = false
+
+    void (async () => {
+      if (scopeId === 'guest') {
+        setSessions({})
+        setSessionOrder([])
+        setActiveId(null)
+        setSessionsRemoteLoading(false)
+        return
+      }
+      setSessionsRemoteLoading(true)
+      try {
+        const token = await getToken()
+        if (cancelled) return
+        if (!token) {
+          setSessions({})
+          setSessionOrder([])
+          setActiveId(null)
+          return
+        }
+        await migrateLocalSessionsOnce(scopeId, token)
+        if (cancelled) return
+        const records = await fetchChatSessions(token)
+        const nextSessions: Record<string, ChatSession> = {}
+        const order: string[] = []
+        for (const m of records) {
+          const tr = await fetchSessionTranscript(token, m.id)
+          const tool = normalizeToolFromApi(tr.toolType || m.toolType)
+          let messages = parseTranscriptMessages(tr.messages)
+          if (messages.length === 0)
+            messages = welcomeMessages(tool)
+          nextSessions[m.id] = {
+            id: m.id,
+            toolType: tool,
+            messages,
+            createdAt: m.createdAt,
+            title: m.title,
+          }
+          order.push(m.id)
+        }
+        if (cancelled) return
+        setSessions(nextSessions)
+        setSessionOrder(order)
+        const firstForGeneral = order.find(id => nextSessions[id]?.toolType === 'general')
+        setActiveId(firstForGeneral ?? order[0] ?? null)
+      } catch (e) {
+        if (!cancelled) {
+          console.error('[sessions] Remote load failed', e)
+          setSessions({})
+          setSessionOrder([])
+          setActiveId(null)
+        }
+      } finally {
+        if (!cancelled)
+          setSessionsRemoteLoading(false)
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [scopeId, getToken])
 
   useEffect(() => {
-    if (activeId && sessions[activeId]) {
+    if (activeId && sessions[activeId])
       setCurrentTool(sessions[activeId].toolType)
-    }
   }, [activeId, sessions])
 
-  useEffect(() => {
-    if (scopeId === '_loading') return
-    save(lsKeys(scopeId).sessions, sessions)
-  }, [sessions, scopeId])
+  const createSessionRemote = useCallback(
+    async (tool: ToolType): Promise<string> => {
+      const token = await getToken()
+      if (!token)
+        throw new Error('Nicht angemeldet.')
+      const rec = await createChatSessionRemote(token, { toolType: tool })
+      const welcome = welcomeMessages(tool)
+      const session: ChatSession = {
+        id: rec.id,
+        toolType: tool,
+        messages: welcome,
+        createdAt: rec.createdAt,
+        title: rec.title,
+      }
+      setSessions(prev => ({ ...prev, [rec.id]: session }))
+      setSessionOrder(prev => [rec.id, ...prev.filter(id => id !== rec.id)])
+      await putSessionTranscript(token, rec.id, { toolType: tool, messages: welcome })
+      return rec.id
+    },
+    [getToken],
+  )
 
-  useEffect(() => {
-    if (scopeId === '_loading') return
-    save(lsKeys(scopeId).order, sessionOrder)
-  }, [sessionOrder, scopeId])
-
-  useEffect(() => {
-    if (scopeId === '_loading') return
-    save(lsKeys(scopeId).active, activeId)
-  }, [activeId, scopeId])
-
-  const createSession = useCallback((tool: ToolType = 'general'): string => {
-    const id = uid()
-    const welcome = welcomeFor(tool)
-    const messages: ChatMessage[] = welcome
-      ? [{ id: uid(), text: welcome, isUser: false, timestamp: new Date().toISOString() }]
-      : []
-    const session: ChatSession = { id, toolType: tool, messages, createdAt: new Date().toISOString() }
-
-    setSessions(prev => ({ ...prev, [id]: session }))
-    setSessionOrder(prev => [id, ...prev])
-    return id
-  }, [])
-
-  const switchToTool = useCallback((tool: ToolType) => {
-    setCurrentTool(tool)
-    const existing = sessionOrder.find(id => sessions[id]?.toolType === tool)
-    if (existing) {
-      setActiveId(existing)
-    } else {
-      const id = createSession(tool)
+  const switchToTool = useCallback(
+    async (tool: ToolType) => {
+      setCurrentTool(tool)
+      const order = sessionOrderRef.current
+      const sess = sessionsRef.current
+      const existing = order.find(id => sess[id]?.toolType === tool)
+      if (existing) {
+        setActiveId(existing)
+        return
+      }
+      const id = await createSessionRemote(tool)
       setActiveId(id)
-    }
-  }, [sessions, sessionOrder, createSession])
+    },
+    [createSessionRemote],
+  )
 
   const setActiveSession = useCallback((id: string) => {
     setActiveId(id)
   }, [])
 
-  const newSession = useCallback((tool?: ToolType): string => {
-    const t = tool ?? currentTool
-    const id = createSession(t)
-    setActiveId(id)
-    return id
-  }, [currentTool, createSession])
+  const newSession = useCallback(
+    async (tool?: ToolType): Promise<string> => {
+      const t = tool ?? currentTool
+      const id = await createSessionRemote(t)
+      setActiveId(id)
+      return id
+    },
+    [currentTool, createSessionRemote],
+  )
 
-  const deleteSession = useCallback((id: string) => {
-    setSessions(prev => {
-      const next = { ...prev }
-      delete next[id]
-      return next
-    })
+  const deleteSession = useCallback(
+    async (id: string) => {
+      try {
+        const token = await getToken()
+        if (token)
+          await deleteChatSessionRemote(token, id)
+      } catch (e) {
+        console.warn('[sessions] Delete remote failed', e)
+      }
 
-    setSessionOrder(prev => prev.filter(sessionId => sessionId !== id))
+      const ord = sessionOrderRef.current.filter(sessionId => sessionId !== id)
+      const sess = { ...sessionsRef.current }
+      delete sess[id]
+      const wasActive = activeIdRef.current === id
+      const nextActive = wasActive
+        ? ord.find(sessionId => sess[sessionId]?.toolType === currentToolRef.current) ?? null
+        : activeIdRef.current
 
-    setStreamingIds(prev => {
-      if (!prev[id]) return prev
-      const next = { ...prev }
-      delete next[id]
-      return next
-    })
+      setSessions(sess)
+      setSessionOrder(ord)
+      setActiveId(nextActive)
 
-    setStreamingPlaceholder(prev => (prev?.sessionId === id ? null : prev))
+      setStreamingIds(prev => {
+        if (!prev[id]) return prev
+        const next = { ...prev }
+        delete next[id]
+        return next
+      })
+      setStreamingPlaceholder(prev => (prev?.sessionId === id ? null : prev))
+    },
+    [getToken],
+  )
 
-    setActiveId(prev => {
-      if (prev !== id) return prev
-      const next = sessionOrder.find(sessionId => sessionId !== id && sessions[sessionId]?.toolType === currentTool)
-      return next ?? null
-    })
-  }, [sessions, sessionOrder, currentTool])
-
-  const clearHistory = useCallback(() => {
-    if (scopeId === '_loading') return
-    const k = lsKeys(scopeId)
+  const clearHistory = useCallback(async () => {
+    if (scopeId === '_loading' || scopeId === 'guest') return
+    const ids = [...sessionOrderRef.current]
+    const token = await getToken()
+    for (const id of ids) {
+      try {
+        if (token) await deleteChatSessionRemote(token, id)
+      } catch (e) {
+        console.warn('[sessions] clearHistory delete', id, e)
+      }
+    }
     setSessions({})
     setSessionOrder([])
     setActiveId(null)
     setStreamingIds({})
     setStreamingPlaceholder(null)
-    localStorage.removeItem(k.sessions)
-    localStorage.removeItem(k.order)
-    localStorage.removeItem(k.active)
-  }, [scopeId])
+  }, [getToken, scopeId])
 
-  const addMessage = useCallback((
-    sessionId: string,
-    msg: Partial<ChatMessage> & { text: string; isUser: boolean },
-  ) => {
-    const full: ChatMessage = {
-      id: uid(),
-      timestamp: new Date().toISOString(),
-      ...msg,
-    }
-    setSessions(prev => {
-      const session = prev[sessionId]
-      if (!session) return prev
-      const shouldSetTitle = full.isUser && !(session.title?.trim())
-      const title = shouldSetTitle ? suggestSessionTitle(session.toolType, full.text) : session.title
-      return {
-        ...prev,
-        [sessionId]: {
-          ...session,
-          messages: [...session.messages, full],
-          ...(shouldSetTitle ? { title } : {}),
-        },
+  const addMessage = useCallback(
+    (sessionId: string, msg: Partial<ChatMessage> & { text: string; isUser: boolean }) => {
+      const full: ChatMessage = {
+        id: uid(),
+        timestamp: new Date().toISOString(),
+        ...msg,
       }
-    })
-  }, [])
+      setSessions(prev => {
+        const session = prev[sessionId]
+        if (!session) return prev
+        const shouldSetTitle = full.isUser && !(session.title?.trim())
+        const title = shouldSetTitle ? suggestSessionTitle(session.toolType, full.text) : session.title
+        return {
+          ...prev,
+          [sessionId]: {
+            ...session,
+            messages: [...session.messages, full],
+            ...(shouldSetTitle ? { title } : {}),
+          },
+        }
+      })
+      schedulePersist(sessionId)
+    },
+    [schedulePersist],
+  )
 
-  const updateMessageText = useCallback((sessionId: string, msgId: string, text: string) => {
-    setSessions(prev => {
-      const session = prev[sessionId]
-      if (!session) return prev
-      return {
-        ...prev,
-        [sessionId]: {
-          ...session,
-          messages: session.messages.map(m => m.id === msgId ? { ...m, text } : m),
-        },
-      }
-    })
-  }, [])
+  const updateMessageText = useCallback(
+    (sessionId: string, msgId: string, text: string) => {
+      setSessions(prev => {
+        const session = prev[sessionId]
+        if (!session) return prev
+        return {
+          ...prev,
+          [sessionId]: {
+            ...session,
+            messages: session.messages.map(m => m.id === msgId ? { ...m, text } : m),
+          },
+        }
+      })
+      schedulePersist(sessionId)
+    },
+    [schedulePersist],
+  )
 
   const updateMessageTextRef = useRef(updateMessageText)
   updateMessageTextRef.current = updateMessageText
@@ -311,39 +500,43 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     return () => setStreamTextApplier(null)
   }, [])
 
-  const finalizeMessage = useCallback((
-    sessionId: string,
-    msgId: string,
-    meta: { toolUsed?: string },
-  ) => {
-    setSessions(prev => {
-      const session = prev[sessionId]
-      if (!session) return prev
-      return {
-        ...prev,
-        [sessionId]: {
-          ...session,
-          messages: session.messages.map(m =>
-            m.id === msgId ? { ...m, toolUsed: meta.toolUsed } : m,
-          ),
-        },
-      }
-    })
-  }, [])
+  const finalizeMessage = useCallback(
+    (sessionId: string, msgId: string, meta: { toolUsed?: string }) => {
+      setSessions(prev => {
+        const session = prev[sessionId]
+        if (!session) return prev
+        return {
+          ...prev,
+          [sessionId]: {
+            ...session,
+            messages: session.messages.map(m =>
+              m.id === msgId ? { ...m, toolUsed: meta.toolUsed } : m,
+            ),
+          },
+        }
+      })
+      schedulePersist(sessionId)
+    },
+    [schedulePersist],
+  )
 
-  const deleteMessage = useCallback((sessionId: string, msgId: string) => {
-    setSessions(prev => {
-      const session = prev[sessionId]
-      if (!session) return prev
-      return {
-        ...prev,
-        [sessionId]: {
-          ...session,
-          messages: session.messages.filter(m => m.id !== msgId),
-        },
-      }
-    })
-  }, [])
+  const deleteMessage = useCallback(
+    (sessionId: string, msgId: string) => {
+      setSessions(prev => {
+        const session = prev[sessionId]
+        if (!session) return prev
+        return {
+          ...prev,
+          [sessionId]: {
+            ...session,
+            messages: session.messages.filter(m => m.id !== msgId),
+          },
+        }
+      })
+      schedulePersist(sessionId)
+    },
+    [schedulePersist],
+  )
 
   const setSessionStreaming = useCallback((sessionId: string, streaming: boolean, assistantMessageId?: string) => {
     setStreamingIds(prev => {
@@ -353,9 +546,9 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
       delete next[sessionId]
       return next
     })
-    if (streaming && assistantMessageId) {
+    if (streaming && assistantMessageId)
       setStreamingPlaceholder({ sessionId, messageId: assistantMessageId })
-    }
+
     if (!streaming) {
       setStreamingPlaceholder(prev =>
         prev?.sessionId === sessionId ? null : prev,
@@ -371,12 +564,11 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
   const dismissAnswerToast = useCallback(() => setAnswerReadyToast(null), [])
 
   const notifyAnswerReady = useCallback((sessionId: string, toolType: ToolType, preview: string) => {
-    // Refs: stream may finish after navigation; stale closure must not hide the toast.
     const onChat = locationRef.current.pathname.startsWith('/chat')
     const tabVisible = typeof document === 'undefined' || document.visibilityState === 'visible'
-    if (onChat && activeIdRef.current === sessionId && tabVisible) {
+    if (onChat && activeIdRef.current === sessionId && tabVisible)
       return
-    }
+
     const short = preview.length > 72 ? `${preview.slice(0, 72)}…` : preview
     setAnswerReadyToast({ sessionId, toolType, preview: short })
     if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
@@ -391,11 +583,26 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const reorderSessionsForTool = useCallback((toolType: ToolType, fromIndex: number, toIndex: number) => {
-    setSessionOrder(prev =>
-      reorderSessionOrderForTool(prev, toolType, fromIndex, toIndex, sessionsRef.current),
-    )
-  }, [])
+  const reorderSessionsForTool = useCallback(
+    async (toolType: ToolType, fromIndex: number, toIndex: number) => {
+      const nextOrder = reorderSessionOrderForTool(
+        sessionOrderRef.current,
+        toolType,
+        fromIndex,
+        toIndex,
+        sessionsRef.current,
+      )
+      setSessionOrder(nextOrder)
+      try {
+        const token = await getToken()
+        if (token)
+          await putChatSessionOrder(token, nextOrder)
+      } catch (e) {
+        console.warn('[sessions] Order sync failed', e)
+      }
+    },
+    [getToken],
+  )
 
   const activeMessages = activeId ? (sessions[activeId]?.messages ?? []) : []
 
@@ -409,6 +616,7 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     sessionOrder,
     activeSessionId: activeId,
     currentToolType: currentTool,
+    sessionsRemoteLoading,
     setActiveSession,
     newSession,
     deleteSession,
@@ -432,6 +640,7 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     sessionOrder,
     activeId,
     currentTool,
+    sessionsRemoteLoading,
     setActiveSession,
     newSession,
     deleteSession,
@@ -461,8 +670,8 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
 
 export function useChatSessions(): SessionStore {
   const ctx = useContext(ChatSessionsContext)
-  if (!ctx) {
+  if (!ctx)
     throw new Error('useChatSessions must be used within ChatSessionsProvider')
-  }
+
   return ctx
 }

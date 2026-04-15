@@ -1,4 +1,4 @@
-import type { AgentRequest, AgentResponse, LearningInsight, SkillSummary } from '../types'
+import type { AgentRequest, AgentResponse, ChatMessage, LearningInsight, SkillSummary, ToolType } from '../types'
 
 const BASE = import.meta.env.VITE_API_BASE_URL
   ? `${import.meta.env.VITE_API_BASE_URL}`
@@ -289,4 +289,209 @@ export async function askAgentDemo(request: AgentRequest): Promise<AgentResponse
   }
 
   return await res.json() as AgentResponse
+}
+
+// ── Chat sessions (Redis sync) ─────────────────────────────────────────────
+
+export interface ApiChatSessionRecord {
+  id: string
+  title: string
+  toolType: string
+  createdAt: string
+  lastMessageAt: string
+  messageCount: number
+}
+
+export async function fetchChatSessions(token: string): Promise<ApiChatSessionRecord[]> {
+  const res = await fetch(`${BASE}/api/sessions`, { headers: { Authorization: `Bearer ${token}` } })
+  if (!res.ok)
+    throw new Error(await readApiError(res, `Sessions laden fehlgeschlagen (${res.status})`))
+  const data = await res.json() as unknown
+  return Array.isArray(data) ? data as ApiChatSessionRecord[] : []
+}
+
+export async function createChatSessionRemote(
+  token: string,
+  body: { toolType: string; title?: string },
+): Promise<ApiChatSessionRecord> {
+  const res = await fetch(`${BASE}/api/sessions`, {
+    method: 'POST',
+    headers: authHeaders(token),
+    body: JSON.stringify(body),
+  })
+  if (!res.ok)
+    throw new Error(await readApiError(res, `Session anlegen fehlgeschlagen (${res.status})`))
+  return await res.json() as ApiChatSessionRecord
+}
+
+export async function deleteChatSessionRemote(token: string, sessionId: string): Promise<void> {
+  const res = await fetch(`${BASE}/api/sessions/${encodeURIComponent(sessionId)}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok)
+    throw new Error(await readApiError(res, `Session löschen fehlgeschlagen (${res.status})`))
+}
+
+export async function putChatSessionOrder(token: string, orderedSessionIds: string[]): Promise<void> {
+  const res = await fetch(`${BASE}/api/sessions/order`, {
+    method: 'PUT',
+    headers: authHeaders(token),
+    body: JSON.stringify({ orderedSessionIds }),
+  })
+  if (!res.ok)
+    throw new Error(await readApiError(res, `Tab-Reihenfolge speichern fehlgeschlagen (${res.status})`))
+}
+
+export interface SessionTranscriptResponse {
+  toolType: string
+  messages: unknown
+}
+
+export async function fetchSessionTranscript(token: string, sessionId: string): Promise<SessionTranscriptResponse> {
+  const res = await fetch(`${BASE}/api/sessions/${encodeURIComponent(sessionId)}/transcript`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok)
+    throw new Error(await readApiError(res, `Verlauf laden fehlgeschlagen (${res.status})`))
+  return await res.json() as SessionTranscriptResponse
+}
+
+export async function putSessionTranscript(
+  token: string,
+  sessionId: string,
+  body: { toolType: ToolType; messages: ChatMessage[] },
+): Promise<void> {
+  const res = await fetch(`${BASE}/api/sessions/${encodeURIComponent(sessionId)}/transcript`, {
+    method: 'PUT',
+    headers: authHeaders(token),
+    body: JSON.stringify(body),
+  })
+  if (!res.ok)
+    throw new Error(await readApiError(res, `Verlauf speichern fehlgeschlagen (${res.status})`))
+}
+
+// ── Job applications hub ───────────────────────────────────────────────────
+
+export type ApplicationStatusApi =
+  | 'draft'
+  | 'applied'
+  | 'phoneScreen'
+  | 'interview'
+  | 'assessment'
+  | 'offer'
+  | 'accepted'
+  | 'rejected'
+  | 'withdrawn'
+
+export interface ApplicationEventApi {
+  date: string
+  description: string
+  note?: string
+}
+
+export interface JobApplicationApi {
+  id: string
+  jobTitle: string
+  company: string
+  jobUrl?: string
+  jobDescription?: string
+  status: ApplicationStatusApi
+  statusUpdatedAt: string
+  tailoredCvNotes?: string
+  coverLetterText?: string
+  interviewNotes?: string
+  timeline: ApplicationEventApi[]
+  createdAt: string
+  updatedAt: string
+  analysisSessionId?: string
+  interviewSessionId?: string
+}
+
+export async function fetchJobApplications(token: string): Promise<JobApplicationApi[]> {
+  const res = await fetch(`${BASE}/api/applications`, { headers: { Authorization: `Bearer ${token}` } })
+  if (!res.ok)
+    throw new Error(await readApiError(res, `Bewerbungen laden fehlgeschlagen (${res.status})`))
+  const data = await res.json() as unknown
+  return Array.isArray(data) ? data as JobApplicationApi[] : []
+}
+
+export async function fetchJobApplication(token: string, id: string): Promise<JobApplicationApi> {
+  const res = await fetch(`${BASE}/api/applications/${encodeURIComponent(id)}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok)
+    throw new Error(await readApiError(res, `Bewerbung laden fehlgeschlagen (${res.status})`))
+  return await res.json() as JobApplicationApi
+}
+
+export async function createJobApplication(
+  token: string,
+  body: { jobTitle: string; company: string; jobUrl?: string; jobDescription?: string },
+): Promise<JobApplicationApi> {
+  const res = await fetch(`${BASE}/api/applications`, {
+    method: 'POST',
+    headers: authHeaders(token),
+    body: JSON.stringify(body),
+  })
+  if (!res.ok)
+    throw new Error(await readApiError(res, `Bewerbung anlegen fehlgeschlagen (${res.status})`))
+  return await res.json() as JobApplicationApi
+}
+
+export async function updateJobApplicationStatus(
+  token: string,
+  id: string,
+  body: { status: ApplicationStatusApi; note?: string },
+): Promise<void> {
+  const res = await fetch(`${BASE}/api/applications/${encodeURIComponent(id)}/status`, {
+    method: 'PUT',
+    headers: authHeaders(token),
+    body: JSON.stringify(body),
+  })
+  if (!res.ok)
+    throw new Error(await readApiError(res, `Status speichern fehlgeschlagen (${res.status})`))
+}
+
+export async function saveJobApplicationCoverLetter(token: string, id: string, text: string): Promise<void> {
+  const res = await fetch(`${BASE}/api/applications/${encodeURIComponent(id)}/cover-letter`, {
+    method: 'PUT',
+    headers: authHeaders(token),
+    body: JSON.stringify({ text }),
+  })
+  if (!res.ok)
+    throw new Error(await readApiError(res, `Anschreiben speichern fehlgeschlagen (${res.status})`))
+}
+
+export async function saveJobApplicationInterviewNotes(token: string, id: string, text: string): Promise<void> {
+  const res = await fetch(`${BASE}/api/applications/${encodeURIComponent(id)}/interview-notes`, {
+    method: 'PUT',
+    headers: authHeaders(token),
+    body: JSON.stringify({ text }),
+  })
+  if (!res.ok)
+    throw new Error(await readApiError(res, `Interview-Notizen speichern fehlgeschlagen (${res.status})`))
+}
+
+export async function linkJobApplicationSession(
+  token: string,
+  id: string,
+  body: { sessionType: 'analysis' | 'interview'; sessionId: string },
+): Promise<void> {
+  const res = await fetch(`${BASE}/api/applications/${encodeURIComponent(id)}/link-session`, {
+    method: 'PUT',
+    headers: authHeaders(token),
+    body: JSON.stringify(body),
+  })
+  if (!res.ok)
+    throw new Error(await readApiError(res, `Chat-Verknüpfung fehlgeschlagen (${res.status})`))
+}
+
+export async function deleteJobApplication(token: string, id: string): Promise<void> {
+  const res = await fetch(`${BASE}/api/applications/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok)
+    throw new Error(await readApiError(res, `Bewerbung löschen fehlgeschlagen (${res.status})`))
 }

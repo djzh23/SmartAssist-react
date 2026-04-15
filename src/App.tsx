@@ -10,6 +10,9 @@ import ProfilePage from './pages/ProfilePage'
 import OnboardingPage from './pages/OnboardingPage'
 import CareerProfilePage from './pages/CareerProfilePage'
 import AdminDashboardPage from './pages/AdminDashboardPage'
+import ApplicationsPage from './pages/ApplicationsPage'
+import ApplicationNewPage from './pages/ApplicationNewPage'
+import ApplicationDetailPage from './pages/ApplicationDetailPage'
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string
 
@@ -72,6 +75,9 @@ function AppRoutes() {
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/career-profile" element={<CareerProfilePage />} />
         <Route path="/pricing" element={<PricingPage />} />
+        <Route path="/applications" element={<ApplicationsPage />} />
+        <Route path="/applications/new" element={<ApplicationNewPage />} />
+        <Route path="/applications/:id" element={<ApplicationDetailPage />} />
       </Route>
 
       <Route

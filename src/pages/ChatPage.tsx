@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { AlertCircle, PanelLeft, Plus, X } from 'lucide-react'
 import type { ToolType } from '../types'
 import { PROGRAMMING_LANGUAGES } from '../types'
-import { UsageLimitError, askAgentStream } from '../api/client'
+import { UsageLimitError, askAgentStream, linkJobApplicationSession } from '../api/client'
 import { syncPlanFromStripe } from '../services/StripeService'
 import TogglePill from '../components/chat/TogglePill'
 import ChatInput from '../components/chat/ChatInput'
@@ -421,12 +421,15 @@ function buildJobAnalyzerPrompt(
 }
 
 export default function ChatPage() {
+  const location = useLocation()
+  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const rawToolParam = (searchParams.get('tool') ?? 'general').toLowerCase()
   const toolParam = normalizeToolParam(rawToolParam)
   const modalToolType = modalToolTypeFromParam(rawToolParam, toolParam)
 
   const store = useChatSessions()
+  const applicationSeedKey = useRef<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [showContextModal, setShowContextModal] = useState(false)
@@ -537,9 +540,63 @@ export default function ChatPage() {
   }, [dismissedContextKeys])
 
   useEffect(() => {
-    store.switchToTool(toolParam)
+    const seed = (location.state as {
+      seedFromApplication?: {
+        applicationId: string
+        mode: 'jobanalyzer' | 'interview'
+        jobTitle: string
+        company: string
+        jobDescription: string
+      }
+    } | null)?.seedFromApplication
+
+    if (seed) {
+      const key = `${seed.applicationId}:${seed.mode}`
+      if (applicationSeedKey.current === key) return
+      applicationSeedKey.current = key
+
+      void (async () => {
+        try {
+          const tool: ToolType = seed.mode === 'interview' ? 'interview' : 'jobanalyzer'
+          await store.switchToTool(tool)
+          const sid = await store.newSession(tool)
+          const ctxTool = seed.mode === 'interview' ? 'interview' : 'jobanalyzer'
+          setContextBySessionKey(prev => ({
+            ...prev,
+            [contextKey(ctxTool, sid)]: normalizeContext({
+              sessionId: sid,
+              toolType: ctxTool,
+              jobTitle: seed.jobTitle,
+              companyName: seed.company,
+              jobText: seed.jobDescription.slice(0, JOB_ANALYZER_PROMPT_LIMIT),
+              cvText: '',
+              programmingLanguage: '',
+              programmingLanguageId: '',
+              hasJob: true,
+              hasCv: false,
+              updatedAt: new Date().toISOString(),
+            }),
+          }))
+          store.setActiveSession(sid)
+          navigate('.', { replace: true, state: {} })
+          const token = await getToken()
+          if (token) {
+            await linkJobApplicationSession(token, seed.applicationId, {
+              sessionType: seed.mode === 'interview' ? 'interview' : 'analysis',
+              sessionId: sid,
+            })
+          }
+        } catch (e) {
+          console.warn('[ChatPage] Application seed failed', e)
+          setError('Kontext aus Bewerbung konnte nicht übernommen werden.')
+        }
+      })()
+      return
+    }
+
+    void store.switchToTool(toolParam)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [toolParam])
+  }, [toolParam, location.state])
 
   useEffect(() => {
     const upgraded = (searchParams.get('upgraded') ?? '').toLowerCase() === 'true'
@@ -733,11 +790,11 @@ export default function ChatPage() {
   }
 
   const handleNewSession = () => {
-    store.newSession(store.currentToolType)
+    void store.newSession(store.currentToolType)
   }
 
   const handleDeleteSession = (id: string) => {
-    store.deleteSession(id)
+    void store.deleteSession(id)
 
     setContextBySessionKey(prev => {
       const next: SessionContextMap = {}
@@ -769,7 +826,7 @@ export default function ChatPage() {
 
   const handleClear = () => {
     if (!window.confirm('Alle Konversationen löschen?')) return
-    store.clearHistory()
+    void store.clearHistory()
     setContextBySessionKey({})
     setDismissedContextKeys({})
     localStorage.removeItem(LS_CONTEXT)
@@ -781,8 +838,12 @@ export default function ChatPage() {
       setShowLimitModal(true)
       return
     }
+    if (store.sessionsRemoteLoading) {
+      setError('Chats werden noch geladen — bitte kurz warten.')
+      return
+    }
 
-    const sessionId = store.activeSessionId ?? store.newSession(store.currentToolType)
+    const sessionId = store.activeSessionId ?? await store.newSession(store.currentToolType)
     const sessionToolType = store.sessions[sessionId]?.toolType ?? store.currentToolType
     const displayText = options?.displayText ?? text
     const outgoingText = options?.apiMessageOverride ?? text
@@ -1011,7 +1072,9 @@ export default function ChatPage() {
         onNew={handleNewSession}
         onDelete={handleDeleteSession}
         onClear={handleClear}
-        onReorderSessions={(from, to) => store.reorderSessionsForTool(store.currentToolType, from, to)}
+        onReorderSessions={(from, to) => {
+          void store.reorderSessionsForTool(store.currentToolType, from, to)
+        }}
         showLLPanel={isLanguage}
         languageLearningMode={llMode}
         nativeLangCode={nativeLang}
