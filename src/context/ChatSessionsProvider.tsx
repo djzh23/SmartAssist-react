@@ -123,6 +123,43 @@ function welcomeMessages(tool: ToolType): ChatMessage[] {
     : []
 }
 
+// #region agent log
+const DEBUG_SESSIONS_INGEST = 'http://127.0.0.1:7293/ingest/5ae5fb19-3203-43ac-991d-db54e808ed53'
+
+function shouldAgentLogSessions(): boolean {
+  try {
+    return import.meta.env.DEV || localStorage.getItem('PRIVATEPREP_DEBUG_SESSIONS') === '1'
+  }
+  catch {
+    return import.meta.env.DEV
+  }
+}
+
+function debugSessionsLog(payload: {
+  hypothesisId: string
+  location: string
+  message: string
+  data?: Record<string, unknown>
+  runId?: string
+}) {
+  if (!shouldAgentLogSessions())
+    return
+  void fetch(DEBUG_SESSIONS_INGEST, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'd65d91' },
+    body: JSON.stringify({
+      sessionId: 'd65d91',
+      timestamp: Date.now(),
+      runId: payload.runId ?? import.meta.env.MODE,
+      hypothesisId: payload.hypothesisId,
+      location: payload.location,
+      message: payload.message,
+      data: payload.data ?? {},
+    }),
+  }).catch(() => {})
+}
+// #endregion
+
 export interface AnswerReadyToast {
   sessionId: string
   toolType: ToolType
@@ -141,6 +178,9 @@ export interface SessionStore {
   currentToolType: ToolType
   /** True while loading sessions/transcripts from the API after sign-in or account switch. */
   sessionsRemoteLoading: boolean
+  /** Set when remote session list/transcript load fails (empty state + visible banner). */
+  sessionsLoadError: string | null
+  retrySessionsRemoteLoad: () => void
   setActiveSession: (id: string) => void
   newSession: (tool?: ToolType) => Promise<string>
   deleteSession: (id: string) => Promise<void>
@@ -229,6 +269,7 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
   const [streamingPlaceholder, setStreamingPlaceholder] = useState<StreamingPlaceholder | null>(null)
   const [answerReadyToast, setAnswerReadyToast] = useState<AnswerReadyToast | null>(null)
   const [sessionsRemoteLoading, setSessionsRemoteLoading] = useState(true)
+  const [sessionsLoadError, setSessionsLoadError] = useState<string | null>(null)
 
   const locationRef = useRef(location)
   locationRef.current = location
@@ -259,7 +300,27 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
       if (!s) continue
       try {
         await putSessionTranscript(token, sessionId, { toolType: s.toolType, messages: s.messages })
+        debugSessionsLog({
+          hypothesisId: 'H-backend',
+          location: 'ChatSessionsProvider.tsx:flushPersist',
+          message: 'putSessionTranscript ok',
+          data: {
+            sessionIdSuffix: sessionId.length > 8 ? sessionId.slice(-8) : sessionId,
+            messageCount: s.messages.length,
+            ok: true,
+          },
+        })
       } catch (e) {
+        debugSessionsLog({
+          hypothesisId: 'H-auth',
+          location: 'ChatSessionsProvider.tsx:flushPersist',
+          message: 'putSessionTranscript failed',
+          data: {
+            sessionIdSuffix: sessionId.length > 8 ? sessionId.slice(-8) : sessionId,
+            ok: false,
+            err: e instanceof Error ? e.message.slice(0, 160) : String(e).slice(0, 160),
+          },
+        })
         console.warn('[sessions] Transcript sync failed', sessionId, e)
       }
     }
@@ -280,6 +341,7 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
   const loadSessionsFromApi = useCallback(
     async (mode: 'initial' | 'refresh') => {
       const seq = ++loadSeqRef.current
+      const baseUsesAbsolute = Boolean(import.meta.env.VITE_API_BASE_URL?.trim())
       if (scopeId === '_loading')
         return
       if (scopeId === 'guest') {
@@ -288,12 +350,25 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
         setSessions({})
         setSessionOrder([])
         setActiveId(null)
+        setSessionsLoadError(null)
         if (mode === 'initial')
           setSessionsRemoteLoading(false)
         return
       }
       if (mode === 'initial')
         setSessionsRemoteLoading(true)
+      debugSessionsLog({
+        hypothesisId: 'H-env',
+        location: 'ChatSessionsProvider.tsx:loadSessionsFromApi:start',
+        message: 'load start',
+        data: {
+          mode,
+          seq,
+          scopeKind: 'user',
+          baseUsesAbsolute,
+          visibility: typeof document !== 'undefined' ? document.visibilityState : 'n/a',
+        },
+      })
       try {
         const token = await getToken()
         if (seq !== loadSeqRef.current)
@@ -302,12 +377,25 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
           setSessions({})
           setSessionOrder([])
           setActiveId(null)
+          setSessionsLoadError('Chats konnten nicht geladen werden: Kein gültiges Anmeldetoken. Bitte neu anmelden.')
+          debugSessionsLog({
+            hypothesisId: 'H-auth',
+            location: 'ChatSessionsProvider.tsx:loadSessionsFromApi',
+            message: 'no token after getToken',
+            data: { mode, seq },
+          })
           return
         }
         await migrateLocalSessionsOnce(scopeId, token)
         if (seq !== loadSeqRef.current)
           return
         const records = await fetchChatSessions(token)
+        debugSessionsLog({
+          hypothesisId: 'H-backend',
+          location: 'ChatSessionsProvider.tsx:loadSessionsFromApi',
+          message: 'fetchChatSessions done',
+          data: { mode, seq, recordCount: records.length },
+        })
         const nextSessions: Record<string, ChatSession> = {}
         const order: string[] = []
         for (const m of records) {
@@ -315,9 +403,22 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
           if (seq !== loadSeqRef.current)
             return
           const tool = normalizeToolFromApi(tr.toolType || m.toolType)
-          let messages = parseTranscriptMessages(tr.messages)
+          const parsedMessages = parseTranscriptMessages(tr.messages)
+          let messages = parsedMessages
           if (messages.length === 0)
             messages = welcomeMessages(tool)
+          debugSessionsLog({
+            hypothesisId: 'H-backend',
+            location: 'ChatSessionsProvider.tsx:loadSessionsFromApi:transcript',
+            message: 'transcript row',
+            data: {
+              mode,
+              seq,
+              sessionIdSuffix: m.id.length > 8 ? m.id.slice(-8) : m.id,
+              messageCount: messages.length,
+              usedWelcomeFallback: parsedMessages.length === 0,
+            },
+          })
           nextSessions[m.id] = {
             id: m.id,
             toolType: tool,
@@ -331,6 +432,13 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
           return
         setSessions(nextSessions)
         setSessionOrder(order)
+        setSessionsLoadError(null)
+        debugSessionsLog({
+          hypothesisId: 'H-backend',
+          location: 'ChatSessionsProvider.tsx:loadSessionsFromApi:success',
+          message: 'load applied',
+          data: { mode, seq, sessionCount: order.length },
+        })
         if (mode === 'initial') {
           const firstForGeneral = order.find(id => nextSessions[id]?.toolType === 'general')
           setActiveId(firstForGeneral ?? order[0] ?? null)
@@ -347,9 +455,21 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
       catch (e) {
         if (seq === loadSeqRef.current) {
           console.error('[sessions] Remote load failed', e)
+          const msg = e instanceof Error ? e.message : 'Chats konnten nicht geladen werden.'
+          setSessionsLoadError(msg.length > 220 ? `${msg.slice(0, 220)}…` : msg)
           setSessions({})
           setSessionOrder([])
           setActiveId(null)
+          debugSessionsLog({
+            hypothesisId: 'H-silent',
+            location: 'ChatSessionsProvider.tsx:loadSessionsFromApi:catch',
+            message: 'load failed',
+            data: {
+              mode,
+              seq,
+              err: e instanceof Error ? e.message.slice(0, 200) : String(e).slice(0, 200),
+            },
+          })
         }
       }
       finally {
@@ -359,6 +479,11 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     },
     [scopeId, getToken],
   )
+
+  const retrySessionsRemoteLoad = useCallback(() => {
+    setSessionsLoadError(null)
+    void loadSessionsFromApi('initial')
+  }, [loadSessionsFromApi])
 
   const scheduleRemoteRefresh = useCallback(() => {
     if (scopeId === '_loading' || scopeId === 'guest')
@@ -714,6 +839,8 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     activeSessionId: activeId,
     currentToolType: currentTool,
     sessionsRemoteLoading,
+    sessionsLoadError,
+    retrySessionsRemoteLoad,
     setActiveSession,
     newSession,
     deleteSession,
@@ -738,6 +865,8 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     activeId,
     currentTool,
     sessionsRemoteLoading,
+    sessionsLoadError,
+    retrySessionsRemoteLoad,
     setActiveSession,
     newSession,
     deleteSession,

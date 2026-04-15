@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
-import { AlertCircle, PanelLeft, Plus, X } from 'lucide-react'
+import { AlertCircle, PanelLeft, Plus, RefreshCw, X } from 'lucide-react'
 import type { ToolType } from '../types'
 import { PROGRAMMING_LANGUAGES } from '../types'
 import { UsageLimitError, askAgentStream, linkJobApplicationSession } from '../api/client'
@@ -1088,6 +1088,25 @@ export default function ChatPage() {
       />
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        {store.sessionsLoadError && (
+          <div className="flex-shrink-0 border-b border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-900 sm:px-4" role="alert">
+            <div className="mx-auto flex max-w-3xl flex-wrap items-center justify-between gap-2">
+              <span className="flex min-w-0 items-start gap-2">
+                <AlertCircle size={18} className="mt-0.5 shrink-0 text-red-600" aria-hidden />
+                <span className="min-w-0 leading-snug">{store.sessionsLoadError}</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => store.retrySessionsRemoteLoad()}
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-semibold text-red-800 shadow-sm transition hover:bg-red-50"
+              >
+                <RefreshCw size={14} aria-hidden />
+                Erneut laden
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* ── Mobile chat session bar (replaces floating chevron) ─── */}
         <div className="flex flex-shrink-0 items-center gap-2 border-b border-slate-100 bg-white px-3 py-2 md:hidden">
           <button
