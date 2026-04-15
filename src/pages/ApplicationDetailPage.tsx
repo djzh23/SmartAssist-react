@@ -20,7 +20,7 @@ const STATUS_OPTIONS: { value: ApplicationStatusApi; label: string }[] = [
   { value: 'assessment', label: 'Assessment' },
   { value: 'offer', label: 'Angebot' },
   { value: 'accepted', label: 'Angenommen' },
-  { value: 'rejected', label: 'Absage' },
+  { value: 'rejected', label: 'Abgesagt' },
   { value: 'withdrawn', label: 'Zurückgezogen' },
 ]
 

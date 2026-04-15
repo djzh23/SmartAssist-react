@@ -36,9 +36,12 @@ const STATUS_LABEL: Record<ApplicationStatusApi, string> = {
   assessment: 'Assessment',
   offer: 'Angebot',
   accepted: 'Angenommen',
-  rejected: 'Absage',
+  rejected: 'Abgesagt',
   withdrawn: 'Zurückgezogen',
 }
+
+/** Archiv-Spalten (unterhalb der Pipeline), immer sichtbar. */
+const ARCHIVE: ApplicationStatusApi[] = ['rejected', 'withdrawn', 'accepted']
 
 const COLUMN_ACCENT: Record<ApplicationStatusApi, string> = {
   draft: 'border-l-amber-400',
@@ -114,14 +117,10 @@ export default function ApplicationsPage() {
     [apps],
   )
 
-  const terminalApps = useMemo(() => {
-    const acc = grouped.get('accepted') ?? []
-    const rej = grouped.get('rejected') ?? []
-    const wd = grouped.get('withdrawn') ?? []
-    return [...acc, ...rej, ...wd].sort(
-      (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
-    )
-  }, [grouped])
+  const archiveTotal = useMemo(
+    () => ARCHIVE.reduce((n, s) => n + (grouped.get(s)?.length ?? 0), 0),
+    [grouped],
+  )
 
   return (
     <div className="min-h-0 flex-1 overflow-y-auto bg-gradient-to-b from-slate-50 to-white">
@@ -137,7 +136,10 @@ export default function ApplicationsPage() {
                 Meine Bewerbungen
               </h1>
               <p className="mt-1 max-w-xl text-sm leading-relaxed text-slate-600">
-                Pipeline von Entwurf bis Angebot — jede Karte öffnet die Detailansicht für Dokumente, Status und nächste Schritte.
+                Pipeline von Entwurf bis Angebot — darunter findest du immer den Bereich{' '}
+                <span className="font-semibold text-slate-700">Abgesagt, Zurückgezogen und Angenommen</span>
+                {' '}
+                im Archiv. Jede Karte öffnet die Detailansicht.
               </p>
               <p className="mt-2 text-sm font-medium text-slate-800">
                 <span className="tabular-nums text-primary">{activeCount}</span>
@@ -147,6 +149,10 @@ export default function ApplicationsPage() {
                 <span className="tabular-nums">{apps.length}</span>
                 {' '}
                 gesamt
+                <span className="mx-2 text-slate-300">·</span>
+                <span className="tabular-nums text-slate-600">{archiveTotal}</span>
+                {' '}
+                im Archiv
               </p>
             </div>
           </div>
@@ -250,36 +256,78 @@ export default function ApplicationsPage() {
               </div>
             </section>
 
-            {/* Abgeschlossen */}
-            {terminalApps.length > 0 && (
-              <section aria-label="Abgeschlossene Bewerbungen" className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-                <h2 className="mb-4 flex items-center gap-2 text-sm font-bold text-slate-800">
-                  Abgeschlossen
-                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-600">
-                    {terminalApps.length}
-                  </span>
-                </h2>
-                <ul className="divide-y divide-slate-100">
-                  {terminalApps.map(app => (
-                    <li key={`${app.id}-${app.status}`}>
-                      <Link
-                        to={`/applications/${app.id}`}
-                        className="flex items-center gap-4 py-4 transition hover:bg-slate-50/80 sm:px-2"
-                      >
-                        <div className={`min-w-0 flex-1 border-l-4 pl-3 ${COLUMN_ACCENT[app.status]}`}>
-                          <p className="font-semibold text-slate-900">{app.jobTitle}</p>
-                          <p className="text-sm text-slate-600">{app.company}</p>
-                        </div>
-                        <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold uppercase text-slate-600">
-                          {STATUS_LABEL[app.status]}
+            {/* Archiv: Absagen & erledigt — immer sichtbar (nicht nur bei Einträgen) */}
+            <section aria-label="Archiv: abgeschlossene Bewerbungen" className="rounded-2xl border border-slate-200 bg-slate-50/40 p-5 shadow-sm sm:p-6">
+              <h2 className="mb-1 flex flex-wrap items-center gap-2 text-sm font-bold text-slate-800">
+                Archiv — Absagen und erledigt
+                <span className="rounded-full bg-white px-2 py-0.5 text-xs font-bold tabular-nums text-slate-600 shadow-sm">
+                  {archiveTotal}
+                </span>
+              </h2>
+              <p className="mb-5 text-xs leading-relaxed text-slate-500">
+                Abgesagte und beendete Bewerbungen erscheinen hier automatisch, sobald du den Status in den Details setzt.
+              </p>
+              <div className="grid gap-4 sm:grid-cols-3">
+                {ARCHIVE.map(status => {
+                  const list = (grouped.get(status) ?? []).sort(
+                    (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+                  )
+                  return (
+                    <div
+                      key={status}
+                      className="flex min-h-[10rem] flex-col rounded-xl border border-slate-200/90 bg-white p-3 shadow-sm"
+                    >
+                      <div className="mb-2 flex items-center justify-between gap-2 border-b border-slate-100 pb-2">
+                        <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                          {STATUS_LABEL[status]}
+                        </h3>
+                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold tabular-nums text-slate-700">
+                          {list.length}
                         </span>
-                        <ChevronRight className="shrink-0 text-slate-300" size={18} aria-hidden />
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            )}
+                      </div>
+                      <div className="flex flex-1 flex-col gap-2">
+                        {list.length === 0 ? (
+                          <p className="flex flex-1 items-center justify-center rounded-lg border border-dashed border-slate-200 bg-slate-50/80 px-2 py-6 text-center text-xs leading-relaxed text-slate-500">
+                            {status === 'rejected'
+                              ? 'Noch keine abgesagte Bewerbung — Status „Abgesagt“ in den Details wählen.'
+                              : status === 'withdrawn'
+                                ? 'Noch keine zurückgezogene Bewerbung.'
+                                : 'Noch keine Zusage — Status „Angenommen“ setzen, sobald du unterschrieben hast.'}
+                          </p>
+                        ) : (
+                          list.map(app => (
+                            <Link
+                              key={app.id}
+                              to={`/applications/${app.id}`}
+                              className={[
+                                'group flex flex-col rounded-lg border border-slate-100 bg-white p-2.5 text-left shadow-sm transition',
+                                'border-l-4 hover:border-slate-200 hover:shadow-md',
+                                COLUMN_ACCENT[status],
+                              ].join(' ')}
+                            >
+                              <div className="flex items-start justify-between gap-1">
+                                <p className="line-clamp-2 min-w-0 text-sm font-semibold text-slate-900 group-hover:text-primary">
+                                  {app.jobTitle || 'Ohne Titel'}
+                                </p>
+                                <ChevronRight
+                                  size={14}
+                                  className="shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-primary"
+                                  aria-hidden
+                                />
+                              </div>
+                              <p className="mt-0.5 truncate text-xs text-slate-600">{app.company || '—'}</p>
+                              <p className="mt-1.5 text-[10px] font-medium uppercase tracking-wide text-slate-400">
+                                {formatRelative(app.updatedAt)}
+                              </p>
+                            </Link>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </section>
 
             {apps.length === 0 && !loading && (
               <div className="mx-auto max-w-md rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 px-6 py-14 text-center">

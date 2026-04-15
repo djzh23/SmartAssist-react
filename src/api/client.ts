@@ -427,6 +427,28 @@ function readJsonProp(o: Record<string, unknown>, camel: string, pascal: string)
   return undefined
 }
 
+/** Backend / legacy strings that are not exact enum names (before defaulting to draft). */
+const APPLICATION_STATUS_ALIASES: Record<string, ApplicationStatusApi> = {
+  declined: 'rejected',
+  decline: 'rejected',
+  denied: 'rejected',
+  unsuccessful: 'rejected',
+  notselected: 'rejected',
+  nothired: 'rejected',
+  nooffer: 'rejected',
+  lost: 'rejected',
+  abgelehnt: 'rejected',
+  absage: 'rejected',
+  abgesagt: 'rejected',
+  canceled: 'withdrawn',
+  cancelled: 'withdrawn',
+  withdrawnbycandidate: 'withdrawn',
+  zuruckgezogen: 'withdrawn',
+  acceptedoffer: 'accepted',
+  hired: 'accepted',
+  won: 'accepted',
+}
+
 /** Maps API status (int enum, PascalCase, or camelCase string) to our union. */
 export function normalizeApplicationStatus(raw: unknown): ApplicationStatusApi {
   if (typeof raw === 'number' && Number.isInteger(raw) && raw >= 0 && raw < APPLICATION_STATUS_ORDER.length)
@@ -440,6 +462,9 @@ export function normalizeApplicationStatus(raw: unknown): ApplicationStatusApi {
     const asCamel = t.charAt(0).toLowerCase() + t.slice(1)
     if ((APPLICATION_STATUS_ORDER as readonly string[]).includes(asCamel))
       return asCamel as ApplicationStatusApi
+    const compact = t.toLowerCase().replace(/[\s_-]+/g, '')
+    const alias = APPLICATION_STATUS_ALIASES[compact]
+    if (alias) return alias
   }
   return 'draft'
 }
@@ -526,7 +551,7 @@ export async function createJobApplication(
   })
   if (!res.ok)
     throw new Error(await readApiError(res, `Bewerbung anlegen fehlgeschlagen (${res.status})`))
-  return await res.json() as JobApplicationApi
+  return parseJobApplication(await res.json())
 }
 
 export async function updateJobApplicationStatus(

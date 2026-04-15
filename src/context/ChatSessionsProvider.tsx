@@ -241,6 +241,11 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
   const currentToolRef = useRef(currentTool)
   currentToolRef.current = currentTool
 
+  /** Bumps on unmount / scope change so in-flight loads do not apply stale results. */
+  const loadSeqRef = useRef(0)
+  const broadcastRef = useRef<BroadcastChannel | null>(null)
+  const refreshDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   const persistIdsRef = useRef(new Set<string>())
   const persistTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -272,23 +277,27 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     [flushPersist],
   )
 
-  useEffect(() => {
-    if (scopeId === '_loading') return
-
-    let cancelled = false
-
-    void (async () => {
+  const loadSessionsFromApi = useCallback(
+    async (mode: 'initial' | 'refresh') => {
+      const seq = ++loadSeqRef.current
+      if (scopeId === '_loading')
+        return
       if (scopeId === 'guest') {
+        if (seq !== loadSeqRef.current)
+          return
         setSessions({})
         setSessionOrder([])
         setActiveId(null)
-        setSessionsRemoteLoading(false)
+        if (mode === 'initial')
+          setSessionsRemoteLoading(false)
         return
       }
-      setSessionsRemoteLoading(true)
+      if (mode === 'initial')
+        setSessionsRemoteLoading(true)
       try {
         const token = await getToken()
-        if (cancelled) return
+        if (seq !== loadSeqRef.current)
+          return
         if (!token) {
           setSessions({})
           setSessionOrder([])
@@ -296,12 +305,15 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
           return
         }
         await migrateLocalSessionsOnce(scopeId, token)
-        if (cancelled) return
+        if (seq !== loadSeqRef.current)
+          return
         const records = await fetchChatSessions(token)
         const nextSessions: Record<string, ChatSession> = {}
         const order: string[] = []
         for (const m of records) {
           const tr = await fetchSessionTranscript(token, m.id)
+          if (seq !== loadSeqRef.current)
+            return
           const tool = normalizeToolFromApi(tr.toolType || m.toolType)
           let messages = parseTranscriptMessages(tr.messages)
           if (messages.length === 0)
@@ -315,28 +327,108 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
           }
           order.push(m.id)
         }
-        if (cancelled) return
+        if (seq !== loadSeqRef.current)
+          return
         setSessions(nextSessions)
         setSessionOrder(order)
-        const firstForGeneral = order.find(id => nextSessions[id]?.toolType === 'general')
-        setActiveId(firstForGeneral ?? order[0] ?? null)
-      } catch (e) {
-        if (!cancelled) {
+        if (mode === 'initial') {
+          const firstForGeneral = order.find(id => nextSessions[id]?.toolType === 'general')
+          setActiveId(firstForGeneral ?? order[0] ?? null)
+        }
+        else {
+          setActiveId(prev => {
+            if (prev && nextSessions[prev])
+              return prev
+            const firstForTool = order.find(id => nextSessions[id]?.toolType === currentToolRef.current)
+            return firstForTool ?? order[0] ?? null
+          })
+        }
+      }
+      catch (e) {
+        if (seq === loadSeqRef.current) {
           console.error('[sessions] Remote load failed', e)
           setSessions({})
           setSessionOrder([])
           setActiveId(null)
         }
-      } finally {
-        if (!cancelled)
+      }
+      finally {
+        if (seq === loadSeqRef.current && mode === 'initial')
           setSessionsRemoteLoading(false)
       }
-    })()
+    },
+    [scopeId, getToken],
+  )
 
-    return () => {
-      cancelled = true
+  const scheduleRemoteRefresh = useCallback(() => {
+    if (scopeId === '_loading' || scopeId === 'guest')
+      return
+    if (refreshDebounceRef.current)
+      clearTimeout(refreshDebounceRef.current)
+    refreshDebounceRef.current = setTimeout(() => {
+      refreshDebounceRef.current = null
+      void loadSessionsFromApi('refresh')
+    }, 650)
+  }, [scopeId, loadSessionsFromApi])
+
+  const pingOtherTabs = useCallback(() => {
+    try {
+      broadcastRef.current?.postMessage({ t: 'sessions' })
     }
-  }, [scopeId, getToken])
+    catch {
+      /* BroadcastChannel may be unavailable */
+    }
+  }, [])
+
+  useEffect(() => {
+    if (scopeId === '_loading')
+      return
+    void loadSessionsFromApi('initial')
+    return () => {
+      loadSeqRef.current += 1
+    }
+  }, [scopeId, loadSessionsFromApi])
+
+  /** Nach Wechsel Handy ↔ Desktop (anderes Gerät): Liste vom Server holen, wenn die Seite wieder sichtbar ist. */
+  useEffect(() => {
+    const onVisibleOrFocus = () => {
+      if (document.visibilityState !== 'visible')
+        return
+      scheduleRemoteRefresh()
+    }
+    document.addEventListener('visibilitychange', onVisibleOrFocus)
+    window.addEventListener('focus', onVisibleOrFocus)
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibleOrFocus)
+      window.removeEventListener('focus', onVisibleOrFocus)
+    }
+  }, [scheduleRemoteRefresh])
+
+  /** Mehrere Browser-Tabs: andere Tabs kurz nach lokaler Änderung mitziehen. */
+  useEffect(() => {
+    if (scopeId === '_loading' || scopeId === 'guest') {
+      broadcastRef.current = null
+      return
+    }
+    if (typeof BroadcastChannel === 'undefined')
+      return
+    let ch: BroadcastChannel
+    try {
+      ch = new BroadcastChannel('privateprep-chat-sessions-v1')
+    }
+    catch {
+      return
+    }
+    broadcastRef.current = ch
+    ch.onmessage = () => {
+      scheduleRemoteRefresh()
+    }
+    return () => {
+      ch.close()
+      if (broadcastRef.current === ch)
+        broadcastRef.current = null
+    }
+  }, [scopeId, scheduleRemoteRefresh])
 
   useEffect(() => {
     if (activeId && sessions[activeId])
@@ -360,9 +452,10 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
       setSessions(prev => ({ ...prev, [rec.id]: session }))
       setSessionOrder(prev => [rec.id, ...prev.filter(id => id !== rec.id)])
       await putSessionTranscript(token, rec.id, { toolType: tool, messages: welcome })
+      pingOtherTabs()
       return rec.id
     },
-    [getToken],
+    [getToken, pingOtherTabs],
   )
 
   const switchToTool = useCallback(
@@ -424,8 +517,9 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
         return next
       })
       setStreamingPlaceholder(prev => (prev?.sessionId === id ? null : prev))
+      pingOtherTabs()
     },
-    [getToken],
+    [getToken, pingOtherTabs],
   )
 
   const clearHistory = useCallback(async () => {
@@ -444,7 +538,8 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     setActiveId(null)
     setStreamingIds({})
     setStreamingPlaceholder(null)
-  }, [getToken, scopeId])
+    pingOtherTabs()
+  }, [getToken, scopeId, pingOtherTabs])
 
   const addMessage = useCallback(
     (sessionId: string, msg: Partial<ChatMessage> & { text: string; isUser: boolean }) => {
@@ -595,13 +690,15 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
       setSessionOrder(nextOrder)
       try {
         const token = await getToken()
-        if (token)
+        if (token) {
           await putChatSessionOrder(token, nextOrder)
+          pingOtherTabs()
+        }
       } catch (e) {
         console.warn('[sessions] Order sync failed', e)
       }
     },
-    [getToken],
+    [getToken, pingOtherTabs],
   )
 
   const activeMessages = activeId ? (sessions[activeId]?.messages ?? []) : []
