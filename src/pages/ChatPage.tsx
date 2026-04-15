@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
-import { AlertCircle, PanelLeft, Plus, RefreshCw, X } from 'lucide-react'
+import { AlertCircle, CheckCircle2, PanelLeft, Plus, RefreshCw, X } from 'lucide-react'
 import type { ToolType } from '../types'
 import { PROGRAMMING_LANGUAGES } from '../types'
 import { UsageLimitError, askAgentStream, linkJobApplicationSession } from '../api/client'
@@ -1102,6 +1102,23 @@ export default function ChatPage() {
               >
                 <RefreshCw size={14} aria-hidden />
                 Erneut laden
+              </button>
+            </div>
+          </div>
+        )}
+
+        {store.remoteSyncNotice && (
+          <div className="pointer-events-none flex flex-shrink-0 justify-center px-3 pt-2 sm:px-4" role="status" aria-live="polite">
+            <div className="pointer-events-auto flex max-w-md items-center gap-2 rounded-full border border-emerald-200 bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-lg">
+              <CheckCircle2 size={16} className="shrink-0 opacity-95" aria-hidden />
+              <span className="min-w-0 flex-1 leading-snug">{store.remoteSyncNotice}</span>
+              <button
+                type="button"
+                onClick={() => store.dismissRemoteSyncNotice()}
+                className="rounded-full p-0.5 text-white/90 transition hover:bg-white/15 hover:text-white"
+                aria-label="Hinweis schließen"
+              >
+                <X size={14} />
               </button>
             </div>
           </div>

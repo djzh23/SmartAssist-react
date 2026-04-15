@@ -31,6 +31,27 @@ function lsKeys(scopeId: string) {
   }
 }
 
+/** Per-browser last open chat for this Clerk user — avoids jumping to server-first tab after refresh. */
+function lastActiveChatStorageKey(scopeId: string): string {
+  return `smartassist_last_active_chat_${scopeId}`
+}
+
+function readStoredLastActiveChatId(scopeId: string): string | null {
+  try {
+    const v = localStorage.getItem(lastActiveChatStorageKey(scopeId))
+    return v && v.trim() ? v.trim() : null
+  }
+  catch {
+    return null
+  }
+}
+
+function buildRemoteSyncFingerprint(order: string[], next: Record<string, ChatSession>): string {
+  const orderPart = order.join(',')
+  const counts = order.map(id => `${id}:${next[id]?.messages?.length ?? 0}`).join('|')
+  return `${orderPart}::${counts}`
+}
+
 /** URL query value for each tool (matches ChatPage). */
 export const TOOL_TO_QUERY: Record<ToolType, string> = {
   general: 'general',
@@ -199,6 +220,9 @@ export interface SessionStore {
   dismissAnswerToast: () => void
   notifyAnswerReady: (sessionId: string, toolType: ToolType, preview: string) => void
   reorderSessionsForTool: (toolType: ToolType, fromIndex: number, toIndex: number) => Promise<void>
+  /** Short notice after background sync detected remote changes (auto-dismiss). */
+  remoteSyncNotice: string | null
+  dismissRemoteSyncNotice: () => void
 }
 
 const ChatSessionsContext = createContext<SessionStore | null>(null)
@@ -270,6 +294,7 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
   const [answerReadyToast, setAnswerReadyToast] = useState<AnswerReadyToast | null>(null)
   const [sessionsRemoteLoading, setSessionsRemoteLoading] = useState(true)
   const [sessionsLoadError, setSessionsLoadError] = useState<string | null>(null)
+  const [remoteSyncNotice, setRemoteSyncNotice] = useState<string | null>(null)
 
   const locationRef = useRef(location)
   locationRef.current = location
@@ -286,6 +311,12 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
   const loadSeqRef = useRef(0)
   const broadcastRef = useRef<BroadcastChannel | null>(null)
   const refreshDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const remoteSyncFingerprintRef = useRef('')
+  const remoteSyncToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    remoteSyncFingerprintRef.current = ''
+  }, [scopeId])
 
   const persistIdsRef = useRef(new Set<string>())
   const persistTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -430,6 +461,20 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
         }
         if (seq !== loadSeqRef.current)
           return
+
+        const fpNew = buildRemoteSyncFingerprint(order, nextSessions)
+        const prevFp = remoteSyncFingerprintRef.current
+        remoteSyncFingerprintRef.current = fpNew
+        if (mode === 'refresh' && prevFp !== '' && prevFp !== fpNew) {
+          if (remoteSyncToastTimerRef.current)
+            clearTimeout(remoteSyncToastTimerRef.current)
+          setRemoteSyncNotice('Aktualisiert — Chats mit dem Server abgeglichen.')
+          remoteSyncToastTimerRef.current = setTimeout(() => {
+            remoteSyncToastTimerRef.current = null
+            setRemoteSyncNotice(null)
+          }, 2800)
+        }
+
         setSessions(nextSessions)
         setSessionOrder(order)
         setSessionsLoadError(null)
@@ -440,13 +485,18 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
           data: { mode, seq, sessionCount: order.length },
         })
         if (mode === 'initial') {
+          const stored = readStoredLastActiveChatId(scopeId)
+          const preferred = stored && nextSessions[stored] ? stored : null
           const firstForGeneral = order.find(id => nextSessions[id]?.toolType === 'general')
-          setActiveId(firstForGeneral ?? order[0] ?? null)
+          setActiveId(preferred ?? firstForGeneral ?? order[0] ?? null)
         }
         else {
           setActiveId(prev => {
             if (prev && nextSessions[prev])
               return prev
+            const stored = readStoredLastActiveChatId(scopeId)
+            if (stored && nextSessions[stored])
+              return stored
             const firstForTool = order.find(id => nextSessions[id]?.toolType === currentToolRef.current)
             return firstForTool ?? order[0] ?? null
           })
@@ -485,6 +535,14 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     void loadSessionsFromApi('initial')
   }, [loadSessionsFromApi])
 
+  const dismissRemoteSyncNotice = useCallback(() => {
+    if (remoteSyncToastTimerRef.current) {
+      clearTimeout(remoteSyncToastTimerRef.current)
+      remoteSyncToastTimerRef.current = null
+    }
+    setRemoteSyncNotice(null)
+  }, [])
+
   const scheduleRemoteRefresh = useCallback(() => {
     if (scopeId === '_loading' || scopeId === 'guest')
       return
@@ -504,6 +562,11 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
       /* BroadcastChannel may be unavailable */
     }
   }, [])
+
+  useEffect(() => {
+    if (scopeId === '_loading' || scopeId === 'guest')
+      setRemoteSyncNotice(null)
+  }, [scopeId])
 
   useEffect(() => {
     if (scopeId === '_loading')
@@ -554,6 +617,46 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
         broadcastRef.current = null
     }
   }, [scopeId, scheduleRemoteRefresh])
+
+  /** Remember open tab per browser profile so refresh does not jump to another device’s “latest” tab order. */
+  useEffect(() => {
+    if (scopeId === '_loading' || scopeId === 'guest')
+      return
+    try {
+      if (activeId)
+        localStorage.setItem(lastActiveChatStorageKey(scopeId), activeId)
+      else
+        localStorage.removeItem(lastActiveChatStorageKey(scopeId))
+    }
+    catch {
+      /* ignore quota / private mode */
+    }
+  }, [activeId, scopeId])
+
+  /** Background poll on Chat route while tab is visible (cross-device sync without manual refresh). */
+  useEffect(() => {
+    if (scopeId === '_loading' || scopeId === 'guest')
+      return
+    if (!location.pathname.startsWith('/chat'))
+      return
+    const everyMs = 22_000
+    const tick = () => {
+      if (document.visibilityState !== 'visible')
+        return
+      void loadSessionsFromApi('refresh')
+    }
+    const id = window.setInterval(tick, everyMs)
+    return () => window.clearInterval(id)
+  }, [scopeId, location.pathname, loadSessionsFromApi])
+
+  useEffect(() => {
+    return () => {
+      if (remoteSyncToastTimerRef.current) {
+        clearTimeout(remoteSyncToastTimerRef.current)
+        remoteSyncToastTimerRef.current = null
+      }
+    }
+  }, [])
 
   useEffect(() => {
     if (activeId && sessions[activeId])
@@ -859,6 +962,8 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     dismissAnswerToast,
     notifyAnswerReady,
     reorderSessionsForTool,
+    remoteSyncNotice,
+    dismissRemoteSyncNotice,
   }), [
     sessions,
     sessionOrder,
@@ -885,6 +990,8 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     dismissAnswerToast,
     notifyAnswerReady,
     reorderSessionsForTool,
+    remoteSyncNotice,
+    dismissRemoteSyncNotice,
   ])
 
   return (
