@@ -347,12 +347,18 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
         if (seq !== loadSeqRef.current)
           return
         const records = await fetchChatSessions(token)
+        if (seq !== loadSeqRef.current)
+          return
+        const transcripts = await Promise.all(
+          records.map(m => fetchSessionTranscript(token, m.id)),
+        )
+        if (seq !== loadSeqRef.current)
+          return
         const nextSessions: Record<string, ChatSession> = {}
         const order: string[] = []
-        for (const m of records) {
-          const tr = await fetchSessionTranscript(token, m.id)
-          if (seq !== loadSeqRef.current)
-            return
+        for (let i = 0; i < records.length; i++) {
+          const m = records[i]
+          const tr = transcripts[i]
           const tool = normalizeToolFromApi(tr.toolType || m.toolType)
           const parsedMessages = parseTranscriptMessages(tr.messages)
           let messages = parsedMessages

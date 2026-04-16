@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { BrowserRouter, Navigate, Route, Routes, useNavigate } from 'react-router-dom'
 import { ClerkProvider, useAuth, useUser } from '@clerk/clerk-react'
 import MainLayout from './components/layout/MainLayout'
@@ -5,19 +6,24 @@ import LoadingScreen from './components/LoadingScreen'
 import LandingPage from './pages/LandingPage'
 import ChatPage from './pages/ChatPage'
 import ToolsPage from './pages/ToolsPage'
-import PricingPage from './pages/PricingPage'
 import ProfilePage from './pages/ProfilePage'
 import OnboardingPage from './pages/OnboardingPage'
-import CareerProfilePage from './pages/CareerProfilePage'
-import AdminDashboardPage from './pages/AdminDashboardPage'
-import ApplicationsPage from './pages/ApplicationsPage'
-import ApplicationNewPage from './pages/ApplicationNewPage'
-import ApplicationDetailPage from './pages/ApplicationDetailPage'
-import GuidesIndexPage from './pages/guides/GuidesIndexPage'
-import GuideArticlePage from './pages/guides/GuideArticlePage'
-import NotesPage from './pages/NotesPage'
+
+const PricingPage = lazy(() => import('./pages/PricingPage'))
+const CareerProfilePage = lazy(() => import('./pages/CareerProfilePage'))
+const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage'))
+const ApplicationsPage = lazy(() => import('./pages/ApplicationsPage'))
+const ApplicationNewPage = lazy(() => import('./pages/ApplicationNewPage'))
+const ApplicationDetailPage = lazy(() => import('./pages/ApplicationDetailPage'))
+const GuidesIndexPage = lazy(() => import('./pages/guides/GuidesIndexPage'))
+const GuideArticlePage = lazy(() => import('./pages/guides/GuideArticlePage'))
+const NotesPage = lazy(() => import('./pages/NotesPage'))
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string
+
+function RouteFallback() {
+  return <LoadingScreen />
+}
 
 // ClerkProvider must be inside BrowserRouter so useNavigate is available
 function ClerkProviderWithRouter({ children }: { children: React.ReactNode }) {
@@ -76,23 +82,81 @@ function AppRoutes() {
         <Route path="/chat" element={<ChatPage />} />
         <Route path="/tools" element={<ToolsPage />} />
         <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/career-profile" element={<CareerProfilePage />} />
-        <Route path="/pricing" element={<PricingPage />} />
-        <Route path="/applications" element={<ApplicationsPage />} />
-        <Route path="/applications/new" element={<ApplicationNewPage />} />
-        <Route path="/applications/:id" element={<ApplicationDetailPage />} />
-        <Route path="/guides" element={<GuidesIndexPage />} />
-        <Route path="/guides/:slug" element={<GuideArticlePage />} />
-        <Route path="/notes" element={<NotesPage />} />
+        <Route
+          path="/career-profile"
+          element={(
+            <Suspense fallback={<RouteFallback />}>
+              <CareerProfilePage />
+            </Suspense>
+          )}
+        />
+        <Route
+          path="/pricing"
+          element={(
+            <Suspense fallback={<RouteFallback />}>
+              <PricingPage />
+            </Suspense>
+          )}
+        />
+        <Route
+          path="/applications"
+          element={(
+            <Suspense fallback={<RouteFallback />}>
+              <ApplicationsPage />
+            </Suspense>
+          )}
+        />
+        <Route
+          path="/applications/new"
+          element={(
+            <Suspense fallback={<RouteFallback />}>
+              <ApplicationNewPage />
+            </Suspense>
+          )}
+        />
+        <Route
+          path="/applications/:id"
+          element={(
+            <Suspense fallback={<RouteFallback />}>
+              <ApplicationDetailPage />
+            </Suspense>
+          )}
+        />
+        <Route
+          path="/guides"
+          element={(
+            <Suspense fallback={<RouteFallback />}>
+              <GuidesIndexPage />
+            </Suspense>
+          )}
+        />
+        <Route
+          path="/guides/:slug"
+          element={(
+            <Suspense fallback={<RouteFallback />}>
+              <GuideArticlePage />
+            </Suspense>
+          )}
+        />
+        <Route
+          path="/notes"
+          element={(
+            <Suspense fallback={<RouteFallback />}>
+              <NotesPage />
+            </Suspense>
+          )}
+        />
       </Route>
 
       <Route
         path="/admin"
-        element={
+        element={(
           <RequireSignedIn>
-            <AdminDashboardPage />
+            <Suspense fallback={<RouteFallback />}>
+              <AdminDashboardPage />
+            </Suspense>
           </RequireSignedIn>
-        }
+        )}
       />
 
       {/* Fallback */}
