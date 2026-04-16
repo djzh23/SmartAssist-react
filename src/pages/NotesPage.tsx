@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   AlertCircle,
+  ArrowLeft,
   ChevronRight,
   ExternalLink,
   Loader2,
@@ -13,7 +14,9 @@ import {
   Trash2,
   X,
 } from 'lucide-react'
+import { RenderedMarkdown } from '../components/chat/RenderedMarkdown'
 import { useChatNotes } from '../hooks/useChatNotes'
+import { useMediaQuery } from '../hooks/useMediaQuery'
 import type { ChatSavedNote } from '../types'
 
 function formatDate(iso: string): string {
@@ -59,6 +62,14 @@ export default function NotesPage() {
   const [savingEdit, setSavingEdit] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [editError, setEditError] = useState<string | null>(null)
+  const isMdUp = useMediaQuery('(min-width: 768px)')
+  /** Unter md: entweder Liste oder Lesen — volle Breite, besser bedienbar. */
+  const [mobileStep, setMobileStep] = useState<'list' | 'reader'>('list')
+
+  useEffect(() => {
+    if (isMdUp)
+      setMobileStep('list')
+  }, [isMdUp])
 
   useEffect(() => {
     if (filteredNotes.length === 0) {
@@ -73,6 +84,11 @@ export default function NotesPage() {
     () => filteredNotes.find(n => n.id === selectedId) ?? null,
     [filteredNotes, selectedId],
   )
+
+  useEffect(() => {
+    if (!selected)
+      setMobileStep('list')
+  }, [selected])
 
   const openEdit = useCallback((n: ChatSavedNote) => {
     setEditing(n)
@@ -220,9 +236,15 @@ export default function NotesPage() {
         </div>
       ) : null}
 
-      <div className="flex min-h-0 flex-1 flex-col gap-4 md:h-[min(82vh,calc(100vh-6.5rem))] md:flex-row md:gap-0 md:rounded-2xl md:border md:border-slate-200 md:bg-white md:shadow-sm">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm md:h-[min(82vh,calc(100vh-6.5rem))] md:flex-row md:gap-0">
         {/* Liste */}
-        <aside className="flex min-h-0 w-full flex-shrink-0 flex-col border-slate-200 md:w-[min(100%,320px)] md:border-r md:bg-slate-50/40">
+        <aside
+          className={[
+            'flex min-h-0 w-full flex-shrink-0 flex-col border-slate-200 md:w-[min(100%,320px)] md:border-r md:bg-slate-50/40',
+            !isMdUp && mobileStep === 'reader' ? 'hidden' : '',
+            !isMdUp ? 'max-md:max-h-[min(52vh,420px)] max-md:min-h-0' : '',
+          ].filter(Boolean).join(' ')}
+        >
           <div className="flex flex-shrink-0 flex-col gap-3 border-b border-slate-100 p-3 md:p-4">
             <div className="relative">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden />
@@ -291,19 +313,24 @@ export default function NotesPage() {
                           <li key={n.id}>
                             <button
                               type="button"
-                              onClick={() => setSelectedId(n.id)}
+                              onClick={() => {
+                                setSelectedId(n.id)
+                                if (!isMdUp) setMobileStep('reader')
+                              }}
                               className={[
-                                'flex w-full flex-col rounded-xl border px-3 py-2.5 text-left transition',
+                                'flex w-full flex-col rounded-xl border px-3 py-2.5 text-left transition active:bg-slate-50/80',
                                 active
                                   ? 'border-primary/50 bg-primary-light/70 shadow-sm'
                                   : 'border-transparent bg-white hover:border-slate-200 hover:bg-white md:bg-transparent',
                               ].join(' ')}
                             >
-                              <span className="line-clamp-2 text-sm font-semibold text-slate-900">{n.title}</span>
+                              <span className="flex items-start justify-between gap-2">
+                                <span className="line-clamp-2 min-w-0 flex-1 text-sm font-semibold text-slate-900">{n.title}</span>
+                                <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-slate-300 md:hidden" aria-hidden />
+                              </span>
                               <span className="mt-1 line-clamp-2 text-xs leading-snug text-slate-500">{previewBody(n.body)}</span>
-                              <span className="mt-1.5 flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-slate-400">
+                              <span className="mt-1.5 text-[10px] font-medium uppercase tracking-wide text-slate-400">
                                 {formatDate(n.updatedAt)}
-                                <ChevronRight className="h-3 w-3 opacity-0" aria-hidden />
                               </span>
                             </button>
                           </li>
@@ -315,19 +342,37 @@ export default function NotesPage() {
         </aside>
 
         {/* Lesepanel */}
-        <section className="flex min-h-[50vh] flex-1 flex-col md:min-h-0">
+        <section
+          className={[
+            'flex min-h-0 flex-1 flex-col md:min-h-0',
+            !isMdUp && mobileStep === 'list' ? 'hidden' : '',
+            !isMdUp ? 'max-md:min-h-[min(78dvh,calc(100dvh-10rem))]' : '',
+          ].filter(Boolean).join(' ')}
+        >
           {selected ? (
             <>
-              <div className="flex flex-shrink-0 flex-wrap items-start justify-between gap-2 border-b border-slate-100 px-4 py-3 md:px-6">
-                <div className="min-w-0 flex-1">
-                  <h2 className="text-lg font-bold leading-snug text-slate-900 md:text-xl">{selected.title}</h2>
-                  <p className="mt-1 text-xs text-slate-500">
-                    Zuletzt
-                    {' '}
-                    {formatDate(selected.updatedAt)}
-                  </p>
+              <div className="flex flex-shrink-0 flex-wrap items-start justify-between gap-2 border-b border-slate-100 px-3 py-3 sm:px-4 md:px-6">
+                <div className="flex min-w-0 flex-1 items-start gap-2">
+                  {!isMdUp ? (
+                    <button
+                      type="button"
+                      onClick={() => setMobileStep('list')}
+                      className="mt-0.5 shrink-0 rounded-xl border border-slate-200 bg-white p-2 text-slate-600 shadow-sm transition hover:border-primary/40 hover:bg-primary-light/40 hover:text-primary"
+                      aria-label="Zurück zur Liste"
+                    >
+                      <ArrowLeft className="h-5 w-5" aria-hidden />
+                    </button>
+                  ) : null}
+                  <div className="min-w-0 flex-1">
+                    <h2 className="text-base font-bold leading-snug text-slate-900 sm:text-lg md:text-xl">{selected.title}</h2>
+                    <p className="mt-1 text-xs text-slate-500">
+                      Zuletzt
+                      {' '}
+                      {formatDate(selected.updatedAt)}
+                    </p>
+                  </div>
                 </div>
-                <div className="flex flex-shrink-0 gap-1">
+                <div className="flex w-full flex-shrink-0 flex-wrap justify-end gap-1 sm:w-auto">
                   {selected.source ? (
                     <Link
                       to={`/chat?tool=${encodeURIComponent(selected.source.toolType)}`}
@@ -359,25 +404,27 @@ export default function NotesPage() {
                 </div>
               </div>
               {selected.tags.length > 0 ? (
-                <div className="flex flex-shrink-0 flex-wrap gap-1.5 border-b border-slate-50 px-4 py-2 md:px-6">
+                <div className="flex flex-shrink-0 flex-wrap gap-1.5 border-b border-slate-50 px-3 py-2 sm:px-4 md:px-6">
                   {selected.tags.map(t => (
                     <span
                       key={t}
-                      className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-medium text-slate-600"
+                      className="rounded-full border border-amber-200/80 bg-amber-50 px-2.5 py-0.5 text-[11px] font-medium text-amber-900/90"
                     >
                       {t}
                     </span>
                   ))}
                 </div>
               ) : null}
-              <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 md:px-6 md:py-6">
-                <pre className="max-w-prose whitespace-pre-wrap font-sans text-[15px] leading-relaxed text-slate-800">{selected.body}</pre>
+              <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-3 py-4 sm:px-4 md:px-6 md:py-6">
+                <div className="mx-auto max-w-3xl rounded-2xl border border-slate-200/80 bg-gradient-to-b from-slate-50/90 via-white to-amber-50/20 px-3 py-5 shadow-inner sm:px-6 sm:py-7">
+                  <RenderedMarkdown content={selected.body} variant="reader" />
+                </div>
               </div>
             </>
           ) : notes.length > 0 && !notesLoading ? (
             <div className="flex flex-1 flex-col items-center justify-center gap-2 p-8 text-center text-sm text-slate-500">
               <NotebookPen className="h-10 w-10 text-slate-200" aria-hidden />
-              Wähle links eine Notiz zum Lesen.
+              Wähle eine Notiz aus der Liste.
             </div>
           ) : null}
         </section>
