@@ -125,3 +125,4 @@
 ## ✅ Gelöst
 
 - **Agent 2:** Lokale Debug-Instrumentierung (`debugSessionsLog`, feste Ingest-URL, `PRIVATEPREP_DEBUG_SESSIONS`) aus `src/context/ChatSessionsProvider.tsx` entfernt; Variable `baseUsesAbsolute` entfernt (nur für entfernte Logs genutzt). Keine Backend-Änderungen — Commit-Message auf Branch `hardening/v3-production-ready`: `chore: remove dead code — unused methods, imports, console.logs, obsolete components`.
+- **Test-Fix (SmartAssistApi, Branch `hardening/v3-production-ready`):** `AgentControllerTests` für `SetContext` / `GetContext` — `ClerkAuthService` mockt jetzt einen angemeldeten User (`SetupSignedInClerk`), damit `dotnet test` wieder vollständig grün ist (`fix(test): mock signed-in Clerk for SetContext/GetContext controller tests`).
