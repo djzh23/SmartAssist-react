@@ -110,6 +110,18 @@ export interface ProfileContextToggles {
   activeTargetJobId: string | null
 }
 
+/** Strukturierter Kontext für Job-Analyzer / Interview — Backend baut daraus die Nutzerrolle. */
+export interface CareerToolSetup {
+  cvText?: string
+  jobText?: string
+  jobUrl?: string
+  jobTitle?: string
+  companyName?: string
+  interviewLanguageCode?: string
+  jobAnalyzerFollowUp?: boolean
+  interviewAlias?: string
+}
+
 export interface AgentRequest {
   message: string
   sessionId?: string
@@ -129,6 +141,7 @@ export interface AgentRequest {
   profileToggles?: ProfileContextToggles
   /** When set, backend loads Bewerbungskontext for this application id. */
   jobApplicationId?: string
+  careerToolSetup?: CareerToolSetup
 }
 
 export interface AgentResponse {

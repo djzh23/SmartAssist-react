@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { AlertCircle, CheckCircle2, PanelLeft, Plus, RefreshCw, X } from 'lucide-react'
-import type { ToolType } from '../types'
+import type { CareerToolSetup, ToolType } from '../types'
 import { PROGRAMMING_LANGUAGES } from '../types'
 import { UsageLimitError, askAgentStream, linkJobApplicationSession } from '../api/client'
 import { syncPlanFromStripe } from '../services/StripeService'
@@ -278,6 +278,65 @@ function toJobAnalyzerContext(context: SessionContextData | null): JobAnalyzerPr
     jobText: context.jobText.trim(),
     cvText: sanitizeTechnicalContext(context.cvText).trim(),
   }
+}
+
+function sessionHasCareerSetupForStructuredApi(
+  tool: ToolType,
+  ctx: SessionContextData | null,
+): ctx is SessionContextData {
+  if (!ctx) return false
+  const cv = ctx.cvText?.trim() ?? ''
+  const job = ctx.jobText?.trim() ?? ''
+  if (tool === 'jobanalyzer') {
+    return Boolean(ctx.hasCv || ctx.hasJob || cv.length > 0 || job.length > 0 || ctx.jobTitle.trim() || ctx.companyName.trim())
+  }
+  if (tool === 'interview') {
+    return Boolean(ctx.hasCv || ctx.hasJob || cv.length > 0 || job.length > 0)
+  }
+  return false
+}
+
+function buildCareerToolSetupForApi(
+  tool: ToolType,
+  priorUserMessageCount: number,
+  jobCtx: JobAnalyzerPromptContext,
+  invCtx: InterviewPromptContext,
+  ctx: SessionContextData,
+): CareerToolSetup | undefined {
+  if (tool === 'jobanalyzer') {
+    const cv = compactLines(sanitizeTechnicalContext(jobCtx.cvText), 22, 2600).trim()
+    const job = compactLines(jobCtx.jobText, 40, 3600).trim()
+    const title = jobCtx.jobTitle.trim().slice(0, 200)
+    const company = jobCtx.companyName.trim().slice(0, 200)
+    if (!cv && !job && !title && !company)
+      return undefined
+    return {
+      cvText: cv || undefined,
+      jobText: job || undefined,
+      jobTitle: title || undefined,
+      companyName: company || undefined,
+      jobAnalyzerFollowUp: priorUserMessageCount > 0,
+    }
+  }
+  if (tool === 'interview') {
+    const cv = compactLines(sanitizeTechnicalContext(invCtx.cvText), 22, 2600).trim()
+    const job = compactLines(invCtx.jobText, 14, 3600).trim()
+    const url = invCtx.jobUrl.trim().slice(0, 400)
+    const title = ctx.jobTitle.trim().slice(0, 200)
+    const company = ctx.companyName.trim().slice(0, 200)
+    if (!cv && !job && !url && !title && !company)
+      return undefined
+    return {
+      cvText: cv || undefined,
+      jobText: job || undefined,
+      jobUrl: url || undefined,
+      jobTitle: title || undefined,
+      companyName: company || undefined,
+      interviewLanguageCode: invCtx.language,
+      interviewAlias: invCtx.alias.trim().slice(0, 80) || undefined,
+    }
+  }
+  return undefined
 }
 
 function interviewBaseInstruction(language: string, hasCv: boolean, alias: string): string {
@@ -898,11 +957,31 @@ export default function ChatPage() {
     const interviewLangCode = interviewSetup.language === 'en' ? 'en' : 'de'
     const interviewLangName = interviewLangCode === 'de' ? 'German' : 'English'
 
-    const apiMessage = isInterview
-      ? buildInterviewPrompt(outgoingText, interviewLangName, interviewSetup)
-      : (store.currentToolType === 'jobanalyzer'
-        ? buildJobAnalyzerPrompt(outgoingText, jobAnalyzerSetup, priorUserMessageCount)
-        : outgoingText)
+    const hasApiMsgOverride = Boolean(options?.apiMessageOverride)
+    const useStructuredCareer = !hasApiMsgOverride
+      && (store.currentToolType === 'jobanalyzer' || isInterview)
+      && sessionHasCareerSetupForStructuredApi(store.currentToolType, effectiveContext)
+
+    const careerToolSetup = useStructuredCareer && effectiveContext
+      ? buildCareerToolSetupForApi(
+          store.currentToolType,
+          priorUserMessageCount,
+          jobAnalyzerSetup,
+          interviewSetup,
+          effectiveContext,
+        )
+      : undefined
+
+    const apiMessage = useStructuredCareer
+      ? (outgoingText.trim()
+        || (store.currentToolType === 'jobanalyzer' && priorUserMessageCount === 0
+          ? 'Bitte starte jetzt die Erstanalyse.'
+          : 'Bitte fahre mit der Vorbereitung fort.'))
+      : (isInterview
+        ? buildInterviewPrompt(outgoingText, interviewLangName, interviewSetup)
+        : (store.currentToolType === 'jobanalyzer'
+          ? buildJobAnalyzerPrompt(outgoingText, jobAnalyzerSetup, priorUserMessageCount)
+          : outgoingText))
 
     const streamingMsgId = crypto.randomUUID()
     flushSync(() => {
@@ -941,6 +1020,7 @@ export default function ChatPage() {
             interviewLanguage: isInterview ? (interviewLangCode === 'de' ? 'German' : 'English') : undefined,
             profileToggles: isSignedIn ? profileToggles : undefined,
             jobApplicationId: isSignedIn && linkedAppForSend ? linkedAppForSend.id : undefined,
+            careerToolSetup,
           },
           token,
           (chunk) => {
@@ -994,6 +1074,7 @@ export default function ChatPage() {
             interviewLanguage: isInterview ? (interviewLangCode === 'de' ? 'German' : 'English') : undefined,
             profileToggles: isSignedIn ? profileToggles : undefined,
             jobApplicationId: isSignedIn && linkedAppForSend ? linkedAppForSend.id : undefined,
+            careerToolSetup,
           },
           token,
           (chunk) => {
