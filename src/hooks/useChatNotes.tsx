@@ -88,6 +88,8 @@ export interface ChatNotesStore {
   allTags: string[]
   notesLoading: boolean
   notesError: string | null
+  /** ISO time of last successful notes fetch from the server. */
+  notesLastSyncedAt: string | null
   clearNotesError: () => void
   addNote: (input: AddChatNoteInput) => Promise<ChatSavedNote>
   updateNote: (id: string, patch: Partial<Pick<ChatSavedNote, 'title' | 'body' | 'tags'>>) => Promise<void>
@@ -142,6 +144,7 @@ function useChatNotesState(): ChatNotesStore {
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [notesLoading, setNotesLoading] = useState(false)
   const [notesError, setNotesError] = useState<string | null>(null)
+  const [notesLastSyncedAt, setNotesLastSyncedAt] = useState<string | null>(null)
 
   const clearNotesError = useCallback(() => setNotesError(null), [])
 
@@ -149,6 +152,7 @@ function useChatNotesState(): ChatNotesStore {
     if (!userId || !isSignedIn) {
       setNotes([])
       setNotesError(null)
+      setNotesLastSyncedAt(null)
       setNotesLoading(false)
       return
     }
@@ -168,6 +172,7 @@ function useChatNotesState(): ChatNotesStore {
           list = await fetchChatNotes(token)
       }
       setNotes(list)
+      setNotesLastSyncedAt(new Date().toISOString())
     }
     catch (e) {
       const msg = e instanceof Error ? e.message : 'Notizen konnten nicht geladen werden.'
@@ -273,6 +278,7 @@ function useChatNotesState(): ChatNotesStore {
       allTags,
       notesLoading,
       notesError,
+      notesLastSyncedAt,
       clearNotesError,
       addNote,
       updateNote,
@@ -292,6 +298,7 @@ function useChatNotesState(): ChatNotesStore {
       allTags,
       notesLoading,
       notesError,
+      notesLastSyncedAt,
       clearNotesError,
       addNote,
       updateNote,

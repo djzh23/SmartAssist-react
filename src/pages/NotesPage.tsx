@@ -8,13 +8,13 @@ import {
   Loader2,
   NotebookPen,
   Pencil,
-  RefreshCw,
   Search,
   Tag,
   Trash2,
   X,
 } from 'lucide-react'
 import { RenderedMarkdown } from '../components/chat/RenderedMarkdown'
+import { ServerSyncControl } from '../components/ui/ServerSyncControl'
 import { useChatNotes } from '../hooks/useChatNotes'
 import { useMediaQuery } from '../hooks/useMediaQuery'
 import type { ChatSavedNote } from '../types'
@@ -47,6 +47,7 @@ export default function NotesPage() {
     allTags,
     notesLoading,
     notesError,
+    notesLastSyncedAt,
     clearNotesError,
     updateNote,
     deleteNote,
@@ -194,15 +195,12 @@ export default function NotesPage() {
             </p>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={() => void reload()}
-          disabled={notesLoading}
-          className="inline-flex items-center justify-center gap-2 self-start rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-50"
-        >
-          {notesLoading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <RefreshCw className="h-4 w-4" aria-hidden />}
-          Aktualisieren
-        </button>
+        <ServerSyncControl
+          className="self-start"
+          onSync={() => void reload()}
+          syncing={notesLoading}
+          lastSyncedAt={notesLastSyncedAt}
+        />
       </header>
 
       {notesError ? (

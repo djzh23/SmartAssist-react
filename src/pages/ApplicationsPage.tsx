@@ -8,8 +8,8 @@ import {
   LayoutGrid,
   Loader2,
   Plus,
-  RefreshCw,
 } from 'lucide-react'
+import { ServerSyncControl } from '../components/ui/ServerSyncControl'
 import {
   type ApplicationStatusApi,
   type JobApplicationApi,
@@ -78,6 +78,7 @@ export default function ApplicationsPage() {
   const [apps, setApps] = useState<JobApplicationApi[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -91,6 +92,7 @@ export default function ApplicationsPage() {
       }
       const list = await fetchJobApplications(token)
       setApps(list)
+      setLastSyncedAt(new Date().toISOString())
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Laden fehlgeschlagen')
     } finally {
@@ -160,15 +162,11 @@ export default function ApplicationsPage() {
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-            <button
-              type="button"
-              onClick={() => void load()}
-              disabled={loading}
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 disabled:opacity-50"
-            >
-              <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-              Aktualisieren
-            </button>
+            <ServerSyncControl
+              onSync={() => void load()}
+              syncing={loading}
+              lastSyncedAt={lastSyncedAt}
+            />
             <Link
               to="/applications/new"
               className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-md transition hover:bg-amber-700"

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Briefcase, Check, Code2, Globe2, GripVertical, Loader2, MessageCircle, Pencil, Plus, Target, Trash2, X } from 'lucide-react'
+import { ServerSyncControl } from '../ui/ServerSyncControl'
 import type { LucideIcon } from 'lucide-react'
 import type { ChatSession, ToolType } from '../../types'
 import { NATIVE_LANGS, PROGRAMMING_LANGUAGES, TARGET_LANGS } from '../../types'
@@ -76,6 +77,10 @@ interface Props {
   progLang: string
   onProgLangChange: (v: string) => void
   showInterviewPanel: boolean
+  /** Signed-in: pull session list + transcripts from server on demand. */
+  onSyncFromServer?: () => void
+  sessionsRemoteSyncing?: boolean
+  sessionsLastSyncedAt?: string | null
 }
 
 export default function ChatSidebar({
@@ -101,6 +106,9 @@ export default function ChatSidebar({
   progLang,
   onProgLangChange,
   showInterviewPanel,
+  onSyncFromServer,
+  sessionsRemoteSyncing = false,
+  sessionsLastSyncedAt = null,
 }: Props) {
   const [dragFrom, setDragFrom] = useState<number | null>(null)
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
@@ -174,6 +182,17 @@ export default function ChatSidebar({
             <X size={16} />
           </button>
         </div>
+
+        {onSyncFromServer && (
+          <div className="flex-shrink-0 border-b border-slate-200 px-3 py-2">
+            <ServerSyncControl
+              onSync={onSyncFromServer}
+              syncing={sessionsRemoteSyncing}
+              lastSyncedAt={sessionsLastSyncedAt}
+              className="w-full [&_button]:w-full"
+            />
+          </div>
+        )}
 
         {showLLPanel && (
           <div className="flex-shrink-0 border-t border-slate-200 px-3 py-2.5">

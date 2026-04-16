@@ -185,9 +185,17 @@ export interface SessionStore {
   dismissAnswerToast: () => void
   notifyAnswerReady: (sessionId: string, toolType: ToolType, preview: string) => void
   reorderSessionsForTool: (toolType: ToolType, fromIndex: number, toIndex: number) => Promise<void>
-  /** Short notice after background sync detected remote changes (auto-dismiss). */
+  /** Short notice after manual sync detected remote changes (auto-dismiss). */
   remoteSyncNotice: string | null
   dismissRemoteSyncNotice: () => void
+  /** User-triggered full session list + transcript sync (no automatic polling). */
+  syncSessionsRemote: () => Promise<void>
+  sessionsRemoteSyncing: boolean
+  /** ISO time of last successful server load (initial or manual sync). */
+  sessionsLastSyncedAt: string | null
+  /** Hint that another tab or visibility suggests pulling from server; cleared on Sync or dismiss. */
+  sessionsStaleHint: string | null
+  dismissSessionsStaleHint: () => void
 }
 
 const ChatSessionsContext = createContext<SessionStore | null>(null)
@@ -260,6 +268,9 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
   const [sessionsRemoteLoading, setSessionsRemoteLoading] = useState(true)
   const [sessionsLoadError, setSessionsLoadError] = useState<string | null>(null)
   const [remoteSyncNotice, setRemoteSyncNotice] = useState<string | null>(null)
+  const [sessionsRemoteSyncing, setSessionsRemoteSyncing] = useState(false)
+  const [sessionsLastSyncedAt, setSessionsLastSyncedAt] = useState<string | null>(null)
+  const [sessionsStaleHint, setSessionsStaleHint] = useState<string | null>(null)
 
   const locationRef = useRef(location)
   locationRef.current = location
@@ -275,7 +286,6 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
   /** Bumps on unmount / scope change so in-flight loads do not apply stale results. */
   const loadSeqRef = useRef(0)
   const broadcastRef = useRef<BroadcastChannel | null>(null)
-  const refreshDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const remoteSyncFingerprintRef = useRef('')
   const remoteSyncToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -349,8 +359,25 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
         const records = await fetchChatSessions(token)
         if (seq !== loadSeqRef.current)
           return
+        const prevLocal = sessionsRef.current
+        const active = activeIdRef.current
         const transcripts = await Promise.all(
-          records.map(m => fetchSessionTranscript(token, m.id)),
+          records.map(m => {
+            if (mode === 'initial')
+              return fetchSessionTranscript(token, m.id)
+            const local = prevLocal[m.id]
+            const localCount = local?.messages?.length ?? 0
+            const needFetch =
+              !local
+              || m.id === active
+              || localCount !== m.messageCount
+            if (needFetch)
+              return fetchSessionTranscript(token, m.id)
+            return Promise.resolve({
+              toolType: local.toolType,
+              messages: local.messages,
+            })
+          }),
         )
         if (seq !== loadSeqRef.current)
           return
@@ -392,6 +419,8 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
         setSessions(nextSessions)
         setSessionOrder(order)
         setSessionsLoadError(null)
+        setSessionsStaleHint(null)
+        setSessionsLastSyncedAt(new Date().toISOString())
         if (mode === 'initial') {
           const stored = readStoredLastActiveChatId(scopeId)
           const preferred = stored && nextSessions[stored] ? stored : null
@@ -441,15 +470,21 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     setRemoteSyncNotice(null)
   }, [])
 
-  const scheduleRemoteRefresh = useCallback(() => {
+  const dismissSessionsStaleHint = useCallback(() => {
+    setSessionsStaleHint(null)
+  }, [])
+
+  const syncSessionsRemote = useCallback(async () => {
     if (scopeId === '_loading' || scopeId === 'guest')
       return
-    if (refreshDebounceRef.current)
-      clearTimeout(refreshDebounceRef.current)
-    refreshDebounceRef.current = setTimeout(() => {
-      refreshDebounceRef.current = null
-      void loadSessionsFromApi('refresh')
-    }, 650)
+    setSessionsRemoteSyncing(true)
+    setSessionsStaleHint(null)
+    try {
+      await loadSessionsFromApi('refresh')
+    }
+    finally {
+      setSessionsRemoteSyncing(false)
+    }
   }, [scopeId, loadSessionsFromApi])
 
   const pingOtherTabs = useCallback(() => {
@@ -462,8 +497,10 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
-    if (scopeId === '_loading' || scopeId === 'guest')
+    if (scopeId === '_loading' || scopeId === 'guest') {
       setRemoteSyncNotice(null)
+      setSessionsStaleHint(null)
+    }
   }, [scopeId])
 
   useEffect(() => {
@@ -475,22 +512,28 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     }
   }, [scopeId, loadSessionsFromApi])
 
-  /** Nach Wechsel Handy ↔ Desktop (anderes Gerät): Liste vom Server holen, wenn die Seite wieder sichtbar ist. */
+  /** Tab wieder sichtbar: Hinweis auf manuellen Sync (kein automatischer Server-Refetch). */
   useEffect(() => {
-    const onVisibleOrFocus = () => {
-      if (document.visibilityState !== 'visible')
+    if (scopeId === '_loading' || scopeId === 'guest')
+      return
+    let wasHidden = document.visibilityState === 'hidden'
+    const onVis = () => {
+      if (document.visibilityState === 'hidden') {
+        wasHidden = true
         return
-      scheduleRemoteRefresh()
+      }
+      if (document.visibilityState === 'visible' && wasHidden) {
+        wasHidden = false
+        setSessionsStaleHint(
+          'Fenster wieder aktiv — tippe auf „Synchronisieren“, um Chats mit dem Server abzugleichen.',
+        )
+      }
     }
-    document.addEventListener('visibilitychange', onVisibleOrFocus)
-    window.addEventListener('focus', onVisibleOrFocus)
-    return () => {
-      document.removeEventListener('visibilitychange', onVisibleOrFocus)
-      window.removeEventListener('focus', onVisibleOrFocus)
-    }
-  }, [scheduleRemoteRefresh])
+    document.addEventListener('visibilitychange', onVis)
+    return () => document.removeEventListener('visibilitychange', onVis)
+  }, [scopeId])
 
-  /** Mehrere Browser-Tabs: andere Tabs kurz nach lokaler Änderung mitziehen. */
+  /** Mehrere Browser-Tabs: andere Tabs informieren — kein automatischer Refetch. */
   useEffect(() => {
     if (scopeId === '_loading' || scopeId === 'guest') {
       broadcastRef.current = null
@@ -507,14 +550,16 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     }
     broadcastRef.current = ch
     ch.onmessage = () => {
-      scheduleRemoteRefresh()
+      setSessionsStaleHint(
+        'In einem anderen Tab wurden Chats geändert — tippe auf „Synchronisieren“, um den Serverstand zu laden.',
+      )
     }
     return () => {
       ch.close()
       if (broadcastRef.current === ch)
         broadcastRef.current = null
     }
-  }, [scopeId, scheduleRemoteRefresh])
+  }, [scopeId])
 
   /** Remember open tab per browser profile so refresh does not jump to another device’s “latest” tab order. */
   useEffect(() => {
@@ -530,22 +575,6 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
       /* ignore quota / private mode */
     }
   }, [activeId, scopeId])
-
-  /** Background poll on Chat route while tab is visible (cross-device sync without manual refresh). */
-  useEffect(() => {
-    if (scopeId === '_loading' || scopeId === 'guest')
-      return
-    if (!location.pathname.startsWith('/chat'))
-      return
-    const everyMs = 22_000
-    const tick = () => {
-      if (document.visibilityState !== 'visible')
-        return
-      void loadSessionsFromApi('refresh')
-    }
-    const id = window.setInterval(tick, everyMs)
-    return () => window.clearInterval(id)
-  }, [scopeId, location.pathname, loadSessionsFromApi])
 
   useEffect(() => {
     return () => {
@@ -900,6 +929,11 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     reorderSessionsForTool,
     remoteSyncNotice,
     dismissRemoteSyncNotice,
+    syncSessionsRemote,
+    sessionsRemoteSyncing,
+    sessionsLastSyncedAt,
+    sessionsStaleHint,
+    dismissSessionsStaleHint,
   }), [
     sessions,
     sessionOrder,
@@ -929,6 +963,11 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     reorderSessionsForTool,
     remoteSyncNotice,
     dismissRemoteSyncNotice,
+    syncSessionsRemote,
+    sessionsRemoteSyncing,
+    sessionsLastSyncedAt,
+    sessionsStaleHint,
+    dismissSessionsStaleHint,
   ])
 
   return (

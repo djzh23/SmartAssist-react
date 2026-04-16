@@ -28,6 +28,7 @@ import {
   uploadCv,
 } from '../api/profileClient'
 import CvUploader from '../components/profile/CvUploader'
+import { ServerSyncControl } from '../components/ui/ServerSyncControl'
 
 function canMarkProfileSetupComplete(p: CareerProfile): boolean {
   return Boolean(p.field?.trim() && p.level?.trim() && p.goals.length > 0)
@@ -293,6 +294,7 @@ export default function CareerProfilePage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [profileLastSyncedAt, setProfileLastSyncedAt] = useState<string | null>(null)
   const [skillDraft, setSkillDraft] = useState('')
   const [jobTitle, setJobTitle] = useState('')
   const [jobCompany, setJobCompany] = useState('')
@@ -311,6 +313,7 @@ export default function CareerProfilePage() {
       if (!token) throw new Error('Nicht angemeldet')
       const p = await fetchProfile(token)
       setProfile(p)
+      setProfileLastSyncedAt(new Date().toISOString())
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Laden fehlgeschlagen')
     } finally {
@@ -527,15 +530,25 @@ export default function CareerProfilePage() {
   return (
     <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden bg-slate-50">
       <div className="mx-auto w-full max-w-3xl px-4 py-6">
-        <h1 className="mb-1 text-2xl font-semibold text-slate-900">Karriereprofil</h1>
-        <p className="mb-6 text-sm text-slate-600">
-          Diese Daten kannst du in den Chat-Kontext einbinden (Schalter über dem Eingabefeld). Du bearbeitest hier
-          dieselben Infos wie in der{' '}
-          <Link to="/onboarding" className="font-medium text-primary hover:underline">
-            geführten Einrichtung (3 Schritte)
-          </Link>
-          — nichts doppelt pflegen nötig.
-        </p>
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            <h1 className="mb-1 text-2xl font-semibold text-slate-900">Karriereprofil</h1>
+            <p className="text-sm text-slate-600">
+              Diese Daten kannst du in den Chat-Kontext einbinden (Schalter über dem Eingabefeld). Du bearbeitest hier
+              dieselben Infos wie in der{' '}
+              <Link to="/onboarding" className="font-medium text-primary hover:underline">
+                geführten Einrichtung (3 Schritte)
+              </Link>
+              — nichts doppelt pflegen nötig.
+            </p>
+          </div>
+          <ServerSyncControl
+            className="shrink-0"
+            onSync={() => void load()}
+            syncing={loading}
+            lastSyncedAt={profileLastSyncedAt}
+          />
+        </div>
 
         <LearningInsightsPanel />
 

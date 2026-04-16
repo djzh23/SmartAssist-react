@@ -1203,6 +1203,9 @@ export default function ChatPage() {
         onRenameSession={(id, title) => {
           void store.renameSession(id, title)
         }}
+        onSyncFromServer={isSignedIn ? () => void store.syncSessionsRemote() : undefined}
+        sessionsRemoteSyncing={store.sessionsRemoteSyncing}
+        sessionsLastSyncedAt={store.sessionsLastSyncedAt}
         showLLPanel={isLanguage}
         languageLearningMode={llMode}
         nativeLangCode={nativeLang}
@@ -1231,6 +1234,32 @@ export default function ChatPage() {
                 <RefreshCw size={14} aria-hidden />
                 Erneut laden
               </button>
+            </div>
+          </div>
+        )}
+
+        {store.sessionsStaleHint && (
+          <div className="flex-shrink-0 border-b border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-950 sm:px-4" role="status">
+            <div className="mx-auto flex max-w-3xl flex-wrap items-center justify-between gap-2">
+              <span className="min-w-0 leading-snug">{store.sessionsStaleHint}</span>
+              <div className="flex shrink-0 flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => void store.syncSessionsRemote()}
+                  disabled={store.sessionsRemoteSyncing}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-xs font-semibold text-amber-900 shadow-sm transition hover:bg-amber-100 disabled:opacity-50"
+                >
+                  <RefreshCw size={14} className={store.sessionsRemoteSyncing ? 'animate-spin' : ''} aria-hidden />
+                  Synchronisieren
+                </button>
+                <button
+                  type="button"
+                  onClick={() => store.dismissSessionsStaleHint()}
+                  className="rounded-lg px-2 py-1 text-xs font-medium text-amber-800/90 hover:bg-amber-100/80"
+                >
+                  Ausblenden
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -1266,6 +1295,17 @@ export default function ChatPage() {
               ? sessionListLabel(store.sessions[activeId], 40)
               : 'Neues Gespräch'}
           </p>
+          {isSignedIn && (
+            <button
+              type="button"
+              onClick={() => void store.syncSessionsRemote()}
+              disabled={store.sessionsRemoteSyncing}
+              className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-500 transition-colors active:bg-slate-100 disabled:opacity-50"
+              aria-label="Mit Server synchronisieren"
+            >
+              <RefreshCw size={16} className={store.sessionsRemoteSyncing ? 'animate-spin' : ''} />
+            </button>
+          )}
           <button
             onClick={handleNewSession}
             className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-500 transition-colors active:bg-slate-100"

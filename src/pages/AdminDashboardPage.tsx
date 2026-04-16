@@ -4,10 +4,10 @@ import { useAuth } from '@clerk/clerk-react'
 import {
   ArrowLeft,
   Loader2,
-  RefreshCw,
   ShieldAlert,
   X,
 } from 'lucide-react'
+import { ServerSyncControl } from '../components/ui/ServerSyncControl'
 import {
   Area,
   Bar,
@@ -196,6 +196,7 @@ export default function AdminDashboardPage() {
   const [userSearch, setUserSearch] = useState('')
   const [planFilter, setPlanFilter] = useState<'all' | 'free' | 'starter' | 'pro'>('all')
   const [detailRangeLabel, setDetailRangeLabel] = useState('')
+  const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null)
 
   const fixedMonthlyCosts = useMemo(() => {
     const raw = import.meta.env.VITE_ADMIN_FIXED_COSTS_USD_MONTHLY
@@ -235,6 +236,7 @@ export default function AdminDashboardPage() {
       const to = todayIso()
       const list = await fetchTopUsers(token, { from, to, limit: 250 })
       setTopUsersList(list)
+      setLastSyncedAt(new Date().toISOString())
     } catch (e) {
       setTopUsersError(e instanceof Error ? e.message : 'Top-Nutzer konnten nicht geladen werden.')
     } finally {
@@ -255,6 +257,7 @@ export default function AdminDashboardPage() {
       }
       const dash = await fetchDashboard(token)
       setData(dash)
+      setLastSyncedAt(new Date().toISOString())
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Unbekannter Fehler'
       if (msg.includes('Not authorized') || msg.includes('403')) {
@@ -275,14 +278,6 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     void loadTopUsers()
   }, [loadTopUsers])
-
-  useEffect(() => {
-    const id = window.setInterval(() => {
-      void load(false)
-      void loadTopUsers()
-    }, 60_000)
-    return () => window.clearInterval(id)
-  }, [load, loadTopUsers])
 
   const openUserDetail = async (userId: string) => {
     setDetailError(null)
@@ -480,29 +475,21 @@ export default function AdminDashboardPage() {
               <p className="text-[11px] text-slate-500">Kosten, Modelle, Nutzer – kompakte Übersicht</p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="inline-flex items-center gap-1.5 text-xs text-slate-400">
-              <span className="h-2 w-2 rounded-full bg-teal-400 shadow-[0_0_8px_rgba(45,212,191,0.6)]" aria-hidden />
-              Live
-            </span>
-            {refreshing && (
-              <span className="flex items-center gap-1 text-xs text-slate-500">
-                <Loader2 size={14} className="animate-spin" />
-                Aktualisiere…
-              </span>
-            )}
-            <button
-              type="button"
-              onClick={() => {
+          <div className="flex flex-col items-end gap-1 sm:flex-row sm:items-center sm:gap-3">
+            <p className="max-w-[220px] text-right text-[11px] leading-snug text-slate-500">
+              Daten manuell synchronisieren — kein automatischer Hintergrund-Abruf.
+            </p>
+            <ServerSyncControl
+              variant="dark"
+              onSync={() => {
                 void load(false)
                 void loadTopUsers()
               }}
-              disabled={refreshing || initialLoad}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-600 bg-slate-800/80 px-3 py-1.5 text-xs font-medium text-slate-200 transition-colors hover:bg-slate-800 disabled:opacity-50"
-            >
-              <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
-              Jetzt
-            </button>
+              syncing={refreshing || topUsersLoading}
+              lastSyncedAt={lastSyncedAt}
+              error={error ?? topUsersError}
+              disabled={initialLoad}
+            />
           </div>
         </div>
       </header>
