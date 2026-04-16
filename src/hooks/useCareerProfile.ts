@@ -89,7 +89,7 @@ export function useCareerProfile() {
   }, [getToken, loadProfile])
 
   const needsOnboarding =
-    isSignedIn && !loading && !error && profile !== null && !profile.onboardingCompleted
+    isSignedIn && !loading && !error && profile != null && !profile.onboardingCompleted
 
   return {
     profile,
@@ -100,6 +100,6 @@ export function useCareerProfile() {
     reload: loadProfile,
     skipOnboarding,
     needsOnboarding,
-    hasProfile: isSignedIn && !loading && profile !== null && profile.onboardingCompleted,
+    hasProfile: isSignedIn && !loading && profile != null && profile.onboardingCompleted,
   }
 }
