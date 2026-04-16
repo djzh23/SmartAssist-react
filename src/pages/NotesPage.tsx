@@ -181,7 +181,7 @@ export default function NotesPage() {
   }
 
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-6 md:py-8">
+    <div className="mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col gap-4 overflow-hidden px-4 py-6 md:py-8">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-start gap-3">
           <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-primary-light text-primary">
@@ -236,13 +236,13 @@ export default function NotesPage() {
         </div>
       ) : null}
 
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm md:h-[min(82vh,calc(100vh-6.5rem))] md:flex-row md:gap-0">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm md:min-h-0 md:flex-row md:gap-0">
         {/* Liste */}
         <aside
           className={[
-            'flex min-h-0 w-full flex-shrink-0 flex-col border-slate-200 md:w-[min(100%,320px)] md:border-r md:bg-slate-50/40',
+            'flex min-h-0 w-full min-w-0 flex-shrink-0 flex-col border-slate-200 md:w-[min(100%,320px)] md:max-h-none md:border-r md:bg-slate-50/40',
             !isMdUp && mobileStep === 'reader' ? 'hidden' : '',
-            !isMdUp ? 'max-md:max-h-[min(52vh,420px)] max-md:min-h-0' : '',
+            !isMdUp ? 'max-md:max-h-[55vh] max-md:flex-1' : '',
           ].filter(Boolean).join(' ')}
         >
           <div className="flex flex-shrink-0 flex-col gap-3 border-b border-slate-100 p-3 md:p-4">
@@ -344,9 +344,9 @@ export default function NotesPage() {
         {/* Lesepanel */}
         <section
           className={[
-            'flex min-h-0 flex-1 flex-col md:min-h-0',
+            'flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden',
             !isMdUp && mobileStep === 'list' ? 'hidden' : '',
-            !isMdUp ? 'max-md:min-h-[min(78dvh,calc(100dvh-10rem))]' : '',
+            !isMdUp ? 'max-md:flex-1' : '',
           ].filter(Boolean).join(' ')}
         >
           {selected ? (
