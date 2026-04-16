@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Briefcase, Code2, Globe2, GripVertical, Loader2, MessageCircle, Plus, Target, Trash2, X } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { Briefcase, Check, Code2, Globe2, GripVertical, Loader2, MessageCircle, Pencil, Plus, Target, Trash2, X } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { ChatSession, ToolType } from '../../types'
 import { NATIVE_LANGS, PROGRAMMING_LANGUAGES, TARGET_LANGS } from '../../types'
@@ -60,6 +60,8 @@ interface Props {
   onNew: () => void
   onDelete: (id: string) => void
   onClear: () => void
+  /** Persist new tab title (signed-in: server). */
+  onRenameSession?: (id: string, title: string) => void | Promise<void>
   /** Drag-reorder visible sessions (indices in this list). */
   onReorderSessions?: (fromIndex: number, toIndex: number) => void
   /** Per-session streaming (background generation) */
@@ -86,6 +88,7 @@ export default function ChatSidebar({
   onNew,
   onDelete,
   onClear,
+  onRenameSession,
   onReorderSessions,
   sessionIsStreaming,
   showLLPanel,
@@ -101,7 +104,40 @@ export default function ChatSidebar({
 }: Props) {
   const [dragFrom, setDragFrom] = useState<number | null>(null)
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
+  const [renamingId, setRenamingId] = useState<string | null>(null)
+  const [renameDraft, setRenameDraft] = useState('')
+  const renameInputRef = useRef<HTMLInputElement>(null)
   const canReorder = Boolean(onReorderSessions) && sessions.length > 1
+
+  useEffect(() => {
+    if (renamingId && renameInputRef.current) {
+      renameInputRef.current.focus()
+      renameInputRef.current.select()
+    }
+  }, [renamingId])
+
+  const beginRename = (session: ChatSession, e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!onRenameSession) return
+    setRenamingId(session.id)
+    setRenameDraft(session.title?.trim() || sessionListLabel(session, 200))
+  }
+
+  const cancelRename = () => {
+    setRenamingId(null)
+    setRenameDraft('')
+  }
+
+  const commitRename = async () => {
+    if (!renamingId || !onRenameSession) return
+    const next = renameDraft.trim()
+    if (!next) {
+      cancelRename()
+      return
+    }
+    await onRenameSession(renamingId, next)
+    cancelRename()
+  }
 
   return (
     <>
@@ -254,6 +290,7 @@ export default function ChatSidebar({
                       setDragOverIndex(null)
                     } : undefined}
                     onClick={() => {
+                      if (renamingId) return
                       onSelect(session.id)
                       onClose()
                     }}
@@ -290,9 +327,49 @@ export default function ChatSidebar({
                     </div>
 
                     <div className="relative min-w-0 flex-1">
-                      <p className={`truncate text-[12px] font-medium ${isActive ? 'text-slate-800' : 'text-slate-600'}`}>
-                        {label}
-                      </p>
+                      {renamingId === session.id ? (
+                        <div className="flex flex-col gap-1" onClick={e => e.stopPropagation()}>
+                          <input
+                            ref={renameInputRef}
+                            value={renameDraft}
+                            onChange={e => setRenameDraft(e.target.value)}
+                            maxLength={120}
+                            className="w-full rounded-md border border-slate-300 bg-white px-2 py-1 text-[12px] text-slate-800 outline-none focus:border-primary"
+                            aria-label="Tab-Titel bearbeiten"
+                            onKeyDown={e => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault()
+                                void commitRename()
+                              }
+                              if (e.key === 'Escape') {
+                                e.preventDefault()
+                                cancelRename()
+                              }
+                            }}
+                          />
+                          <div className="flex gap-1">
+                            <button
+                              type="button"
+                              onClick={() => void commitRename()}
+                              className="inline-flex items-center gap-0.5 rounded-md bg-primary px-2 py-0.5 text-[11px] font-medium text-white hover:bg-primary-hover"
+                            >
+                              <Check size={12} aria-hidden />
+                              Speichern
+                            </button>
+                            <button
+                              type="button"
+                              onClick={cancelRename}
+                              className="rounded-md border border-slate-200 px-2 py-0.5 text-[11px] text-slate-600 hover:bg-slate-100"
+                            >
+                              Abbrechen
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className={`truncate text-[12px] font-medium ${isActive ? 'text-slate-800' : 'text-slate-600'}`}>
+                          {label}
+                        </p>
+                      )}
                       <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
                         <span className={`h-1.5 w-1.5 flex-shrink-0 rounded-full ${theme.dot} opacity-70`} />
                         <p className="text-[10px] text-slate-400">{time}</p>
@@ -305,6 +382,18 @@ export default function ChatSidebar({
                       </div>
                     </div>
 
+                    {onRenameSession && renamingId !== session.id ? (
+                      <button
+                        type="button"
+                        onClick={e => beginRename(session, e)}
+                        disabled={isStreaming}
+                        className="relative flex h-5 w-5 flex-shrink-0 items-center justify-center rounded text-slate-400 opacity-0 transition-all group-hover:opacity-100 hover:bg-slate-200/80 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-30"
+                        title={isStreaming ? 'Während Antwort nicht umbenennen' : 'Umbenennen'}
+                        aria-label="Chat umbenennen"
+                      >
+                        <Pencil size={12} />
+                      </button>
+                    ) : null}
                     <button
                       onClick={e => {
                         e.stopPropagation()

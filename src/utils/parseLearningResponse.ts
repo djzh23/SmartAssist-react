@@ -8,16 +8,40 @@ export interface ParsedLearningStructured {
   isStructured: true
 }
 
+/**
+ * Normalizes delimiter spellings so parsing matches model output (umlauts, spaces, optional END).
+ */
+export function normalizeLearningResponseMarkers(raw: string): string {
+  let t = raw.replace(/\r\n/g, '\n')
+  // Übersetzung: models often write Ü instead of UE in the delimiter
+  t = t.replace(/---\s*ÜBERSETZUNG\s*---/gi, '---UEBERSETZUNG---')
+  t = t.replace(/---\s*Uebersetzung\s*---/gi, '---UEBERSETZUNG---')
+  t = t.replace(/---\s*übersetzung\s*---/gi, '---UEBERSETZUNG---')
+  t = t.replace(/---\s*Übersetzung\s*---/gi, '---UEBERSETZUNG---')
+  t = t.replace(/---\s*Translation\s*---/gi, '---UEBERSETZUNG---')
+  t = t.replace(/---\s*ZIELSPRACHE\s*---/gi, '---ZIELSPRACHE---')
+  t = t.replace(/---\s*Zielsprache\s*---/gi, '---ZIELSPRACHE---')
+  t = t.replace(/---\s*KONTEXT\s*---/gi, '---KONTEXT---')
+  t = t.replace(/---\s*VARIANTEN\s*---/gi, '---VARIANTEN---')
+  t = t.replace(/---\s*TIPP\s*---/gi, '---TIPP---')
+  t = t.replace(/---\s*END\s*---/gi, '---END---')
+  return t
+}
+
 export function parseLearningResponse(text: string): ParsedLearningStructured | null {
-  const targetMatch = text.match(/---ZIELSPRACHE---([\s\S]*?)---UEBERSETZUNG---/i)
+  const normalized = normalizeLearningResponseMarkers(text)
+
+  const targetMatch = normalized.match(/---ZIELSPRACHE---([\s\S]*?)---UEBERSETZUNG---/i)
   if (!targetMatch) return null
 
-  const translationMatch = text.match(
-    /---UEBERSETZUNG---([\s\S]*?)(?=---KONTEXT---|---VARIANTEN---|---TIPP---|---END---)/i,
+  const translationMatch = normalized.match(
+    /---UEBERSETZUNG---([\s\S]*?)(?=---KONTEXT---|---VARIANTEN---|---TIPP---|---END---|$)/i,
   )
-  const kontextMatch = text.match(/---KONTEXT---([\s\S]*?)(?=---VARIANTEN---|---TIPP---|---END---)/i)
-  const variantenMatch = text.match(/---VARIANTEN---([\s\S]*?)(?=---TIPP---|---END---)/i)
-  const tipMatch = text.match(/---TIPP---([\s\S]*?)---END---/i)
+  const kontextMatch = normalized.match(
+    /---KONTEXT---([\s\S]*?)(?=---VARIANTEN---|---TIPP---|---END---|$)/i,
+  )
+  const variantenMatch = normalized.match(/---VARIANTEN---([\s\S]*?)(?=---TIPP---|---END---|$)/i)
+  const tipMatch = normalized.match(/---TIPP---([\s\S]*?)(?:---END---|$)/i)
 
   return {
     targetText: targetMatch[1].trim(),

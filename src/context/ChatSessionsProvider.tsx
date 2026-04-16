@@ -16,6 +16,7 @@ import {
   deleteChatSessionRemote,
   fetchChatSessions,
   fetchSessionTranscript,
+  patchChatSessionTitle,
   putChatSessionOrder,
   putSessionTranscript,
 } from '../api/client'
@@ -203,6 +204,7 @@ export interface SessionStore {
   sessionsLoadError: string | null
   retrySessionsRemoteLoad: () => void
   setActiveSession: (id: string) => void
+  renameSession: (sessionId: string, title: string) => Promise<void>
   newSession: (tool?: ToolType) => Promise<string>
   deleteSession: (id: string) => Promise<void>
   clearHistory: () => Promise<void>
@@ -706,6 +708,43 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     setActiveId(id)
   }, [])
 
+  const renameSession = useCallback(
+    async (sessionId: string, title: string) => {
+      const trimmed = title.trim()
+      if (!trimmed) return
+      const maxT = trimmed.length > 120 ? trimmed.slice(0, 120) : trimmed
+      const previousTitle = sessionsRef.current[sessionId]?.title
+      setSessions(prev => {
+        const s = prev[sessionId]
+        if (!s) return prev
+        return { ...prev, [sessionId]: { ...s, title: maxT } }
+      })
+      try {
+        const token = await getToken()
+        if (!token) {
+          pingOtherTabs()
+          return
+        }
+        const rec = await patchChatSessionTitle(token, sessionId, maxT)
+        setSessions(prev => {
+          const s = prev[sessionId]
+          if (!s) return prev
+          return { ...prev, [sessionId]: { ...s, title: rec.title } }
+        })
+        pingOtherTabs()
+      }
+      catch (e) {
+        console.warn('[sessions] rename failed', e)
+        setSessions(prev => {
+          const s = prev[sessionId]
+          if (!s) return prev
+          return { ...prev, [sessionId]: { ...s, title: previousTitle } }
+        })
+      }
+    },
+    [getToken, pingOtherTabs],
+  )
+
   const newSession = useCallback(
     async (tool?: ToolType): Promise<string> => {
       const t = tool ?? currentTool
@@ -945,6 +984,7 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     sessionsLoadError,
     retrySessionsRemoteLoad,
     setActiveSession,
+    renameSession,
     newSession,
     deleteSession,
     clearHistory,
@@ -973,6 +1013,7 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     sessionsLoadError,
     retrySessionsRemoteLoad,
     setActiveSession,
+    renameSession,
     newSession,
     deleteSession,
     clearHistory,

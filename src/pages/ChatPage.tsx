@@ -1119,6 +1119,9 @@ export default function ChatPage() {
         onReorderSessions={(from, to) => {
           void store.reorderSessionsForTool(store.currentToolType, from, to)
         }}
+        onRenameSession={(id, title) => {
+          void store.renameSession(id, title)
+        }}
         showLLPanel={isLanguage}
         languageLearningMode={llMode}
         nativeLangCode={nativeLang}
@@ -1297,6 +1300,7 @@ export default function ChatPage() {
                 streamCursorMessageId={store.streamingPlaceholder?.messageId ?? null}
                 scrollContainerRef={chatScrollRef}
                 scrollToBottomSeq={scrollToBottomSeq}
+                activeSessionId={activeId}
               />
             </div>
           </div>
@@ -1316,7 +1320,10 @@ export default function ChatPage() {
           </div>
         )}
 
-        {isSignedIn && !careerProfileLoading && (
+        {isSignedIn
+          && !careerProfileLoading
+          && store.currentToolType !== 'language'
+          && store.currentToolType !== 'general' && (
           <div className="flex-shrink-0 border-b border-slate-200 bg-white px-4 py-2">
             <ChatContextBar
               careerProfile={careerProfile}

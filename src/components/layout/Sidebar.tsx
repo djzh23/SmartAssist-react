@@ -21,6 +21,7 @@ import {
   Linkedin,
   FolderOpen,
   BookOpen,
+  NotebookPen,
   type LucideIcon,
 } from 'lucide-react'
 import { useIsAdmin } from '../../hooks/useIsAdmin'
@@ -299,6 +300,7 @@ export default function Sidebar({ onNavClick }: Props) {
           onClick={onNavClick}
         />
         <SidebarLink item={{ label: 'Ratgeber', icon: <BookOpen size={15} />, to: '/guides' }} onClick={onNavClick} />
+        <SidebarLink item={{ label: 'Notizen', icon: <NotebookPen size={15} />, to: '/notes' }} onClick={onNavClick} />
 
         <p className="px-3 pb-1.5 pt-5 text-[10px] font-bold uppercase tracking-[1.5px] text-slate-500">Coaching und Chat</p>
         {skillsLoading && (

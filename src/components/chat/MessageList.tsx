@@ -24,6 +24,8 @@ interface Props {
   scrollContainerRef?: RefObject<HTMLDivElement | null>
   /** Increment after each send to force scroll to latest (user message + reply). */
   scrollToBottomSeq?: number
+  /** Current session (for saving assistant replies as notes). */
+  activeSessionId?: string | null
 }
 
 function TypingDots() {
@@ -54,6 +56,7 @@ export default function MessageList({
   streamCursorMessageId = null,
   scrollContainerRef,
   scrollToBottomSeq = 0,
+  activeSessionId = null,
 }: Props) {
   const prevSeqRef = useRef(0)
 
@@ -138,6 +141,7 @@ export default function MessageList({
               progLang={progLang}
               useLanguageCard={useLanguageCard}
               showStreamCursor={showStreamCursor}
+              activeSessionId={activeSessionId}
             />
           )
         })

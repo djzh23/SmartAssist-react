@@ -1,11 +1,12 @@
 import type { ChatMessage, ToolType } from '../../types'
 import { BriefcaseBusiness, Settings2 } from 'lucide-react'
+import AssistantNoteSaveButton from './AssistantNoteSaveButton'
 import JobAnalysisCard from './JobAnalysisCard'
 import LearningResponse from './LearningResponse'
 import ProgrammingResponse from './ProgrammingResponse'
 import InterviewResponse from './InterviewResponse'
 import { RenderedMarkdown } from './RenderedMarkdown'
-import { parseLearningResponse } from '../../utils/parseLearningResponse'
+import { normalizeLearningResponseMarkers, parseLearningResponse } from '../../utils/parseLearningResponse'
 import StreamingTextCursor from './StreamingTextCursor'
 
 interface Props {
@@ -18,6 +19,7 @@ interface Props {
   useLanguageCard?: boolean
   /** Blinkender Cursor während gedrosseltem Stream-Rendering */
   showStreamCursor?: boolean
+  activeSessionId?: string | null
 }
 
 export default function MessageBubble({
@@ -29,6 +31,7 @@ export default function MessageBubble({
   progLang = 'csharp',
   useLanguageCard = false,
   showStreamCursor = false,
+  activeSessionId = null,
 }: Props) {
   const time = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   const isJobAnalyzerReply = !msg.isUser && (toolType === 'jobanalyzer' || msg.toolUsed === 'analyze_job')
@@ -38,54 +41,79 @@ export default function MessageBubble({
     const structured = parseLearningResponse(msg.text)
     if (structured?.isStructured) {
       return (
-        <LearningResponse
-          data={{
-            targetLanguageText: structured.targetText,
-            nativeLanguageText: structured.translationText,
-            learnContext: structured.contextText ?? undefined,
-            learnVariants: structured.variantsText ?? undefined,
-            learnTip: structured.tipText ?? undefined,
-          }}
-          targetLang={targetLang}
-          nativeLang={nativeLang}
-          targetLangCode={targetLangCode}
-          timestamp={msg.timestamp}
-          showStreamCursor={showStreamCursor}
-        />
+        <>
+          <LearningResponse
+            data={{
+              targetLanguageText: structured.targetText,
+              nativeLanguageText: structured.translationText,
+              learnContext: structured.contextText ?? undefined,
+              learnVariants: structured.variantsText ?? undefined,
+              learnTip: structured.tipText ?? undefined,
+            }}
+            targetLang={targetLang}
+            nativeLang={nativeLang}
+            targetLangCode={targetLangCode}
+            timestamp={msg.timestamp}
+            showStreamCursor={showStreamCursor}
+          />
+          <AssistantNoteSaveButton msg={msg} toolType={toolType} activeSessionId={activeSessionId} />
+        </>
       )
     }
 
     // 2. Backend returned a structured LearningData object (legacy / non-streaming)
     if (msg.learningData) {
       return (
-        <LearningResponse
-          data={msg.learningData}
-          targetLang={targetLang}
-          nativeLang={nativeLang}
-          targetLangCode={targetLangCode}
-          timestamp={msg.timestamp}
-          showStreamCursor={showStreamCursor}
-        />
+        <>
+          <LearningResponse
+            data={msg.learningData}
+            targetLang={targetLang}
+            nativeLang={nativeLang}
+            targetLangCode={targetLangCode}
+            timestamp={msg.timestamp}
+            showStreamCursor={showStreamCursor}
+          />
+          <AssistantNoteSaveButton msg={msg} toolType={toolType} activeSessionId={activeSessionId} />
+        </>
       )
     }
 
-    // 3. Fallback: render ANY language response as a LearningResponse card so
-    //    (a) the user always sees the purple bordered card style, and
-    //    (b) the audio button is available for the whole text.
-    //    An empty nativeLanguageText hides the translation card automatically.
+    // 3. Structured answer still streaming or delimiter mismatch: avoid one mega-card
+    //    (wrong TTS + raw --- markers). Show placeholder until parse succeeds.
     if (msg.text.trim()) {
+      const normalized = normalizeLearningResponseMarkers(msg.text)
+      const looksLikeStructured = /---\s*ZIELSPRACHE\s*---/i.test(normalized)
+      if (looksLikeStructured && !structured && showStreamCursor) {
+        return (
+          <div className="flex max-w-[85%] animate-slide-up flex-col gap-1 self-start">
+            <div className="rounded-[4px_18px_18px_18px] border border-amber-200/80 bg-amber-50/90 px-3.5 py-3 text-sm leading-relaxed text-amber-950">
+              <p className="text-[13px] font-medium text-amber-900">Antwort wird strukturiert …</p>
+              <p className="mt-1 text-[12px] text-amber-800/90">
+                Kurz warten, bis Zielsprache und Übersetzung vollständig geliefert sind.
+              </p>
+              <StreamingTextCursor />
+            </div>
+            <span className="px-1 text-[11px] text-slate-400">{time}</span>
+          </div>
+        )
+      }
+
+      // 4. Plain or malformed-but-finished reply: single card + audio on full text
       return (
-        <LearningResponse
-          data={{
-            targetLanguageText: msg.text.trim(),
-            nativeLanguageText: '',
-          }}
-          targetLang={targetLang}
-          nativeLang={nativeLang}
-          targetLangCode={targetLangCode}
-          timestamp={msg.timestamp}
-          showStreamCursor={showStreamCursor}
-        />
+        <>
+          <LearningResponse
+            data={{
+              targetLanguageText: msg.text.trim(),
+              nativeLanguageText: '',
+            }}
+            targetLang={targetLang}
+            nativeLang={nativeLang}
+            targetLangCode={targetLangCode}
+            timestamp={msg.timestamp}
+            showStreamCursor={showStreamCursor}
+          />
+          <AssistantNoteSaveButton msg={msg} toolType={toolType} activeSessionId={activeSessionId} />
+        </>
       )
     }
   }
@@ -101,28 +129,35 @@ export default function MessageBubble({
           </span>
           <span className="text-[11px] text-slate-400">{time}</span>
         </div>
+        <AssistantNoteSaveButton msg={msg} toolType={toolType} activeSessionId={activeSessionId} />
       </div>
     )
   }
 
   if (!msg.isUser && toolType === 'programming') {
     return (
-      <ProgrammingResponse
-        text={msg.text}
-        progLang={progLang}
-        timestamp={msg.timestamp}
-        showStreamCursor={showStreamCursor}
-      />
+      <>
+        <ProgrammingResponse
+          text={msg.text}
+          progLang={progLang}
+          timestamp={msg.timestamp}
+          showStreamCursor={showStreamCursor}
+        />
+        <AssistantNoteSaveButton msg={msg} toolType={toolType} activeSessionId={activeSessionId} />
+      </>
     )
   }
 
   if (!msg.isUser && toolType === 'interview') {
     return (
-      <InterviewResponse
-        text={msg.text}
-        timestamp={msg.timestamp}
-        showStreamCursor={showStreamCursor}
-      />
+      <>
+        <InterviewResponse
+          text={msg.text}
+          timestamp={msg.timestamp}
+          showStreamCursor={showStreamCursor}
+        />
+        <AssistantNoteSaveButton msg={msg} toolType={toolType} activeSessionId={activeSessionId} />
+      </>
     )
   }
 
@@ -142,6 +177,7 @@ export default function MessageBubble({
           )}
           <span className="text-[11px] text-slate-400">{time}</span>
         </div>
+        <AssistantNoteSaveButton msg={msg} toolType={toolType} activeSessionId={activeSessionId} />
       </div>
     )
   }

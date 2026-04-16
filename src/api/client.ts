@@ -362,6 +362,17 @@ export async function deleteChatSessionRemote(token: string, sessionId: string):
     throw new Error(await readApiError(res, `Session löschen fehlgeschlagen (${res.status})`))
 }
 
+export async function patchChatSessionTitle(token: string, sessionId: string, title: string): Promise<ApiChatSessionRecord> {
+  const res = await fetch(`${BASE}/api/sessions/${encodeURIComponent(sessionId)}`, {
+    method: 'PATCH',
+    headers: authHeaders(token),
+    body: JSON.stringify({ title }),
+  })
+  if (!res.ok)
+    throw new Error(await readApiError(res, `Titel konnte nicht gespeichert werden (${res.status})`))
+  return await res.json() as ApiChatSessionRecord
+}
+
 export async function putChatSessionOrder(token: string, orderedSessionIds: string[]): Promise<void> {
   const res = await fetch(`${BASE}/api/sessions/order`, {
     method: 'PUT',

@@ -83,6 +83,23 @@ export interface ChatSession {
   title?: string
 }
 
+/** Saved assistant reply from chat (localStorage until a future API exists). */
+export interface ChatSavedNoteSource {
+  toolType: ToolType
+  sessionId: string
+  messageId: string
+}
+
+export interface ChatSavedNote {
+  id: string
+  createdAt: string
+  updatedAt: string
+  title: string
+  body: string
+  tags: string[]
+  source?: ChatSavedNoteSource
+}
+
 // ── API types ─────────────────────────────────────────────
 /** Karriereprofil-Kontext für /api/agent (camelCase wie Backend JSON). */
 export interface ProfileContextToggles {

@@ -15,6 +15,7 @@ import ApplicationNewPage from './pages/ApplicationNewPage'
 import ApplicationDetailPage from './pages/ApplicationDetailPage'
 import GuidesIndexPage from './pages/guides/GuidesIndexPage'
 import GuideArticlePage from './pages/guides/GuideArticlePage'
+import NotesPage from './pages/NotesPage'
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string
 
@@ -82,6 +83,7 @@ function AppRoutes() {
         <Route path="/applications/:id" element={<ApplicationDetailPage />} />
         <Route path="/guides" element={<GuidesIndexPage />} />
         <Route path="/guides/:slug" element={<GuideArticlePage />} />
+        <Route path="/notes" element={<NotesPage />} />
       </Route>
 
       <Route
