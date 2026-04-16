@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import { ChatSessionsProvider } from '../../hooks/useChatSessions'
 import { ChatNotesProvider } from '../../hooks/useChatNotes'
+import ChatNotesStorageBanner from './ChatNotesStorageBanner'
 import Sidebar from './Sidebar'
 import { Menu, X } from 'lucide-react'
 
@@ -55,6 +56,7 @@ export default function MainLayout() {
         <main className="relative flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto">
           <ChatSessionsProvider>
             <ChatNotesProvider>
+              <ChatNotesStorageBanner />
               <Outlet />
             </ChatNotesProvider>
           </ChatSessionsProvider>

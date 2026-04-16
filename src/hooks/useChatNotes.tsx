@@ -13,6 +13,7 @@ import {
   deleteChatNoteRemote,
   fetchChatNotes,
   updateChatNoteRemote,
+  type ChatNotesStorageMeta,
 } from '../api/client'
 import type { ChatSavedNote, ChatSavedNoteSource, ToolType } from '../types'
 
@@ -90,6 +91,9 @@ export interface ChatNotesStore {
   notesError: string | null
   /** ISO time of last successful notes fetch from the server. */
   notesLastSyncedAt: string | null
+  /** Shown when the API stores notes on Redis while Postgres was requested (missing/invalid DB connection). */
+  chatNotesStorageWarning: string | null
+  clearChatNotesStorageWarning: () => void
   clearNotesError: () => void
   addNote: (input: AddChatNoteInput) => Promise<ChatSavedNote>
   updateNote: (id: string, patch: Partial<Pick<ChatSavedNote, 'title' | 'body' | 'tags'>>) => Promise<void>
@@ -99,6 +103,17 @@ export interface ChatNotesStore {
 }
 
 const ChatNotesContext = createContext<ChatNotesStore | null>(null)
+
+function chatNotesDegradedBannerText(meta: ChatNotesStorageMeta): string {
+  if (!meta.degraded)
+    return ''
+  if (meta.degradedReason === 'no_valid_supabase_connection') {
+    return 'Notizen: Die API ist für Postgres/Supabase konfiguriert, aber es gibt keine gültige Datenbankverbindung. '
+      + 'Es wird Redis verwendet — in Supabase erscheinen daher keine Einträge. '
+      + 'Bitte auf dem API-Host «SUPABASE__CONNECTIONSTRING» oder «DATABASE_URL» setzen und neu deployen.'
+  }
+  return 'Notizen: Postgres ist konfiguriert, die API nutzt vorerst Redis.'
+}
 
 async function migrateLocalNotesToServer(token: string, userId: string): Promise<boolean> {
   let raw: string | null = null
@@ -145,14 +160,26 @@ function useChatNotesState(): ChatNotesStore {
   const [notesLoading, setNotesLoading] = useState(false)
   const [notesError, setNotesError] = useState<string | null>(null)
   const [notesLastSyncedAt, setNotesLastSyncedAt] = useState<string | null>(null)
+  const [chatNotesStorageWarning, setChatNotesStorageWarning] = useState<string | null>(null)
 
   const clearNotesError = useCallback(() => setNotesError(null), [])
+
+  const clearChatNotesStorageWarning = useCallback(() => setChatNotesStorageWarning(null), [])
+
+  const applyChatNotesStorageMeta = useCallback((meta: ChatNotesStorageMeta | null) => {
+    if (!meta) return
+    if (meta.degraded)
+      setChatNotesStorageWarning(chatNotesDegradedBannerText(meta))
+    else if (meta.effective === 'postgres')
+      setChatNotesStorageWarning(null)
+  }, [])
 
   const reload = useCallback(async () => {
     if (!userId || !isSignedIn) {
       setNotes([])
       setNotesError(null)
       setNotesLastSyncedAt(null)
+      setChatNotesStorageWarning(null)
       setNotesLoading(false)
       return
     }
@@ -165,12 +192,16 @@ function useChatNotesState(): ChatNotesStore {
         setNotesError('Kein gültiges Anmelde-Token.')
         return
       }
-      let list = await fetchChatNotes(token)
+      let { notes: list, storageMeta } = await fetchChatNotes(token)
       if (list.length === 0) {
         const migrated = await migrateLocalNotesToServer(token, userId)
-        if (migrated)
-          list = await fetchChatNotes(token)
+        if (migrated) {
+          const again = await fetchChatNotes(token)
+          list = again.notes
+          storageMeta = again.storageMeta
+        }
       }
+      applyChatNotesStorageMeta(storageMeta)
       setNotes(list)
       setNotesLastSyncedAt(new Date().toISOString())
     }
@@ -182,7 +213,7 @@ function useChatNotesState(): ChatNotesStore {
     finally {
       setNotesLoading(false)
     }
-  }, [userId, isSignedIn, getToken])
+  }, [userId, isSignedIn, getToken, applyChatNotesStorageMeta])
 
   useEffect(() => {
     void reload()
@@ -194,19 +225,20 @@ function useChatNotesState(): ChatNotesStore {
       if (!token)
         throw new Error('Nicht angemeldet.')
       const tagSet = [...new Set(input.tags.map(normalizeTag).filter(Boolean))]
-      const created = await createChatNoteRemote(token, {
+      const { note: created, storageMeta } = await createChatNoteRemote(token, {
         title: input.title.trim(),
         body: input.body,
         tags: tagSet,
         source: input.source,
       })
+      applyChatNotesStorageMeta(storageMeta)
       setNotes(prev => {
         const withoutDup = prev.filter(n => n.id !== created.id)
         return [created, ...withoutDup]
       })
       return created
     },
-    [getToken],
+    [getToken, applyChatNotesStorageMeta],
   )
 
   const updateNote = useCallback(
@@ -218,10 +250,11 @@ function useChatNotesState(): ChatNotesStore {
       if (patch.title !== undefined) body.title = patch.title.trim()
       if (patch.body !== undefined) body.body = patch.body
       if (patch.tags !== undefined) body.tags = [...new Set(patch.tags.map(normalizeTag).filter(Boolean))]
-      const updated = await updateChatNoteRemote(token, id, body)
+      const { note: updated, storageMeta } = await updateChatNoteRemote(token, id, body)
+      applyChatNotesStorageMeta(storageMeta)
       setNotes(prev => prev.map(n => (n.id === id ? updated : n)))
     },
-    [getToken],
+    [getToken, applyChatNotesStorageMeta],
   )
 
   const deleteNote = useCallback(
@@ -229,10 +262,11 @@ function useChatNotesState(): ChatNotesStore {
       const token = await getToken()
       if (!token)
         throw new Error('Nicht angemeldet.')
-      await deleteChatNoteRemote(token, id)
+      const storageMeta = await deleteChatNoteRemote(token, id)
+      applyChatNotesStorageMeta(storageMeta)
       setNotes(prev => prev.filter(n => n.id !== id))
     },
-    [getToken],
+    [getToken, applyChatNotesStorageMeta],
   )
 
   const hasNoteForMessage = useCallback(
@@ -279,6 +313,8 @@ function useChatNotesState(): ChatNotesStore {
       notesLoading,
       notesError,
       notesLastSyncedAt,
+      chatNotesStorageWarning,
+      clearChatNotesStorageWarning,
       clearNotesError,
       addNote,
       updateNote,
@@ -299,6 +335,8 @@ function useChatNotesState(): ChatNotesStore {
       notesLoading,
       notesError,
       notesLastSyncedAt,
+      chatNotesStorageWarning,
+      clearChatNotesStorageWarning,
       clearNotesError,
       addNote,
       updateNote,

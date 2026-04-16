@@ -431,7 +431,7 @@ export async function putSessionTranscript(
     throw new Error(await readApiError(res, `Verlauf speichern fehlgeschlagen (${res.status})`))
 }
 
-// ── Chat notes (Redis, cross-device) ─────────────────────────────────────
+// ── Chat notes (Redis / Postgres via API) ────────────────────────────────
 
 export interface CreateChatNoteBody {
   title: string
@@ -440,14 +440,43 @@ export interface CreateChatNoteBody {
   source?: ChatSavedNoteSource
 }
 
-export async function fetchChatNotes(token: string): Promise<ChatSavedNote[]> {
-  const res = await fetch(`${BASE}/api/chat-notes`, { headers: { Authorization: `Bearer ${token}` } })
-  await throwIfChatNotesHttpError(res, 'Notizen laden fehlgeschlagen')
-  const data = await res.json() as unknown
-  return Array.isArray(data) ? (data as ChatSavedNote[]) : []
+/** Parsed from API response headers when the server exposes storage disclosure. */
+export interface ChatNotesStorageMeta {
+  effective: 'redis' | 'postgres'
+  configured: string
+  degraded: boolean
+  degradedReason: string | null
 }
 
-export async function createChatNoteRemote(token: string, body: CreateChatNoteBody): Promise<ChatSavedNote> {
+export function parseChatNotesStorageMeta(res: Response): ChatNotesStorageMeta | null {
+  const raw = res.headers.get('X-Chat-Notes-Effective-Storage')?.trim().toLowerCase()
+  if (raw !== 'redis' && raw !== 'postgres')
+    return null
+  const effective = raw as 'redis' | 'postgres'
+  const configured = res.headers.get('X-Chat-Notes-Configured-Storage')?.trim() ?? 'redis'
+  const degraded = res.headers.get('X-Chat-Notes-Degraded') === 'true'
+  const degradedReason = res.headers.get('X-Chat-Notes-Degraded-Reason')?.trim() ?? null
+  return { effective, configured, degraded, degradedReason }
+}
+
+export interface FetchChatNotesResult {
+  notes: ChatSavedNote[]
+  storageMeta: ChatNotesStorageMeta | null
+}
+
+export async function fetchChatNotes(token: string): Promise<FetchChatNotesResult> {
+  const res = await fetch(`${BASE}/api/chat-notes`, { headers: { Authorization: `Bearer ${token}` } })
+  await throwIfChatNotesHttpError(res, 'Notizen laden fehlgeschlagen')
+  const storageMeta = parseChatNotesStorageMeta(res)
+  const data = await res.json() as unknown
+  const notes = Array.isArray(data) ? (data as ChatSavedNote[]) : []
+  return { notes, storageMeta }
+}
+
+export async function createChatNoteRemote(
+  token: string,
+  body: CreateChatNoteBody,
+): Promise<{ note: ChatSavedNote; storageMeta: ChatNotesStorageMeta | null }> {
   const res = await fetch(`${BASE}/api/chat-notes`, {
     method: 'POST',
     headers: authHeaders(token),
@@ -459,31 +488,40 @@ export async function createChatNoteRemote(token: string, body: CreateChatNoteBo
     }),
   })
   await throwIfChatNotesHttpError(res, 'Notiz anlegen fehlgeschlagen')
-  return await res.json() as ChatSavedNote
+  const storageMeta = parseChatNotesStorageMeta(res)
+  const note = await res.json() as ChatSavedNote
+  return { note, storageMeta }
 }
 
 export async function updateChatNoteRemote(
   token: string,
   noteId: string,
   patch: { title?: string; body?: string; tags?: string[] },
-): Promise<ChatSavedNote> {
+): Promise<{ note: ChatSavedNote; storageMeta: ChatNotesStorageMeta | null }> {
   const res = await fetch(`${BASE}/api/chat-notes/${encodeURIComponent(noteId)}`, {
     method: 'PUT',
     headers: authHeaders(token),
     body: JSON.stringify(patch),
   })
   await throwIfChatNotesHttpError(res, 'Notiz speichern fehlgeschlagen')
-  return await res.json() as ChatSavedNote
+  const storageMeta = parseChatNotesStorageMeta(res)
+  const note = await res.json() as ChatSavedNote
+  return { note, storageMeta }
 }
 
-export async function deleteChatNoteRemote(token: string, noteId: string): Promise<void> {
+/** Returns storage disclosure headers when present (including on 204). */
+export async function deleteChatNoteRemote(
+  token: string,
+  noteId: string,
+): Promise<ChatNotesStorageMeta | null> {
   const res = await fetch(`${BASE}/api/chat-notes/${encodeURIComponent(noteId)}`, {
     method: 'DELETE',
     headers: { Authorization: `Bearer ${token}` },
   })
   if (res.status === 404)
-    return
+    return null
   await throwIfChatNotesHttpError(res, 'Notiz löschen fehlgeschlagen')
+  return parseChatNotesStorageMeta(res)
 }
 
 // ── Job applications hub ───────────────────────────────────────────────────
