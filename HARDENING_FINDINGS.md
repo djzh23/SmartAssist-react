@@ -124,4 +124,4 @@
 
 ## ✅ Gelöst
 
-_Noch keine — dieser Report ist die Eingabe für Agent 2–8. Nach Abschluss der Phasen hier Einträge mit Commit-Hash/Referenz ergänzen._
+- **Agent 2:** Lokale Debug-Instrumentierung (`debugSessionsLog`, feste Ingest-URL, `PRIVATEPREP_DEBUG_SESSIONS`) aus `src/context/ChatSessionsProvider.tsx` entfernt; Variable `baseUsesAbsolute` entfernt (nur für entfernte Logs genutzt). Keine Backend-Änderungen — Commit-Message auf Branch `hardening/v3-production-ready`: `chore: remove dead code — unused methods, imports, console.logs, obsolete components`.
