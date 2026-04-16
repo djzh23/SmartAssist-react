@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { BrowserRouter, Navigate, Route, Routes, useNavigate } from 'react-router-dom'
 import { ClerkProvider, useAuth, useUser } from '@clerk/clerk-react'
+import { AppErrorBoundary } from './components/AppErrorBoundary'
 import MainLayout from './components/layout/MainLayout'
 import LoadingScreen from './components/LoadingScreen'
 import LandingPage from './pages/LandingPage'
@@ -167,10 +168,12 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <ClerkProviderWithRouter>
-        <AppRoutes />
-      </ClerkProviderWithRouter>
-    </BrowserRouter>
+    <AppErrorBoundary>
+      <BrowserRouter>
+        <ClerkProviderWithRouter>
+          <AppRoutes />
+        </ClerkProviderWithRouter>
+      </BrowserRouter>
+    </AppErrorBoundary>
   )
 }

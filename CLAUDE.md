@@ -45,7 +45,8 @@ In dev, Vite proxies `/api/*` → backend (see `vite.config.ts`).
 |--------|-------------------|-------------------------------------|
 | POST   | /api/agent/ask    | `AgentRequest` → `AgentResponse`    |
 | POST   | /api/speech/tts   | `{Text, LanguageCode}` → audio/mpeg |
-| GET    | /api/agent/health | health check                        |
+| GET    | /api/health       | ASP.NET health JSON (self + Upstash) |
+| GET    | /api/agent/health | lightweight `{ status, timestamp }` |
 
 ### AgentRequest
 ```ts

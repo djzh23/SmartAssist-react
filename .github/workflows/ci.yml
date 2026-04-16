@@ -6,11 +6,13 @@ on:
       - main
       - develop
       - staging
+      - hardening/v3-production-ready
   push:
     branches:
       - main
       - develop
       - staging
+      - hardening/v3-production-ready
 
 jobs:
   build:
@@ -30,6 +32,9 @@ jobs:
 
       - name: Type check
         run: npm run lint
+
+      - name: Unit tests
+        run: npm test
 
       - name: Build
         run: npm run build

@@ -117,7 +117,7 @@
 
 ## CI/CD
 
-- **Repo `SmartAssist-react`:** Keine `.github/workflows/*.yml` im Audit-Pfad geprüft (Agent 8 liefert).
+- **Repo `SmartAssist-react`:** `.github/workflows/ci.yml` — `npm ci`, `npm run lint`, `npm test`, `npm run build` auf `main` / `develop` / `staging` / `hardening/v3-production-ready` (Push + PR).
 - **Dependabot:** nicht geprüft.
 
 ---
@@ -130,3 +130,6 @@
 - **Agent 4 (SmartAssistApi):** Rate-Limiter-Policies (`agent_chat`, `agent_read`, `profile_writes`, `applications`, `sessions`, `admin`, `stripe_write`), `Stripe` Webhook `[DisableRateLimiting]`, CORS nur explizite Methoden/Header, Response-Header (CSP, X-Frame-Options, nosniff, Referrer-Policy), DataAnnotations auf zentralen DTOs, `SetContextRequest` ins Model — Commit-Message: `security: harden endpoints — input validation, rate limiting, CORS, CSP headers, authorization checks`.
 - **Agent 5:** Frontend: `React.lazy`+`Suspense` für schwere Routen (u. a. Admin/Recharts), parallele `fetchSessionTranscript` via `Promise.all` — Haupt-Chunk `index-*.js` ca. **1868 → 1344 kB** (gzip **~575 → ~429 kB**), Build ~25s. API: Groq-`HttpClient.Timeout` **120s → 90s**; `AgentService.RunAsync` lädt Kontext nach `ExtractUserFacts` nur noch bei tatsächlichen Fakten-Merges, redundanten Block-Refresh entfernt.
 - **Agent 6:** Vitest 2 + `@vitest/coverage-v8` + Testing Library + jsdom; `package.json`-Scripts `test` / `test:watch`; `vite.config.ts` Test-/Coverage-Block; `src/test/setup.ts`. Neue Tests: `sessionOrder`, `parseLearningResponse`, `useChatSessions.toolQuery` (`TOOL_TO_QUERY`), `useCareerProfile` (stabile Clerk-`getToken`-Mock-Referenz, `profileClient`-Mocks). `useCareerProfile`: `needsOnboarding` / `hasProfile` nutzen `profile != null` statt `!== null`, damit `undefined`-API-Antworten nicht fälschlich als Profil gelten. Ziel „>80 % Coverage“ für das Gesamtprojekt ist mit diesem Paket **nicht** erreicht — messbar mit `npm test -- --coverage` (optional erweitern: API-`ApplicationServiceTests`, E2E).
+- **Agent 7 (SmartAssistApi):** Serilog (`Serilog.AspNetCore`, Konfiguration in `appsettings.json`), `UseSerilogRequestLogging`, `Log.CloseAndFlush()` im Shutdown; Middleware `UseRequestId` setzt `X-Request-Id` (Echo oder neu generiert), `RequestId` im Serilog-`LogContext`; CORS `WithExposedHeaders` um `X-Request-Id`. `AddHealthChecks` + `UpstashRedisHealthCheck` (scoped `IRedisStringStore`, GET-Probe), `MapHealthChecks("/api/health")` — JSON-Status inkl. Upstash; `/api/agent/health` bleibt leichtgewichtiges OK für bestehende Deploy-Checks. Tests: `UpstashRedisHealthCheckTests`.
+- **Agent 7 (Frontend):** Root-`AppErrorBoundary` (`src/components/AppErrorBoundary.tsx`) um `BrowserRouter` in `App.tsx` — Nutzerhinweis + Reload bei Render-Fehlern; in DEV `console.error` mit Stack.
+- **Agent 8 (SmartAssist-react):** CI-Workflow um `npm test` erweitert; Trigger-Branches um `hardening/v3-production-ready` ergänzt.
