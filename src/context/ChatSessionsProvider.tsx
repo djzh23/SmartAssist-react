@@ -361,16 +361,20 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
           return
         const prevLocal = sessionsRef.current
         const active = activeIdRef.current
+        /**
+         * Refresh transcript fetches: API `messageCount` is only bumped server-side on agent
+         * completion (not on user turns / PUT transcript), so comparing it to `messages.length`
+         * forces a refetch for almost every session → one Sync explodes Redis reads.
+         * On refresh we only load full transcript for the active tab and for sessions we have
+         * not seen yet; other tabs keep local messages until the user opens them or uses Sync
+         * again after switching.
+         */
         const transcripts = await Promise.all(
           records.map(m => {
             if (mode === 'initial')
               return fetchSessionTranscript(token, m.id)
             const local = prevLocal[m.id]
-            const localCount = local?.messages?.length ?? 0
-            const needFetch =
-              !local
-              || m.id === active
-              || localCount !== m.messageCount
+            const needFetch = !local || m.id === active
             if (needFetch)
               return fetchSessionTranscript(token, m.id)
             return Promise.resolve({

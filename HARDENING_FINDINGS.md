@@ -69,7 +69,7 @@
 - **Datei:** `src/pages/ChatPage.tsx` (**~1463 Zeilen**) — **God-Component:** Routing-State, Billing-Banner, Kontext-Modals, Streaming, Career-Profile, Applications-Seed, viele `useEffect`-Ketten — schwer testbar und reviewbar.
 - **Datei:** `src/context/ChatSessionsProvider.tsx` (**~1051 Zeilen**) — monolithischer Provider; Business-Logik (Sync, Migration, Persistenz) **nicht** in separaten Hooks/Services ausgelagert (verstößt gegen Workspace-Regel “keine Business-Logik in Page” — hier Provider statt Page, aber gleiches Problem).
 - **Datei:** `src/pages/ChatPage.tsx` — `useEffect` mit `async` IIFE für Application-Seed (**Zeilen ~611–693**) ohne **AbortController** — nach Unmount können weiterhin `setState`/Navigation folgen (Race / React-Warnungen).
-- **Datei:** `src/context/ChatSessionsProvider.tsx` — `loadSessionsFromApi('initial')`: weiterhin **N Requests** für Transkripte (parallel `Promise.all`). Bei **`refresh`** werden Transkripte nur für aktive Session, neue IDs und Sessions mit abweichender `messageCount` geholt — weniger Redis-Last als vorher bei reinem Tab-Wechsel; viele Chats können dennoch teuer sein.
+- **Datei:** `src/context/ChatSessionsProvider.tsx` — `loadSessionsFromApi('initial')`: weiterhin **N Requests** für Transkripte (parallel `Promise.all`). Bei **`refresh`** nur Transkripte für die **aktive** Session und **neu** in der Serverliste (fehlend im lokalen State); andere Tabs behalten den lokalen Verlauf bis Tabwechsel oder erneutem Sync — spart Redis, weil die API-`messageCount` nicht mit `messages.length` vergleichbar ist (Server zählt nur Metadaten-Pfad nach Agent-Antwort).
 
 ### Fehlende useEffect-Cleanups
 
