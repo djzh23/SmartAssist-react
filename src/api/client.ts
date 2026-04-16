@@ -163,6 +163,17 @@ async function readApiError(response: Response, fallback: string): Promise<strin
   }
 }
 
+/** Chat-notes routes need a current API build; 404 usually means an old deploy or wrong proxy target. */
+async function throwIfChatNotesHttpError(res: Response, fallbackLabel: string): Promise<void> {
+  if (res.ok) return
+  if (res.status === 404) {
+    throw new Error(
+      'Die Notizen-API ist auf diesem Server nicht verfügbar (404). Bitte SmartAssistApi mit Chat-Notizen deployen oder lokal neu starten; in der Entwicklung `VITE_PROXY_TARGET` bzw. den Port in `vite.config.ts` prüfen.',
+    )
+  }
+  throw new Error(await readApiError(res, `${fallbackLabel} (${res.status})`))
+}
+
 export async function getAgentUsage(token?: string): Promise<UsageStatus> {
   const res = await fetch(`${BASE}/api/agent/usage`, {
     headers: token ? { 'Authorization': `Bearer ${token}` } : {},
@@ -431,8 +442,7 @@ export interface CreateChatNoteBody {
 
 export async function fetchChatNotes(token: string): Promise<ChatSavedNote[]> {
   const res = await fetch(`${BASE}/api/chat-notes`, { headers: { Authorization: `Bearer ${token}` } })
-  if (!res.ok)
-    throw new Error(await readApiError(res, `Notizen laden fehlgeschlagen (${res.status})`))
+  await throwIfChatNotesHttpError(res, 'Notizen laden fehlgeschlagen')
   const data = await res.json() as unknown
   return Array.isArray(data) ? (data as ChatSavedNote[]) : []
 }
@@ -448,8 +458,7 @@ export async function createChatNoteRemote(token: string, body: CreateChatNoteBo
       source: body.source ?? null,
     }),
   })
-  if (!res.ok)
-    throw new Error(await readApiError(res, `Notiz anlegen fehlgeschlagen (${res.status})`))
+  await throwIfChatNotesHttpError(res, 'Notiz anlegen fehlgeschlagen')
   return await res.json() as ChatSavedNote
 }
 
@@ -463,8 +472,7 @@ export async function updateChatNoteRemote(
     headers: authHeaders(token),
     body: JSON.stringify(patch),
   })
-  if (!res.ok)
-    throw new Error(await readApiError(res, `Notiz speichern fehlgeschlagen (${res.status})`))
+  await throwIfChatNotesHttpError(res, 'Notiz speichern fehlgeschlagen')
   return await res.json() as ChatSavedNote
 }
 
@@ -475,8 +483,7 @@ export async function deleteChatNoteRemote(token: string, noteId: string): Promi
   })
   if (res.status === 404)
     return
-  if (!res.ok)
-    throw new Error(await readApiError(res, `Notiz löschen fehlgeschlagen (${res.status})`))
+  await throwIfChatNotesHttpError(res, 'Notiz löschen fehlgeschlagen')
 }
 
 // ── Job applications hub ───────────────────────────────────────────────────
