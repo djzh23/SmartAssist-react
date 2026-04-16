@@ -21,6 +21,8 @@ export default function AssistantNoteSaveButton({ msg, toolType, activeSessionId
   const { isSignedIn } = useUser()
   const { addNote, hasNoteForMessage } = useChatNotes()
   const [open, setOpen] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [saveErr, setSaveErr] = useState<string | null>(null)
   const resolvedToolType: ToolType = toolType ?? 'general'
 
   if (msg.isUser || !isSignedIn || !activeSessionId || !msg.text.trim()) return null
@@ -29,29 +31,48 @@ export default function AssistantNoteSaveButton({ msg, toolType, activeSessionId
   const defaultTitle = suggestTitleFromBody(msg.text)
 
   return (
-    <div className="mt-1 flex justify-start pl-1">
+    <div className="mt-0.5 flex justify-start">
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        title="Als Notiz speichern"
         aria-label="Antwort als Notiz speichern"
-        className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-1 text-[11px] font-medium text-slate-600 shadow-sm transition-colors hover:border-primary/40 hover:bg-primary-light/40 hover:text-primary"
+        onClick={() => {
+          setSaveErr(null)
+          setOpen(true)
+        }}
+        className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-slate-500 shadow-sm transition hover:border-primary/50 hover:bg-primary-light/60 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 active:scale-[0.97]"
       >
-        <BookmarkPlus className="h-3.5 w-3.5" aria-hidden />
-        Speichern
+        <BookmarkPlus className="h-4 w-4" strokeWidth={2.25} aria-hidden />
       </button>
       <SaveChatNoteModal
         isOpen={open}
-        onClose={() => setOpen(false)}
+        onClose={() => {
+          setOpen(false)
+          setSaveErr(null)
+        }}
         defaultTitle={defaultTitle}
         defaultBody={msg.text.trim()}
         duplicateForMessage={duplicate}
-        onSave={(title, body, tags) => {
-          addNote({
-            title,
-            body,
-            tags,
-            source: { toolType: resolvedToolType, sessionId: activeSessionId, messageId: msg.id },
-          })
+        isSaving={saving}
+        saveError={saveErr}
+        onSave={async (title, body, tags) => {
+          setSaving(true)
+          setSaveErr(null)
+          try {
+            await addNote({
+              title,
+              body,
+              tags,
+              source: { toolType: resolvedToolType, sessionId: activeSessionId, messageId: msg.id },
+            })
+          }
+          catch (e) {
+            setSaveErr(e instanceof Error ? e.message : 'Notiz konnte nicht gespeichert werden.')
+            throw e
+          }
+          finally {
+            setSaving(false)
+          }
         }}
       />
     </div>

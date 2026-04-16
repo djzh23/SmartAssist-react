@@ -7,10 +7,16 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { useUser } from '@clerk/clerk-react'
+import { useAuth, useUser } from '@clerk/clerk-react'
+import {
+  createChatNoteRemote,
+  deleteChatNoteRemote,
+  fetchChatNotes,
+  updateChatNoteRemote,
+} from '../api/client'
 import type { ChatSavedNote, ChatSavedNoteSource, ToolType } from '../types'
 
-function storageKey(userId: string): string {
+function localStorageKey(userId: string): string {
   return `privateprep_chat_notes_${userId}`
 }
 
@@ -18,15 +24,12 @@ function normalizeTag(raw: string): string {
   return raw.trim().toLowerCase()
 }
 
-function uid(): string {
-  return crypto.randomUUID()
-}
-
 function isToolType(v: string): v is ToolType {
   return v === 'general' || v === 'jobanalyzer' || v === 'language' || v === 'programming' || v === 'interview'
 }
 
-function parseNotes(raw: string): ChatSavedNote[] {
+/** Parse legacy localStorage export (v1) for one-time migration to the API. */
+function parseLocalNotes(raw: string): ChatSavedNote[] {
   try {
     const data = JSON.parse(raw) as unknown
     if (!Array.isArray(data)) return []
@@ -61,7 +64,7 @@ function parseNotes(raw: string): ChatSavedNote[] {
     return out
   }
   catch (e) {
-    console.warn('[useChatNotes] JSON parse failed', e)
+    console.warn('[useChatNotes] legacy JSON parse failed', e)
     return []
   }
 }
@@ -83,115 +86,148 @@ export interface ChatNotesStore {
   toggleTagFilter: (tag: string) => void
   clearTagFilters: () => void
   allTags: string[]
-  addNote: (input: AddChatNoteInput) => ChatSavedNote
-  updateNote: (id: string, patch: Partial<Pick<ChatSavedNote, 'title' | 'body' | 'tags'>>) => void
-  deleteNote: (id: string) => void
+  notesLoading: boolean
+  notesError: string | null
+  clearNotesError: () => void
+  addNote: (input: AddChatNoteInput) => Promise<ChatSavedNote>
+  updateNote: (id: string, patch: Partial<Pick<ChatSavedNote, 'title' | 'body' | 'tags'>>) => Promise<void>
+  deleteNote: (id: string) => Promise<void>
   hasNoteForMessage: (messageId: string) => boolean
-  reload: () => void
+  reload: () => Promise<void>
 }
 
 const ChatNotesContext = createContext<ChatNotesStore | null>(null)
 
+async function migrateLocalNotesToServer(token: string, userId: string): Promise<boolean> {
+  let raw: string | null = null
+  try {
+    raw = localStorage.getItem(localStorageKey(userId))
+  }
+  catch (e) {
+    console.warn('[useChatNotes] localStorage read for migration failed', e)
+    return false
+  }
+  if (!raw) return false
+  const local = parseLocalNotes(raw)
+  if (local.length === 0) return false
+
+  for (const n of local) {
+    try {
+      await createChatNoteRemote(token, {
+        title: n.title,
+        body: n.body,
+        tags: n.tags,
+        source: n.source,
+      })
+    }
+    catch (e) {
+      console.warn('[useChatNotes] migration item failed', n.id, e)
+    }
+  }
+  try {
+    localStorage.removeItem(localStorageKey(userId))
+  }
+  catch (e) {
+    console.warn('[useChatNotes] could not remove legacy key after migration', e)
+  }
+  return true
+}
+
 function useChatNotesState(): ChatNotesStore {
   const { user, isSignedIn } = useUser()
+  const { getToken } = useAuth()
   const userId = user?.id ?? null
   const [notes, setNotes] = useState<ChatSavedNote[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const [notesLoading, setNotesLoading] = useState(false)
+  const [notesError, setNotesError] = useState<string | null>(null)
 
-  const reload = useCallback(() => {
-    if (!userId) {
+  const clearNotesError = useCallback(() => setNotesError(null), [])
+
+  const reload = useCallback(async () => {
+    if (!userId || !isSignedIn) {
       setNotes([])
+      setNotesError(null)
+      setNotesLoading(false)
       return
     }
+    setNotesLoading(true)
+    setNotesError(null)
     try {
-      const raw = localStorage.getItem(storageKey(userId))
-      setNotes(raw ? parseNotes(raw) : [])
+      const token = await getToken()
+      if (!token) {
+        setNotes([])
+        setNotesError('Kein gültiges Anmelde-Token.')
+        return
+      }
+      let list = await fetchChatNotes(token)
+      if (list.length === 0) {
+        const migrated = await migrateLocalNotesToServer(token, userId)
+        if (migrated)
+          list = await fetchChatNotes(token)
+      }
+      setNotes(list)
     }
     catch (e) {
-      console.warn('[useChatNotes] read failed', e)
+      const msg = e instanceof Error ? e.message : 'Notizen konnten nicht geladen werden.'
+      setNotesError(msg)
       setNotes([])
     }
-  }, [userId])
+    finally {
+      setNotesLoading(false)
+    }
+  }, [userId, isSignedIn, getToken])
 
   useEffect(() => {
-    reload()
+    void reload()
   }, [reload])
 
   const addNote = useCallback(
-    (input: AddChatNoteInput): ChatSavedNote => {
-      const now = new Date().toISOString()
+    async (input: AddChatNoteInput): Promise<ChatSavedNote> => {
+      const token = await getToken()
+      if (!token)
+        throw new Error('Nicht angemeldet.')
       const tagSet = [...new Set(input.tags.map(normalizeTag).filter(Boolean))]
-      const note: ChatSavedNote = {
-        id: uid(),
-        createdAt: now,
-        updatedAt: now,
+      const created = await createChatNoteRemote(token, {
         title: input.title.trim(),
         body: input.body,
         tags: tagSet,
         source: input.source,
-      }
-      setNotes(prev => {
-        const next = [note, ...prev]
-        if (userId) {
-          try {
-            localStorage.setItem(storageKey(userId), JSON.stringify(next))
-          }
-          catch (e) {
-            console.warn('[useChatNotes] write failed', e)
-          }
-        }
-        return next
       })
-      return note
+      setNotes(prev => {
+        const withoutDup = prev.filter(n => n.id !== created.id)
+        return [created, ...withoutDup]
+      })
+      return created
     },
-    [userId],
+    [getToken],
   )
 
   const updateNote = useCallback(
-    (id: string, patch: Partial<Pick<ChatSavedNote, 'title' | 'body' | 'tags'>>) => {
-      setNotes(prev => {
-        const next = prev.map(n => {
-          if (n.id !== id) return n
-          const tags = patch.tags !== undefined ? [...new Set(patch.tags.map(normalizeTag).filter(Boolean))] : n.tags
-          return {
-            ...n,
-            title: patch.title !== undefined ? patch.title.trim() : n.title,
-            body: patch.body !== undefined ? patch.body : n.body,
-            tags,
-            updatedAt: new Date().toISOString(),
-          }
-        })
-        if (userId) {
-          try {
-            localStorage.setItem(storageKey(userId), JSON.stringify(next))
-          }
-          catch (e) {
-            console.warn('[useChatNotes] write failed', e)
-          }
-        }
-        return next
-      })
+    async (id: string, patch: Partial<Pick<ChatSavedNote, 'title' | 'body' | 'tags'>>) => {
+      const token = await getToken()
+      if (!token)
+        throw new Error('Nicht angemeldet.')
+      const body: { title?: string; body?: string; tags?: string[] } = {}
+      if (patch.title !== undefined) body.title = patch.title.trim()
+      if (patch.body !== undefined) body.body = patch.body
+      if (patch.tags !== undefined) body.tags = [...new Set(patch.tags.map(normalizeTag).filter(Boolean))]
+      const updated = await updateChatNoteRemote(token, id, body)
+      setNotes(prev => prev.map(n => (n.id === id ? updated : n)))
     },
-    [userId],
+    [getToken],
   )
 
   const deleteNote = useCallback(
-    (id: string) => {
-      setNotes(prev => {
-        const next = prev.filter(n => n.id !== id)
-        if (userId) {
-          try {
-            localStorage.setItem(storageKey(userId), JSON.stringify(next))
-          }
-          catch (e) {
-            console.warn('[useChatNotes] write failed', e)
-          }
-        }
-        return next
-      })
+    async (id: string) => {
+      const token = await getToken()
+      if (!token)
+        throw new Error('Nicht angemeldet.')
+      await deleteChatNoteRemote(token, id)
+      setNotes(prev => prev.filter(n => n.id !== id))
     },
-    [userId],
+    [getToken],
   )
 
   const hasNoteForMessage = useCallback(
@@ -235,6 +271,9 @@ function useChatNotesState(): ChatNotesStore {
       toggleTagFilter,
       clearTagFilters,
       allTags,
+      notesLoading,
+      notesError,
+      clearNotesError,
       addNote,
       updateNote,
       deleteNote,
@@ -251,6 +290,9 @@ function useChatNotesState(): ChatNotesStore {
       toggleTagFilter,
       clearTagFilters,
       allTags,
+      notesLoading,
+      notesError,
+      clearNotesError,
       addNote,
       updateNote,
       deleteNote,

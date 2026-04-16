@@ -1,4 +1,13 @@
-import type { AgentRequest, AgentResponse, ChatMessage, LearningInsight, SkillSummary, ToolType } from '../types'
+import type {
+  AgentRequest,
+  AgentResponse,
+  ChatMessage,
+  ChatSavedNote,
+  ChatSavedNoteSource,
+  LearningInsight,
+  SkillSummary,
+  ToolType,
+} from '../types'
 
 const BASE = import.meta.env.VITE_API_BASE_URL
   ? `${import.meta.env.VITE_API_BASE_URL}`
@@ -409,6 +418,65 @@ export async function putSessionTranscript(
   })
   if (!res.ok)
     throw new Error(await readApiError(res, `Verlauf speichern fehlgeschlagen (${res.status})`))
+}
+
+// ── Chat notes (Redis, cross-device) ─────────────────────────────────────
+
+export interface CreateChatNoteBody {
+  title: string
+  body: string
+  tags: string[]
+  source?: ChatSavedNoteSource
+}
+
+export async function fetchChatNotes(token: string): Promise<ChatSavedNote[]> {
+  const res = await fetch(`${BASE}/api/chat-notes`, { headers: { Authorization: `Bearer ${token}` } })
+  if (!res.ok)
+    throw new Error(await readApiError(res, `Notizen laden fehlgeschlagen (${res.status})`))
+  const data = await res.json() as unknown
+  return Array.isArray(data) ? (data as ChatSavedNote[]) : []
+}
+
+export async function createChatNoteRemote(token: string, body: CreateChatNoteBody): Promise<ChatSavedNote> {
+  const res = await fetch(`${BASE}/api/chat-notes`, {
+    method: 'POST',
+    headers: authHeaders(token),
+    body: JSON.stringify({
+      title: body.title,
+      body: body.body,
+      tags: body.tags,
+      source: body.source ?? null,
+    }),
+  })
+  if (!res.ok)
+    throw new Error(await readApiError(res, `Notiz anlegen fehlgeschlagen (${res.status})`))
+  return await res.json() as ChatSavedNote
+}
+
+export async function updateChatNoteRemote(
+  token: string,
+  noteId: string,
+  patch: { title?: string; body?: string; tags?: string[] },
+): Promise<ChatSavedNote> {
+  const res = await fetch(`${BASE}/api/chat-notes/${encodeURIComponent(noteId)}`, {
+    method: 'PUT',
+    headers: authHeaders(token),
+    body: JSON.stringify(patch),
+  })
+  if (!res.ok)
+    throw new Error(await readApiError(res, `Notiz speichern fehlgeschlagen (${res.status})`))
+  return await res.json() as ChatSavedNote
+}
+
+export async function deleteChatNoteRemote(token: string, noteId: string): Promise<void> {
+  const res = await fetch(`${BASE}/api/chat-notes/${encodeURIComponent(noteId)}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (res.status === 404)
+    return
+  if (!res.ok)
+    throw new Error(await readApiError(res, `Notiz löschen fehlgeschlagen (${res.status})`))
 }
 
 // ── Job applications hub ───────────────────────────────────────────────────

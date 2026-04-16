@@ -1,6 +1,18 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { NotebookPen, Pencil, Search, Tag, Trash2, X } from 'lucide-react'
+import {
+  AlertCircle,
+  ChevronRight,
+  ExternalLink,
+  Loader2,
+  NotebookPen,
+  Pencil,
+  RefreshCw,
+  Search,
+  Tag,
+  Trash2,
+  X,
+} from 'lucide-react'
 import { useChatNotes } from '../hooks/useChatNotes'
 import type { ChatSavedNote } from '../types'
 
@@ -11,6 +23,12 @@ function formatDate(iso: string): string {
   catch {
     return iso
   }
+}
+
+function previewBody(text: string, max = 140): string {
+  const oneLine = text.replace(/\s+/g, ' ').trim()
+  if (oneLine.length <= max) return oneLine
+  return `${oneLine.slice(0, max)}…`
 }
 
 export default function NotesPage() {
@@ -24,35 +42,69 @@ export default function NotesPage() {
     toggleTagFilter,
     clearTagFilters,
     allTags,
+    notesLoading,
+    notesError,
+    clearNotesError,
     updateNote,
     deleteNote,
+    reload,
   } = useChatNotes()
 
+  const [selectedId, setSelectedId] = useState<string | null>(null)
   const [editing, setEditing] = useState<ChatSavedNote | null>(null)
   const [editTitle, setEditTitle] = useState('')
   const [editBody, setEditBody] = useState('')
   const [editTags, setEditTags] = useState<string[]>([])
   const [editTagInput, setEditTagInput] = useState('')
+  const [savingEdit, setSavingEdit] = useState(false)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [editError, setEditError] = useState<string | null>(null)
 
-  const openEdit = (n: ChatSavedNote) => {
+  useEffect(() => {
+    if (filteredNotes.length === 0) {
+      setSelectedId(null)
+      return
+    }
+    if (!selectedId || !filteredNotes.some(n => n.id === selectedId))
+      setSelectedId(filteredNotes[0]!.id)
+  }, [filteredNotes, selectedId])
+
+  const selected = useMemo(
+    () => filteredNotes.find(n => n.id === selectedId) ?? null,
+    [filteredNotes, selectedId],
+  )
+
+  const openEdit = useCallback((n: ChatSavedNote) => {
     setEditing(n)
     setEditTitle(n.title)
     setEditBody(n.body)
     setEditTags([...n.tags])
     setEditTagInput('')
-  }
+    setEditError(null)
+  }, [])
 
-  const closeEdit = () => {
+  const closeEdit = useCallback(() => {
     setEditing(null)
-  }
+    setEditError(null)
+  }, [])
 
-  const saveEdit = () => {
+  const saveEdit = useCallback(async () => {
     if (!editing) return
     const t = editTitle.trim()
     if (!t || !editBody.trim()) return
-    updateNote(editing.id, { title: t, body: editBody, tags: editTags })
-    closeEdit()
-  }
+    setSavingEdit(true)
+    setEditError(null)
+    try {
+      await updateNote(editing.id, { title: t, body: editBody, tags: editTags })
+      closeEdit()
+    }
+    catch (e) {
+      setEditError(e instanceof Error ? e.message : 'Speichern fehlgeschlagen.')
+    }
+    finally {
+      setSavingEdit(false)
+    }
+  }, [editing, editTitle, editBody, editTags, updateNote, closeEdit])
 
   const addEditTag = () => {
     const t = editTagInput.trim().toLowerCase()
@@ -64,13 +116,31 @@ export default function NotesPage() {
     setEditTagInput('')
   }
 
+  const handleDelete = useCallback(
+    async (id: string) => {
+      if (!window.confirm('Notiz wirklich löschen?')) return
+      setDeletingId(id)
+      try {
+        await deleteNote(id)
+        if (selectedId === id) setSelectedId(null)
+      }
+      catch (e) {
+        window.alert(e instanceof Error ? e.message : 'Löschen fehlgeschlagen.')
+      }
+      finally {
+        setDeletingId(null)
+      }
+    },
+    [deleteNote, selectedId],
+  )
+
   const emptyHint = useMemo(
     () => (
       <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 px-6 py-12 text-center">
         <NotebookPen className="mx-auto mb-3 h-10 w-10 text-slate-300" aria-hidden />
         <p className="text-sm font-medium text-slate-700">Noch keine Notizen</p>
         <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
-          Öffne einen Chat und speichere Assistant-Antworten über „Speichern“ unter der Nachricht.
+          Speichere Assistant-Antworten im Chat über das Lesezeichen-Symbol unter der Nachricht.
         </p>
         <Link
           to="/chat"
@@ -95,122 +165,223 @@ export default function NotesPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8">
-      <div className="mb-8 flex items-start gap-3">
-        <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-primary-light text-primary">
-          <NotebookPen className="h-5 w-5" aria-hidden />
+    <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-6 md:py-8">
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex items-start gap-3">
+          <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-primary-light text-primary">
+            <NotebookPen className="h-5 w-5" aria-hidden />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">Notizen</h1>
+            <p className="mt-1 max-w-xl text-sm text-slate-600">
+              Gespeicherte Antworten aus dem Chat — mit dem Server synchron, auf allen Geräten verfügbar.
+            </p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Notizen</h1>
-          <p className="mt-1 text-sm text-slate-600">
-            Gespeicherte Antworten aus dem Chat — bearbeiten, taggen und filtern. Daten liegen in diesem Browser
-            (localStorage).
-          </p>
-        </div>
-      </div>
+        <button
+          type="button"
+          onClick={() => void reload()}
+          disabled={notesLoading}
+          className="inline-flex items-center justify-center gap-2 self-start rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-50"
+        >
+          {notesLoading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <RefreshCw className="h-4 w-4" aria-hidden />}
+          Aktualisieren
+        </button>
+      </header>
 
-      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center">
-        <div className="relative min-w-0 flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden />
-          <input
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            placeholder="In Titel oder Inhalt suchen …"
-            className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm outline-none focus:border-primary"
-            aria-label="Suche"
-          />
-        </div>
-        {selectedTags.length > 0 ? (
+      {notesError ? (
+        <div
+          className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900"
+          role="alert"
+        >
+          <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" aria-hidden />
+          <div className="min-w-0 flex-1">
+            <p className="font-medium">Notizen konnten nicht geladen werden</p>
+            <p className="mt-1 text-red-800/90">{notesError}</p>
+          </div>
           <button
             type="button"
-            onClick={clearTagFilters}
-            className="flex-shrink-0 rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50"
+            onClick={() => {
+              clearNotesError()
+              void reload()
+            }}
+            className="shrink-0 rounded-lg border border-red-300 px-2 py-1 text-xs font-medium text-red-900 hover:bg-red-100"
           >
-            Filter zurücksetzen
+            Erneut versuchen
           </button>
-        ) : null}
-      </div>
-
-      {allTags.length > 0 ? (
-        <div className="mb-6">
-          <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
-            <Tag className="h-3.5 w-3.5" aria-hidden />
-            Tags filtern (einer reicht)
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {allTags.map(t => {
-              const on = selectedTags.includes(t)
-              return (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => toggleTagFilter(t)}
-                  className={[
-                    'rounded-full border px-3 py-1 text-xs font-medium transition-colors',
-                    on ? 'border-primary bg-primary-light text-primary' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300',
-                  ].join(' ')}
-                >
-                  {t}
-                </button>
-              )
-            })}
-          </div>
+          <button
+            type="button"
+            onClick={clearNotesError}
+            className="shrink-0 rounded-lg p-1 text-red-700 hover:bg-red-100"
+            aria-label="Hinweis schließen"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
       ) : null}
 
-      {notes.length === 0
-        ? emptyHint
-        : filteredNotes.length === 0
-          ? (
-              <p className="py-8 text-center text-sm text-slate-500">Keine Treffer für die aktuelle Suche oder Filter.</p>
-            )
-          : (
-              <ul className="flex flex-col gap-3">
-                {filteredNotes.map(n => (
-                  <li
-                    key={n.id}
-                    className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-primary/30 hover:shadow-md"
+      <div className="flex min-h-0 flex-1 flex-col gap-4 md:h-[min(82vh,calc(100vh-6.5rem))] md:flex-row md:gap-0 md:rounded-2xl md:border md:border-slate-200 md:bg-white md:shadow-sm">
+        {/* Liste */}
+        <aside className="flex min-h-0 w-full flex-shrink-0 flex-col border-slate-200 md:w-[min(100%,320px)] md:border-r md:bg-slate-50/40">
+          <div className="flex flex-shrink-0 flex-col gap-3 border-b border-slate-100 p-3 md:p-4">
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden />
+              <input
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder="Suche in Titel und Text …"
+                className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm outline-none focus:border-primary"
+                aria-label="Suche"
+              />
+            </div>
+            {selectedTags.length > 0 ? (
+              <button
+                type="button"
+                onClick={clearTagFilters}
+                className="self-start rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50"
+              >
+                Filter zurücksetzen
+              </button>
+            ) : null}
+            {allTags.length > 0 ? (
+              <div>
+                <p className="mb-1.5 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                  <Tag className="h-3 w-3" aria-hidden />
+                  Tags (einer reicht)
+                </p>
+                <div className="flex max-h-24 flex-wrap gap-1.5 overflow-y-auto">
+                  {allTags.map(t => {
+                    const on = selectedTags.includes(t)
+                    return (
+                      <button
+                        key={t}
+                        type="button"
+                        onClick={() => toggleTagFilter(t)}
+                        className={[
+                          'rounded-full border px-2.5 py-0.5 text-xs font-medium transition-colors',
+                          on ? 'border-primary bg-primary-light text-primary' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300',
+                        ].join(' ')}
+                      >
+                        {t}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            ) : null}
+          </div>
+
+          <div className="min-h-0 flex-1 overflow-y-auto p-2 md:p-3">
+            {notesLoading && notes.length === 0 ? (
+              <div className="flex flex-col items-center justify-center gap-2 py-12 text-sm text-slate-500">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden />
+                Notizen werden geladen …
+              </div>
+            ) : notes.length === 0
+              ? emptyHint
+              : filteredNotes.length === 0
+                ? (
+                    <p className="py-8 text-center text-sm text-slate-500">Keine Treffer für Suche oder Filter.</p>
+                  )
+                : (
+                    <ul className="flex flex-col gap-1">
+                      {filteredNotes.map(n => {
+                        const active = n.id === selectedId
+                        return (
+                          <li key={n.id}>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedId(n.id)}
+                              className={[
+                                'flex w-full flex-col rounded-xl border px-3 py-2.5 text-left transition',
+                                active
+                                  ? 'border-primary/50 bg-primary-light/70 shadow-sm'
+                                  : 'border-transparent bg-white hover:border-slate-200 hover:bg-white md:bg-transparent',
+                              ].join(' ')}
+                            >
+                              <span className="line-clamp-2 text-sm font-semibold text-slate-900">{n.title}</span>
+                              <span className="mt-1 line-clamp-2 text-xs leading-snug text-slate-500">{previewBody(n.body)}</span>
+                              <span className="mt-1.5 flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-slate-400">
+                                {formatDate(n.updatedAt)}
+                                <ChevronRight className="h-3 w-3 opacity-0" aria-hidden />
+                              </span>
+                            </button>
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  )}
+          </div>
+        </aside>
+
+        {/* Lesepanel */}
+        <section className="flex min-h-[50vh] flex-1 flex-col md:min-h-0">
+          {selected ? (
+            <>
+              <div className="flex flex-shrink-0 flex-wrap items-start justify-between gap-2 border-b border-slate-100 px-4 py-3 md:px-6">
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-lg font-bold leading-snug text-slate-900 md:text-xl">{selected.title}</h2>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Zuletzt
+                    {' '}
+                    {formatDate(selected.updatedAt)}
+                  </p>
+                </div>
+                <div className="flex flex-shrink-0 gap-1">
+                  {selected.source ? (
+                    <Link
+                      to={`/chat?tool=${encodeURIComponent(selected.source.toolType)}`}
+                      className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:border-primary/40 hover:text-primary"
+                    >
+                      <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+                      Zum Chat
+                    </Link>
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={() => openEdit(selected)}
+                    className="rounded-lg border border-slate-200 bg-white p-2 text-slate-600 hover:border-primary/40 hover:text-primary"
+                    aria-label="Bearbeiten"
                   >
-                    <div className="flex flex-wrap items-start justify-between gap-2">
-                      <h2 className="min-w-0 flex-1 text-base font-semibold text-slate-900">{n.title}</h2>
-                      <div className="flex gap-1">
-                        <button
-                          type="button"
-                          onClick={() => openEdit(n)}
-                          className="rounded-lg p-1.5 text-slate-500 hover:bg-primary-light hover:text-primary"
-                          aria-label="Bearbeiten"
-                          title="Bearbeiten"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (window.confirm('Notiz wirklich löschen?')) deleteNote(n.id)
-                          }}
-                          className="rounded-lg p-1.5 text-slate-500 hover:bg-red-50 hover:text-red-600"
-                          aria-label="Löschen"
-                          title="Löschen"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </div>
-                    <p className="mt-2 line-clamp-4 whitespace-pre-wrap text-sm leading-relaxed text-slate-600">{n.body}</p>
-                    {n.tags.length > 0 ? (
-                      <div className="mt-2 flex flex-wrap gap-1.5">
-                        {n.tags.map(t => (
-                          <span key={t} className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">
-                            {t}
-                          </span>
-                        ))}
-                      </div>
-                    ) : null}
-                    <p className="mt-2 text-[11px] text-slate-400">{formatDate(n.updatedAt)}</p>
-                  </li>
-                ))}
-              </ul>
-            )}
+                    <Pencil className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleDelete(selected.id)}
+                    disabled={deletingId === selected.id}
+                    className="rounded-lg border border-slate-200 bg-white p-2 text-slate-600 hover:border-red-200 hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                    aria-label="Löschen"
+                  >
+                    {deletingId === selected.id
+                      ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                      : <Trash2 className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+              {selected.tags.length > 0 ? (
+                <div className="flex flex-shrink-0 flex-wrap gap-1.5 border-b border-slate-50 px-4 py-2 md:px-6">
+                  {selected.tags.map(t => (
+                    <span
+                      key={t}
+                      className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-medium text-slate-600"
+                    >
+                      {t}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
+              <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 md:px-6 md:py-6">
+                <pre className="max-w-prose whitespace-pre-wrap font-sans text-[15px] leading-relaxed text-slate-800">{selected.body}</pre>
+              </div>
+            </>
+          ) : notes.length > 0 && !notesLoading ? (
+            <div className="flex flex-1 flex-col items-center justify-center gap-2 p-8 text-center text-sm text-slate-500">
+              <NotebookPen className="h-10 w-10 text-slate-200" aria-hidden />
+              Wähle links eine Notiz zum Lesen.
+            </div>
+          ) : null}
+        </section>
+      </div>
 
       {editing ? (
         <div
@@ -231,6 +402,9 @@ export default function NotesPage() {
                 <X className="h-5 w-5" />
               </button>
             </div>
+            {editError ? (
+              <p className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900">{editError}</p>
+            ) : null}
             <label className="mb-1 block text-xs font-semibold uppercase text-slate-500">Titel</label>
             <input
               value={editTitle}
@@ -253,7 +427,9 @@ export default function NotesPage() {
                   onClick={() => setEditTags(prev => prev.filter(x => x !== t))}
                   className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs text-slate-700 hover:border-red-200 hover:bg-red-50"
                 >
-                  {t} ×
+                  {t}
+                  {' '}
+                  ×
                 </button>
               ))}
             </div>
@@ -280,11 +456,11 @@ export default function NotesPage() {
               </button>
               <button
                 type="button"
-                onClick={saveEdit}
-                disabled={!editTitle.trim() || !editBody.trim()}
+                onClick={() => void saveEdit()}
+                disabled={!editTitle.trim() || !editBody.trim() || savingEdit}
                 className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover disabled:opacity-50"
               >
-                Speichern
+                {savingEdit ? 'Speichern …' : 'Speichern'}
               </button>
             </div>
           </div>

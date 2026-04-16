@@ -7,7 +7,9 @@ interface Props {
   defaultTitle: string
   defaultBody: string
   duplicateForMessage?: boolean
-  onSave: (title: string, body: string, tags: string[]) => void
+  isSaving?: boolean
+  saveError?: string | null
+  onSave: (title: string, body: string, tags: string[]) => void | Promise<void>
 }
 
 export default function SaveChatNoteModal({
@@ -16,6 +18,8 @@ export default function SaveChatNoteModal({
   defaultTitle,
   defaultBody,
   duplicateForMessage,
+  isSaving = false,
+  saveError = null,
   onSave,
 }: Props) {
   const [title, setTitle] = useState(defaultTitle)
@@ -44,11 +48,16 @@ export default function SaveChatNoteModal({
     setTagInput('')
   }
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const t = title.trim()
-    if (!t || !body.trim()) return
-    onSave(t, body, tags)
-    onClose()
+    if (!t || !body.trim() || isSaving) return
+    try {
+      await onSave(t, body, tags)
+      onClose()
+    }
+    catch {
+      // Fehleranzeige übernimmt der Aufrufer (saveError); Modal bleibt offen.
+    }
   }
 
   return (
@@ -87,6 +96,12 @@ export default function SaveChatNoteModal({
         {duplicateForMessage ? (
           <p className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
             Für diese Antwort existiert bereits eine Notiz. Du kannst trotzdem eine weitere anlegen.
+          </p>
+        ) : null}
+
+        {saveError ? (
+          <p className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900" role="alert">
+            {saveError}
           </p>
         ) : null}
 
@@ -148,17 +163,18 @@ export default function SaveChatNoteModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            disabled={isSaving}
+            className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
           >
             Abbrechen
           </button>
           <button
             type="button"
-            onClick={handleSave}
-            disabled={!title.trim() || !body.trim()}
+            onClick={() => void handleSave()}
+            disabled={!title.trim() || !body.trim() || isSaving}
             className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Speichern
+            {isSaving ? 'Speichern …' : 'Speichern'}
           </button>
         </div>
       </div>
