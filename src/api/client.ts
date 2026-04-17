@@ -340,7 +340,7 @@ export async function askAgentDemo(request: AgentRequest): Promise<AgentResponse
   return await res.json() as AgentResponse
 }
 
-// ── Chat sessions (Redis sync) ─────────────────────────────────────────────
+// ── Chat sessions (API: Redis or Postgres per backend) ─────────────────────
 
 export interface ApiChatSessionRecord {
   id: string
