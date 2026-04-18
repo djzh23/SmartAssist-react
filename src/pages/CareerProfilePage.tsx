@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '@clerk/clerk-react'
-import { CheckCircle2, Lightbulb, Loader2, Plus, Trash2 } from 'lucide-react'
+import { CheckCircle2, Lightbulb, Loader2, Plus, Sparkles, Trash2 } from 'lucide-react'
 import {
   fetchJobApplications,
   fetchLearningInsights,
@@ -21,6 +21,7 @@ import type {
 import {
   addTargetJob,
   completeOnboarding,
+  fetchAnonymousCvSummary,
   fetchProfile,
   removeTargetJob,
   updateFullProfile,
@@ -32,6 +33,12 @@ import { ServerSyncControl } from '../components/ui/ServerSyncControl'
 
 function canMarkProfileSetupComplete(p: CareerProfile): boolean {
   return Boolean(p.field?.trim() && p.level?.trim() && p.goals.length > 0)
+}
+
+function hasEnoughForAnonymousCvSummary(p: CareerProfile): boolean {
+  if ((p.skills?.length ?? 0) > 0) return true
+  if ((p.experience?.length ?? 0) > 0) return true
+  return (p.cvRawText?.trim().length ?? 0) >= 50
 }
 
 function LearningInsightsPanel() {
@@ -293,6 +300,7 @@ export default function CareerProfilePage() {
   const [profile, setProfile] = useState<CareerProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [cvSummaryLoading, setCvSummaryLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [profileLastSyncedAt, setProfileLastSyncedAt] = useState<string | null>(null)
   const [skillDraft, setSkillDraft] = useState('')
@@ -440,6 +448,22 @@ export default function CareerProfilePage() {
       setError(e instanceof Error ? e.message : 'CV speichern fehlgeschlagen')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const generateAnonymousCvSummary = async () => {
+    if (!profile || !hasEnoughForAnonymousCvSummary(profile)) return
+    const token = await getToken()
+    if (!token) return
+    setCvSummaryLoading(true)
+    setError(null)
+    try {
+      const text = await fetchAnonymousCvSummary(token)
+      setProfile({ ...profile, cvRawText: text })
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Zusammenfassung fehlgeschlagen')
+    } finally {
+      setCvSummaryLoading(false)
     }
   }
 
@@ -930,6 +954,24 @@ export default function CareerProfilePage() {
 
         <section className="mb-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <h2 className="mb-3 text-sm font-semibold text-slate-800">Lebenslauf (Text)</h2>
+          <p className="mb-2 text-xs text-slate-600">
+            {hasEnoughForAnonymousCvSummary(profile)
+              ? 'Du kannst aus deinen Profildaten einen anonymen Fließtext für KI-Kontext erzeugen (ohne Namen) — Text prüfen und anschließend speichern.'
+              : 'Für die automatische Zusammenfassung: mindestens Skills, eine Berufserfahrung oder CV-Text mit mindestens 50 Zeichen eintragen.'}
+          </p>
+          <div className="mb-2 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => void generateAnonymousCvSummary()}
+              disabled={saving || cvSummaryLoading || !hasEnoughForAnonymousCvSummary(profile)}
+              className="inline-flex items-center gap-2 rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-sm font-medium text-violet-900 hover:bg-violet-100 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {cvSummaryLoading
+                ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                : <Sparkles className="h-4 w-4 shrink-0" aria-hidden />}
+              Zusammenfassung generieren (ohne Namen)
+            </button>
+          </div>
           <textarea
             value={profile.cvRawText ?? ''}
             onChange={e => setProfile({ ...profile, cvRawText: e.target.value })}
@@ -939,7 +981,7 @@ export default function CareerProfilePage() {
           <button
             type="button"
             onClick={() => void saveCv()}
-            disabled={saving}
+            disabled={saving || cvSummaryLoading}
             className="mt-2 rounded-lg bg-primary px-4 py-2 text-sm text-white hover:bg-primary-hover disabled:opacity-50"
           >
             CV speichern

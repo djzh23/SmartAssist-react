@@ -107,6 +107,40 @@ export async function askAgentStream(
 }
 
 // ── Agent ask ──────────────────────────────────────────────────────────────
+// ── Job posting preview (URL or pasted text) ───────────────────────────────
+
+export interface JobPreviewResponse {
+  success: boolean
+  jobTitle: string | null
+  companyName: string | null
+  location: string | null
+  rawJobText: string | null
+  keyRequirements: string[] | null
+  keywords: string[] | null
+  error: string | null
+}
+
+export async function fetchJobPreview(token: string, input: string): Promise<JobPreviewResponse> {
+  const res = await fetch(`${BASE}/api/jobs/preview`, {
+    method: 'POST',
+    headers: authHeaders(token),
+    body: JSON.stringify({ input }),
+  })
+  if (res.status === 401)
+    throw new Error('Anmeldung erforderlich für die Stellen-Vorschau.')
+  if (res.status === 429) {
+    let reason = 'Zu viele Anfragen. Bitte kurz warten.'
+    try {
+      const err = await res.json() as Record<string, string>
+      reason = err?.reason ?? err?.error ?? reason
+    } catch { /* ignore */ }
+    throw new UsageLimitError(reason, 429)
+  }
+  if (!res.ok)
+    throw new Error(await readApiError(res, `Stellen-Vorschau fehlgeschlagen (${res.status})`))
+  return (await res.json()) as JobPreviewResponse
+}
+
 export async function askAgent(
   request: AgentRequest,
   token?: string,
