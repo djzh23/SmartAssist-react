@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAuth, useUser } from '@clerk/clerk-react'
 import { PROGRAMMING_LANGUAGES } from '../../types'
+import { sanitizeTechnicalContext } from '../../utils/cvTechnicalContext'
 
 export type ContextModalToolType = 'jobanalyzer' | 'interview' | 'interviewprep' | 'programming'
 
@@ -12,6 +13,10 @@ export interface ContextPayload {
   programmingLanguage: string
   programmingLanguageId: string
   generalCoaching?: boolean
+  includeProfileCvInSetup?: boolean
+  extraSkills: string
+  extraProjects: string
+  extraExperienceNotes: string
 }
 
 type InitialModalData = Partial<ContextPayload> & { profileCvPrefilled?: boolean }
@@ -20,6 +25,8 @@ interface Props {
   toolType: ContextModalToolType
   sessionId: string
   initialData?: InitialModalData
+  /** Roh-Text aus Karriereprofil — wird nur mit Einverständnis in Setup gemischt, nicht als Textfeld editiert. */
+  profileCvFromCareer?: string
   onClose: () => void
   onContextSet: (payload: ContextPayload) => void
 }
@@ -29,6 +36,7 @@ const JOB_TEXT_MAX = 7000
 const CV_TEXT_MAX = 4200
 const TITLE_MAX = 180
 const COMPANY_MAX = 180
+const EXTRA_MAX = 2000
 
 function trimTo(value: string, max: number): string {
   return value.trim().slice(0, max)
@@ -48,17 +56,56 @@ function mapToolType(toolType: ContextModalToolType): 'jobanalyzer' | 'interview
   return toolType
 }
 
-export default function ContextModal({ toolType, sessionId, initialData, onClose, onContextSet }: Props) {
-  const profileHint = initialData?.profileCvPrefilled === true
+/** Für POST /api/agent/context: zusammengeführter CV-Block (Profil + optional Legacy + Zusätze). */
+function buildMergedCvForServer(args: {
+  includeProfileCvInSetup: boolean
+  profileCvRaw: string | undefined
+  legacyCvText: string
+  extraSkills: string
+  extraProjects: string
+  extraExperienceNotes: string
+}): string {
+  const parts: string[] = []
+  if (args.includeProfileCvInSetup && args.profileCvRaw?.trim()) {
+    parts.push(sanitizeTechnicalContext(args.profileCvRaw).trim())
+  }
+  if (args.legacyCvText.trim()) {
+    parts.push(sanitizeTechnicalContext(args.legacyCvText).trim())
+  }
+  const extraBlock = [
+    args.extraSkills.trim()
+      && `Zusätzliche Skills (nur dieses Gespräch):\n${args.extraSkills.trim().slice(0, EXTRA_MAX)}`,
+    args.extraProjects.trim() && `Projekte:\n${args.extraProjects.trim().slice(0, EXTRA_MAX)}`,
+    args.extraExperienceNotes.trim()
+      && `Erfahrung (kurz):\n${args.extraExperienceNotes.trim().slice(0, EXTRA_MAX)}`,
+  ].filter(Boolean).join('\n\n')
+  if (extraBlock)
+    parts.push(extraBlock)
+  return parts.join('\n\n---\n\n').slice(0, CV_TEXT_MAX)
+}
+
+export default function ContextModal({
+  toolType,
+  sessionId,
+  initialData,
+  profileCvFromCareer,
+  onClose,
+  onContextSet,
+}: Props) {
+  const profileAvailable = Boolean(profileCvFromCareer?.trim())
   const { user } = useUser()
   const { getToken } = useAuth()
 
-  const [step, setStep] = useState(1)
-  const [cvText, setCvText] = useState(initialData?.cvText ?? '')
   const [jobText, setJobText] = useState(initialData?.jobText ?? '')
   const [jobTitle, setJobTitle] = useState(initialData?.jobTitle ?? '')
   const [companyName, setCompanyName] = useState(initialData?.companyName ?? '')
   const [programmingLanguageId, setProgrammingLanguageId] = useState(initialData?.programmingLanguageId ?? '')
+  const [includeProfileCvInSetup, setIncludeProfileCvInSetup] = useState(
+    initialData?.includeProfileCvInSetup !== false,
+  )
+  const [extraSkills, setExtraSkills] = useState(initialData?.extraSkills ?? '')
+  const [extraProjects, setExtraProjects] = useState(initialData?.extraProjects ?? '')
+  const [extraExperienceNotes, setExtraExperienceNotes] = useState(initialData?.extraExperienceNotes ?? '')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -69,24 +116,27 @@ export default function ContextModal({ toolType, sessionId, initialData, onClose
   )
 
   const trimmedJobText = trimTo(jobText, JOB_TEXT_MAX)
-  const trimmedCvText = trimTo(cvText, CV_TEXT_MAX)
   const trimmedJobTitle = trimTo(jobTitle, TITLE_MAX)
   const trimmedCompanyName = trimTo(companyName, COMPANY_MAX)
+  const trimmedExtraSkills = trimTo(extraSkills, EXTRA_MAX)
+  const trimmedExtraProjects = trimTo(extraProjects, EXTRA_MAX)
+  const trimmedExtraExp = trimTo(extraExperienceNotes, EXTRA_MAX)
 
   const jobWasTrimmed = jobText.trim().length > JOB_TEXT_MAX
-  const cvWasTrimmed = cvText.trim().length > CV_TEXT_MAX
 
   useEffect(() => {
     const derivedProgrammingId = initialData?.programmingLanguageId
       || languageOptions.find(option => option.label.toLowerCase() === (initialData?.programmingLanguage ?? '').toLowerCase())?.id
       || ''
 
-    setStep(1)
-    setCvText(initialData?.cvText ?? '')
     setJobText(initialData?.jobText ?? '')
     setJobTitle(initialData?.jobTitle ?? '')
     setCompanyName(initialData?.companyName ?? '')
     setProgrammingLanguageId(derivedProgrammingId)
+    setIncludeProfileCvInSetup(initialData?.includeProfileCvInSetup !== false)
+    setExtraSkills(initialData?.extraSkills ?? '')
+    setExtraProjects(initialData?.extraProjects ?? '')
+    setExtraExperienceNotes(initialData?.extraExperienceNotes ?? '')
     setError(null)
   }, [initialData, languageOptions, sessionId, toolType])
 
@@ -98,6 +148,15 @@ export default function ContextModal({ toolType, sessionId, initialData, onClose
       const token = await getToken()
       const selectedLanguageLabel = languageOptions.find(option => option.id === programmingLanguageId)?.label ?? null
 
+      const mergedCvForServer = buildMergedCvForServer({
+        includeProfileCvInSetup: payload.includeProfileCvInSetup !== false,
+        profileCvRaw: profileCvFromCareer,
+        legacyCvText: payload.cvText,
+        extraSkills: payload.extraSkills,
+        extraProjects: payload.extraProjects,
+        extraExperienceNotes: payload.extraExperienceNotes,
+      })
+
       const response = await fetch(`${API_URL}/api/agent/context`, {
         method: 'POST',
         headers: {
@@ -107,7 +166,7 @@ export default function ContextModal({ toolType, sessionId, initialData, onClose
         body: JSON.stringify({
           sessionId,
           toolType: effectiveToolType,
-          cvText: payload.cvText.trim() || null,
+          cvText: mergedCvForServer || null,
           jobText: payload.jobText.trim() || null,
           jobTitle: payload.jobTitle.trim() || null,
           companyName: payload.companyName.trim() || null,
@@ -128,40 +187,44 @@ export default function ContextModal({ toolType, sessionId, initialData, onClose
     }
   }
 
-  const submitContext = async () => {
+  const basePayload = (): Omit<ContextPayload, 'generalCoaching'> => {
     const selectedLanguageLabel = languageOptions.find(option => option.id === programmingLanguageId)?.label ?? null
-    await persistAndComplete({
-      cvText: trimmedCvText,
+    return {
+      cvText: '',
       jobText: trimmedJobText,
       jobTitle: trimmedJobTitle,
       companyName: trimmedCompanyName,
       programmingLanguage: selectedLanguageLabel ?? '',
       programmingLanguageId: programmingLanguageId.trim(),
+      includeProfileCvInSetup,
+      extraSkills: trimmedExtraSkills,
+      extraProjects: trimmedExtraProjects,
+      extraExperienceNotes: trimmedExtraExp,
+    }
+  }
+
+  const submitContext = async () => {
+    await persistAndComplete({
+      ...basePayload(),
     })
   }
 
   const submitInterviewGeneralCoaching = async () => {
-    const selectedLanguageLabel = languageOptions.find(option => option.id === programmingLanguageId)?.label ?? null
     await persistAndComplete({
-      cvText: trimmedCvText,
+      ...basePayload(),
       jobText: '',
       jobTitle: '',
       companyName: '',
-      programmingLanguage: selectedLanguageLabel ?? '',
-      programmingLanguageId: programmingLanguageId.trim(),
       generalCoaching: true,
     })
   }
 
   const submitJobGeneralCoaching = async () => {
-    const selectedLanguageLabel = languageOptions.find(option => option.id === programmingLanguageId)?.label ?? null
     await persistAndComplete({
-      cvText: trimmedCvText,
+      ...basePayload(),
       jobText: '',
       jobTitle: '',
       companyName: '',
-      programmingLanguage: selectedLanguageLabel ?? '',
-      programmingLanguageId: programmingLanguageId.trim(),
       generalCoaching: true,
     })
   }
@@ -169,128 +232,121 @@ export default function ContextModal({ toolType, sessionId, initialData, onClose
   if (effectiveToolType === 'interviewprep') {
     return (
       <div className="modal-backdrop">
-        <div className="modal-box">
+        <div className="modal-box max-h-[90vh] overflow-y-auto">
           <div className="modal-header">
-            <span>Interview Setup</span>
+            <span>Interview-Setup</span>
             <button onClick={onClose} className="modal-close">×</button>
           </div>
 
-          {step === 1 && (
-            <div className="modal-body">
-              <h3>Schritt 1 von 2: Zielstelle</h3>
-              <p className="modal-subtitle">
-                Schwerpunkt: Stelle oder Link. Lebenslauf kommt im nächsten Schritt — oder wähle „Allgemeines Coaching“ ohne feste Ausschreibung
-                (dein Karriereprofil-CV ist, falls vorhanden, bereits eingetragen).
+          <div className="modal-body">
+            <h3>Stelle & Kontext</h3>
+            <p className="modal-subtitle">
+              Stelleninfos unten; Lebenslauf kommt aus dem Karriereprofil (optional abschaltbar). Ergänze nur hier Skills,
+              Projekte oder kurze Erfahrung — speziell für dieses Gespräch.
+            </p>
+
+            <label>Stellenbezeichnung *</label>
+            <input
+              value={jobTitle}
+              onChange={event => setJobTitle(event.target.value)}
+              placeholder="z. B. Senior .NET Developer"
+              className="modal-input"
+            />
+
+            <label>Unternehmen</label>
+            <input
+              value={companyName}
+              onChange={event => setCompanyName(event.target.value)}
+              placeholder="z. B. Siemens AG"
+              className="modal-input"
+            />
+
+            <label>Stellenbeschreibung</label>
+            <textarea
+              value={jobText}
+              onChange={event => setJobText(event.target.value)}
+              placeholder="Vollständige Ausschreibung oder Link-Kontext…"
+              className="modal-textarea"
+              rows={5}
+            />
+
+            {jobWasTrimmed && (
+              <p className="modal-hint text-amber-700">
+                Hinweis: Der Stellenkontext wird auf {JOB_TEXT_MAX} Zeichen gekürzt.
               </p>
+            )}
 
-              <label>Stellenbezeichnung *</label>
-              <input
-                value={jobTitle}
-                onChange={event => setJobTitle(event.target.value)}
-                placeholder="z. B. Senior .NET Developer"
-                className="modal-input"
-              />
+            {profileAvailable && (
+              <label className="mt-3 flex cursor-pointer items-start gap-2 text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  className="mt-1 rounded border-slate-300"
+                  checked={includeProfileCvInSetup}
+                  onChange={event => setIncludeProfileCvInSetup(event.target.checked)}
+                />
+                <span>
+                  Lebenslauf-Inhalt aus dem <strong>Karriereprofil</strong> in dieses Gespräch einbeziehen (empfohlen).
+                  Wenn aus: nutzt der Chat nur die Schalter unter dem Chat + die Zusatzfelder hier.
+                </span>
+              </label>
+            )}
 
-              <label>Unternehmen</label>
-              <input
-                value={companyName}
-                onChange={event => setCompanyName(event.target.value)}
-                placeholder="z. B. Siemens AG"
-                className="modal-input"
-              />
+            {!profileAvailable && (
+              <p className="modal-hint text-slate-600">
+                Kein Lebenslauf im Karriereprofil — ergänze Zusatzinfos unten oder im Profil.
+              </p>
+            )}
 
-              <label>Stellenbeschreibung</label>
-              <textarea
-                value={jobText}
-                onChange={event => setJobText(event.target.value)}
-                placeholder="Füge die vollständige Stellenausschreibung hier ein..."
-                className="modal-textarea"
-                rows={5}
-              />
+            <label className="mt-3">Zusätzliche Skills (nur dieses Gespräch)</label>
+            <textarea
+              value={extraSkills}
+              onChange={event => setExtraSkills(event.target.value)}
+              placeholder="z. B. Azure, Kubernetes, oder eine Zeile pro Skill"
+              className="modal-textarea"
+              rows={3}
+            />
 
-              {jobWasTrimmed && (
-                <p className="modal-hint text-amber-700">
-                  Hinweis: Der Stellenkontext wird auf {JOB_TEXT_MAX} Zeichen gekürzt.
-                </p>
-              )}
+            <label>Relevante Projekte (kurz)</label>
+            <textarea
+              value={extraProjects}
+              onChange={event => setExtraProjects(event.target.value)}
+              placeholder="Projektname, Rolle, Ergebnis …"
+              className="modal-textarea"
+              rows={3}
+            />
 
-              {profileHint && (
-                <p className="modal-hint text-slate-600">
-                  Lebenslauf aus deinem Karriereprofil ist für Schritt 2 vorbereitet — du kannst auch jetzt schon „Allgemeines Coaching“ wählen.
-                </p>
-              )}
+            <label>Erfahrung / Stationen (optional)</label>
+            <textarea
+              value={extraExperienceNotes}
+              onChange={event => setExtraExperienceNotes(event.target.value)}
+              placeholder="Was für diese Stelle zählen soll, auch wenn es nicht im Profil steht."
+              className="modal-textarea"
+              rows={2}
+            />
 
-              <div className="modal-actions flex-wrap gap-2">
-                <button onClick={onClose} className="btn-ghost">
-                  Später
-                </button>
-                <button
-                  type="button"
-                  onClick={() => void submitInterviewGeneralCoaching()}
-                  className="btn-ghost"
-                  disabled={loading}
-                >
-                  Allgemeines Coaching
-                </button>
-                <button
-                  onClick={() => setStep(2)}
-                  className="btn-primary"
-                  disabled={!trimmedJobTitle}
-                >
-                  Weiter →
-                </button>
-              </div>
+            {error && <p className="modal-error">{error}</p>}
+
+            <div className="modal-actions flex-wrap gap-2">
+              <button onClick={onClose} className="btn-ghost">
+                Später
+              </button>
+              <button
+                type="button"
+                onClick={() => void submitInterviewGeneralCoaching()}
+                className="btn-ghost"
+                disabled={loading}
+              >
+                Allgemeines Coaching
+              </button>
+              <button
+                onClick={() => void submitContext()}
+                className="btn-primary"
+                disabled={!trimmedJobTitle || loading}
+              >
+                {loading ? 'Wird vorbereitet…' : 'Mit Stelle starten'}
+              </button>
             </div>
-          )}
-
-          {step === 2 && (
-            <div className="modal-body">
-              <h3>Schritt 2 von 2: Lebenslauf</h3>
-              <p className="modal-subtitle">
-                {profileHint
-                  ? 'Lebenslauf aus dem Karriereprofil — für dieses Gespräch anpassbar.'
-                  : 'Füge deinen Lebenslauf ein, damit die Fragen auf dein Profil abgestimmt werden.'}
-              </p>
-
-              <label>Lebenslauf (Text)</label>
-              <textarea
-                value={cvText}
-                onChange={event => setCvText(event.target.value)}
-                placeholder={profileHint ? 'Aus Profil übernommen — hier bearbeiten…' : 'Füge hier deinen Lebenslauf als Text ein...'}
-                className="modal-textarea"
-                rows={8}
-              />
-
-              <p className="modal-hint">
-                Daten bleiben lokal im Browser-Kontext. Teile keine sensiblen Inhalte im Chat.
-              </p>
-
-              {cvWasTrimmed && (
-                <p className="modal-hint text-amber-700">
-                  Hinweis: Der Lebenslauf-Kontext wird auf {CV_TEXT_MAX} Zeichen gekürzt.
-                </p>
-              )}
-
-              {error && <p className="modal-error">{error}</p>}
-
-              <div className="modal-actions flex-wrap gap-2">
-                <button onClick={() => setStep(1)} className="btn-ghost">
-                  ← Zurück
-                </button>
-                <button
-                  type="button"
-                  onClick={() => void submitInterviewGeneralCoaching()}
-                  className="btn-ghost"
-                  disabled={loading}
-                >
-                  Allgemeines Coaching
-                </button>
-                <button onClick={() => void submitContext()} className="btn-primary" disabled={loading}>
-                  {loading ? 'Wird vorbereitet...' : 'Mit Profil & Stelle starten'}
-                </button>
-              </div>
-            </div>
-          )}
+          </div>
         </div>
       </div>
     )
@@ -299,44 +355,71 @@ export default function ContextModal({ toolType, sessionId, initialData, onClose
   if (effectiveToolType === 'jobanalyzer') {
     return (
       <div className="modal-backdrop">
-        <div className="modal-box">
+        <div className="modal-box max-h-[90vh] overflow-y-auto">
           <div className="modal-header">
-            <span>Job Analyzer Setup</span>
+            <span>Job Analyzer</span>
             <button onClick={onClose} className="modal-close">×</button>
           </div>
 
           <div className="modal-body">
-            <h3>Stellenanzeige einfügen</h3>
+            <h3>Stellenanzeige</h3>
             <p className="modal-subtitle">
-              Zuerst Stelle oder Link. Lebenslauf unten — oder zuerst nur Profil (Karriereprofil wird vorbefüllt).
+              Füge die Anzeige ein. Passung nutzt dein Karriereprofil (optional abschaltbar) plus die Zusatzfelder — kein
+              separates CV-Kopieren nötig.
             </p>
 
             <label>Stellenanzeige oder URL</label>
             <textarea
               value={jobText}
               onChange={event => setJobText(event.target.value)}
-              placeholder="Füge hier die vollständige Stellenausschreibung oder den Link ein..."
+              placeholder="Vollständige Stellenausschreibung oder Link-Kontext…"
               className="modal-textarea"
               rows={8}
             />
 
-            <details className="mt-3 rounded-lg border border-slate-200 bg-slate-50/80 p-3">
-              <summary className="cursor-pointer text-sm font-medium text-slate-700">
-                {profileHint ? 'Lebenslauf aus Karriereprofil (anpassbar)' : 'Lebenslauf (optional)'}
-              </summary>
-              <label className="mt-2 block">Lebenslauf (Text)</label>
-              <textarea
-                value={cvText}
-                onChange={event => setCvText(event.target.value)}
-                placeholder={profileHint ? 'Aus Profil — für diese Analyse anpassen…' : 'Optional: Lebenslauf für eine präzisere Passungsanalyse...'}
-                className="modal-textarea mt-1"
-                rows={4}
-              />
-            </details>
+            {profileAvailable && (
+              <label className="mt-3 flex cursor-pointer items-start gap-2 text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  className="mt-1 rounded border-slate-300"
+                  checked={includeProfileCvInSetup}
+                  onChange={event => setIncludeProfileCvInSetup(event.target.checked)}
+                />
+                <span>
+                  Lebenslauf aus <strong>Karriereprofil</strong> für die Passungsanalyse nutzen. Aus = nur Stelle +
+                  Zusatzinfos (z. B. wenn du die Analyse ohne Profil-CV testen willst).
+                </span>
+              </label>
+            )}
 
-            {(jobWasTrimmed || cvWasTrimmed) && (
+            <label className="mt-3">Zusätzliche Skills (nur diese Analyse)</label>
+            <textarea
+              value={extraSkills}
+              onChange={event => setExtraSkills(event.target.value)}
+              placeholder="Skills, die für diese Stelle zählen sollen …"
+              className="modal-textarea"
+              rows={3}
+            />
+
+            <label>Projekte / Referenzen (kurz)</label>
+            <textarea
+              value={extraProjects}
+              onChange={event => setExtraProjects(event.target.value)}
+              className="modal-textarea"
+              rows={2}
+            />
+
+            <label>Erfahrung (optional, nur hier)</label>
+            <textarea
+              value={extraExperienceNotes}
+              onChange={event => setExtraExperienceNotes(event.target.value)}
+              className="modal-textarea"
+              rows={2}
+            />
+
+            {(jobWasTrimmed) && (
               <p className="modal-hint text-amber-700">
-                Hinweis: Sehr lange Eingaben werden für stabile Analyse automatisch gekürzt.
+                Hinweis: Sehr lange Eingaben werden automatisch gekürzt.
               </p>
             )}
 
@@ -359,7 +442,7 @@ export default function ContextModal({ toolType, sessionId, initialData, onClose
                 disabled={!trimmedJobText || loading}
                 className="btn-primary"
               >
-                {loading ? 'Analyse läuft...' : 'Mit Profil & Stelle analysieren'}
+                {loading ? 'Analyse läuft…' : 'Analyse starten'}
               </button>
             </div>
           </div>
@@ -402,7 +485,18 @@ export default function ContextModal({ toolType, sessionId, initialData, onClose
                 Überspringen
               </button>
               <button
-                onClick={() => void submitContext()}
+                onClick={() => void persistAndComplete({
+                  cvText: '',
+                  jobText: '',
+                  jobTitle: '',
+                  companyName: '',
+                  programmingLanguage: languageOptions.find(option => option.id === programmingLanguageId)?.label ?? '',
+                  programmingLanguageId: programmingLanguageId.trim(),
+                  includeProfileCvInSetup: true,
+                  extraSkills: '',
+                  extraProjects: '',
+                  extraExperienceNotes: '',
+                })}
                 disabled={!programmingLanguageId.trim() || loading}
                 className="btn-primary"
               >

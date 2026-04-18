@@ -516,27 +516,6 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     }
   }, [scopeId, loadSessionsFromApi])
 
-  /** Tab wieder sichtbar: Hinweis auf manuellen Sync (kein automatischer Server-Refetch). */
-  useEffect(() => {
-    if (scopeId === '_loading' || scopeId === 'guest')
-      return
-    let wasHidden = document.visibilityState === 'hidden'
-    const onVis = () => {
-      if (document.visibilityState === 'hidden') {
-        wasHidden = true
-        return
-      }
-      if (document.visibilityState === 'visible' && wasHidden) {
-        wasHidden = false
-        setSessionsStaleHint(
-          'Fenster wieder aktiv — tippe auf „Synchronisieren“, um Chats mit dem Server abzugleichen.',
-        )
-      }
-    }
-    document.addEventListener('visibilitychange', onVis)
-    return () => document.removeEventListener('visibilitychange', onVis)
-  }, [scopeId])
-
   /** Mehrere Browser-Tabs: andere Tabs informieren — kein automatischer Refetch. */
   useEffect(() => {
     if (scopeId === '_loading' || scopeId === 'guest') {

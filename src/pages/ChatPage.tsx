@@ -13,7 +13,6 @@ import ContextModal, { type ContextModalToolType, type ContextPayload } from '..
 import MessageList from '../components/chat/MessageList'
 import { ThinkingIndicator, shouldSkipThinkingUi, STREAM_CHARS_PER_SECOND } from '../components/chat/ThinkingIndicator'
 import ChatAnswerReadyBanner from '../components/chat/ChatAnswerReadyBanner'
-import CareerScoreBanner from '../components/chat/CareerScoreBanner'
 import OnboardingPromptModal, { ONBOARDING_CHAT_PROMPT_DISMISS_KEY } from '../components/chat/OnboardingPromptModal'
 import UsageLimitModal from '../components/ui/UsageLimitModal'
 import { useDeliberateStream } from '../hooks/useDeliberateStream'
@@ -24,10 +23,6 @@ import { sanitizeTechnicalContext } from '../utils/cvTechnicalContext'
 import { applyStreamText } from '../chat/streamTextBridge'
 import { sessionListLabel } from '../utils/sessionTitle'
 import { buildProfileStatsLine, getProfileCompleteness, getProfileCompletenessGapHint } from '../utils/profileCompleteness'
-import { parseJobAnalysis, pickOverallScore } from '../utils/jobMarkdown'
-import { analyzeCvJobMatch } from '../utils/jobMatchAnalyzer'
-import { buildUserMessageTranscript } from '../utils/chatTranscript'
-import { pickInterviewReadinessScore } from '../utils/interviewScore'
 
 /** German UI labels shown in sidebar / header chips */
 const LANG_DISPLAY: Record<string, string> = {
@@ -72,6 +67,7 @@ type DismissedContextMap = Record<string, true>
 interface SessionContextData {
   sessionId: string
   toolType: ContextToolType
+  /** Legacy; Profil-Text kommt primär aus Karriereprofil + Zusatzfeldern. */
   cvText: string
   jobText: string
   jobTitle: string
@@ -82,6 +78,11 @@ interface SessionContextData {
   hasCv: boolean
   /** Ohne konkrete Stellenanzeige, minimales Setup für strukturierte API-Payloads. */
   generalCoaching?: boolean
+  /** false = kein Lebenslauf aus Karriereprofil in dieses Setup. */
+  includeProfileCvInSetup?: boolean
+  extraSkills: string
+  extraProjects: string
+  extraExperienceNotes: string
   updatedAt: string
 }
 
@@ -132,6 +133,28 @@ function contextKey(tool: ContextToolType, sessionId: string): string {
   return `${tool}:${sessionId}`
 }
 
+const EXTRA_FIELD_MAX = 2000
+
+function mergeSessionCvForApi(ctx: SessionContextData, profileCvRaw: string | null): string {
+  const parts: string[] = []
+  if (ctx.includeProfileCvInSetup !== false && profileCvRaw?.trim()) {
+    parts.push(sanitizeTechnicalContext(profileCvRaw).trim())
+  }
+  if (ctx.cvText?.trim()) {
+    parts.push(sanitizeTechnicalContext(ctx.cvText).trim())
+  }
+  const extraBlock = [
+    ctx.extraSkills?.trim()
+      && `Zusätzliche Skills (nur dieses Gespräch):\n${ctx.extraSkills.trim().slice(0, EXTRA_FIELD_MAX)}`,
+    ctx.extraProjects?.trim() && `Projekte:\n${ctx.extraProjects.trim().slice(0, EXTRA_FIELD_MAX)}`,
+    ctx.extraExperienceNotes?.trim()
+      && `Erfahrung (kurz):\n${ctx.extraExperienceNotes.trim().slice(0, EXTRA_FIELD_MAX)}`,
+  ].filter(Boolean).join('\n\n')
+  if (extraBlock)
+    parts.push(extraBlock)
+  return parts.join('\n\n---\n\n').slice(0, 4200)
+}
+
 function normalizeContext(input: Partial<SessionContextData> & { sessionId: string; toolType: ContextToolType }): SessionContextData {
   const cvText = sanitizeTechnicalContext(input.cvText ?? '').slice(0, 4200)
   const jobText = (input.jobText ?? '').trim().slice(0, 7000)
@@ -139,6 +162,18 @@ function normalizeContext(input: Partial<SessionContextData> & { sessionId: stri
   const companyName = (input.companyName ?? '').trim().slice(0, 180)
   const programmingLanguage = (input.programmingLanguage ?? '').trim().slice(0, 80)
   const programmingLanguageId = (input.programmingLanguageId ?? '').trim().slice(0, 40)
+  const extraSkills = (input.extraSkills ?? '').trim().slice(0, EXTRA_FIELD_MAX)
+  const extraProjects = (input.extraProjects ?? '').trim().slice(0, EXTRA_FIELD_MAX)
+  const extraExperienceNotes = (input.extraExperienceNotes ?? '').trim().slice(0, EXTRA_FIELD_MAX)
+  const includeProfileCvInSetup = input.includeProfileCvInSetup !== false
+
+  const hasCv = Boolean(
+    cvText
+    || extraSkills
+    || extraProjects
+    || extraExperienceNotes
+    || (includeProfileCvInSetup),
+  )
 
   return {
     sessionId: input.sessionId,
@@ -150,8 +185,12 @@ function normalizeContext(input: Partial<SessionContextData> & { sessionId: stri
     programmingLanguage,
     programmingLanguageId,
     hasJob: Boolean(jobText || jobTitle || companyName),
-    hasCv: Boolean(cvText),
+    hasCv,
     generalCoaching: Boolean(input.generalCoaching),
+    includeProfileCvInSetup,
+    extraSkills,
+    extraProjects,
+    extraExperienceNotes,
     updatedAt: input.updatedAt ?? new Date().toISOString(),
   }
 }
@@ -243,7 +282,7 @@ function defaultInterviewContext(): InterviewPromptContext {
   }
 }
 
-function toInterviewContext(context: SessionContextData | null): InterviewPromptContext {
+function toInterviewContext(context: SessionContextData | null, profileCvRaw: string | null): InterviewPromptContext {
   if (!context || context.toolType !== 'interview') {
     return defaultInterviewContext()
   }
@@ -260,7 +299,7 @@ function toInterviewContext(context: SessionContextData | null): InterviewPrompt
   return {
     language: 'de',
     alias: '',
-    cvText: context.cvText,
+    cvText: mergeSessionCvForApi(context, profileCvRaw),
     jobUrl: '',
     jobText: mergedJobText,
   }
@@ -275,7 +314,7 @@ function defaultJobAnalyzerContext(): JobAnalyzerPromptContext {
   }
 }
 
-function toJobAnalyzerContext(context: SessionContextData | null): JobAnalyzerPromptContext {
+function toJobAnalyzerContext(context: SessionContextData | null, profileCvRaw: string | null): JobAnalyzerPromptContext {
   if (!context || context.toolType !== 'jobanalyzer') {
     return defaultJobAnalyzerContext()
   }
@@ -284,23 +323,24 @@ function toJobAnalyzerContext(context: SessionContextData | null): JobAnalyzerPr
     jobTitle: context.jobTitle.trim().slice(0, 180),
     companyName: context.companyName.trim().slice(0, 180),
     jobText: context.jobText.trim(),
-    cvText: sanitizeTechnicalContext(context.cvText).trim(),
+    cvText: mergeSessionCvForApi(context, profileCvRaw),
   }
 }
 
 function sessionHasCareerSetupForStructuredApi(
   tool: ToolType,
   ctx: SessionContextData | null,
+  profileCvRaw: string | null,
 ): ctx is SessionContextData {
   if (!ctx) return false
   if (ctx.generalCoaching) return true
-  const cv = ctx.cvText?.trim() ?? ''
+  const mergedCv = mergeSessionCvForApi(ctx, profileCvRaw).trim()
   const job = ctx.jobText?.trim() ?? ''
   if (tool === 'jobanalyzer') {
-    return Boolean(ctx.hasCv || ctx.hasJob || cv.length > 0 || job.length > 0 || ctx.jobTitle.trim() || ctx.companyName.trim())
+    return Boolean(mergedCv.length > 0 || job.length > 0 || ctx.jobTitle.trim() || ctx.companyName.trim())
   }
   if (tool === 'interview') {
-    return Boolean(ctx.hasCv || ctx.hasJob || cv.length > 0 || job.length > 0)
+    return Boolean(mergedCv.length > 0 || job.length > 0 || ctx.jobTitle.trim() || ctx.companyName.trim())
   }
   return false
 }
@@ -667,8 +707,9 @@ export default function ChatPage() {
               cvText: '',
               programmingLanguage: '',
               programmingLanguageId: '',
-              hasJob: true,
-              hasCv: false,
+              extraSkills: '',
+              extraProjects: '',
+              extraExperienceNotes: '',
               updatedAt: new Date().toISOString(),
             }),
           }))
@@ -853,6 +894,10 @@ export default function ChatPage() {
       programmingLanguage: contextData.programmingLanguage,
       programmingLanguageId: contextData.programmingLanguageId,
       generalCoaching: contextData.generalCoaching,
+      includeProfileCvInSetup: contextData.includeProfileCvInSetup,
+      extraSkills: contextData.extraSkills,
+      extraProjects: contextData.extraProjects,
+      extraExperienceNotes: contextData.extraExperienceNotes,
     })
 
     setContextBySessionKey(prev => ({
@@ -999,15 +1044,16 @@ export default function ChatPage() {
     setError(null)
 
     const effectiveContext = options?.contextOverride ?? activeContext
-    const interviewSetup = toInterviewContext(effectiveContext)
-    const jobAnalyzerSetup = toJobAnalyzerContext(effectiveContext)
+    const profileCvForMerge = careerProfile?.cvRawText ?? null
+    const interviewSetup = toInterviewContext(effectiveContext, profileCvForMerge)
+    const jobAnalyzerSetup = toJobAnalyzerContext(effectiveContext, profileCvForMerge)
     const interviewLangCode = interviewSetup.language === 'en' ? 'en' : 'de'
     const interviewLangName = interviewLangCode === 'de' ? 'German' : 'English'
 
     const hasApiMsgOverride = Boolean(options?.apiMessageOverride)
     const useStructuredCareer = !hasApiMsgOverride
       && (store.currentToolType === 'jobanalyzer' || isInterview)
-      && sessionHasCareerSetupForStructuredApi(store.currentToolType, effectiveContext)
+      && sessionHasCareerSetupForStructuredApi(store.currentToolType, effectiveContext, profileCvForMerge)
 
     const careerToolSetup = useStructuredCareer && effectiveContext
       ? buildCareerToolSetupForApi(
@@ -1226,62 +1272,19 @@ export default function ChatPage() {
       : ''
     if (!activeContext && !profileCv) return undefined
     return {
-      cvText: activeContext?.cvText?.trim() || profileCv,
+      cvText: activeContext?.cvText?.trim() ?? '',
       jobText: activeContext?.jobText ?? '',
       jobTitle: activeContext?.jobTitle ?? '',
       companyName: activeContext?.companyName ?? '',
       programmingLanguage: activeContext?.programmingLanguage ?? '',
       programmingLanguageId: activeContext?.programmingLanguageId ?? '',
-      profileCvPrefilled: Boolean(profileCv && !(activeContext?.cvText?.trim())),
+      includeProfileCvInSetup: activeContext?.includeProfileCvInSetup !== false,
+      extraSkills: activeContext?.extraSkills ?? '',
+      extraProjects: activeContext?.extraProjects ?? '',
+      extraExperienceNotes: activeContext?.extraExperienceNotes ?? '',
+      profileCvPrefilled: Boolean(profileCv),
     }
   }, [activeContext, careerProfile])
-
-  const careerScoreBannerProps = useMemo(() => {
-    const tool = store.currentToolType
-    if (tool !== 'jobanalyzer' && tool !== 'interview') return null
-    const msgs = store.activeMessages
-    const lastAssistant = [...msgs].reverse().find(m => !m.isUser && m.text.trim())
-    if (!lastAssistant?.text?.trim()) return null
-
-    if (tool === 'jobanalyzer') {
-      const sections = parseJobAnalysis(lastAssistant.text)
-      const fromModel = pickOverallScore(sections)
-      const ctx = activeContext?.toolType === 'jobanalyzer' ? activeContext : null
-      const transcript = buildUserMessageTranscript(msgs)
-      let heuristic: number | undefined
-      if (ctx && (ctx.jobText?.trim() || ctx.cvText?.trim())) {
-        heuristic = analyzeCvJobMatch({
-          cvProfile: ctx.cvText ?? '',
-          jobText: ctx.jobText ?? '',
-          chatTranscript: transcript,
-        }).score
-      }
-      const primary = fromModel ?? heuristic
-      if (primary === undefined) return null
-      const secondary =
-        typeof fromModel === 'number'
-        && typeof heuristic === 'number'
-        && fromModel !== heuristic
-          ? heuristic
-          : undefined
-      return {
-        kind: 'job' as const,
-        primaryScore: primary,
-        secondaryScore: secondary,
-        caption:
-          'Modell-Score kommt aus der letzten Analyse-Antwort; die Heuristik nutzt Profil, Stelle und gekürzten Chat.',
-      }
-    }
-
-    const readiness = pickInterviewReadinessScore(lastAssistant.text)
-    if (readiness === undefined) return null
-    return {
-      kind: 'interview' as const,
-      primaryScore: readiness,
-      caption:
-        'READINESS-Zeile aus der letzten Interview-Antwort (Konvention im System-Prompt). Ohne diese Zeile erscheint kein Banner.',
-    }
-  }, [store.activeMessages, store.currentToolType, activeContext])
 
   return (
     <div className="relative flex min-h-0 flex-1 overflow-hidden">
@@ -1507,21 +1510,6 @@ export default function ChatPage() {
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <div ref={chatScrollRef} className="min-h-0 flex-1 overflow-y-auto">
             <div className="mx-auto max-w-3xl px-4 py-4">
-              {careerScoreBannerProps?.kind === 'job' && (
-                <CareerScoreBanner
-                  kind="job"
-                  primaryScore={careerScoreBannerProps.primaryScore}
-                  secondaryScore={careerScoreBannerProps.secondaryScore}
-                  caption={careerScoreBannerProps.caption}
-                />
-              )}
-              {careerScoreBannerProps?.kind === 'interview' && (
-                <CareerScoreBanner
-                  kind="interview"
-                  primaryScore={careerScoreBannerProps.primaryScore}
-                  caption={careerScoreBannerProps.caption}
-                />
-              )}
               <MessageList
                 messages={store.activeMessages}
                 viewSessionId={activeId}
@@ -1587,6 +1575,7 @@ export default function ChatPage() {
           toolType={modalToolType}
           sessionId={store.activeSessionId}
           initialData={activeModalInitialData}
+          profileCvFromCareer={careerProfile?.cvRawText ?? undefined}
           onClose={handleCloseContextModal}
           onContextSet={handleContextSet}
         />

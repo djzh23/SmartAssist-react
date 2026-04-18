@@ -65,28 +65,19 @@ export default function ChatContextBar({
     <div className="mx-auto max-w-3xl">
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 border-b border-slate-100 pb-2">
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1">
-          {careerProfile ? (
-            <div className="flex flex-shrink-0 items-center gap-1.5">
-              <span className="text-[11px] font-medium text-slate-500">Profil</span>
-              <div className="flex gap-0.5" aria-hidden>
-                {Array.from({ length: 10 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className={[
-                      'h-1.5 w-1.5 rounded-sm',
-                      i < Math.ceil(profileCompletenessPct / 10) ? 'bg-teal-500' : 'bg-slate-200',
-                    ].join(' ')}
-                  />
-                ))}
-              </div>
-              <span className="text-[11px] font-semibold text-slate-700">{profileCompletenessPct}%</span>
-            </div>
-          ) : null}
           <p className="min-w-0 text-[11px] leading-snug text-slate-500">
-            Kontext für diesen Chat: Schalter unten — dauerhaft unter{' '}
+            <span className="font-medium text-slate-600">Kontext</span>
+            {' — '}
+            Teile ein- oder ausblenden; Profil bearbeiten unter{' '}
             <Link to="/career-profile" className="font-medium text-primary hover:underline">
               Karriereprofil
             </Link>
+            {careerProfile && profileCompletenessPct < 100 ? (
+              <span className="text-slate-400">
+                {' '}
+                ({profileCompletenessPct}% vollständig)
+              </span>
+            ) : null}
             .
           </p>
         </div>
