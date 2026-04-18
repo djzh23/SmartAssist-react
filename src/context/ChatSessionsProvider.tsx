@@ -171,7 +171,7 @@ export interface SessionStore {
   newSession: (tool?: ToolType) => Promise<string>
   deleteSession: (id: string) => Promise<void>
   clearHistory: () => Promise<void>
-  switchToTool: (tool: ToolType) => Promise<void>
+  switchToTool: (tool: ToolType) => void
   addMessage: (sessionId: string, msg: Partial<ChatMessage> & { text: string; isUser: boolean }) => void
   updateMessageText: (sessionId: string, msgId: string, text: string) => void
   finalizeMessage: (sessionId: string, msgId: string, meta: { toolUsed?: string }) => void
@@ -617,21 +617,18 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     [getToken, pingOtherTabs],
   )
 
-  const switchToTool = useCallback(
-    async (tool: ToolType) => {
-      setCurrentTool(tool)
-      const order = sessionOrderRef.current
-      const sess = sessionsRef.current
-      const existing = order.find(id => sess[id]?.toolType === tool)
-      if (existing) {
-        setActiveId(existing)
-        return
-      }
-      const id = await createSessionRemote(tool)
-      setActiveId(id)
-    },
-    [createSessionRemote],
-  )
+  const switchToTool = useCallback((tool: ToolType) => {
+    setCurrentTool(tool)
+    const order = sessionOrderRef.current
+    const sess = sessionsRef.current
+    const existing = order.find(id => sess[id]?.toolType === tool)
+    if (existing) {
+      setActiveId(existing)
+      return
+    }
+    // Do not auto-create a server session when switching tools — user starts one via "Neues Gespräch".
+    setActiveId(null)
+  }, [])
 
   const setActiveSession = useCallback((id: string) => {
     setActiveId(id)

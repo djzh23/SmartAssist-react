@@ -120,6 +120,8 @@ export interface CareerToolSetup {
   interviewLanguageCode?: string
   jobAnalyzerFollowUp?: boolean
   interviewAlias?: string
+  /** Keine feste Stellenanzeige — allgemeines Job-/Interview-Coaching (Backend + Assembler). */
+  generalCoaching?: boolean
 }
 
 export interface AgentRequest {

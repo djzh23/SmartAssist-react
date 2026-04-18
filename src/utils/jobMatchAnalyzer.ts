@@ -1,7 +1,9 @@
-﻿interface MatchInput {
+interface MatchInput {
   cvProfile: string
   jobText: string
   jobUrl?: string
+  /** Zusätzlicher Nutzer-Chat (begrenzt), erhöht Deckung bei Gesprächs-Erwähnungen. */
+  chatTranscript?: string
 }
 
 type MatchStrength = 'none' | 'low' | 'medium' | 'high'
@@ -261,8 +263,12 @@ function buildReport(args: {
   ].filter(Boolean).join('\n')
 }
 
-export function analyzeCvJobMatch({ cvProfile, jobText, jobUrl }: MatchInput): JobMatchResult {
-  const cvTokens = tokenize(cvProfile)
+export function analyzeCvJobMatch({ cvProfile, jobText, jobUrl, chatTranscript }: MatchInput): JobMatchResult {
+  const chatChunk = (chatTranscript ?? '').trim().slice(0, 3500)
+  const mergedProfile = chatChunk
+    ? `${cvProfile.trim()}\n\n--- CHAT (Nutzer, Auszug) ---\n\n${chatChunk}`
+    : cvProfile
+  const cvTokens = tokenize(mergedProfile)
   const cvTokenSet = new Set(cvTokens)
   const requirementLines = extractRequirementLines(jobText)
 
@@ -296,7 +302,7 @@ export function analyzeCvJobMatch({ cvProfile, jobText, jobUrl }: MatchInput): J
   const missingKeywords = jobKeywords.filter(token => !tokenMatches(token, cvTokenSet, cvTokens))
   const keywordCoverage = jobKeywords.length > 0 ? matchedKeywords.length / jobKeywords.length : 0
 
-  const hasWeakCv = cvTokens.length < 55 || /\bn\/a\b/i.test(cvProfile)
+  const hasWeakCv = cvTokens.length < 55 || /\bn\/a\b/i.test(mergedProfile)
   const cvPenalty = hasWeakCv ? 0.66 : cvTokens.length < 95 ? 0.84 : 1
 
   const missingEssentialCount = essentials.filter(item => !item.matched).length

@@ -11,12 +11,15 @@ export interface ContextPayload {
   companyName: string
   programmingLanguage: string
   programmingLanguageId: string
+  generalCoaching?: boolean
 }
+
+type InitialModalData = Partial<ContextPayload> & { profileCvPrefilled?: boolean }
 
 interface Props {
   toolType: ContextModalToolType
   sessionId: string
-  initialData?: Partial<ContextPayload>
+  initialData?: InitialModalData
   onClose: () => void
   onContextSet: (payload: ContextPayload) => void
 }
@@ -46,6 +49,7 @@ function mapToolType(toolType: ContextModalToolType): 'jobanalyzer' | 'interview
 }
 
 export default function ContextModal({ toolType, sessionId, initialData, onClose, onContextSet }: Props) {
+  const profileHint = initialData?.profileCvPrefilled === true
   const { user } = useUser()
   const { getToken } = useAuth()
 
@@ -86,7 +90,7 @@ export default function ContextModal({ toolType, sessionId, initialData, onClose
     setError(null)
   }, [initialData, languageOptions, sessionId, toolType])
 
-  const submitContext = async () => {
+  const persistAndComplete = async (payload: ContextPayload) => {
     setLoading(true)
     setError(null)
 
@@ -103,10 +107,10 @@ export default function ContextModal({ toolType, sessionId, initialData, onClose
         body: JSON.stringify({
           sessionId,
           toolType: effectiveToolType,
-          cvText: trimmedCvText || null,
-          jobText: trimmedJobText || null,
-          jobTitle: trimmedJobTitle || null,
-          companyName: trimmedCompanyName || null,
+          cvText: payload.cvText.trim() || null,
+          jobText: payload.jobText.trim() || null,
+          jobTitle: payload.jobTitle.trim() || null,
+          companyName: payload.companyName.trim() || null,
           programmingLanguage: selectedLanguageLabel,
           userId: user?.id ?? null,
         }),
@@ -116,19 +120,50 @@ export default function ContextModal({ toolType, sessionId, initialData, onClose
         throw new Error(await readErrorMessage(response, `Kontext konnte nicht gespeichert werden (${response.status})`))
       }
 
-      onContextSet({
-        cvText: trimmedCvText,
-        jobText: trimmedJobText,
-        jobTitle: trimmedJobTitle,
-        companyName: trimmedCompanyName,
-        programmingLanguage: selectedLanguageLabel ?? '',
-        programmingLanguageId: programmingLanguageId.trim(),
-      })
+      onContextSet(payload)
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : 'Kontext konnte nicht gespeichert werden')
     } finally {
       setLoading(false)
     }
+  }
+
+  const submitContext = async () => {
+    const selectedLanguageLabel = languageOptions.find(option => option.id === programmingLanguageId)?.label ?? null
+    await persistAndComplete({
+      cvText: trimmedCvText,
+      jobText: trimmedJobText,
+      jobTitle: trimmedJobTitle,
+      companyName: trimmedCompanyName,
+      programmingLanguage: selectedLanguageLabel ?? '',
+      programmingLanguageId: programmingLanguageId.trim(),
+    })
+  }
+
+  const submitInterviewGeneralCoaching = async () => {
+    const selectedLanguageLabel = languageOptions.find(option => option.id === programmingLanguageId)?.label ?? null
+    await persistAndComplete({
+      cvText: trimmedCvText,
+      jobText: '',
+      jobTitle: '',
+      companyName: '',
+      programmingLanguage: selectedLanguageLabel ?? '',
+      programmingLanguageId: programmingLanguageId.trim(),
+      generalCoaching: true,
+    })
+  }
+
+  const submitJobGeneralCoaching = async () => {
+    const selectedLanguageLabel = languageOptions.find(option => option.id === programmingLanguageId)?.label ?? null
+    await persistAndComplete({
+      cvText: trimmedCvText,
+      jobText: '',
+      jobTitle: '',
+      companyName: '',
+      programmingLanguage: selectedLanguageLabel ?? '',
+      programmingLanguageId: programmingLanguageId.trim(),
+      generalCoaching: true,
+    })
   }
 
   if (effectiveToolType === 'interviewprep') {
@@ -144,7 +179,8 @@ export default function ContextModal({ toolType, sessionId, initialData, onClose
             <div className="modal-body">
               <h3>Schritt 1 von 2: Zielstelle</h3>
               <p className="modal-subtitle">
-                Für welche Rolle möchtest du dich vorbereiten?
+                Schwerpunkt: Stelle oder Link. Lebenslauf kommt im nächsten Schritt — oder wähle „Allgemeines Coaching“ ohne feste Ausschreibung
+                (dein Karriereprofil-CV ist, falls vorhanden, bereits eingetragen).
               </p>
 
               <label>Stellenbezeichnung *</label>
@@ -178,9 +214,23 @@ export default function ContextModal({ toolType, sessionId, initialData, onClose
                 </p>
               )}
 
-              <div className="modal-actions">
+              {profileHint && (
+                <p className="modal-hint text-slate-600">
+                  Lebenslauf aus deinem Karriereprofil ist für Schritt 2 vorbereitet — du kannst auch jetzt schon „Allgemeines Coaching“ wählen.
+                </p>
+              )}
+
+              <div className="modal-actions flex-wrap gap-2">
                 <button onClick={onClose} className="btn-ghost">
                   Später
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void submitInterviewGeneralCoaching()}
+                  className="btn-ghost"
+                  disabled={loading}
+                >
+                  Allgemeines Coaching
                 </button>
                 <button
                   onClick={() => setStep(2)}
@@ -197,14 +247,16 @@ export default function ContextModal({ toolType, sessionId, initialData, onClose
             <div className="modal-body">
               <h3>Schritt 2 von 2: Lebenslauf</h3>
               <p className="modal-subtitle">
-                Füge deinen Lebenslauf ein, damit die Fragen auf dein Profil abgestimmt werden.
+                {profileHint
+                  ? 'Lebenslauf aus dem Karriereprofil — für dieses Gespräch anpassbar.'
+                  : 'Füge deinen Lebenslauf ein, damit die Fragen auf dein Profil abgestimmt werden.'}
               </p>
 
               <label>Lebenslauf (Text)</label>
               <textarea
                 value={cvText}
                 onChange={event => setCvText(event.target.value)}
-                placeholder="Füge hier deinen Lebenslauf als Text ein..."
+                placeholder={profileHint ? 'Aus Profil übernommen — hier bearbeiten…' : 'Füge hier deinen Lebenslauf als Text ein...'}
                 className="modal-textarea"
                 rows={8}
               />
@@ -221,12 +273,20 @@ export default function ContextModal({ toolType, sessionId, initialData, onClose
 
               {error && <p className="modal-error">{error}</p>}
 
-              <div className="modal-actions">
+              <div className="modal-actions flex-wrap gap-2">
                 <button onClick={() => setStep(1)} className="btn-ghost">
                   ← Zurück
                 </button>
+                <button
+                  type="button"
+                  onClick={() => void submitInterviewGeneralCoaching()}
+                  className="btn-ghost"
+                  disabled={loading}
+                >
+                  Allgemeines Coaching
+                </button>
                 <button onClick={() => void submitContext()} className="btn-primary" disabled={loading}>
-                  {loading ? 'Wird vorbereitet...' : 'Interview starten'}
+                  {loading ? 'Wird vorbereitet...' : 'Mit Profil & Stelle starten'}
                 </button>
               </div>
             </div>
@@ -248,7 +308,7 @@ export default function ContextModal({ toolType, sessionId, initialData, onClose
           <div className="modal-body">
             <h3>Stellenanzeige einfügen</h3>
             <p className="modal-subtitle">
-              Ergänze Ausschreibung und optional Lebenslauf für eine gezielte Analyse.
+              Zuerst Stelle oder Link. Lebenslauf unten — oder zuerst nur Profil (Karriereprofil wird vorbefüllt).
             </p>
 
             <label>Stellenanzeige oder URL</label>
@@ -260,14 +320,19 @@ export default function ContextModal({ toolType, sessionId, initialData, onClose
               rows={8}
             />
 
-            <label>Lebenslauf (optional)</label>
-            <textarea
-              value={cvText}
-              onChange={event => setCvText(event.target.value)}
-              placeholder="Optional: Lebenslauf einfügen für eine präzisere Passungsanalyse..."
-              className="modal-textarea"
-              rows={4}
-            />
+            <details className="mt-3 rounded-lg border border-slate-200 bg-slate-50/80 p-3">
+              <summary className="cursor-pointer text-sm font-medium text-slate-700">
+                {profileHint ? 'Lebenslauf aus Karriereprofil (anpassbar)' : 'Lebenslauf (optional)'}
+              </summary>
+              <label className="mt-2 block">Lebenslauf (Text)</label>
+              <textarea
+                value={cvText}
+                onChange={event => setCvText(event.target.value)}
+                placeholder={profileHint ? 'Aus Profil — für diese Analyse anpassen…' : 'Optional: Lebenslauf für eine präzisere Passungsanalyse...'}
+                className="modal-textarea mt-1"
+                rows={4}
+              />
+            </details>
 
             {(jobWasTrimmed || cvWasTrimmed) && (
               <p className="modal-hint text-amber-700">
@@ -277,16 +342,24 @@ export default function ContextModal({ toolType, sessionId, initialData, onClose
 
             {error && <p className="modal-error">{error}</p>}
 
-            <div className="modal-actions">
+            <div className="modal-actions flex-wrap gap-2">
               <button onClick={onClose} className="btn-ghost">
                 Überspringen
+              </button>
+              <button
+                type="button"
+                onClick={() => void submitJobGeneralCoaching()}
+                className="btn-ghost"
+                disabled={loading}
+              >
+                Allgemeines Coaching
               </button>
               <button
                 onClick={() => void submitContext()}
                 disabled={!trimmedJobText || loading}
                 className="btn-primary"
               >
-                {loading ? 'Analyse läuft...' : 'Analyse starten'}
+                {loading ? 'Analyse läuft...' : 'Mit Profil & Stelle analysieren'}
               </button>
             </div>
           </div>

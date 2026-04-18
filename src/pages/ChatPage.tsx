@@ -13,6 +13,7 @@ import ContextModal, { type ContextModalToolType, type ContextPayload } from '..
 import MessageList from '../components/chat/MessageList'
 import { ThinkingIndicator, shouldSkipThinkingUi, STREAM_CHARS_PER_SECOND } from '../components/chat/ThinkingIndicator'
 import ChatAnswerReadyBanner from '../components/chat/ChatAnswerReadyBanner'
+import CareerScoreBanner from '../components/chat/CareerScoreBanner'
 import OnboardingPromptModal, { ONBOARDING_CHAT_PROMPT_DISMISS_KEY } from '../components/chat/OnboardingPromptModal'
 import UsageLimitModal from '../components/ui/UsageLimitModal'
 import { useDeliberateStream } from '../hooks/useDeliberateStream'
@@ -23,6 +24,10 @@ import { sanitizeTechnicalContext } from '../utils/cvTechnicalContext'
 import { applyStreamText } from '../chat/streamTextBridge'
 import { sessionListLabel } from '../utils/sessionTitle'
 import { buildProfileStatsLine, getProfileCompleteness, getProfileCompletenessGapHint } from '../utils/profileCompleteness'
+import { parseJobAnalysis, pickOverallScore } from '../utils/jobMarkdown'
+import { analyzeCvJobMatch } from '../utils/jobMatchAnalyzer'
+import { buildUserMessageTranscript } from '../utils/chatTranscript'
+import { pickInterviewReadinessScore } from '../utils/interviewScore'
 
 /** German UI labels shown in sidebar / header chips */
 const LANG_DISPLAY: Record<string, string> = {
@@ -75,6 +80,8 @@ interface SessionContextData {
   programmingLanguageId: string
   hasJob: boolean
   hasCv: boolean
+  /** Ohne konkrete Stellenanzeige, minimales Setup für strukturierte API-Payloads. */
+  generalCoaching?: boolean
   updatedAt: string
 }
 
@@ -144,6 +151,7 @@ function normalizeContext(input: Partial<SessionContextData> & { sessionId: stri
     programmingLanguageId,
     hasJob: Boolean(jobText || jobTitle || companyName),
     hasCv: Boolean(cvText),
+    generalCoaching: Boolean(input.generalCoaching),
     updatedAt: input.updatedAt ?? new Date().toISOString(),
   }
 }
@@ -285,6 +293,7 @@ function sessionHasCareerSetupForStructuredApi(
   ctx: SessionContextData | null,
 ): ctx is SessionContextData {
   if (!ctx) return false
+  if (ctx.generalCoaching) return true
   const cv = ctx.cvText?.trim() ?? ''
   const job = ctx.jobText?.trim() ?? ''
   if (tool === 'jobanalyzer') {
@@ -303,6 +312,23 @@ function buildCareerToolSetupForApi(
   invCtx: InterviewPromptContext,
   ctx: SessionContextData,
 ): CareerToolSetup | undefined {
+  if (tool === 'jobanalyzer' && ctx.generalCoaching) {
+    const cv = compactLines(sanitizeTechnicalContext(jobCtx.cvText), 22, 2600).trim()
+    return {
+      cvText: cv || undefined,
+      generalCoaching: true,
+      jobAnalyzerFollowUp: priorUserMessageCount > 0,
+    }
+  }
+  if (tool === 'interview' && ctx.generalCoaching) {
+    const cv = compactLines(sanitizeTechnicalContext(invCtx.cvText), 22, 2600).trim()
+    return {
+      cvText: cv || undefined,
+      generalCoaching: true,
+      interviewLanguageCode: invCtx.language,
+      interviewAlias: invCtx.alias.trim().slice(0, 80) || undefined,
+    }
+  }
   if (tool === 'jobanalyzer') {
     const cv = compactLines(sanitizeTechnicalContext(jobCtx.cvText), 22, 2600).trim()
     const job = compactLines(jobCtx.jobText, 40, 3600).trim()
@@ -826,6 +852,7 @@ export default function ChatPage() {
       companyName: contextData.companyName,
       programmingLanguage: contextData.programmingLanguage,
       programmingLanguageId: contextData.programmingLanguageId,
+      generalCoaching: contextData.generalCoaching,
     })
 
     setContextBySessionKey(prev => ({
@@ -844,6 +871,14 @@ export default function ChatPage() {
     const userAlreadyStarted = store.activeMessages.some(message => message.isUser)
     if (userAlreadyStarted) return
 
+    if (activeContextTool === 'jobanalyzer' && normalized.generalCoaching) {
+      void handleSend(
+        'Bitte gib eine allgemeine Karriere- und Profil-Einschätzung ohne konkrete Stellenanzeige (Skills, nächste Schritte, Marktrealismus).',
+        { displayText: 'Allgemeines Coaching starten', contextOverride: normalized },
+      )
+      return
+    }
+
     if (activeContextTool === 'jobanalyzer' && normalized.jobText) {
       const roleHint = normalized.jobTitle
         ? `${normalized.jobTitle}${normalized.companyName ? ` bei ${normalized.companyName}` : ''}`
@@ -855,6 +890,14 @@ export default function ChatPage() {
           displayText: `Analyse starten: ${roleHint}`,
           contextOverride: normalized,
         },
+      )
+      return
+    }
+
+    if (activeContextTool === 'interview' && normalized.generalCoaching) {
+      void handleSend(
+        'Please start general interview coaching without a specific job posting — use my CV/profile; ask targeted questions if needed.',
+        { contextOverride: normalized },
       )
       return
     }
@@ -941,8 +984,12 @@ export default function ChatPage() {
       setError('Chats werden noch geladen — bitte kurz warten.')
       return
     }
+    if (!store.activeSessionId) {
+      setError('Bitte zuerst „Neues Gespräch“ in der Seitenleiste starten, dann hier schreiben.')
+      return
+    }
 
-    const sessionId = store.activeSessionId ?? await store.newSession(store.currentToolType)
+    const sessionId = store.activeSessionId
     const linkedAppForSend = linkedJobApplicationBySession[sessionId]
     const sessionToolType = store.sessions[sessionId]?.toolType ?? store.currentToolType
     const displayText = options?.displayText ?? text
@@ -1172,16 +1219,69 @@ export default function ChatPage() {
   } as const
 
   const activeContextInfo = activeContextTool ? contextInfo[activeContextTool] : null
-  const activeModalInitialData = activeContext
-    ? {
-      cvText: activeContext.cvText,
-      jobText: activeContext.jobText,
-      jobTitle: activeContext.jobTitle,
-      companyName: activeContext.companyName,
-      programmingLanguage: activeContext.programmingLanguage,
-      programmingLanguageId: activeContext.programmingLanguageId,
+  const activeModalInitialData = useMemo(() => {
+    const profileCvRaw = careerProfile?.cvRawText?.trim()
+    const profileCv = profileCvRaw
+      ? sanitizeTechnicalContext(careerProfile?.cvRawText ?? '').slice(0, 4200)
+      : ''
+    if (!activeContext && !profileCv) return undefined
+    return {
+      cvText: activeContext?.cvText?.trim() || profileCv,
+      jobText: activeContext?.jobText ?? '',
+      jobTitle: activeContext?.jobTitle ?? '',
+      companyName: activeContext?.companyName ?? '',
+      programmingLanguage: activeContext?.programmingLanguage ?? '',
+      programmingLanguageId: activeContext?.programmingLanguageId ?? '',
+      profileCvPrefilled: Boolean(profileCv && !(activeContext?.cvText?.trim())),
     }
-    : undefined
+  }, [activeContext, careerProfile])
+
+  const careerScoreBannerProps = useMemo(() => {
+    const tool = store.currentToolType
+    if (tool !== 'jobanalyzer' && tool !== 'interview') return null
+    const msgs = store.activeMessages
+    const lastAssistant = [...msgs].reverse().find(m => !m.isUser && m.text.trim())
+    if (!lastAssistant?.text?.trim()) return null
+
+    if (tool === 'jobanalyzer') {
+      const sections = parseJobAnalysis(lastAssistant.text)
+      const fromModel = pickOverallScore(sections)
+      const ctx = activeContext?.toolType === 'jobanalyzer' ? activeContext : null
+      const transcript = buildUserMessageTranscript(msgs)
+      let heuristic: number | undefined
+      if (ctx && (ctx.jobText?.trim() || ctx.cvText?.trim())) {
+        heuristic = analyzeCvJobMatch({
+          cvProfile: ctx.cvText ?? '',
+          jobText: ctx.jobText ?? '',
+          chatTranscript: transcript,
+        }).score
+      }
+      const primary = fromModel ?? heuristic
+      if (primary === undefined) return null
+      const secondary =
+        typeof fromModel === 'number'
+        && typeof heuristic === 'number'
+        && fromModel !== heuristic
+          ? heuristic
+          : undefined
+      return {
+        kind: 'job' as const,
+        primaryScore: primary,
+        secondaryScore: secondary,
+        caption:
+          'Modell-Score kommt aus der letzten Analyse-Antwort; die Heuristik nutzt Profil, Stelle und gekürzten Chat.',
+      }
+    }
+
+    const readiness = pickInterviewReadinessScore(lastAssistant.text)
+    if (readiness === undefined) return null
+    return {
+      kind: 'interview' as const,
+      primaryScore: readiness,
+      caption:
+        'READINESS-Zeile aus der letzten Interview-Antwort (Konvention im System-Prompt). Ohne diese Zeile erscheint kein Banner.',
+    }
+  }, [store.activeMessages, store.currentToolType, activeContext])
 
   return (
     <div className="relative flex min-h-0 flex-1 overflow-hidden">
@@ -1407,6 +1507,21 @@ export default function ChatPage() {
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <div ref={chatScrollRef} className="min-h-0 flex-1 overflow-y-auto">
             <div className="mx-auto max-w-3xl px-4 py-4">
+              {careerScoreBannerProps?.kind === 'job' && (
+                <CareerScoreBanner
+                  kind="job"
+                  primaryScore={careerScoreBannerProps.primaryScore}
+                  secondaryScore={careerScoreBannerProps.secondaryScore}
+                  caption={careerScoreBannerProps.caption}
+                />
+              )}
+              {careerScoreBannerProps?.kind === 'interview' && (
+                <CareerScoreBanner
+                  kind="interview"
+                  primaryScore={careerScoreBannerProps.primaryScore}
+                  caption={careerScoreBannerProps.caption}
+                />
+              )}
               <MessageList
                 messages={store.activeMessages}
                 viewSessionId={activeId}
@@ -1462,6 +1577,7 @@ export default function ChatPage() {
         <ChatInput
           toolType={store.currentToolType}
           isLoading={inputBlocked}
+          noActiveSession={!activeId}
           onSend={handleSend}
         />
       </div>

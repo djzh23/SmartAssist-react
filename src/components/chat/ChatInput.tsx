@@ -13,10 +13,12 @@ const PLACEHOLDERS: Record<ToolType, string> = {
 interface Props {
   toolType: ToolType
   isLoading: boolean
+  /** Kein aktiver Chat — Eingabe gesperrt (z. B. nach Tool-Wechsel ohne neue Session). */
+  noActiveSession?: boolean
   onSend: (text: string) => void
 }
 
-export default function ChatInput({ toolType, isLoading, onSend }: Props) {
+export default function ChatInput({ toolType, isLoading, noActiveSession = false, onSend }: Props) {
   const [text, setText] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const near = text.length > 3500
@@ -30,7 +32,7 @@ export default function ChatInput({ toolType, isLoading, onSend }: Props) {
 
   const handleSend = () => {
     const trimmed = text.trim()
-    if (!trimmed || isLoading) return
+    if (!trimmed || isLoading || noActiveSession) return
     onSend(trimmed)
     setText('')
     if (textareaRef.current) textareaRef.current.style.height = 'auto'
@@ -48,7 +50,9 @@ export default function ChatInput({ toolType, isLoading, onSend }: Props) {
             'flex-1 border rounded-xl bg-white transition-all duration-150 overflow-hidden',
             text.length > 0 || isLoading
               ? 'border-primary shadow-[0_0_0_3px_rgba(124,58,237,0.08)]'
-              : 'border-slate-200 hover:border-slate-300',
+              : noActiveSession
+                ? 'border-slate-200 bg-slate-50/80'
+                : 'border-slate-200 hover:border-slate-300',
           ].join(' ')}
         >
           <textarea
@@ -56,10 +60,14 @@ export default function ChatInput({ toolType, isLoading, onSend }: Props) {
             value={text}
             onChange={e => setText(e.target.value)}
             onKeyDown={handleKey}
-            placeholder={PLACEHOLDERS[toolType]}
+            placeholder={
+              noActiveSession
+                ? 'Wähle zuerst „Neues Gespräch“ in der Seitenleiste …'
+                : PLACEHOLDERS[toolType]
+            }
             maxLength={4000}
             rows={1}
-            disabled={isLoading}
+            disabled={isLoading || noActiveSession}
             className="block max-h-[120px] w-full resize-none overflow-y-auto border-none bg-transparent px-4 pb-2 pt-3 text-sm text-slate-800 outline-none placeholder-slate-400 disabled:opacity-50"
           />
           <div className="flex items-center justify-between px-4 pb-2.5">
@@ -72,7 +80,7 @@ export default function ChatInput({ toolType, isLoading, onSend }: Props) {
 
         <button
           onClick={handleSend}
-          disabled={isLoading || !text.trim()}
+          disabled={isLoading || noActiveSession || !text.trim()}
           className="w-10 h-10 mb-[3px] flex-shrink-0 rounded-xl bg-primary hover:bg-primary-hover text-white flex items-center justify-center transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed hover:scale-[1.04] active:scale-95"
         >
           {isLoading

@@ -89,11 +89,18 @@ export default function MessageList({
   ])
 
   if (messages.length === 0 && !typingOnThisSession) {
+    const noActiveSession = viewSessionId === null
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
         <MessageCircle size={40} className="text-slate-200" />
-        <p className="font-medium text-slate-400">Starte ein neues Gespräch</p>
-        <p className="text-sm text-slate-300">Schreib eine Nachricht unten oder tippe auf Neues Gespräch</p>
+        <p className="font-medium text-slate-400">
+          {noActiveSession ? 'Kein Gespräch aktiv' : 'Starte ein neues Gespräch'}
+        </p>
+        <p className="max-w-md text-sm text-slate-300">
+          {noActiveSession
+            ? 'Tippe in der Seitenleiste auf „Neues Gespräch“, um für dieses Tool eine Session zu beginnen. Danach kannst du hier schreiben.'
+            : 'Schreib eine Nachricht unten oder tippe auf Neues Gespräch'}
+        </p>
       </div>
     )
   }
