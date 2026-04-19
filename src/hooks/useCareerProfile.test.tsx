@@ -41,6 +41,7 @@ function minimalProfile(overrides: Partial<CareerProfile> = {}): CareerProfile {
     languages: [],
     cvRawText: null,
     cvSummary: null,
+    cvSummaryEn: null,
     cvUploadedAt: null,
     targetJobs: [],
     onboardingCompleted: true,

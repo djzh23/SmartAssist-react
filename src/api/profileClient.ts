@@ -20,6 +20,7 @@ export interface CareerProfile {
   languages: ProfileLanguage[]
   cvRawText: string | null
   cvSummary: string | null
+  cvSummaryEn: string | null
   cvUploadedAt: string | null
   targetJobs: TargetJob[]
   onboardingCompleted: boolean
@@ -126,11 +127,18 @@ export async function uploadCv(token: string, text: string): Promise<void> {
   if (!res.ok) throw new Error(await readError(res, `CV upload failed (${res.status})`))
 }
 
+export type AnonymousSummaryLanguage = 'de' | 'en'
+
 /** LLM: anonymer Profil-Fließtext für KI-Kontext (keine Namen im Prompt-Auftrag). */
-export async function fetchAnonymousCvSummary(token: string): Promise<string> {
+export async function fetchAnonymousCvSummary(
+  token: string,
+  options?: { language?: AnonymousSummaryLanguage },
+): Promise<string> {
+  const language = options?.language ?? 'de'
   const res = await fetch(`${API_BASE}/api/profile/cv/anonymous-summary`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ language }),
   })
   if (res.status === 429)
     throw new Error(await readError(res, 'Zu viele Anfragen. Bitte kurz warten.'))
@@ -138,8 +146,7 @@ export async function fetchAnonymousCvSummary(token: string): Promise<string> {
     throw new Error(await readError(res, `Zusammenfassung fehlgeschlagen (${res.status})`))
   const data = await res.json() as { summary?: string }
   const s = data.summary?.trim()
-  if (!s)
-    throw new Error('Leere Antwort vom Server.')
+  if (!s) throw new Error('Leere Antwort vom Server.')
   return s
 }
 
