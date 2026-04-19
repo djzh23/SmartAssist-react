@@ -9,15 +9,15 @@ export default function ChatNotesStorageBanner() {
 
   return (
     <div
-      className="flex flex-shrink-0 items-start gap-2 border-b border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950 md:px-4"
+      className="flex flex-shrink-0 items-start gap-2 border-b border-amber-500/35 bg-amber-950/45 px-3 py-2 text-sm text-amber-100 md:px-4"
       role="status"
     >
-      <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-700" aria-hidden />
+      <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-400" aria-hidden />
       <p className="min-w-0 flex-1 leading-snug">{chatNotesStorageWarning}</p>
       <button
         type="button"
         onClick={clearChatNotesStorageWarning}
-        className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg text-amber-800 transition-colors hover:bg-amber-200/80"
+        className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg text-amber-200/90 transition-colors hover:bg-amber-500/15"
         aria-label="Hinweis schließen"
       >
         <X className="h-4 w-4" />

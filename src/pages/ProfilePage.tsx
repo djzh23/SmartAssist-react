@@ -15,16 +15,16 @@ function UsageBar({ used, limit }: { used: number; limit: number }) {
   return (
     <div>
       <div className="mb-1.5 flex items-center justify-between text-xs">
-        <span className="font-medium text-slate-700">Tägliche Antworten</span>
-        <span className="text-slate-500">{used} / {limitLabel}</span>
+        <span className="font-medium text-stone-200">Tägliche Antworten</span>
+        <span className="text-stone-400">{used} / {limitLabel}</span>
       </div>
-      <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
+      <div className="h-2.5 w-full overflow-hidden rounded-full bg-stone-800/80">
         <div
           className={`h-full rounded-full transition-all duration-500 ${barColor}`}
           style={{ width: `${Math.max(2, pct)}%` }}
         />
       </div>
-      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
+      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-stone-500">
         <span>Heute genutzt: {used}</span>
         <span>Verbleibend: {remainingLabel}</span>
         <span>Setzt um Mitternacht zurück</span>
@@ -218,55 +218,47 @@ export default function ProfilePage() {
 
   if (!user.isLoaded) {
     return (
-      <div className="flex min-h-0 flex-1 items-center justify-center bg-[#f5f6fb]">
-        <Loader2 size={22} className="animate-spin text-slate-400" />
+      <div className="flex min-h-0 flex-1 items-center justify-center bg-transparent">
+        <Loader2 size={22} className="animate-spin text-stone-500" />
       </div>
     )
   }
 
   return (
-    <div
-      className="relative min-h-0 flex-1 overflow-y-auto"
-      style={{
-        backgroundColor: '#f5f6fb',
-        backgroundImage:
-          'linear-gradient(to right, rgba(100,116,139,0.09) 1px, transparent 1px), linear-gradient(to bottom, rgba(100,116,139,0.09) 1px, transparent 1px)',
-        backgroundSize: '28px 28px',
-      }}
-    >
+    <div className="relative min-h-0 flex-1 overflow-y-auto bg-transparent">
       <div className="pointer-events-none absolute inset-0 overflow-hidden" style={{ zIndex: 0 }}>
-        <div className="absolute -right-28 top-0 h-80 w-80 rounded-full bg-amber-200/45 blur-3xl" />
-        <div className="absolute -left-28 bottom-0 h-96 w-96 rounded-full bg-amber-200/45 blur-3xl" />
-        <div className="absolute left-1/2 top-14 h-44 w-44 -translate-x-1/2 rotate-45 rounded-[34px] border border-amber-200/45" />
-        <div className="absolute right-10 top-52 h-28 w-28 rotate-12 rounded-2xl border border-slate-300/70 bg-white/40" />
+        <div className="absolute -right-28 top-0 h-80 w-80 rounded-full bg-amber-600/12 blur-3xl" />
+        <div className="absolute -left-28 bottom-0 h-96 w-96 rounded-full bg-amber-500/10 blur-3xl" />
+        <div className="absolute left-1/2 top-14 h-44 w-44 -translate-x-1/2 rotate-45 rounded-[34px] border border-amber-500/18" />
+        <div className="absolute right-10 top-52 h-28 w-28 rotate-12 rounded-2xl border border-stone-600/35 bg-stone-900/30" />
       </div>
 
       <div className="relative z-10 mx-auto max-w-2xl space-y-6 px-6 py-12">
         <div className="mb-2">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-500">Mein Konto</p>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-800">Profil und Nutzung</h1>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-400">Mein Konto</p>
+          <h1 className="mt-1 text-2xl font-bold tracking-tight text-stone-50">Profil und Nutzung</h1>
         </div>
 
         {justUpgraded && (
-          <div className="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          <div className="flex items-center gap-3 rounded-xl border border-emerald-500/35 bg-emerald-950/40 px-4 py-3 text-sm text-emerald-100">
             <IconHubIcon name="winner" className="h-5 w-5 shrink-0" />
             <span>Willkommen bei Premium! Dein Plan wurde aktualisiert.</span>
           </div>
         )}
 
         {isUpgradePending && !upgradeSyncNotice && (
-          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <div className="rounded-xl border border-amber-500/35 bg-amber-950/35 px-4 py-3 text-sm text-amber-100">
             Temporärer {pendingUpgradePlan === 'pro' ? 'Pro' : 'Premium'}-Zugriff aktiv, während Backend-Bestätigung aussteht.
           </div>
         )}
 
         {upgradeSyncNotice && (
-          <div className="flex items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <div className="flex items-center justify-between gap-3 rounded-xl border border-amber-500/35 bg-amber-950/35 px-4 py-3 text-sm text-amber-50">
             <span>{upgradeSyncNotice}</span>
             <button
               onClick={() => void handleRetryUsageSync()}
               disabled={isSyncingUsage}
-              className="rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-xs font-semibold text-amber-800 disabled:opacity-60"
+              className="rounded-lg border border-amber-500/40 bg-amber-950/50 px-3 py-1.5 text-xs font-semibold text-amber-100 disabled:opacity-60"
             >
               {isSyncingUsage ? 'Synchronisiert…' : 'Jetzt synchronisieren'}
             </button>
@@ -274,12 +266,12 @@ export default function ProfilePage() {
         )}
 
         {syncError && (
-          <div className="flex items-center justify-between gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          <div className="flex items-center justify-between gap-3 rounded-xl border border-rose-500/35 bg-rose-950/40 px-4 py-3 text-sm text-rose-100">
             <span>Synchronisierungsfehler: {syncError}</span>
             <button
               onClick={() => void handleRetryUsageSync()}
               disabled={isSyncingUsage}
-              className="rounded-lg border border-rose-300 bg-white px-3 py-1.5 text-xs font-semibold text-rose-700 disabled:opacity-60"
+              className="rounded-lg border border-rose-500/40 bg-rose-950/50 px-3 py-1.5 text-xs font-semibold text-rose-100 disabled:opacity-60"
             >
               {isSyncingUsage ? 'Wird wiederholt…' : 'Erneut versuchen'}
             </button>
@@ -289,25 +281,25 @@ export default function ProfilePage() {
         <div className="flex justify-end">
           <button
             onClick={() => navigate('/chat')}
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:border-slate-400"
+            className="inline-flex items-center gap-2 rounded-xl border border-stone-600/45 bg-app-raised/90 px-4 py-2 text-sm font-semibold text-stone-200 transition-colors hover:border-stone-500/55"
           >
             Zum Chat
           </button>
         </div>
 
         {/* Benutzerinfo */}
-        <div className="relative overflow-hidden rounded-3xl border border-slate-200/90 bg-white/90 p-5 shadow-[0_10px_34px_rgba(15,23,42,0.08)] backdrop-blur">
+        <div className="relative overflow-hidden rounded-3xl border border-stone-600/40 bg-app-surface/90 p-5 shadow-landing backdrop-blur">
           <div
             className="pointer-events-none absolute inset-0 opacity-80"
-            style={{ backgroundImage: 'radial-gradient(circle at 88% 0%, rgba(124,58,237,0.07), transparent 50%)' }}
+            style={{ backgroundImage: 'radial-gradient(circle at 88% 0%, rgba(245,158,11,0.1), transparent 50%)' }}
           />
           <div className="relative flex items-center gap-4">
-            <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl border border-amber-200 bg-amber-50 text-xl font-bold text-amber-700">
+            <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl border border-amber-500/35 bg-amber-950/40 text-xl font-bold text-amber-200">
               {user.initials}
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
-                <p className="truncate font-semibold text-slate-800">
+                <p className="truncate font-semibold text-stone-100">
                   {user.firstName ? `${user.firstName} ${user.lastName ?? ''}`.trim() : user.email ?? 'Gast'}
                 </p>
                 <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold ${planColors.badge}`}>
@@ -315,9 +307,9 @@ export default function ProfilePage() {
                   {planLabel}
                 </span>
               </div>
-              {user.email && <p className="mt-0.5 truncate text-xs text-slate-500">{user.email}</p>}
+              {user.email && <p className="mt-0.5 truncate text-xs text-stone-400">{user.email}</p>}
               {user.isSignedIn && (
-                <p className="mt-0.5 flex items-center gap-1 text-xs text-slate-400">
+                <p className="mt-0.5 flex items-center gap-1 text-xs text-stone-500">
                   <Calendar size={11} />
                   Angemeldet
                 </p>
@@ -327,8 +319,8 @@ export default function ProfilePage() {
         </div>
 
         {/* Verbrauch */}
-        <div className="space-y-5 rounded-3xl border border-slate-200/90 bg-white/90 p-5 shadow-[0_10px_34px_rgba(15,23,42,0.08)] backdrop-blur">
-          <h2 className="text-xs font-bold uppercase tracking-[0.15em] text-slate-400">Dein heutiger Verbrauch</h2>
+        <div className="space-y-5 rounded-3xl border border-stone-600/40 bg-app-surface/90 p-5 shadow-landing backdrop-blur">
+          <h2 className="text-xs font-bold uppercase tracking-[0.15em] text-stone-500">Dein heutiger Verbrauch</h2>
           <UsageBar used={user.usageToday} limit={user.dailyLimit} />
 
           <div className="grid grid-cols-3 gap-3">
@@ -337,29 +329,29 @@ export default function ProfilePage() {
               { icon: <Calendar size={14} className="text-amber-500" />, label: 'Aktive Tage', value: user.daysActive || 1 },
               { icon: <Star size={14} className="text-amber-500" />, label: 'Lieblingstool', value: user.favoriteTool ?? '—' },
             ].map(stat => (
-              <div key={stat.label} className="rounded-2xl border border-slate-100 bg-slate-50/85 px-3 py-3">
-                <div className="mb-1 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+              <div key={stat.label} className="rounded-2xl border border-stone-600/30 bg-app-muted/80 px-3 py-3">
+                <div className="mb-1 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-stone-500">
                   {stat.icon}
                   {stat.label}
                 </div>
-                <p className="text-base font-bold text-slate-800">{stat.value}</p>
+                <p className="text-base font-bold text-stone-100">{stat.value}</p>
               </div>
             ))}
           </div>
         </div>
 
         {/* Aktueller Plan */}
-        <div className="space-y-4 rounded-3xl border border-slate-200/90 bg-white/90 p-5 shadow-[0_10px_34px_rgba(15,23,42,0.08)] backdrop-blur">
-          <h2 className="text-xs font-bold uppercase tracking-[0.15em] text-slate-400">Aktueller Plan</h2>
+        <div className="space-y-4 rounded-3xl border border-stone-600/40 bg-app-surface/90 p-5 shadow-landing backdrop-blur">
+          <h2 className="text-xs font-bold uppercase tracking-[0.15em] text-stone-500">Aktueller Plan</h2>
 
-          <div className={`rounded-2xl border-2 p-4 ${planColors.border} bg-white/80`}>
+          <div className={`rounded-2xl border-2 p-4 ${planColors.border} bg-app-muted/70`}>
             <div className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-100 bg-slate-50">
-                <PlanIcon size={16} className={user.plan === 'pro' ? 'text-amber-500' : user.plan === 'premium' ? 'text-amber-600' : 'text-slate-500'} />
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-stone-600/35 bg-app-raised/90">
+                <PlanIcon size={16} className={user.plan === 'pro' ? 'text-amber-500' : user.plan === 'premium' ? 'text-amber-600' : 'text-stone-400'} />
               </div>
               <div>
-                <p className="font-bold text-slate-800">{planLabel}</p>
-                <p className="text-xs text-slate-500">
+                <p className="font-bold text-stone-100">{planLabel}</p>
+                <p className="text-xs text-stone-400">
                   {user.plan === 'free'
                     ? '20 Nachrichten pro Tag (nach Anmeldung)'
                     : user.plan === 'premium'
@@ -373,7 +365,7 @@ export default function ProfilePage() {
               <button
                 onClick={handleManageSubscription}
                 disabled={portalLoading}
-                className="mt-3 rounded-lg border border-amber-400 px-4 py-2 text-xs font-semibold text-amber-600 transition-colors hover:bg-amber-50 disabled:opacity-60"
+                className="mt-3 rounded-lg border border-amber-500/45 px-4 py-2 text-xs font-semibold text-amber-200 transition-colors hover:bg-amber-500/15 disabled:opacity-60"
               >
                 {portalLoading ? 'Wird geöffnet…' : 'Abonnement verwalten →'}
               </button>
@@ -396,7 +388,7 @@ export default function ProfilePage() {
                   onClick={() => void handleSyncPlan()}
                   disabled={isSyncingPlan}
                   title="Bereits bezahlt? Plan mit Stripe abgleichen"
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-600 transition-colors hover:border-slate-400 disabled:opacity-60"
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-stone-600/45 bg-app-raised/90 px-3 py-2 text-xs font-semibold text-stone-300 transition-colors hover:border-stone-500/55 disabled:opacity-60"
                 >
                   {isSyncingPlan ? <Loader2 size={12} className="animate-spin" /> : null}
                   {isSyncingPlan ? 'Synchronisiert…' : 'Plan synchronisieren'}
@@ -410,13 +402,13 @@ export default function ProfilePage() {
         </div>
 
         {/* Verlauf letzte 7 Tage */}
-        <div className="rounded-3xl border border-slate-200/90 bg-white/90 p-5 shadow-[0_10px_34px_rgba(15,23,42,0.08)] backdrop-blur">
-          <h2 className="mb-4 text-xs font-bold uppercase tracking-[0.15em] text-slate-400">
+        <div className="rounded-3xl border border-stone-600/40 bg-app-surface/90 p-5 shadow-landing backdrop-blur">
+          <h2 className="mb-4 text-xs font-bold uppercase tracking-[0.15em] text-stone-500">
             Verlauf — letzte 7 Tage
           </h2>
 
           {weekHistory.every(d => d.count === 0) ? (
-            <p className="py-4 text-center text-xs text-slate-400">
+            <p className="py-4 text-center text-xs text-stone-500">
               Noch keine Aktivität aufgezeichnet. Starte ein Gespräch!
             </p>
           ) : (
@@ -426,14 +418,14 @@ export default function ProfilePage() {
                 const isToday = day.date === todayDate
                 return (
                   <div key={day.date} className="flex flex-1 flex-col items-center gap-1.5">
-                    <span className="text-[9px] font-semibold text-slate-400">{day.count > 0 ? day.count : ''}</span>
+                    <span className="text-[9px] font-semibold text-stone-500">{day.count > 0 ? day.count : ''}</span>
                     <div className="w-full overflow-hidden rounded-t-lg" style={{ height: '72px' }}>
                       <div
-                        className={`w-full rounded-t-lg transition-all duration-500 ${isToday ? 'bg-primary' : 'bg-slate-200'}`}
+                        className={`w-full rounded-t-lg transition-all duration-500 ${isToday ? 'bg-primary' : 'bg-stone-700/80'}`}
                         style={{ height: `${heightPct}%`, marginTop: `${100 - heightPct}%` }}
                       />
                     </div>
-                    <span className={`text-[10px] font-medium ${isToday ? 'text-primary font-bold' : 'text-slate-400'}`}>
+                    <span className={`text-[10px] font-medium ${isToday ? 'text-primary font-bold' : 'text-stone-500'}`}>
                       {day.day}
                     </span>
                   </div>

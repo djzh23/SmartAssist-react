@@ -38,6 +38,13 @@
   ::-webkit-scrollbar-thumb:hover {
     @apply bg-slate-300;
   }
+
+  .app-main-shell ::-webkit-scrollbar-thumb {
+    @apply bg-stone-600/45 rounded-full;
+  }
+  .app-main-shell ::-webkit-scrollbar-thumb:hover {
+    @apply bg-stone-500/55;
+  }
 }
 
 @layer utilities {
@@ -66,6 +73,10 @@
 
 .rendered-md thead {
   background: #f8fafc;
+}
+
+.app-main-shell .rendered-md thead {
+  background: rgba(31, 26, 22, 0.95);
 }
 
 .rendered-md tr:last-child td {

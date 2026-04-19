@@ -23,16 +23,16 @@ const TOOL_BADGE: Record<ToolType, string> = {
   interview: 'INTV',
 }
 
-// 8 distinct color themes for session tabs
+// 8 distinct color themes for session tabs (dark shell)
 const SESSION_THEMES = [
-  { bg: 'bg-amber-50',  border: 'border-l-amber-500', icon: 'text-amber-600',  dot: 'bg-amber-400',  shape1: 'bg-amber-200/50',  shape2: 'border-amber-300/60' },
-  { bg: 'bg-amber-50',    border: 'border-l-amber-400',   icon: 'text-amber-600',    dot: 'bg-amber-400',    shape1: 'bg-amber-100/60',    shape2: 'border-amber-200/60' },
-  { bg: 'bg-emerald-50', border: 'border-l-emerald-400',icon: 'text-emerald-600', dot: 'bg-emerald-400', shape1: 'bg-emerald-200/50', shape2: 'border-emerald-300/60' },
-  { bg: 'bg-amber-50',   border: 'border-l-amber-400',  icon: 'text-amber-600',   dot: 'bg-amber-400',   shape1: 'bg-amber-200/50',   shape2: 'border-amber-300/60' },
-  { bg: 'bg-rose-50',    border: 'border-l-rose-400',   icon: 'text-rose-500',    dot: 'bg-rose-400',    shape1: 'bg-rose-200/50',    shape2: 'border-rose-300/60' },
-  { bg: 'bg-blue-50',    border: 'border-l-blue-400',   icon: 'text-blue-500',    dot: 'bg-blue-400',    shape1: 'bg-blue-200/50',    shape2: 'border-blue-300/60' },
-  { bg: 'bg-orange-50',  border: 'border-l-orange-400', icon: 'text-orange-500',  dot: 'bg-orange-400',  shape1: 'bg-orange-200/50',  shape2: 'border-orange-300/60' },
-  { bg: 'bg-teal-50',    border: 'border-l-teal-400',   icon: 'text-teal-600',    dot: 'bg-teal-400',    shape1: 'bg-teal-200/50',    shape2: 'border-teal-300/60' },
+  { bg: 'bg-amber-950/45', border: 'border-l-amber-400', icon: 'text-amber-300', dot: 'bg-amber-400', shape1: 'bg-amber-500/12', shape2: 'border-amber-500/35' },
+  { bg: 'bg-amber-950/40', border: 'border-l-amber-300', icon: 'text-amber-300', dot: 'bg-amber-400', shape1: 'bg-amber-500/10', shape2: 'border-amber-400/30' },
+  { bg: 'bg-emerald-950/40', border: 'border-l-emerald-400', icon: 'text-emerald-300', dot: 'bg-emerald-400', shape1: 'bg-emerald-500/12', shape2: 'border-emerald-500/35' },
+  { bg: 'bg-amber-950/40', border: 'border-l-amber-400', icon: 'text-amber-300', dot: 'bg-amber-400', shape1: 'bg-amber-500/12', shape2: 'border-amber-500/35' },
+  { bg: 'bg-rose-950/40', border: 'border-l-rose-400', icon: 'text-rose-300', dot: 'bg-rose-400', shape1: 'bg-rose-500/12', shape2: 'border-rose-500/35' },
+  { bg: 'bg-blue-950/40', border: 'border-l-blue-400', icon: 'text-blue-300', dot: 'bg-blue-400', shape1: 'bg-blue-500/12', shape2: 'border-blue-500/35' },
+  { bg: 'bg-orange-950/40', border: 'border-l-orange-400', icon: 'text-orange-300', dot: 'bg-orange-400', shape1: 'bg-orange-500/12', shape2: 'border-orange-500/35' },
+  { bg: 'bg-teal-950/40', border: 'border-l-teal-400', icon: 'text-teal-300', dot: 'bg-teal-400', shape1: 'bg-teal-500/12', shape2: 'border-teal-500/35' },
 ] as const
 
 // Geometric shape variants — cycles through for visual variety
@@ -158,7 +158,7 @@ export default function ChatSidebar({
 
       <aside
         className={[
-          'flex flex-col overflow-hidden border-r border-slate-200 bg-slate-50 transition-all duration-200',
+          'flex flex-col overflow-hidden border-r border-stone-600/35 bg-app-muted transition-all duration-200',
           'md:relative md:flex md:w-64 md:translate-x-0',
           isOpen
             ? 'fixed top-11 bottom-0 left-0 z-20 flex w-64 animate-slide-in'
@@ -176,7 +176,7 @@ export default function ChatSidebar({
 
           <button
             onClick={onClose}
-            className="ml-2 flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-200 hover:text-slate-600 md:hidden"
+            className="ml-2 flex h-8 w-8 items-center justify-center rounded-lg text-stone-400 transition-colors hover:bg-white/10 hover:text-stone-100 md:hidden"
             title="Schließen"
           >
             <X size={16} />
@@ -184,8 +184,9 @@ export default function ChatSidebar({
         </div>
 
         {onSyncFromServer && (
-          <div className="flex-shrink-0 border-b border-slate-200 px-3 py-2">
+          <div className="flex-shrink-0 border-b border-stone-600/35 px-3 py-2">
             <ServerSyncControl
+              variant="dark"
               onSync={onSyncFromServer}
               syncing={sessionsRemoteSyncing}
               lastSyncedAt={sessionsLastSyncedAt}
@@ -195,30 +196,30 @@ export default function ChatSidebar({
         )}
 
         {showLLPanel && (
-          <div className="flex-shrink-0 border-t border-slate-200 px-3 py-2.5">
-            <div className="mb-2.5 flex items-center justify-between rounded-lg border border-cyan-200 bg-amber-50 px-2.5 py-2">
-              <span className="text-xs font-semibold text-slate-700">Sprachlernen</span>
-              <span className="inline-flex items-center rounded-full border border-amber-300 bg-white px-2 py-0.5 text-[10px] font-semibold text-amber-700">
+          <div className="flex-shrink-0 border-t border-stone-600/35 px-3 py-2.5">
+            <div className="mb-2.5 flex items-center justify-between rounded-lg border border-amber-500/30 bg-amber-950/35 px-2.5 py-2">
+              <span className="text-xs font-semibold text-stone-200">Sprachlernen</span>
+              <span className="inline-flex items-center rounded-full border border-amber-500/35 bg-app-raised/90 px-2 py-0.5 text-[10px] font-semibold text-amber-200">
                 {languageLearningMode ? 'Aktiv' : 'Inaktiv'}
               </span>
             </div>
 
             {languageLearningMode && (
               <div className="mt-2 flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Ich spreche</label>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-stone-500">Ich spreche</label>
                 <select
                   value={nativeLangCode}
                   onChange={e => onNativeLangChange(e.target.value)}
-                  className="w-full rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-700 outline-none focus:border-primary"
+                  className="w-full rounded-md border border-stone-600/45 bg-app-raised px-2 py-1.5 text-xs text-stone-200 outline-none focus:border-primary"
                 >
                   {NATIVE_LANGS.map(lang => <option key={lang.code} value={lang.code}>{lang.label}</option>)}
                 </select>
 
-                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Ich lerne</label>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-stone-500">Ich lerne</label>
                 <select
                   value={targetLangCode}
                   onChange={e => onTargetLangChange(e.target.value)}
-                  className="w-full rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-700 outline-none focus:border-primary"
+                  className="w-full rounded-md border border-stone-600/45 bg-app-raised px-2 py-1.5 text-xs text-stone-200 outline-none focus:border-primary"
                 >
                   {TARGET_LANGS.map(lang => <option key={lang.code} value={lang.code}>{lang.label}</option>)}
                 </select>
@@ -228,8 +229,8 @@ export default function ChatSidebar({
         )}
 
         {showProgPanel && (
-          <div className="flex-shrink-0 border-t border-slate-200 px-3 py-2.5">
-            <p className="mb-2 text-xs font-medium text-slate-700">Sprache oder Thema</p>
+          <div className="flex-shrink-0 border-t border-stone-600/35 px-3 py-2.5">
+            <p className="mb-2 text-xs font-medium text-stone-200">Sprache oder Thema</p>
             <div className="flex flex-col gap-1">
               {PROGRAMMING_LANGUAGES.map(lang => (
                 <button
@@ -239,7 +240,7 @@ export default function ChatSidebar({
                     'rounded-md px-2.5 py-1.5 text-left text-xs font-medium transition-colors',
                     progLang === lang.id
                       ? 'bg-primary text-white'
-                      : 'text-slate-600 hover:bg-slate-200',
+                      : 'text-stone-400 hover:bg-white/8 hover:text-stone-100',
                   ].join(' ')}
                 >
                   {lang.label}
@@ -250,9 +251,9 @@ export default function ChatSidebar({
         )}
 
         {showInterviewPanel && (
-          <div className="flex-shrink-0 border-t border-slate-200 px-3 py-2.5">
-            <p className="text-xs font-medium text-slate-700">Interview Setup</p>
-            <p className="mt-1 text-[11px] leading-relaxed text-slate-500">
+          <div className="flex-shrink-0 border-t border-stone-600/35 px-3 py-2.5">
+            <p className="text-xs font-medium text-stone-200">Interview Setup</p>
+            <p className="mt-1 text-[11px] leading-relaxed text-stone-500">
               Der Kontextdialog erscheint automatisch zu Beginn. Dort kannst du Stelle und Lebenslauf hinterlegen.
             </p>
           </div>
@@ -260,7 +261,7 @@ export default function ChatSidebar({
 
         <div className="min-h-0 flex-1 overflow-y-auto py-1">
           {sessions.length === 0 ? (
-            <div className="flex h-full flex-col items-center justify-center gap-2 py-10 text-slate-400">
+            <div className="flex h-full flex-col items-center justify-center gap-2 py-10 text-stone-500">
               <span className="text-xl font-semibold opacity-40">{TOOL_BADGE[currentToolType] ?? 'CHAT'}</span>
               <p className="px-6 text-center text-xs">Noch keine Gespräche. Starte einen neuen Chat!</p>
             </div>
@@ -287,7 +288,7 @@ export default function ChatSidebar({
                       canReorder ? 'gap-1 pl-1 pr-2.5' : 'gap-2 px-2.5',
                       isActive
                         ? `${theme.border} ${theme.bg} shadow-sm`
-                        : `border-transparent hover:${theme.bg} hover:border-l-slate-300`,
+                        : `border-transparent hover:${theme.bg} hover:border-l-stone-500`,
                       isDragging ? 'opacity-50' : '',
                       isDropTarget ? 'ring-2 ring-primary/35 ring-offset-1' : '',
                     ].join(' ')}
@@ -329,7 +330,7 @@ export default function ChatSidebar({
                           setDragFrom(null)
                           setDragOverIndex(null)
                         }}
-                        className="flex h-8 w-6 flex-shrink-0 cursor-grab touch-none items-center justify-center rounded-md text-slate-400 active:cursor-grabbing hover:bg-slate-200/80 hover:text-slate-600"
+                        className="flex h-8 w-6 flex-shrink-0 cursor-grab touch-none items-center justify-center rounded-md text-stone-500 active:cursor-grabbing hover:bg-white/10 hover:text-stone-200"
                         aria-label="Reihenfolge ändern"
                         title="Ziehen zum Sortieren"
                       >
@@ -341,7 +342,7 @@ export default function ChatSidebar({
                     <div className={`pointer-events-none absolute right-5 top-0.5 h-5 w-5 border ${theme.shape2} ${SHAPES[(idx + 2) % SHAPES.length].cls} opacity-50`} />
 
                     {/* Colored icon dot */}
-                    <div className={`relative flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-lg ${isActive ? theme.bg : 'bg-white/70'} border border-white shadow-sm`}>
+                    <div className={`relative flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-lg ${isActive ? theme.bg : 'bg-stone-800/90'} border border-stone-600/50 shadow-sm`}>
                       <Icon size={12} className={theme.icon} />
                     </div>
 
@@ -353,7 +354,7 @@ export default function ChatSidebar({
                             value={renameDraft}
                             onChange={e => setRenameDraft(e.target.value)}
                             maxLength={120}
-                            className="w-full rounded-md border border-slate-300 bg-white px-2 py-1 text-[12px] text-slate-800 outline-none focus:border-primary"
+                            className="w-full rounded-md border border-stone-600/45 bg-app-raised px-2 py-1 text-[12px] text-stone-100 outline-none focus:border-primary"
                             aria-label="Tab-Titel bearbeiten"
                             onKeyDown={e => {
                               if (e.key === 'Enter') {
@@ -378,22 +379,22 @@ export default function ChatSidebar({
                             <button
                               type="button"
                               onClick={cancelRename}
-                              className="rounded-md border border-slate-200 px-2 py-0.5 text-[11px] text-slate-600 hover:bg-slate-100"
+                              className="rounded-md border border-stone-600/45 px-2 py-0.5 text-[11px] text-stone-300 hover:bg-white/8"
                             >
                               Abbrechen
                             </button>
                           </div>
                         </div>
                       ) : (
-                        <p className={`truncate text-[12px] font-medium ${isActive ? 'text-slate-800' : 'text-slate-600'}`}>
+                        <p className={`truncate text-[12px] font-medium ${isActive ? 'text-stone-100' : 'text-stone-400'}`}>
                           {label}
                         </p>
                       )}
                       <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
                         <span className={`h-1.5 w-1.5 flex-shrink-0 rounded-full ${theme.dot} opacity-70`} />
-                        <p className="text-[10px] text-slate-400">{time}</p>
+                        <p className="text-[10px] text-stone-500">{time}</p>
                         {isStreaming && (
-                          <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-amber-600">
+                          <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-amber-400">
                             <Loader2 size={10} className="animate-spin" />
                             Antwort läuft…
                           </span>
@@ -406,7 +407,7 @@ export default function ChatSidebar({
                         type="button"
                         onClick={e => beginRename(session, e)}
                         disabled={isStreaming}
-                        className="relative flex h-5 w-5 flex-shrink-0 items-center justify-center rounded text-slate-400 opacity-0 transition-all group-hover:opacity-100 hover:bg-slate-200/80 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-30"
+                        className="relative flex h-5 w-5 flex-shrink-0 items-center justify-center rounded text-stone-500 opacity-0 transition-all group-hover:opacity-100 hover:bg-white/10 hover:text-stone-100 disabled:cursor-not-allowed disabled:opacity-30"
                         title={isStreaming ? 'Während Antwort nicht umbenennen' : 'Umbenennen'}
                         aria-label="Chat umbenennen"
                       >
@@ -418,7 +419,7 @@ export default function ChatSidebar({
                         e.stopPropagation()
                         onDelete(session.id)
                       }}
-                      className="relative flex h-5 w-5 flex-shrink-0 items-center justify-center rounded text-slate-400 opacity-0 transition-all group-hover:opacity-100 hover:bg-red-50 hover:text-red-500"
+                      className="relative flex h-5 w-5 flex-shrink-0 items-center justify-center rounded text-stone-500 opacity-0 transition-all group-hover:opacity-100 hover:bg-red-950/50 hover:text-red-400"
                       title="Löschen"
                     >
                       <X size={12} />
@@ -433,7 +434,7 @@ export default function ChatSidebar({
         {sessions.length > 0 && (
           <button
             onClick={onClear}
-            className="flex w-full flex-shrink-0 items-center justify-center gap-1.5 border-t border-slate-200 py-2.5 text-xs text-slate-400 transition-colors hover:text-red-500"
+            className="flex w-full flex-shrink-0 items-center justify-center gap-1.5 border-t border-stone-600/35 py-2.5 text-xs text-stone-500 transition-colors hover:text-red-400"
           >
             <Trash2 size={12} />
             Verlauf löschen

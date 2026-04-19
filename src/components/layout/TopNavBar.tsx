@@ -28,8 +28,8 @@ interface Props {
 
 const navBtn =
   'rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors min-[769px]:px-3 desktop:px-3'
-const navActive = 'bg-primary-light text-primary'
-const navIdle = 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+const navActive = 'bg-amber-500/15 text-amber-100'
+const navIdle = 'text-stone-300 hover:bg-white/8 hover:text-white'
 
 function navClass(isActive: boolean): string {
   return `${navBtn} ${isActive ? navActive : navIdle}`
@@ -85,56 +85,56 @@ function UserAvatarMenu({
       </button>
       {userMenuOpen && (
         <div
-          className="absolute right-0 top-full z-[60] mt-1.5 min-w-[200px] rounded-lg border border-slate-200 bg-white py-1 shadow-lg"
+          className="absolute right-0 top-full z-[60] mt-1.5 min-w-[200px] rounded-lg border border-stone-600/50 bg-[#1f1812] py-1 shadow-landing-md"
           role="menu"
         >
-          <p className="truncate px-3 py-2 text-xs text-slate-500" title={email ?? undefined}>
+          <p className="truncate px-3 py-2 text-xs text-stone-400" title={email ?? undefined}>
             {email?.split('@')[0] ?? 'Account'}
           </p>
           <button
             type="button"
             role="menuitem"
-            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-stone-200 hover:bg-white/6"
             onClick={() => {
               setUserMenuOpen(false)
               navigate('/profile')
             }}
           >
-            <User size={16} className="text-slate-500" aria-hidden />
+            <User size={16} className="text-stone-400" aria-hidden />
             Mein Profil
           </button>
           <button
             type="button"
             role="menuitem"
-            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-stone-200 hover:bg-white/6"
             onClick={() => {
               setUserMenuOpen(false)
               navigate('/pricing')
             }}
           >
-            <Tag size={16} className="text-slate-500" aria-hidden />
+            <Tag size={16} className="text-stone-400" aria-hidden />
             Preise
           </button>
           {isAdmin && (
             <button
               type="button"
               role="menuitem"
-              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-stone-200 hover:bg-white/6"
               onClick={() => {
                 setUserMenuOpen(false)
                 navigate('/admin')
               }}
             >
-              <ShieldCheck size={16} className="text-slate-500" aria-hidden />
+              <ShieldCheck size={16} className="text-stone-400" aria-hidden />
               Admin
             </button>
           )}
-          <div className="my-1 h-px bg-slate-100" />
+          <div className="my-1 h-px bg-stone-600/40" />
           <SignOutButton>
             <button
               type="button"
               role="menuitem"
-              className="w-full px-3 py-2 text-left text-sm font-medium text-rose-600 hover:bg-rose-50"
+              className="w-full px-3 py-2 text-left text-sm font-medium text-rose-400 hover:bg-rose-950/50"
             >
               Abmelden
             </button>
@@ -199,7 +199,7 @@ export default function TopNavBar({ onMenuClick, menuOpen }: Props) {
   return (
     <header
       className={[
-        'sticky top-0 z-50 flex h-[52px] flex-shrink-0 items-center gap-2 border-b border-slate-200 bg-white px-2 desktop:px-4',
+        'sticky top-0 z-50 flex h-[52px] flex-shrink-0 items-center gap-2 border-b border-stone-600/40 bg-[#1a1208]/92 px-2 backdrop-blur-xl desktop:px-4',
         'min-[769px]:grid min-[769px]:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] min-[769px]:items-center min-[769px]:gap-2 desktop:gap-3',
       ].join(' ')}
     >
@@ -209,7 +209,7 @@ export default function TopNavBar({ onMenuClick, menuOpen }: Props) {
           className="flex min-w-0 flex-shrink-0 items-center gap-2 rounded-lg py-1 pr-2 no-underline hover:opacity-90"
         >
           <img src="/favicon.png" alt="" className="h-8 w-8 rounded-lg" width={32} height={32} />
-          <span className="hidden text-[15px] font-bold tracking-wide text-slate-900 sm:inline">PrivatePrep</span>
+          <span className="hidden text-[15px] font-bold tracking-wide text-stone-50 sm:inline">PrivatePrep</span>
         </Link>
       </div>
 
@@ -273,7 +273,7 @@ export default function TopNavBar({ onMenuClick, menuOpen }: Props) {
         <button
           type="button"
           onClick={() => navigate('/pricing')}
-          className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800"
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-stone-400 transition-colors hover:bg-white/10 hover:text-stone-100"
           aria-label="Preise und Einstellungen"
           title="Preise"
         >

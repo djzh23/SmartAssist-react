@@ -16,7 +16,7 @@ export default function TogglePill({ active, label, title, onClick }: Props) {
         'max-w-[min(100%,260px)] truncate rounded-full px-3 py-1 text-left text-xs font-medium transition-colors',
         active
           ? 'bg-teal-600 text-white hover:bg-teal-700'
-          : 'bg-slate-100 text-slate-500 hover:bg-slate-200',
+          : 'bg-stone-800/90 text-stone-400 hover:bg-stone-700/90 hover:text-stone-200',
       ].join(' ')}
     >
       {label}

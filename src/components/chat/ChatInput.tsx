@@ -43,16 +43,16 @@ export default function ChatInput({ toolType, isLoading, noActiveSession = false
   }
 
   return (
-    <div className="flex-shrink-0 border-t border-slate-100 bg-white px-4 py-3 max-[768px]:pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+    <div className="flex-shrink-0 border-t border-stone-600/35 bg-app-muted/95 px-4 py-3 backdrop-blur-sm max-[768px]:pb-[max(0.75rem,env(safe-area-inset-bottom))]">
       <div className="max-w-3xl mx-auto flex items-end gap-2">
         <div
           className={[
-            'flex-1 border rounded-xl bg-white transition-all duration-150 overflow-hidden',
+            'flex-1 border rounded-xl bg-app-raised/95 transition-all duration-150 overflow-hidden',
             text.length > 0 || isLoading
-              ? 'border-primary shadow-[0_0_0_3px_rgba(124,58,237,0.08)]'
+              ? 'border-primary shadow-[0_0_0_3px_rgba(217,119,6,0.2)]'
               : noActiveSession
-                ? 'border-slate-200 bg-slate-50/80'
-                : 'border-slate-200 hover:border-slate-300',
+                ? 'border-stone-600/40 bg-stone-900/40'
+                : 'border-stone-600/45 hover:border-stone-500/55',
           ].join(' ')}
         >
           <textarea
@@ -68,11 +68,11 @@ export default function ChatInput({ toolType, isLoading, noActiveSession = false
             maxLength={4000}
             rows={1}
             disabled={isLoading || noActiveSession}
-            className="block max-h-[120px] w-full resize-none overflow-y-auto border-none bg-transparent px-4 pb-2 pt-3 text-sm text-slate-800 outline-none placeholder-slate-400 disabled:opacity-50"
+            className="block max-h-[120px] w-full resize-none overflow-y-auto border-none bg-transparent px-4 pb-2 pt-3 text-sm text-stone-100 outline-none placeholder-stone-500 disabled:opacity-50"
           />
           <div className="flex items-center justify-between px-4 pb-2.5">
-            <span className="text-[11px] text-slate-300">Enter zum Senden · Umschalt+Enter für neue Zeile</span>
-            <span className={`text-[11px] ${near ? 'text-red-500 font-semibold' : 'text-slate-300'}`}>
+            <span className="text-[11px] text-stone-500">Enter zum Senden · Umschalt+Enter für neue Zeile</span>
+            <span className={`text-[11px] ${near ? 'text-red-400 font-semibold' : 'text-stone-500'}`}>
               {text.length}/4000
             </span>
           </div>

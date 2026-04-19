@@ -1337,16 +1337,16 @@ export default function ChatPage() {
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         {store.sessionsLoadError && (
-          <div className="flex-shrink-0 border-b border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-900 sm:px-4" role="alert">
+          <div className="flex-shrink-0 border-b border-red-500/35 bg-red-950/40 px-3 py-2.5 text-sm text-red-100 sm:px-4" role="alert">
             <div className="mx-auto flex max-w-3xl flex-wrap items-center justify-between gap-2">
               <span className="flex min-w-0 items-start gap-2">
-                <AlertCircle size={18} className="mt-0.5 shrink-0 text-red-600" aria-hidden />
+                <AlertCircle size={18} className="mt-0.5 shrink-0 text-red-400" aria-hidden />
                 <span className="min-w-0 leading-snug">{store.sessionsLoadError}</span>
               </span>
               <button
                 type="button"
                 onClick={() => store.retrySessionsRemoteLoad()}
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-semibold text-red-800 shadow-sm transition hover:bg-red-50"
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-red-500/40 bg-red-950/50 px-3 py-1.5 text-xs font-semibold text-red-200 shadow-sm transition hover:bg-red-950/70"
               >
                 <RefreshCw size={14} aria-hidden />
                 Erneut laden
@@ -1356,7 +1356,7 @@ export default function ChatPage() {
         )}
 
         {store.sessionsStaleHint && (
-          <div className="flex-shrink-0 border-b border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-950 sm:px-4" role="status">
+          <div className="flex-shrink-0 border-b border-amber-500/35 bg-amber-950/35 px-3 py-2.5 text-sm text-amber-50 sm:px-4" role="status">
             <div className="mx-auto flex max-w-3xl flex-wrap items-center justify-between gap-2">
               <span className="min-w-0 leading-snug">{store.sessionsStaleHint}</span>
               <div className="flex shrink-0 flex-wrap items-center gap-2">
@@ -1364,7 +1364,7 @@ export default function ChatPage() {
                   type="button"
                   onClick={() => void store.syncSessionsRemote()}
                   disabled={store.sessionsRemoteSyncing}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-xs font-semibold text-amber-900 shadow-sm transition hover:bg-amber-100 disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-amber-500/40 bg-amber-950/45 px-3 py-1.5 text-xs font-semibold text-amber-100 shadow-sm transition hover:bg-amber-950/65 disabled:opacity-50"
                 >
                   <RefreshCw size={14} className={store.sessionsRemoteSyncing ? 'animate-spin' : ''} aria-hidden />
                   Synchronisieren
@@ -1372,7 +1372,7 @@ export default function ChatPage() {
                 <button
                   type="button"
                   onClick={() => store.dismissSessionsStaleHint()}
-                  className="rounded-lg px-2 py-1 text-xs font-medium text-amber-800/90 hover:bg-amber-100/80"
+                  className="rounded-lg px-2 py-1 text-xs font-medium text-amber-200/90 hover:bg-amber-500/15"
                 >
                   Ausblenden
                 </button>
@@ -1399,10 +1399,10 @@ export default function ChatPage() {
         )}
 
         {/* Mobile (≤768px): compact actions only — title lives in global top bar */}
-        <div className="flex min-[769px]:hidden flex-shrink-0 items-center justify-end gap-1 border-b border-slate-100 bg-white px-2 py-1.5">
+        <div className="flex min-[769px]:hidden flex-shrink-0 items-center justify-end gap-1 border-b border-stone-600/35 bg-app-muted/90 px-2 py-1.5 backdrop-blur-sm">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="flex h-11 w-11 min-h-[44px] min-w-[44px] flex-shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-500 transition-colors active:bg-slate-100"
+            className="flex h-11 w-11 min-h-[44px] min-w-[44px] flex-shrink-0 items-center justify-center rounded-lg border border-stone-600/45 bg-app-raised/90 text-stone-400 transition-colors active:bg-white/10"
             aria-label="Gespräche öffnen"
           >
             <PanelLeft size={17} />
@@ -1412,7 +1412,7 @@ export default function ChatPage() {
               type="button"
               onClick={() => void store.syncSessionsRemote()}
               disabled={store.sessionsRemoteSyncing}
-              className="flex h-11 w-11 min-h-[44px] min-w-[44px] flex-shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-500 transition-colors active:bg-slate-100 disabled:opacity-50"
+              className="flex h-11 w-11 min-h-[44px] min-w-[44px] flex-shrink-0 items-center justify-center rounded-lg border border-stone-600/45 bg-app-raised/90 text-stone-400 transition-colors active:bg-white/10 disabled:opacity-50"
               aria-label="Mit Server synchronisieren"
             >
               <RefreshCw size={16} className={store.sessionsRemoteSyncing ? 'animate-spin' : ''} />
@@ -1420,7 +1420,7 @@ export default function ChatPage() {
           )}
           <button
             onClick={handleNewSession}
-            className="flex h-11 w-11 min-h-[44px] min-w-[44px] flex-shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-500 transition-colors active:bg-slate-100"
+            className="flex h-11 w-11 min-h-[44px] min-w-[44px] flex-shrink-0 items-center justify-center rounded-lg border border-stone-600/45 bg-app-raised/90 text-stone-400 transition-colors active:bg-white/10"
             aria-label="Neues Gespräch starten"
           >
             <Plus size={16} />
@@ -1557,7 +1557,7 @@ export default function ChatPage() {
           && !careerProfileLoading
           && store.currentToolType !== 'language'
           && store.currentToolType !== 'general' && (
-          <div className="flex-shrink-0 border-b border-slate-200 bg-white px-4 py-2">
+          <div className="flex-shrink-0 border-b border-stone-600/35 bg-app-muted/85 px-4 py-2 backdrop-blur-sm">
             <ChatContextBar
               careerProfile={careerProfile}
               profileCompletenessPct={profileCompletenessPct}

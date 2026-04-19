@@ -18,13 +18,21 @@ export default {
           mid:     '#2D1C08',   // mid dark warm
           light:   '#3D2A10',   // lighter dark warm
         },
+        /** Logged-in app shell — aligned with landing `.landing-page-root` (#120c08) */
+        app: {
+          canvas:    '#120c08',
+          surface:   '#1a1512',
+          muted:     '#14110e',
+          raised:    '#1f1a16',
+          border:    'rgba(168, 162, 158, 0.35)',
+        },
         sidebar: {
-          DEFAULT: '#1e293b',
-          hover:   'rgba(255,255,255,0.06)',
-          active:  'rgba(255,255,255,0.10)',
-          border:  'rgba(255,255,255,0.07)',
-          muted:   '#94a3b8',
-          text:    '#cbd5e1',
+          DEFAULT: '#14110e',
+          hover:   'rgba(251, 191, 36, 0.08)',
+          active:  'rgba(251, 191, 36, 0.14)',
+          border:  'rgba(168, 162, 158, 0.22)',
+          muted:   '#a8a29e',
+          text:    '#e7e5e4',
         },
       },
       fontFamily: {

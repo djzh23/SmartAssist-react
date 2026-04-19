@@ -58,7 +58,7 @@ function badgeColorClass(color: string): string {
     case 'blue':
       return 'bg-blue-500/25 text-blue-200'
     default:
-      return 'bg-white/10 text-slate-300'
+      return 'bg-stone-500/20 text-stone-300'
   }
 }
 

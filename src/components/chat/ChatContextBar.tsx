@@ -63,17 +63,17 @@ export default function ChatContextBar({
 
   return (
     <div className="mx-auto max-w-3xl">
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 border-b border-slate-100 pb-2">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 border-b border-stone-600/35 pb-2">
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1">
-          <p className="min-w-0 text-[11px] leading-snug text-slate-500">
-            <span className="font-medium text-slate-600">Kontext</span>
+          <p className="min-w-0 text-[11px] leading-snug text-stone-400">
+            <span className="font-medium text-stone-200">Kontext</span>
             {' — '}
             Teile ein- oder ausblenden; Profil bearbeiten unter{' '}
             <Link to="/career-profile" className="font-medium text-primary hover:underline">
               Karriereprofil
             </Link>
             {careerProfile && profileCompletenessPct < 100 ? (
-              <span className="text-slate-400">
+              <span className="text-stone-500">
                 {' '}
                 ({profileCompletenessPct}% vollständig)
               </span>
@@ -85,16 +85,16 @@ export default function ChatContextBar({
           type="button"
           onClick={toggleExpanded}
           aria-expanded={expanded}
-          className="inline-flex flex-shrink-0 items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-700 transition-colors hover:bg-slate-100"
+          className="inline-flex flex-shrink-0 items-center gap-1 rounded-lg border border-stone-600/45 bg-app-raised/90 px-2.5 py-1 text-[11px] font-medium text-stone-200 transition-colors hover:bg-white/8"
         >
           {expanded ? (
             <>
-              <ChevronUp className="h-3.5 w-3.5 text-slate-500" aria-hidden />
+              <ChevronUp className="h-3.5 w-3.5 text-stone-400" aria-hidden />
               Kontext ausblenden
             </>
           ) : (
             <>
-              <ChevronDown className="h-3.5 w-3.5 text-slate-500" aria-hidden />
+              <ChevronDown className="h-3.5 w-3.5 text-stone-400" aria-hidden />
               Kontext einblenden
             </>
           )}
@@ -104,7 +104,7 @@ export default function ChatContextBar({
       {expanded ? (
         <div className="space-y-2 pt-2">
           {careerProfile && profileCompletenessPct < 50 && (
-            <div className="rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-[11px] text-amber-900">
+            <div className="rounded-lg border border-amber-500/35 bg-amber-950/40 px-2.5 py-1.5 text-[11px] text-amber-100">
               Je vollständiger dein Profil, desto besser die Antworten. Ergänze fehlende Bereiche unter{' '}
               <Link to="/career-profile" className="font-medium text-primary hover:underline">
                 Karriereprofil
@@ -113,12 +113,12 @@ export default function ChatContextBar({
             </div>
           )}
           {profileGapHint ? (
-            <p className="text-[11px] text-slate-500">
-              <span className="font-medium text-slate-600">Hinweis:</span> {profileGapHint}
+            <p className="text-[11px] text-stone-400">
+              <span className="font-medium text-stone-200">Hinweis:</span> {profileGapHint}
             </p>
           ) : null}
           <div className="flex flex-wrap items-center gap-2 max-[768px]:flex-nowrap max-[768px]:overflow-x-auto max-[768px]:pb-0.5">
-            <span className="mr-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Kontext</span>
+            <span className="mr-1 text-[10px] font-semibold uppercase tracking-wide text-stone-500">Kontext</span>
             <TogglePill
               active={profileToggles.includeBasicProfile}
               label={kontextPillLabels.basic}
@@ -153,12 +153,12 @@ export default function ChatContextBar({
             ))}
           </div>
           {kontextHintOpen ? (
-            <div className="flex items-start gap-1 rounded-lg bg-slate-50/90 py-0.5 pl-0 pr-0.5">
-              <p className="min-w-0 flex-1 text-[11px] leading-snug text-slate-500">
-                <strong className="font-medium text-slate-600">Farbig = aktiv:</strong> diese Profilteile steckt der
-                Server im <strong className="font-medium text-slate-600">System-Prompt</strong> (nicht doppelt im
+            <div className="flex items-start gap-1 rounded-lg bg-stone-900/50 py-0.5 pl-0 pr-0.5">
+              <p className="min-w-0 flex-1 text-[11px] leading-snug text-stone-400">
+                <strong className="font-medium text-stone-200">Farbig = aktiv:</strong> diese Profilteile steckt der
+                Server im <strong className="font-medium text-stone-200">System-Prompt</strong> (nicht doppelt im
                 Nachrichtentext). Stellenanalyse/Interview: in der Nachricht nur ggf. Text aus dem{' '}
-                <strong className="font-medium text-slate-600">Setup-Modal</strong>. Bearbeiten unter{' '}
+                <strong className="font-medium text-stone-200">Setup-Modal</strong>. Bearbeiten unter{' '}
                 <Link to="/career-profile" className="font-medium text-primary hover:underline">
                   Karriereprofil
                 </Link>
@@ -167,7 +167,7 @@ export default function ChatContextBar({
               <button
                 type="button"
                 onClick={dismissKontextHint}
-                className="mt-0.5 flex-shrink-0 rounded-md p-1 text-slate-400 transition-colors hover:bg-slate-200/80 hover:text-slate-600"
+                className="mt-0.5 flex-shrink-0 rounded-md p-1 text-stone-500 transition-colors hover:bg-white/10 hover:text-stone-200"
                 aria-label="Hinweis schließen"
               >
                 <X size={14} strokeWidth={2} />

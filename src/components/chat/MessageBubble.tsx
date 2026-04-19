@@ -86,14 +86,14 @@ export default function MessageBubble({
       if (looksLikeStructured && !structured && showStreamCursor) {
         return (
           <div className="flex max-w-[85%] animate-slide-up flex-col gap-1 self-start">
-            <div className="rounded-[4px_18px_18px_18px] border border-amber-200/80 bg-amber-50/90 px-3.5 py-3 text-sm leading-relaxed text-amber-950">
-              <p className="text-[13px] font-medium text-amber-900">Antwort wird strukturiert …</p>
-              <p className="mt-1 text-[12px] text-amber-800/90">
+            <div className="rounded-[4px_18px_18px_18px] border border-amber-500/35 bg-amber-950/45 px-3.5 py-3 text-sm leading-relaxed text-amber-50">
+              <p className="text-[13px] font-medium text-amber-100">Antwort wird strukturiert …</p>
+              <p className="mt-1 text-[12px] text-amber-200/90">
                 Kurz warten, bis Zielsprache und Übersetzung vollständig geliefert sind.
               </p>
               <StreamingTextCursor />
             </div>
-            <span className="px-1 text-[11px] text-slate-400">{time}</span>
+            <span className="px-1 text-[11px] text-stone-500">{time}</span>
           </div>
         )
       }
@@ -123,11 +123,11 @@ export default function MessageBubble({
       <div className="flex w-full animate-slide-up flex-col items-start gap-1">
         <JobAnalysisCard text={msg.text} showStreamCursor={showStreamCursor} />
         <div className="flex items-center gap-2 pl-1">
-          <span className="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[11px] font-medium text-sky-600">
+          <span className="inline-flex items-center gap-1 rounded-full border border-sky-500/35 bg-sky-950/45 px-2 py-0.5 text-[11px] font-medium text-sky-300">
             <BriefcaseBusiness size={11} />
             <span>Stellenanalyse</span>
           </span>
-          <span className="text-[11px] text-slate-400">{time}</span>
+          <span className="text-[11px] text-stone-500">{time}</span>
         </div>
         <AssistantNoteSaveButton msg={msg} toolType={toolType} activeSessionId={activeSessionId} />
       </div>
@@ -164,18 +164,18 @@ export default function MessageBubble({
   if (!msg.isUser) {
     return (
       <div className="self-start flex max-w-[85%] animate-slide-up flex-col gap-1">
-        <div className="break-words rounded-[4px_18px_18px_18px] bg-slate-100 px-3.5 py-2.5 text-sm leading-relaxed text-slate-800">
+        <div className="break-words rounded-[4px_18px_18px_18px] border border-stone-600/30 bg-stone-900/75 px-3.5 py-2.5 text-sm leading-relaxed text-stone-100">
           <RenderedMarkdown content={msg.text} />
           {showStreamCursor ? <StreamingTextCursor /> : null}
         </div>
         <div className="flex items-center gap-2 px-1">
           {msg.toolUsed && msg.toolUsed !== 'analyze_job' && (
-            <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-[11px] font-medium text-amber-600">
+            <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/35 bg-amber-950/45 px-2.5 py-0.5 text-[11px] font-medium text-amber-300">
               <Settings2 size={11} />
               <span>{msg.toolUsed.replace(/_/g, ' ')}</span>
             </span>
           )}
-          <span className="text-[11px] text-slate-400">{time}</span>
+          <span className="text-[11px] text-stone-500">{time}</span>
         </div>
         <AssistantNoteSaveButton msg={msg} toolType={toolType} activeSessionId={activeSessionId} />
       </div>
@@ -187,7 +187,7 @@ export default function MessageBubble({
       <div className="break-words whitespace-pre-wrap rounded-[18px_18px_4px_18px] bg-primary px-3.5 py-2.5 text-sm leading-relaxed text-white">
         {msg.text}
       </div>
-      <span className="px-1 text-[11px] text-slate-400">{time}</span>
+      <span className="px-1 text-[11px] text-stone-500">{time}</span>
     </div>
   )
 }

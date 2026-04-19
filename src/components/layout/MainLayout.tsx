@@ -11,6 +11,7 @@ import TopNavBar from './TopNavBar'
 import MobileDrawer from './MobileDrawer'
 import BottomTabBar from './BottomTabBar'
 import MobileMoreSheet from './MobileMoreSheet'
+import '../../styles/landing.css'
 
 function MainLayoutShell() {
   const bp = useBreakpoint()
@@ -46,7 +47,13 @@ function MainLayoutShell() {
         : 'w-14'
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-white">
+    <div className="app-main-shell relative flex h-screen flex-col overflow-hidden bg-app-canvas text-stone-100">
+      <div
+        className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#120c08] via-[#1a100a] to-[#16110d]"
+        aria-hidden
+      />
+      <div className="pointer-events-none absolute inset-0 landing-dot-grid opacity-[0.32]" aria-hidden />
+      <div className="relative z-10 flex h-full min-h-0 flex-col">
       <TopNavBar onMenuClick={() => setDrawerOpen(v => !v)} menuOpen={drawerOpen} />
 
       <div className="flex min-h-0 flex-1 overflow-hidden">
@@ -103,6 +110,7 @@ function MainLayoutShell() {
           <MobileMoreSheet />
         </>
       )}
+      </div>
     </div>
   )
 }

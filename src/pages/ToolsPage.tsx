@@ -54,10 +54,10 @@ const TOOLS: ToolCardMeta[] = [
     icon: Briefcase,
     badge: 'Career',
     accent: {
-      soft: 'bg-emerald-50',
-      ring: 'border-emerald-200 text-emerald-700',
-      text: 'text-emerald-700',
-      chip: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+      soft: 'bg-emerald-950/45',
+      ring: 'border-emerald-500/40 text-emerald-300',
+      text: 'text-emerald-300',
+      chip: 'border-emerald-500/35 bg-emerald-950/40 text-emerald-200',
     },
     preview: [
       { title: 'Muss-Kriterien', subtitle: 'Kompetenz-Match sofort sichtbar', line: 'bg-emerald-500' },
@@ -79,10 +79,10 @@ const TOOLS: ToolCardMeta[] = [
     icon: Target,
     badge: 'Career',
     accent: {
-      soft: 'bg-amber-50',
-      ring: 'border-amber-200 text-amber-700',
-      text: 'text-amber-700',
-      chip: 'border-amber-200 bg-amber-50 text-amber-700',
+      soft: 'bg-amber-950/45',
+      ring: 'border-amber-500/40 text-amber-300',
+      text: 'text-amber-300',
+      chip: 'border-amber-500/35 bg-amber-950/40 text-amber-200',
     },
     preview: [
       { title: 'Fragenkatalog', subtitle: 'Fachlich und verhaltensorientiert', line: 'bg-amber-500' },
@@ -104,10 +104,10 @@ const TOOLS: ToolCardMeta[] = [
     icon: MessageCircle,
     badge: 'Flex',
     accent: {
-      soft: 'bg-slate-100',
-      ring: 'border-slate-200 text-slate-700',
-      text: 'text-slate-700',
-      chip: 'border-slate-200 bg-slate-100 text-slate-700',
+      soft: 'bg-stone-900/70',
+      ring: 'border-stone-600/45 text-stone-300',
+      text: 'text-stone-300',
+      chip: 'border-stone-600/40 bg-stone-900/60 text-stone-200',
     },
     preview: [
       { title: 'Schnelle Klärung', subtitle: 'Direkt zur nächsten Entscheidung', line: 'bg-slate-500' },
@@ -129,10 +129,10 @@ const TOOLS: ToolCardMeta[] = [
     icon: Code2,
     badge: 'Tech',
     accent: {
-      soft: 'bg-sky-50',
-      ring: 'border-sky-200 text-sky-700',
-      text: 'text-sky-700',
-      chip: 'border-sky-200 bg-sky-50 text-sky-700',
+      soft: 'bg-sky-950/45',
+      ring: 'border-sky-500/40 text-sky-300',
+      text: 'text-sky-300',
+      chip: 'border-sky-500/35 bg-sky-950/40 text-sky-200',
     },
     preview: [
       { title: 'Code & DSA', subtitle: 'Verständlich und praxisnah', line: 'bg-sky-500' },
@@ -154,10 +154,10 @@ const TOOLS: ToolCardMeta[] = [
     icon: Globe2,
     badge: 'Language',
     accent: {
-      soft: 'bg-amber-50',
-      ring: 'border-amber-200 text-amber-700',
-      text: 'text-amber-700',
-      chip: 'border-amber-200 bg-amber-50 text-amber-700',
+      soft: 'bg-amber-950/45',
+      ring: 'border-amber-500/40 text-amber-300',
+      text: 'text-amber-300',
+      chip: 'border-amber-500/35 bg-amber-950/40 text-amber-200',
     },
     preview: [
       { title: 'Korrektur in Kontext', subtitle: 'Nicht nur Grammatik, auch Wirkung', line: 'bg-amber-500' },
@@ -203,11 +203,11 @@ export default function ToolsPage() {
               'w-[78vw] max-w-[290px] flex-shrink-0 snap-center',
               // Desktop: auto width, controlled by grid
               'md:w-auto md:max-w-none',
-              'group relative overflow-hidden rounded-3xl border border-slate-200/90 bg-white/90 p-5 text-left shadow-[0_10px_34px_rgba(15,23,42,0.08)] backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_44px_rgba(15,23,42,0.12)]',
+              'group relative overflow-hidden rounded-3xl border border-stone-600/40 bg-app-surface/90 p-5 text-left shadow-landing backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:shadow-landing-md',
             ].join(' ')}
           >
             <div className="pointer-events-none absolute inset-0 opacity-80" style={{
-              backgroundImage: 'radial-gradient(circle at 88% 0%, rgba(124,58,237,0.08), transparent 48%)',
+              backgroundImage: 'radial-gradient(circle at 88% 0%, rgba(245,158,11,0.12), transparent 48%)',
             }} />
 
             <div className="relative flex items-start justify-between gap-3">
@@ -219,18 +219,18 @@ export default function ToolsPage() {
               </span>
             </div>
 
-            <h3 className="relative mt-4 text-base font-semibold text-slate-800">{tool.name}</h3>
-            <p className="relative mt-1 text-sm leading-relaxed text-slate-500">{tool.shortDescription}</p>
+            <h3 className="relative mt-4 text-base font-semibold text-stone-100">{tool.name}</h3>
+            <p className="relative mt-1 text-sm leading-relaxed text-stone-400">{tool.shortDescription}</p>
 
-            <div className="relative mt-4 space-y-2 rounded-2xl border border-slate-100 bg-white/85 p-3">
+            <div className="relative mt-4 space-y-2 rounded-2xl border border-stone-600/30 bg-app-muted/80 p-3">
               {tool.preview.map(item => (
-                <div key={item.title} className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50/85 px-3 py-2">
+                <div key={item.title} className="flex items-center gap-3 rounded-xl border border-stone-600/25 bg-app-raised/70 px-3 py-2">
                   <span className={`h-7 w-1 rounded-full ${item.line}`} />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-xs font-semibold text-slate-700">{item.title}</p>
-                    <p className="truncate text-[11px] text-slate-500">{item.subtitle}</p>
+                    <p className="truncate text-xs font-semibold text-stone-200">{item.title}</p>
+                    <p className="truncate text-[11px] text-stone-500">{item.subtitle}</p>
                   </div>
-                  <ArrowUpRight size={14} className="text-slate-300 transition-colors group-hover:text-slate-500" />
+                  <ArrowUpRight size={14} className="text-stone-500 transition-colors group-hover:text-stone-300" />
                 </div>
               ))}
             </div>
@@ -246,41 +246,34 @@ export default function ToolsPage() {
   )
 
   return (
-    <div
-      className="relative min-h-0 flex-1 overflow-y-auto"
-      style={{
-        backgroundColor: '#f5f6fb',
-        backgroundImage: 'linear-gradient(to right, rgba(100,116,139,0.09) 1px, transparent 1px), linear-gradient(to bottom, rgba(100,116,139,0.09) 1px, transparent 1px)',
-        backgroundSize: '28px 28px',
-      }}
-    >
-      {/* Decorative blobs — spread across the full scrollable content via relative positioning */}
+    <div className="relative min-h-0 flex-1 overflow-y-auto bg-transparent">
+      {/* Decorative blobs — warm glow on dark canvas */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden" style={{ zIndex: 0 }}>
-        <div className="absolute -right-28 top-0 h-80 w-80 rounded-full bg-amber-200/45 blur-3xl" />
-        <div className="absolute -left-28 top-1/3 h-96 w-96 rounded-full bg-amber-200/40 blur-3xl" />
-        <div className="absolute right-0 top-2/3 h-80 w-80 rounded-full bg-amber-100/50 blur-3xl" />
-        <div className="absolute left-1/2 top-14 h-44 w-44 -translate-x-1/2 rotate-45 rounded-[34px] border border-amber-200/45" />
-        <div className="absolute right-10 top-52 h-28 w-28 rotate-12 rounded-2xl border border-slate-300/70 bg-white/40" />
-        <div className="absolute left-16 top-[55%] h-20 w-20 rotate-6 rounded-2xl border border-amber-200/50" />
-        <div className="absolute right-24 top-[70%] h-14 w-14 -rotate-12 rounded-xl border border-slate-300/60 bg-white/30" />
+        <div className="absolute -right-28 top-0 h-80 w-80 rounded-full bg-amber-600/15 blur-3xl" />
+        <div className="absolute -left-28 top-1/3 h-96 w-96 rounded-full bg-amber-500/12 blur-3xl" />
+        <div className="absolute right-0 top-2/3 h-80 w-80 rounded-full bg-amber-500/10 blur-3xl" />
+        <div className="absolute left-1/2 top-14 h-44 w-44 -translate-x-1/2 rotate-45 rounded-[34px] border border-amber-500/20" />
+        <div className="absolute right-10 top-52 h-28 w-28 rotate-12 rounded-2xl border border-stone-600/35 bg-stone-900/30" />
+        <div className="absolute left-16 top-[55%] h-20 w-20 rotate-6 rounded-2xl border border-amber-500/18" />
+        <div className="absolute right-24 top-[70%] h-14 w-14 -rotate-12 rounded-xl border border-stone-600/30 bg-stone-900/25" />
       </div>
 
       <div className="relative mx-auto max-w-6xl px-4 py-7 sm:px-6 sm:py-10 md:py-12" style={{ zIndex: 1 }}>
-        <div className="mb-8 rounded-2xl border border-slate-200/80 bg-white/85 p-4 shadow-[0_14px_38px_rgba(15,23,42,0.10)] backdrop-blur sm:mb-10 sm:rounded-3xl sm:p-6">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-500">PrivatePrep Workspace</p>
-          <h1 className="mt-2 text-xl font-bold tracking-tight text-slate-800 sm:text-2xl md:text-3xl">Tools für deine Vorbereitung</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-500">
+        <div className="mb-8 rounded-2xl border border-stone-600/40 bg-app-surface/90 p-4 shadow-landing backdrop-blur sm:mb-10 sm:rounded-3xl sm:p-6">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-400">PrivatePrep Workspace</p>
+          <h1 className="mt-2 text-xl font-bold tracking-tight text-stone-50 sm:text-2xl md:text-3xl">Tools für deine Vorbereitung</h1>
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-stone-400">
             Wähle das passende Tool für deinen nächsten Schritt. Alle Bereiche sind auf Fokus, Übersicht und schnelle Umsetzung ausgerichtet.
           </p>
         </div>
 
         <section className="mb-8 sm:mb-10">
-          <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.15em] text-slate-400">Karriere Tools</h2>
+          <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.15em] text-stone-500">Karriere Tools</h2>
           {renderCards(careerTools)}
         </section>
 
         <section>
-          <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.15em] text-slate-400">Weitere Tools</h2>
+          <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.15em] text-stone-500">Weitere Tools</h2>
           {renderCards(otherTools)}
         </section>
       </div>
@@ -291,28 +284,28 @@ export default function ToolsPage() {
           onClick={() => setSelected(null)}
         >
           <div
-            className="flex w-full max-h-[92svh] max-h-[92vh] flex-col overflow-hidden rounded-t-3xl border border-slate-200/80 bg-white shadow-2xl animate-slide-up sm:max-w-2xl sm:rounded-3xl"
+            className="flex w-full max-h-[92svh] max-h-[92vh] flex-col overflow-hidden rounded-t-3xl border border-stone-600/45 bg-app-surface shadow-2xl animate-slide-up sm:max-w-2xl sm:rounded-3xl"
             onClick={event => event.stopPropagation()}
           >
             {/* Drag handle (mobile only) */}
             <div className="flex flex-shrink-0 justify-center pt-3 pb-1 sm:hidden">
-              <div className="h-1 w-9 rounded-full bg-slate-200" />
+              <div className="h-1 w-9 rounded-full bg-stone-600" />
             </div>
 
             {/* Sticky header */}
-            <div className="flex flex-shrink-0 items-center justify-between border-b border-slate-100 px-4 py-3 sm:px-6 sm:py-4">
+            <div className="flex flex-shrink-0 items-center justify-between border-b border-stone-600/35 px-4 py-3 sm:px-6 sm:py-4">
               <div className="flex items-center gap-2.5">
                 <div className={`flex h-8 w-8 items-center justify-center rounded-xl border ${selected.accent.soft} ${selected.accent.ring}`}>
                   <selected.icon size={15} />
                 </div>
-                <p className="text-sm font-semibold text-slate-800">{selected.name}</p>
+                <p className="text-sm font-semibold text-stone-100">{selected.name}</p>
                 <span className={`hidden rounded-full border px-2 py-0.5 text-[10px] font-semibold sm:inline-flex ${selected.accent.chip}`}>
                   {selected.badge}
                 </span>
               </div>
               <button
                 onClick={() => setSelected(null)}
-                className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+                className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg text-stone-400 transition-colors hover:bg-white/10 hover:text-stone-100"
                 aria-label="Schließen"
               >
                 <X size={16} />
@@ -324,13 +317,13 @@ export default function ToolsPage() {
               <div className="grid grid-cols-1 gap-4 p-4 sm:gap-5 sm:p-6 md:grid-cols-[1.1fr_0.9fr]">
                 {/* Left column: description + examples */}
                 <div>
-                  <p className="text-sm leading-relaxed text-slate-600">{selected.fullDescription}</p>
+                  <p className="text-sm leading-relaxed text-stone-300">{selected.fullDescription}</p>
 
-                  <div className="mt-4 rounded-2xl border border-slate-100 bg-slate-50/70 p-3.5">
-                    <p className="text-[10.5px] font-bold uppercase tracking-[0.14em] text-slate-400">Beispielprompts</p>
+                  <div className="mt-4 rounded-2xl border border-stone-600/30 bg-app-muted/80 p-3.5">
+                    <p className="text-[10.5px] font-bold uppercase tracking-[0.14em] text-stone-500">Beispielprompts</p>
                     <div className="mt-2.5 space-y-2">
                       {selected.examples.map(example => (
-                        <div key={example} className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-[13px] leading-snug text-slate-700">
+                        <div key={example} className="rounded-xl border border-stone-600/35 bg-app-raised/90 px-3 py-2.5 text-[13px] leading-snug text-stone-200">
                           "{example}"
                         </div>
                       ))}
@@ -339,19 +332,19 @@ export default function ToolsPage() {
                 </div>
 
                 {/* Right column: preview + CTA */}
-                <div className="flex flex-col rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <p className="text-sm font-semibold text-slate-700">Direkt starten</p>
-                  <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                <div className="flex flex-col rounded-2xl border border-stone-600/35 bg-app-muted/80 p-4">
+                  <p className="text-sm font-semibold text-stone-200">Direkt starten</p>
+                  <p className="mt-1 text-xs leading-relaxed text-stone-400">
                     Öffne das Tool im Chat und arbeite mit deinem eigenen Kontext.
                   </p>
 
                   <div className="mt-3.5 space-y-2">
                     {selected.preview.map(row => (
-                      <div key={row.title} className="flex items-center gap-2.5 rounded-xl border border-slate-200 bg-white px-3 py-2">
+                      <div key={row.title} className="flex items-center gap-2.5 rounded-xl border border-stone-600/35 bg-app-raised/85 px-3 py-2">
                         <span className={`h-6 w-1 flex-shrink-0 rounded-full ${row.line}`} />
                         <div className="min-w-0">
-                          <p className="truncate text-xs font-semibold text-slate-700">{row.title}</p>
-                          <p className="truncate text-[11px] text-slate-500">{row.subtitle}</p>
+                          <p className="truncate text-xs font-semibold text-stone-200">{row.title}</p>
+                          <p className="truncate text-[11px] text-stone-500">{row.subtitle}</p>
                         </div>
                       </div>
                     ))}
@@ -367,7 +360,7 @@ export default function ToolsPage() {
                     </button>
                     <button
                       onClick={() => setSelected(null)}
-                      className="inline-flex w-full items-center justify-center rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-500 transition-colors hover:border-slate-300 hover:text-slate-700"
+                      className="inline-flex w-full items-center justify-center rounded-xl border border-stone-600/45 px-4 py-2.5 text-sm font-medium text-stone-400 transition-colors hover:border-stone-500/55 hover:text-stone-200"
                     >
                       Schließen
                     </button>
