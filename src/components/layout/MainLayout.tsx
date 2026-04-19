@@ -52,7 +52,7 @@ function MainLayoutShell() {
         className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#120c08] via-[#1a100a] to-[#16110d]"
         aria-hidden
       />
-      <div className="pointer-events-none absolute inset-0 landing-dot-grid opacity-[0.32]" aria-hidden />
+      <div className="pointer-events-none absolute inset-0 landing-dot-grid opacity-[0.42]" aria-hidden />
       <div className="relative z-10 flex h-full min-h-0 flex-col">
       <TopNavBar onMenuClick={() => setDrawerOpen(v => !v)} menuOpen={drawerOpen} />
 

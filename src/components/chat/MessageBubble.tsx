@@ -123,7 +123,7 @@ export default function MessageBubble({
       <div className="flex w-full animate-slide-up flex-col items-start gap-1">
         <JobAnalysisCard text={msg.text} showStreamCursor={showStreamCursor} />
         <div className="flex items-center gap-2 pl-1">
-          <span className="inline-flex items-center gap-1 rounded-full border border-sky-500/35 bg-sky-950/45 px-2 py-0.5 text-[11px] font-medium text-sky-300">
+          <span className="inline-flex items-center gap-1 rounded-full border border-sky-400/45 bg-sky-100/95 px-2 py-0.5 text-[11px] font-medium text-sky-900">
             <BriefcaseBusiness size={11} />
             <span>Stellenanalyse</span>
           </span>
@@ -164,13 +164,13 @@ export default function MessageBubble({
   if (!msg.isUser) {
     return (
       <div className="self-start flex max-w-[85%] animate-slide-up flex-col gap-1">
-        <div className="break-words rounded-[4px_18px_18px_18px] border border-stone-600/30 bg-stone-900/75 px-3.5 py-2.5 text-sm leading-relaxed text-stone-100">
-          <RenderedMarkdown content={msg.text} />
+        <div className="break-words rounded-[4px_18px_18px_18px] border border-stone-400/55 bg-app-parchment px-3.5 py-2.5 text-sm leading-relaxed text-stone-900 shadow-[0_10px_28px_-6px_rgba(0,0,0,0.45)]">
+          <RenderedMarkdown content={msg.text} variant="assistant" />
           {showStreamCursor ? <StreamingTextCursor /> : null}
         </div>
         <div className="flex items-center gap-2 px-1">
           {msg.toolUsed && msg.toolUsed !== 'analyze_job' && (
-            <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/35 bg-amber-950/45 px-2.5 py-0.5 text-[11px] font-medium text-amber-300">
+            <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/45 bg-amber-100/95 px-2.5 py-0.5 text-[11px] font-medium text-amber-950">
               <Settings2 size={11} />
               <span>{msg.toolUsed.replace(/_/g, ' ')}</span>
             </span>
@@ -184,7 +184,7 @@ export default function MessageBubble({
 
   return (
     <div className="flex max-w-[72%] animate-slide-up flex-col items-end gap-1 self-end">
-      <div className="break-words whitespace-pre-wrap rounded-[18px_18px_4px_18px] bg-primary px-3.5 py-2.5 text-sm leading-relaxed text-white">
+      <div className="break-words whitespace-pre-wrap rounded-[18px_18px_4px_18px] bg-primary px-3.5 py-2.5 text-sm leading-relaxed text-white shadow-[0_8px_22px_-4px_rgba(0,0,0,0.4)]">
         {msg.text}
       </div>
       <span className="px-1 text-[11px] text-stone-500">{time}</span>

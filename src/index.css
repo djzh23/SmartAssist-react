@@ -75,10 +75,6 @@
   background: #f8fafc;
 }
 
-.app-main-shell .rendered-md thead {
-  background: rgba(31, 26, 22, 0.95);
-}
-
 .rendered-md tr:last-child td {
   border-bottom: none;
 }

@@ -25,6 +25,9 @@ export default {
           muted:     '#14110e',
           raised:    '#1f1a16',
           border:    'rgba(168, 162, 158, 0.35)',
+          /** Warm cream “kachel” panels on dark sepia — high-contrast body text */
+          parchment:     '#faf6ee',
+          parchmentDeep: '#f3ebe0',
         },
         sidebar: {
           DEFAULT: '#14110e',

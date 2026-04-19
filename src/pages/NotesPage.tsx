@@ -153,10 +153,10 @@ export default function NotesPage() {
 
   const emptyHint = useMemo(
     () => (
-      <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 px-6 py-12 text-center">
-        <NotebookPen className="mx-auto mb-3 h-10 w-10 text-slate-300" aria-hidden />
-        <p className="text-sm font-medium text-slate-700">Noch keine Notizen</p>
-        <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
+      <div className="rounded-2xl border border-dashed border-stone-500/35 bg-app-parchment/60 px-6 py-12 text-center text-stone-900">
+        <NotebookPen className="mx-auto mb-3 h-10 w-10 text-stone-500" aria-hidden />
+        <p className="text-sm font-medium text-stone-900">Noch keine Notizen</p>
+        <p className="mx-auto mt-2 max-w-md text-sm text-stone-700">
           Speichere Assistant-Antworten im Chat über das Lesezeichen-Symbol unter der Nachricht.
         </p>
         <Link
@@ -173,7 +173,7 @@ export default function NotesPage() {
   if (!isSignedIn) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-12 text-center">
-        <p className="text-slate-600">Melde dich an, um Notizen zu speichern und zu verwalten.</p>
+        <p className="text-stone-400">Melde dich an, um Notizen zu speichern und zu verwalten.</p>
         <Link to="/" className="mt-3 inline-block text-sm font-medium text-primary hover:underline">
           Zur Startseite
         </Link>
@@ -189,13 +189,14 @@ export default function NotesPage() {
             <NotebookPen className="h-5 w-5" aria-hidden />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Notizen</h1>
-            <p className="mt-1 max-w-xl text-sm text-slate-600">
+            <h1 className="text-2xl font-bold text-stone-50">Notizen</h1>
+            <p className="mt-1 max-w-xl text-sm text-stone-400">
               Gespeicherte Antworten aus dem Chat — mit dem Server synchron, auf allen Geräten verfügbar.
             </p>
           </div>
         </div>
         <ServerSyncControl
+          variant="dark"
           className="self-start"
           onSync={() => void reload()}
           syncing={notesLoading}
@@ -234,23 +235,23 @@ export default function NotesPage() {
         </div>
       ) : null}
 
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm md:min-h-0 md:flex-row md:gap-0">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-stone-400/40 bg-app-parchment shadow-landing md:min-h-0 md:flex-row md:gap-0">
         {/* Liste */}
         <aside
           className={[
-            'flex min-h-0 w-full min-w-0 flex-shrink-0 flex-col border-slate-200 md:w-[min(100%,320px)] md:max-h-none md:border-r md:bg-slate-50/40',
+            'flex min-h-0 w-full min-w-0 flex-shrink-0 flex-col border-stone-400/35 md:w-[min(100%,320px)] md:max-h-none md:border-r md:bg-app-parchmentDeep/70',
             !isMdUp && mobileStep === 'reader' ? 'hidden' : '',
             !isMdUp ? 'max-md:max-h-[55vh] max-md:flex-1' : '',
           ].filter(Boolean).join(' ')}
         >
-          <div className="flex flex-shrink-0 flex-col gap-3 border-b border-slate-100 p-3 md:p-4">
+          <div className="flex flex-shrink-0 flex-col gap-3 border-b border-stone-400/30 p-3 md:p-4">
             <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden />
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-500" aria-hidden />
               <input
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 placeholder="Suche in Titel und Text …"
-                className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm outline-none focus:border-primary"
+                className="w-full rounded-xl border border-stone-400/50 bg-white py-2.5 pl-10 pr-3 text-sm text-stone-900 outline-none focus:border-primary"
                 aria-label="Suche"
               />
             </div>
@@ -258,14 +259,14 @@ export default function NotesPage() {
               <button
                 type="button"
                 onClick={clearTagFilters}
-                className="self-start rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50"
+                className="self-start rounded-lg border border-stone-400/45 bg-white px-2.5 py-1 text-xs font-medium text-stone-700 hover:bg-stone-100"
               >
                 Filter zurücksetzen
               </button>
             ) : null}
             {allTags.length > 0 ? (
               <div>
-                <p className="mb-1.5 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                <p className="mb-1.5 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-stone-600">
                   <Tag className="h-3 w-3" aria-hidden />
                   Tags (einer reicht)
                 </p>
@@ -279,7 +280,7 @@ export default function NotesPage() {
                         onClick={() => toggleTagFilter(t)}
                         className={[
                           'rounded-full border px-2.5 py-0.5 text-xs font-medium transition-colors',
-                          on ? 'border-primary bg-primary-light text-primary' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300',
+                          on ? 'border-primary bg-primary-light text-primary' : 'border-stone-400/45 bg-white text-stone-700 hover:border-stone-500/50',
                         ].join(' ')}
                       >
                         {t}
@@ -293,7 +294,7 @@ export default function NotesPage() {
 
           <div className="min-h-0 flex-1 overflow-y-auto p-2 md:p-3">
             {notesLoading && notes.length === 0 ? (
-              <div className="flex flex-col items-center justify-center gap-2 py-12 text-sm text-slate-500">
+              <div className="flex flex-col items-center justify-center gap-2 py-12 text-sm text-stone-600">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden />
                 Notizen werden geladen …
               </div>
@@ -301,7 +302,7 @@ export default function NotesPage() {
               ? emptyHint
               : filteredNotes.length === 0
                 ? (
-                    <p className="py-8 text-center text-sm text-slate-500">Keine Treffer für Suche oder Filter.</p>
+                    <p className="py-8 text-center text-sm text-stone-600">Keine Treffer für Suche oder Filter.</p>
                   )
                 : (
                     <ul className="flex flex-col gap-1">
@@ -316,18 +317,18 @@ export default function NotesPage() {
                                 if (!isMdUp) setMobileStep('reader')
                               }}
                               className={[
-                                'flex w-full flex-col rounded-xl border px-3 py-2.5 text-left transition active:bg-slate-50/80',
+                                'flex w-full flex-col rounded-xl border px-3 py-2.5 text-left transition active:bg-stone-200/50',
                                 active
                                   ? 'border-primary/50 bg-primary-light/70 shadow-sm'
-                                  : 'border-transparent bg-white hover:border-slate-200 hover:bg-white md:bg-transparent',
+                                  : 'border-transparent bg-white hover:border-stone-400/45 hover:bg-white md:bg-transparent',
                               ].join(' ')}
                             >
                               <span className="flex items-start justify-between gap-2">
-                                <span className="line-clamp-2 min-w-0 flex-1 text-sm font-semibold text-slate-900">{n.title}</span>
-                                <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-slate-300 md:hidden" aria-hidden />
+                                <span className="line-clamp-2 min-w-0 flex-1 text-sm font-semibold text-stone-900">{n.title}</span>
+                                <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-stone-400 md:hidden" aria-hidden />
                               </span>
-                              <span className="mt-1 line-clamp-2 text-xs leading-snug text-slate-500">{previewBody(n.body)}</span>
-                              <span className="mt-1.5 text-[10px] font-medium uppercase tracking-wide text-slate-400">
+                              <span className="mt-1 line-clamp-2 text-xs leading-snug text-stone-600">{previewBody(n.body)}</span>
+                              <span className="mt-1.5 text-[10px] font-medium uppercase tracking-wide text-stone-500">
                                 {formatDate(n.updatedAt)}
                               </span>
                             </button>
@@ -349,21 +350,21 @@ export default function NotesPage() {
         >
           {selected ? (
             <>
-              <div className="flex flex-shrink-0 flex-wrap items-start justify-between gap-2 border-b border-slate-100 px-3 py-3 sm:px-4 md:px-6">
+              <div className="flex flex-shrink-0 flex-wrap items-start justify-between gap-2 border-b border-stone-400/30 px-3 py-3 sm:px-4 md:px-6">
                 <div className="flex min-w-0 flex-1 items-start gap-2">
                   {!isMdUp ? (
                     <button
                       type="button"
                       onClick={() => setMobileStep('list')}
-                      className="mt-0.5 shrink-0 rounded-xl border border-slate-200 bg-white p-2 text-slate-600 shadow-sm transition hover:border-primary/40 hover:bg-primary-light/40 hover:text-primary"
+                      className="mt-0.5 shrink-0 rounded-xl border border-stone-400/45 bg-white p-2 text-stone-700 shadow-sm transition hover:border-primary/40 hover:bg-primary-light/40 hover:text-primary"
                       aria-label="Zurück zur Liste"
                     >
                       <ArrowLeft className="h-5 w-5" aria-hidden />
                     </button>
                   ) : null}
                   <div className="min-w-0 flex-1">
-                    <h2 className="text-base font-bold leading-snug text-slate-900 sm:text-lg md:text-xl">{selected.title}</h2>
-                    <p className="mt-1 text-xs text-slate-500">
+                    <h2 className="text-base font-bold leading-snug text-stone-900 sm:text-lg md:text-xl">{selected.title}</h2>
+                    <p className="mt-1 text-xs text-stone-600">
                       Zuletzt
                       {' '}
                       {formatDate(selected.updatedAt)}
@@ -374,7 +375,7 @@ export default function NotesPage() {
                   {selected.source ? (
                     <Link
                       to={`/chat?tool=${encodeURIComponent(selected.source.toolType)}`}
-                      className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:border-primary/40 hover:text-primary"
+                      className="inline-flex items-center gap-1 rounded-lg border border-stone-400/45 bg-white px-2.5 py-1.5 text-xs font-medium text-stone-700 hover:border-primary/40 hover:text-primary"
                     >
                       <ExternalLink className="h-3.5 w-3.5" aria-hidden />
                       Zum Chat
@@ -383,7 +384,7 @@ export default function NotesPage() {
                   <button
                     type="button"
                     onClick={() => openEdit(selected)}
-                    className="rounded-lg border border-slate-200 bg-white p-2 text-slate-600 hover:border-primary/40 hover:text-primary"
+                    className="rounded-lg border border-stone-400/45 bg-white p-2 text-stone-700 hover:border-primary/40 hover:text-primary"
                     aria-label="Bearbeiten"
                   >
                     <Pencil className="h-4 w-4" />
@@ -392,7 +393,7 @@ export default function NotesPage() {
                     type="button"
                     onClick={() => void handleDelete(selected.id)}
                     disabled={deletingId === selected.id}
-                    className="rounded-lg border border-slate-200 bg-white p-2 text-slate-600 hover:border-red-200 hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                    className="rounded-lg border border-stone-400/45 bg-white p-2 text-stone-700 hover:border-red-200 hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
                     aria-label="Löschen"
                   >
                     {deletingId === selected.id
@@ -402,7 +403,7 @@ export default function NotesPage() {
                 </div>
               </div>
               {selected.tags.length > 0 ? (
-                <div className="flex flex-shrink-0 flex-wrap gap-1.5 border-b border-slate-50 px-3 py-2 sm:px-4 md:px-6">
+                <div className="flex flex-shrink-0 flex-wrap gap-1.5 border-b border-stone-400/25 px-3 py-2 sm:px-4 md:px-6">
                   {selected.tags.map(t => (
                     <span
                       key={t}
@@ -414,14 +415,14 @@ export default function NotesPage() {
                 </div>
               ) : null}
               <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-3 py-4 sm:px-4 md:px-6 md:py-6">
-                <div className="mx-auto max-w-3xl rounded-2xl border border-slate-200/80 bg-gradient-to-b from-slate-50/90 via-white to-amber-50/20 px-3 py-5 shadow-inner sm:px-6 sm:py-7">
+                <div className="mx-auto max-w-3xl rounded-2xl border border-stone-400/35 bg-gradient-to-b from-app-parchment via-white to-amber-50/30 px-3 py-5 shadow-inner sm:px-6 sm:py-7">
                   <RenderedMarkdown content={selected.body} variant="reader" />
                 </div>
               </div>
             </>
           ) : notes.length > 0 && !notesLoading ? (
-            <div className="flex flex-1 flex-col items-center justify-center gap-2 p-8 text-center text-sm text-slate-500">
-              <NotebookPen className="h-10 w-10 text-slate-200" aria-hidden />
+            <div className="flex flex-1 flex-col items-center justify-center gap-2 p-8 text-center text-sm text-stone-600">
+              <NotebookPen className="h-10 w-10 text-stone-400" aria-hidden />
               Wähle eine Notiz aus der Liste.
             </div>
           ) : null}
@@ -438,39 +439,39 @@ export default function NotesPage() {
           }}
         >
           <div
-            className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-slate-200 bg-white p-5 shadow-xl"
+            className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-stone-400/45 bg-white p-5 shadow-xl"
             onClick={e => e.stopPropagation()}
           >
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-slate-900">Notiz bearbeiten</h2>
-              <button type="button" onClick={closeEdit} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100" aria-label="Schließen">
+              <h2 className="text-lg font-bold text-stone-900">Notiz bearbeiten</h2>
+              <button type="button" onClick={closeEdit} className="rounded-lg p-1 text-stone-500 hover:bg-stone-100" aria-label="Schließen">
                 <X className="h-5 w-5" />
               </button>
             </div>
             {editError ? (
               <p className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900">{editError}</p>
             ) : null}
-            <label className="mb-1 block text-xs font-semibold uppercase text-slate-500">Titel</label>
+            <label className="mb-1 block text-xs font-semibold uppercase text-stone-600">Titel</label>
             <input
               value={editTitle}
               onChange={e => setEditTitle(e.target.value)}
-              className="mb-3 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-primary"
+              className="mb-3 w-full rounded-lg border border-stone-400/45 px-3 py-2 text-sm outline-none focus:border-primary"
             />
-            <label className="mb-1 block text-xs font-semibold uppercase text-slate-500">Inhalt</label>
+            <label className="mb-1 block text-xs font-semibold uppercase text-stone-600">Inhalt</label>
             <textarea
               value={editBody}
               onChange={e => setEditBody(e.target.value)}
               rows={12}
-              className="mb-3 w-full resize-y rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-primary"
+              className="mb-3 w-full resize-y rounded-lg border border-stone-400/45 px-3 py-2 text-sm outline-none focus:border-primary"
             />
-            <label className="mb-1 block text-xs font-semibold uppercase text-slate-500">Tags</label>
+            <label className="mb-1 block text-xs font-semibold uppercase text-stone-600">Tags</label>
             <div className="mb-2 flex flex-wrap gap-1.5">
               {editTags.map(t => (
                 <button
                   key={t}
                   type="button"
                   onClick={() => setEditTags(prev => prev.filter(x => x !== t))}
-                  className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs text-slate-700 hover:border-red-200 hover:bg-red-50"
+                  className="rounded-full border border-stone-400/45 bg-stone-100/90 px-2 py-0.5 text-xs text-stone-800 hover:border-red-200 hover:bg-red-50"
                 >
                   {t}
                   {' '}
@@ -488,15 +489,15 @@ export default function NotesPage() {
                     addEditTag()
                   }
                 }}
-                className="min-w-0 flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-primary"
+                className="min-w-0 flex-1 rounded-lg border border-stone-400/45 px-3 py-2 text-sm outline-none focus:border-primary"
                 placeholder="Tag, Enter"
               />
-              <button type="button" onClick={addEditTag} className="rounded-lg border border-slate-200 px-3 py-2 text-sm hover:bg-slate-50">
+              <button type="button" onClick={addEditTag} className="rounded-lg border border-stone-400/45 px-3 py-2 text-sm hover:bg-stone-100">
                 Hinzufügen
               </button>
             </div>
             <div className="flex justify-end gap-2">
-              <button type="button" onClick={closeEdit} className="rounded-lg border border-slate-200 px-4 py-2 text-sm hover:bg-slate-50">
+              <button type="button" onClick={closeEdit} className="rounded-lg border border-stone-400/45 px-4 py-2 text-sm hover:bg-stone-100">
                 Abbrechen
               </button>
               <button

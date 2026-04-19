@@ -128,22 +128,22 @@ function LearningInsightsPanel() {
   }
 
   return (
-    <section className="mb-8 rounded-xl border border-amber-200/80 bg-amber-50/40 p-5 shadow-sm">
+    <section className="mb-8 rounded-xl border border-amber-500/35 bg-app-parchment p-5 shadow-landing text-stone-900">
       <div className="mb-3 flex items-center gap-2">
-        <Lightbulb className="h-5 w-5 text-amber-600" aria-hidden />
-        <h2 className="text-sm font-semibold text-slate-900">To-dos aus Chats</h2>
+        <Lightbulb className="h-5 w-5 text-amber-700" aria-hidden />
+        <h2 className="text-sm font-semibold text-stone-900">To-dos aus Chats</h2>
       </div>
-      <p className="mb-4 text-sm text-slate-600">
+      <p className="mb-4 text-sm text-stone-700">
         Einträge aus Stellenanalyse und Interview-Coach — gebündelt pro Bewerbung, wenn die Session verknüpft war.
         Bearbeite Titel oder Text; „Erledigt“ entfernt den Eintrag aus dem KI-Kontext.
       </p>
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <label className="flex items-center gap-2 text-xs text-slate-600">
-          <span className="font-medium text-slate-700">Filter</span>
+        <label className="flex items-center gap-2 text-xs text-stone-700">
+          <span className="font-medium text-stone-800">Filter</span>
           <select
             value={filterAppId}
             onChange={e => setFilterAppId(e.target.value)}
-            className="rounded-md border border-amber-200/80 bg-white px-2 py-1 text-xs text-slate-800"
+            className="rounded-md border border-stone-400/50 bg-white px-2 py-1 text-xs text-stone-900"
           >
             <option value="">Alle offenen + passende allgemeine</option>
             {applications.map(a => (
@@ -155,27 +155,27 @@ function LearningInsightsPanel() {
         </label>
       </div>
       {loading && (
-        <div className="flex items-center gap-2 text-sm text-slate-500">
+        <div className="flex items-center gap-2 text-sm text-stone-600">
           <Loader2 className="animate-spin" size={18} />
           Lade…
         </div>
       )}
       {err && <p className="text-sm text-red-600">{err}</p>}
       {!loading && !err && rows.length === 0 && (
-        <p className="text-sm text-slate-500">Noch keine offenen To-dos für diesen Filter.</p>
+        <p className="text-sm text-stone-600">Noch keine offenen To-dos für diesen Filter.</p>
       )}
       {!loading && rows.length > 0 && (
         <div className="flex flex-col gap-5">
           {[...grouped.entries()].map(([gid, list]) => (
             <div key={gid}>
-              <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-amber-800/90">
+              <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-amber-900/90">
                 {appLabel(gid)}
               </p>
               <ul className="flex flex-col gap-2">
                 {list.map(r => (
                   <li
                     key={r.id}
-                    className="rounded-lg border border-amber-100 bg-white px-3 py-2.5 shadow-sm"
+                    className="rounded-lg border border-stone-400/35 bg-white/90 px-3 py-2.5 shadow-sm"
                   >
                     <div className="mb-2 flex flex-wrap items-center gap-2">
                       <span className="text-[10px] font-bold uppercase text-amber-700">{r.category}</span>
@@ -189,7 +189,7 @@ function LearningInsightsPanel() {
                         if (v !== (r.title ?? '').trim())
                           void onPatchBlur(r.id, { title: v || undefined })
                       }}
-                      className="mb-2 w-full rounded border border-slate-200 px-2 py-1 text-xs text-slate-800"
+                      className="mb-2 w-full rounded border border-stone-300 px-2 py-1 text-xs text-stone-900"
                     />
                     <textarea
                       defaultValue={r.content}
@@ -199,14 +199,14 @@ function LearningInsightsPanel() {
                         if (v && v !== r.content.trim())
                           void onPatchBlur(r.id, { content: v })
                       }}
-                      className="mb-2 w-full resize-y rounded border border-slate-200 px-2 py-1 text-sm text-slate-800"
+                      className="mb-2 w-full resize-y rounded border border-stone-300 px-2 py-1 text-sm text-stone-900"
                     />
                     <div className="flex justify-end">
                       <button
                         type="button"
                         disabled={busyId === r.id}
                         onClick={() => void onResolve(r.id)}
-                        className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                        className="rounded-md border border-stone-300 bg-white px-3 py-1.5 text-xs font-medium text-stone-800 hover:bg-stone-100 disabled:opacity-50"
                       >
                         {busyId === r.id ? '…' : 'Erledigt'}
                       </button>
@@ -603,7 +603,7 @@ export default function CareerProfilePage() {
 
   if (!isLoaded || loading) {
     return (
-      <div className="flex min-h-0 flex-1 items-center justify-center text-slate-500">
+      <div className="flex min-h-0 flex-1 items-center justify-center text-stone-400">
         <Loader2 className="animate-spin" size={28} />
       </div>
     )
@@ -630,12 +630,12 @@ export default function CareerProfilePage() {
   const level = profile.level ?? ''
 
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden bg-slate-50">
+    <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden bg-transparent">
       <div className="mx-auto w-full max-w-3xl px-4 py-6">
         <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
-            <h1 className="mb-1 text-2xl font-semibold text-slate-900">Karriereprofil</h1>
-            <p className="text-sm text-slate-600">
+            <h1 className="mb-1 text-2xl font-semibold text-stone-50">Karriereprofil</h1>
+            <p className="text-sm text-stone-400">
               Diese Daten kannst du in den Chat-Kontext einbinden (Schalter über dem Eingabefeld). Du bearbeitest hier
               dieselben Infos wie in der{' '}
               <Link to="/onboarding" className="font-medium text-primary hover:underline">
@@ -645,6 +645,7 @@ export default function CareerProfilePage() {
             </p>
           </div>
           <ServerSyncControl
+            variant="dark"
             className="shrink-0"
             onSync={() => void load()}
             syncing={loading}
@@ -654,23 +655,23 @@ export default function CareerProfilePage() {
 
         <LearningInsightsPanel />
 
-        <section className="mb-8 rounded-xl border border-violet-200 bg-white p-5 shadow-sm">
-          <h2 className="mb-1 text-sm font-semibold text-slate-900">Profil ausfüllen</h2>
-          <p className="mb-4 text-sm text-slate-600">
+        <section className="mb-8 rounded-xl border border-violet-500/35 bg-app-parchment p-5 shadow-landing text-stone-900">
+          <h2 className="mb-1 text-sm font-semibold text-stone-900">Profil ausfüllen</h2>
+          <p className="mb-4 text-sm text-stone-700">
             PDF: Wir speichern den extrahierten Rohtext auf dem Server; die erkannten Felder sind Vorschläge — du kannst
             im Formular unten ergänzen oder korrigieren und pro Abschnitt speichern. Manuell: Daten direkt eintragen;
-            Auswahl in <strong className="font-medium text-slate-800">Basis</strong> speichert beim Ändern, Rolle beim
+            Auswahl in <strong className="font-medium text-stone-900">Basis</strong> speichert beim Ändern, Rolle beim
             Verlassen des Feldes.
           </p>
-          <div className="mb-4 flex rounded-lg border border-slate-200 bg-slate-100 p-0.5 text-xs font-semibold sm:text-sm">
+          <div className="mb-4 flex rounded-lg border border-stone-400/40 bg-app-parchmentDeep p-0.5 text-xs font-semibold sm:text-sm">
             <button
               type="button"
               onClick={() => setDataEntryTab('pdf')}
               className={[
                 'flex-1 rounded-md py-2.5 transition-colors',
                 dataEntryTab === 'pdf'
-                  ? 'bg-white text-slate-900 shadow-sm'
-                  : 'text-slate-500 hover:text-slate-700',
+                  ? 'bg-white text-stone-900 shadow-sm'
+                  : 'text-stone-600 hover:text-stone-900',
               ].join(' ')}
             >
               PDF hochladen &amp; erkennen
@@ -681,8 +682,8 @@ export default function CareerProfilePage() {
               className={[
                 'flex-1 rounded-md py-2.5 transition-colors',
                 dataEntryTab === 'manual'
-                  ? 'bg-white text-slate-900 shadow-sm'
-                  : 'text-slate-500 hover:text-slate-700',
+                  ? 'bg-white text-stone-900 shadow-sm'
+                  : 'text-stone-600 hover:text-stone-900',
               ].join(' ')}
             >
               Manuell ausfüllen
@@ -700,22 +701,22 @@ export default function CareerProfilePage() {
             />
           )}
           {dataEntryTab === 'manual' && (
-            <p className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2.5 text-sm text-slate-600">
-              Nutze die Abschnitte <strong className="font-medium text-slate-800">Basis</strong>,{' '}
-              <strong className="font-medium text-slate-800">Skills</strong>,{' '}
-              <strong className="font-medium text-slate-800">Berufserfahrung</strong> usw. unten auf dieser Seite. Zum
-              Vorbelegen per KI kannst du jederzeit auf <strong className="font-medium text-slate-800">PDF hochladen</strong>{' '}
+            <p className="rounded-lg border border-stone-400/30 bg-app-parchmentDeep px-3 py-2.5 text-sm text-stone-700">
+              Nutze die Abschnitte <strong className="font-medium text-stone-900">Basis</strong>,{' '}
+              <strong className="font-medium text-stone-900">Skills</strong>,{' '}
+              <strong className="font-medium text-stone-900">Berufserfahrung</strong> usw. unten auf dieser Seite. Zum
+              Vorbelegen per KI kannst du jederzeit auf <strong className="font-medium text-stone-900">PDF hochladen</strong>{' '}
               wechseln.
             </p>
           )}
         </section>
 
         {profile.onboardingCompleted ? (
-          <div className="mb-6 flex gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-950">
+          <div className="mb-6 flex gap-3 rounded-xl border border-emerald-600/35 bg-app-parchment px-4 py-3 text-sm text-stone-900">
             <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-emerald-600" aria-hidden />
             <div>
-              <p className="font-semibold text-emerald-950">Profil eingerichtet</p>
-              <p className="mt-1.5 leading-relaxed text-emerald-900/95">
+              <p className="font-semibold text-emerald-900">Profil eingerichtet</p>
+              <p className="mt-1.5 leading-relaxed text-stone-800">
                 Das Setup ist abgehakt: der Chat zeigt keinen Einrichtungs-Hinweis mehr. Ob deine Daten beim Senden
                 wirklich mit an den Assistenten gehen, siehst du im Chat an den <strong className="font-medium">Kontext</strong>
                 -Schaltern — <strong className="font-medium">farbig = aktiv</strong> (z.&nbsp;B. Profil, Skills).
@@ -723,9 +724,9 @@ export default function CareerProfilePage() {
             </div>
           </div>
         ) : canMarkProfileSetupComplete(profile) ? (
-          <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-            <p className="font-semibold">Daten gespeichert — Setup noch nicht abgeschlossen</p>
-            <p className="mt-2 leading-relaxed text-amber-900/95">
+          <div className="mb-6 rounded-xl border border-amber-600/35 bg-app-parchment px-4 py-3 text-sm text-stone-900">
+            <p className="font-semibold text-amber-950">Daten gespeichert — Setup noch nicht abgeschlossen</p>
+            <p className="mt-2 leading-relaxed text-stone-800">
               Deine Eingaben sind schon auf dem Server. „Eingerichtet“ ist nur die Bestätigung, dass du das Onboarding
               nicht mehr brauchst (wie der letzte Schritt der{' '}
               <Link to="/onboarding" className="font-medium text-primary underline-offset-2 hover:underline">
@@ -744,7 +745,7 @@ export default function CareerProfilePage() {
             </button>
           </div>
         ) : (
-          <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <div className="mb-6 rounded-xl border border-amber-600/35 bg-app-parchment px-4 py-3 text-sm text-stone-900">
             <strong className="font-medium">Noch nicht eingerichtet:</strong> Wähle mindestens{' '}
             <strong className="font-medium">Berufsfeld</strong>, <strong className="font-medium">Level</strong> und ein{' '}
             <strong className="font-medium">Ziel</strong>, dann kannst du das Setup hier oder per{' '}
@@ -762,7 +763,7 @@ export default function CareerProfilePage() {
         )}
 
         {pendingMergedDraftHint && (
-          <div className="mb-4 flex flex-col gap-3 rounded-lg border border-violet-200 bg-violet-50/80 px-4 py-3 text-sm text-slate-800 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mb-4 flex flex-col gap-3 rounded-lg border border-violet-500/35 bg-app-parchment px-4 py-3 text-sm text-stone-900 sm:flex-row sm:items-center sm:justify-between">
             <p>
               Erkenntnis aus dem PDF wurde ins Formular übernommen — noch nicht auf dem Server. Mit „Jetzt
               synchronisieren“ werden alle sichtbaren Felder gespeichert (inkl. Ergänzungen).
@@ -785,11 +786,11 @@ export default function CareerProfilePage() {
           </div>
         )}
 
-        <section className="mb-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="mb-3 text-sm font-semibold text-slate-800">Basis</h2>
+        <section className="mb-8 rounded-xl border border-stone-400/40 bg-app-parchment p-5 shadow-landing text-stone-900">
+          <h2 className="mb-3 text-sm font-semibold text-stone-900">Basis</h2>
           <div className="grid gap-3 md:grid-cols-2">
             <label className="block text-sm">
-              <span className="text-slate-600">Berufsfeld</span>
+              <span className="text-stone-700">Berufsfeld</span>
               <select
                 value={field}
                 onChange={e => {
@@ -797,7 +798,7 @@ export default function CareerProfilePage() {
                   const label = FIELDS.find(f => f.value === v)?.label ?? ''
                   void saveProfilePatch({ field: v || null, fieldLabel: label || null })
                 }}
-                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800"
+                className="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 text-stone-900"
               >
                 <option value="">—</option>
                 {FIELDS.map(f => (
@@ -806,7 +807,7 @@ export default function CareerProfilePage() {
               </select>
             </label>
             <label className="block text-sm">
-              <span className="text-slate-600">Level</span>
+              <span className="text-stone-700">Level</span>
               <select
                 value={level}
                 onChange={e => {
@@ -814,7 +815,7 @@ export default function CareerProfilePage() {
                   const label = LEVELS.find(l => l.value === v)?.label ?? ''
                   void saveProfilePatch({ level: v || null, levelLabel: label || null })
                 }}
-                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800"
+                className="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 text-stone-900"
               >
                 <option value="">—</option>
                 {LEVELS.map(l => (
@@ -823,17 +824,17 @@ export default function CareerProfilePage() {
               </select>
             </label>
             <label className="col-span-full block text-sm">
-              <span className="text-slate-600">Aktuelle Rolle</span>
+              <span className="text-stone-700">Aktuelle Rolle</span>
               <input
                 type="text"
                 value={profile.currentRole ?? ''}
                 onChange={e => setProfile({ ...profile, currentRole: e.target.value })}
                 onBlur={() => void saveProfilePatch({ currentRole: profile.currentRole?.trim() || null })}
-                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800"
+                className="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 text-stone-900"
               />
             </label>
           </div>
-          <p className="mt-4 text-xs font-medium text-slate-500">Ziele</p>
+          <p className="mt-4 text-xs font-medium text-stone-600">Ziele</p>
           <div className="mt-2 flex flex-wrap gap-2">
             {GOALS.map(g => (
               <button
@@ -844,7 +845,7 @@ export default function CareerProfilePage() {
                   'rounded-full px-3 py-1 text-xs font-medium',
                   profile.goals.includes(g.id)
                     ? 'bg-primary text-white'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200',
+                    : 'border border-stone-400/40 bg-stone-200/70 text-stone-800 hover:bg-stone-300/60',
                 ].join(' ')}
               >
                 {g.label}
@@ -863,23 +864,23 @@ export default function CareerProfilePage() {
                   levelLabel: LEVELS.find(l => l.value === level)?.label ?? profile.levelLabel ?? null,
                   currentRole: profile.currentRole?.trim() || null,
                 })}
-              className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 shadow-sm hover:bg-slate-50 disabled:opacity-50"
+              className="inline-flex items-center justify-center rounded-xl border border-stone-400/50 bg-white px-4 py-2.5 text-sm font-medium text-stone-900 shadow-sm hover:bg-stone-100 disabled:opacity-50"
             >
               Änderungen speichern
             </button>
           </div>
         </section>
 
-        <section className="mb-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="mb-3 text-sm font-semibold text-slate-800">Skills (max. 30)</h2>
+        <section className="mb-8 rounded-xl border border-stone-400/40 bg-app-parchment p-5 shadow-landing text-stone-900">
+          <h2 className="mb-3 text-sm font-semibold text-stone-900">Skills (max. 30)</h2>
           <div className="mb-3 flex flex-wrap gap-2">
             {profile.skills.map(s => (
               <span
                 key={s}
-                className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-700"
+                className="inline-flex items-center gap-1 rounded-full border border-stone-400/35 bg-stone-100/90 px-3 py-1 text-xs text-stone-800"
               >
                 {s}
-                <button type="button" onClick={() => void removeSkill(s)} className="text-slate-400 hover:text-red-600">
+                <button type="button" onClick={() => void removeSkill(s)} className="text-stone-500 hover:text-red-600">
                   <Trash2 size={12} />
                 </button>
               </span>
@@ -890,7 +891,7 @@ export default function CareerProfilePage() {
               value={skillDraft}
               onChange={e => setSkillDraft(e.target.value)}
               placeholder="Skill hinzufügen…"
-              className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              className="flex-1 rounded-lg border border-stone-300 px-3 py-2 text-sm"
               onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), void addSkill())}
             />
             <button
@@ -904,10 +905,10 @@ export default function CareerProfilePage() {
           </div>
         </section>
 
-        <section className="mb-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="mb-3 text-sm font-semibold text-slate-800">Berufserfahrung</h2>
+        <section className="mb-8 rounded-xl border border-stone-400/40 bg-app-parchment p-5 shadow-landing text-stone-900">
+          <h2 className="mb-3 text-sm font-semibold text-stone-900">Berufserfahrung</h2>
           {(profile.experience ?? []).map((exp, i) => (
-            <div key={i} className="mb-3 grid gap-2 rounded-lg border border-slate-100 p-3 md:grid-cols-2">
+            <div key={i} className="mb-3 grid gap-2 rounded-lg border border-stone-300/40 p-3 md:grid-cols-2">
               <input
                 placeholder="Titel"
                 value={exp.title ?? ''}
@@ -916,7 +917,7 @@ export default function CareerProfilePage() {
                   next[i] = { ...next[i], title: e.target.value }
                   setProfile({ ...profile, experience: next })
                 }}
-                className="rounded border border-slate-200 px-2 py-1 text-sm"
+                className="rounded border border-stone-300 px-2 py-1 text-sm"
               />
               <input
                 placeholder="Firma"
@@ -926,7 +927,7 @@ export default function CareerProfilePage() {
                   next[i] = { ...next[i], company: e.target.value }
                   setProfile({ ...profile, experience: next })
                 }}
-                className="rounded border border-slate-200 px-2 py-1 text-sm"
+                className="rounded border border-stone-300 px-2 py-1 text-sm"
               />
               <input
                 placeholder="Dauer"
@@ -936,7 +937,7 @@ export default function CareerProfilePage() {
                   next[i] = { ...next[i], duration: e.target.value }
                   setProfile({ ...profile, experience: next })
                 }}
-                className="rounded border border-slate-200 px-2 py-1 text-sm"
+                className="rounded border border-stone-300 px-2 py-1 text-sm"
               />
               <input
                 placeholder="Kurzbeschreibung"
@@ -946,13 +947,13 @@ export default function CareerProfilePage() {
                   next[i] = { ...next[i], summary: e.target.value }
                   setProfile({ ...profile, experience: next })
                 }}
-                className="col-span-full rounded border border-slate-200 px-2 py-1 text-sm"
+                className="col-span-full rounded border border-stone-300 px-2 py-1 text-sm"
               />
               <div className="col-span-full flex justify-end">
                 <button
                   type="button"
                   onClick={() => removeExperienceRow(i)}
-                  className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-red-50 hover:text-red-700"
+                  className="inline-flex items-center gap-1 rounded-lg border border-stone-300 px-3 py-1.5 text-xs font-medium text-stone-700 hover:bg-red-50 hover:text-red-700"
                   aria-label="Eintrag entfernen"
                 >
                   <Trash2 size={14} aria-hidden />
@@ -965,7 +966,7 @@ export default function CareerProfilePage() {
             <button
               type="button"
               onClick={() => setProfile({ ...profile, experience: [...(profile.experience ?? []), emptyExp()] })}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-primary shadow-sm hover:bg-primary-light/40"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-primary shadow-sm hover:bg-primary-light/40"
             >
               <Plus size={18} aria-hidden />
               Eintrag hinzufügen
@@ -980,8 +981,8 @@ export default function CareerProfilePage() {
           </div>
         </section>
 
-        <section className="mb-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="mb-3 text-sm font-semibold text-slate-800">Ausbildung</h2>
+        <section className="mb-8 rounded-xl border border-stone-400/40 bg-app-parchment p-5 shadow-landing text-stone-900">
+          <h2 className="mb-3 text-sm font-semibold text-stone-900">Ausbildung</h2>
           {(profile.educationEntries ?? []).map((ed, i) => (
             <div key={i} className="mb-3 grid gap-2 md:grid-cols-3">
               <input
@@ -992,7 +993,7 @@ export default function CareerProfilePage() {
                   next[i] = { ...next[i], degree: e.target.value }
                   setProfile({ ...profile, educationEntries: next })
                 }}
-                className="rounded border border-slate-200 px-2 py-1 text-sm"
+                className="rounded border border-stone-300 px-2 py-1 text-sm"
               />
               <input
                 placeholder="Institution"
@@ -1002,7 +1003,7 @@ export default function CareerProfilePage() {
                   next[i] = { ...next[i], institution: e.target.value }
                   setProfile({ ...profile, educationEntries: next })
                 }}
-                className="rounded border border-slate-200 px-2 py-1 text-sm"
+                className="rounded border border-stone-300 px-2 py-1 text-sm"
               />
               <input
                 placeholder="Jahr"
@@ -1012,13 +1013,13 @@ export default function CareerProfilePage() {
                   next[i] = { ...next[i], year: e.target.value }
                   setProfile({ ...profile, educationEntries: next })
                 }}
-                className="rounded border border-slate-200 px-2 py-1 text-sm"
+                className="rounded border border-stone-300 px-2 py-1 text-sm"
               />
               <div className="flex items-center justify-end md:col-span-3">
                 <button
                   type="button"
                   onClick={() => removeEducationRow(i)}
-                  className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-red-50 hover:text-red-700"
+                  className="inline-flex items-center gap-1 rounded-lg border border-stone-300 px-3 py-1.5 text-xs font-medium text-stone-700 hover:bg-red-50 hover:text-red-700"
                   aria-label="Eintrag entfernen"
                 >
                   <Trash2 size={14} aria-hidden />
@@ -1035,7 +1036,7 @@ export default function CareerProfilePage() {
                   ...profile,
                   educationEntries: [...(profile.educationEntries ?? []), emptyEdu()],
                 })}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-primary shadow-sm hover:bg-primary-light/40"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-primary shadow-sm hover:bg-primary-light/40"
             >
               <Plus size={18} aria-hidden />
               Eintrag hinzufügen
@@ -1050,8 +1051,8 @@ export default function CareerProfilePage() {
           </div>
         </section>
 
-        <section className="mb-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="mb-3 text-sm font-semibold text-slate-800">Sprachen</h2>
+        <section className="mb-8 rounded-xl border border-stone-400/40 bg-app-parchment p-5 shadow-landing text-stone-900">
+          <h2 className="mb-3 text-sm font-semibold text-stone-900">Sprachen</h2>
           {(profile.languages ?? []).map((lang, i) => (
             <div key={i} className="mb-2 flex gap-2">
               <input
@@ -1062,7 +1063,7 @@ export default function CareerProfilePage() {
                   next[i] = { ...next[i], name: e.target.value }
                   setProfile({ ...profile, languages: next })
                 }}
-                className="flex-1 rounded border border-slate-200 px-2 py-1 text-sm"
+                className="flex-1 rounded border border-stone-300 px-2 py-1 text-sm"
               />
               <input
                 placeholder="Level"
@@ -1072,12 +1073,12 @@ export default function CareerProfilePage() {
                   next[i] = { ...next[i], level: e.target.value }
                   setProfile({ ...profile, languages: next })
                 }}
-                className="w-28 rounded border border-slate-200 px-2 py-1 text-sm"
+                className="w-28 rounded border border-stone-300 px-2 py-1 text-sm"
               />
               <button
                 type="button"
                 onClick={() => removeLanguageRow(i)}
-                className="inline-flex shrink-0 items-center justify-center rounded-lg border border-slate-200 p-2 text-slate-500 hover:bg-red-50 hover:text-red-700"
+                className="inline-flex shrink-0 items-center justify-center rounded-lg border border-stone-300 p-2 text-stone-600 hover:bg-red-50 hover:text-red-700"
                 aria-label="Sprache entfernen"
               >
                 <Trash2 size={16} aria-hidden />
@@ -1089,7 +1090,7 @@ export default function CareerProfilePage() {
               type="button"
               onClick={() =>
                 setProfile({ ...profile, languages: [...(profile.languages ?? []), emptyLang()] })}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-primary shadow-sm hover:bg-primary-light/40"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-primary shadow-sm hover:bg-primary-light/40"
             >
               <Plus size={18} aria-hidden />
               Sprache hinzufügen
@@ -1104,21 +1105,21 @@ export default function CareerProfilePage() {
           </div>
         </section>
 
-        <section className="mb-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="mb-3 text-sm font-semibold text-slate-800">Lebenslauf &amp; Kurzfassung</h2>
-          <p className="mb-4 text-xs text-slate-600">
-            <strong className="font-medium text-slate-800">CV-Rohtext</strong> — extrahierter oder eingefügter
+        <section className="mb-8 rounded-xl border border-stone-400/40 bg-app-parchment p-5 shadow-landing text-stone-900">
+          <h2 className="mb-3 text-sm font-semibold text-stone-900">Lebenslauf &amp; Kurzfassung</h2>
+          <p className="mb-4 text-xs text-stone-700">
+            <strong className="font-medium text-stone-900">CV-Rohtext</strong> — extrahierter oder eingefügter
             Lebenslauf (wird für die KI-Erkennung genutzt).{' '}
-            <strong className="font-medium text-slate-800">Anonyme Kurz-Zusammenfassung</strong> — für den Chat, wenn
+            <strong className="font-medium text-stone-900">Anonyme Kurz-Zusammenfassung</strong> — für den Chat, wenn
             „CV“ im Kontext aktiv ist (ohne Namen); basiert auf allen Profildaten inkl. Rohtext.
           </p>
 
-          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">CV-Rohtext</h3>
+          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-stone-600">CV-Rohtext</h3>
           <textarea
             value={profile.cvRawText ?? ''}
             onChange={e => setProfile({ ...profile, cvRawText: e.target.value })}
             rows={6}
-            className="mb-3 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+            className="mb-3 w-full rounded-lg border border-stone-300 px-3 py-2 text-sm"
           />
           <button
             type="button"
@@ -1129,19 +1130,19 @@ export default function CareerProfilePage() {
             CV-Rohtext speichern
           </button>
 
-          <div className="mb-3 flex flex-col gap-3 border-t border-slate-100 pt-6 sm:flex-row sm:items-center sm:justify-between">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <div className="mb-3 flex flex-col gap-3 border-t border-stone-300/40 pt-6 sm:flex-row sm:items-center sm:justify-between">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-stone-600">
               Anonyme Kurz-Zusammenfassung
             </h3>
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs text-slate-500">Anzeige</span>
-              <div className="inline-flex rounded-lg border border-slate-200 bg-slate-100 p-0.5 text-xs font-semibold">
+              <span className="text-xs text-stone-600">Anzeige</span>
+              <div className="inline-flex rounded-lg border border-stone-400/45 bg-app-parchmentDeep p-0.5 text-xs font-semibold">
                 <button
                   type="button"
                   onClick={() => setSummaryViewLang('de')}
                   className={[
                     'rounded-md px-3 py-1.5 transition-colors',
-                    summaryViewLang === 'de' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700',
+                    summaryViewLang === 'de' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-600 hover:text-stone-900',
                   ].join(' ')}
                 >
                   DE
@@ -1151,7 +1152,7 @@ export default function CareerProfilePage() {
                   onClick={() => setSummaryViewLang('en')}
                   className={[
                     'rounded-md px-3 py-1.5 transition-colors',
-                    summaryViewLang === 'en' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700',
+                    summaryViewLang === 'en' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-600 hover:text-stone-900',
                   ].join(' ')}
                 >
                   EN
@@ -1159,7 +1160,7 @@ export default function CareerProfilePage() {
               </div>
             </div>
           </div>
-          <p className="mb-3 text-xs text-slate-600">
+          <p className="mb-3 text-xs text-stone-700">
             {hasEnoughForAnonymousCvSummary(profile)
               ? 'Aus Skills, Berufserfahrung, Ausbildung, Sprachen und CV-Rohtext — jeweils für Deutsch oder Englisch neu erzeugen.'
               : 'Mindestens Skills, eine Berufserfahrung oder CV-Rohtext mit 50+ Zeichen eintragen.'}
@@ -1195,12 +1196,12 @@ export default function CareerProfilePage() {
               type="button"
               onClick={() => void saveSummaryTextsToServer()}
               disabled={saving || cvSummaryLoading}
-              className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 hover:bg-slate-50 disabled:opacity-50"
+              className="inline-flex items-center justify-center rounded-xl border border-stone-400/50 bg-white px-3 py-2 text-sm font-medium text-stone-900 hover:bg-stone-100 disabled:opacity-50"
             >
               Kurzfassungen speichern
             </button>
           </div>
-          <label className="mb-1 block text-xs font-medium text-slate-600">
+          <label className="mb-1 block text-xs font-medium text-stone-700">
             {summaryViewLang === 'de' ? 'Deutsch (Chat-Kontext)' : 'English (profile)'}
           </label>
           <textarea
@@ -1211,29 +1212,29 @@ export default function CareerProfilePage() {
               else setProfile({ ...profile, cvSummaryEn: v || null })
             }}
             rows={8}
-            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+            className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm"
           />
         </section>
 
-        <section className="mb-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="mb-3 text-sm font-semibold text-slate-800">Wunschstellen (max. 3)</h2>
+        <section className="mb-8 rounded-xl border border-stone-400/40 bg-app-parchment p-5 shadow-landing text-stone-900">
+          <h2 className="mb-3 text-sm font-semibold text-stone-900">Wunschstellen (max. 3)</h2>
           <div className="mb-4 space-y-3">
             {(profile.targetJobs ?? []).map((j: TargetJob) => (
               <div
                 key={j.id}
-                className="flex items-start justify-between gap-2 rounded-lg border border-slate-100 bg-slate-50 p-3"
+                className="flex items-start justify-between gap-2 rounded-lg border border-stone-300/40 bg-app-parchmentDeep p-3"
               >
                 <div>
-                  <p className="font-medium text-slate-800">{j.title}</p>
-                  {j.company && <p className="text-sm text-slate-600">{j.company}</p>}
+                  <p className="font-medium text-stone-900">{j.title}</p>
+                  {j.company && <p className="text-sm text-stone-700">{j.company}</p>}
                   {j.description && (
-                    <p className="mt-1 line-clamp-2 text-xs text-slate-500">{j.description}</p>
+                    <p className="mt-1 line-clamp-2 text-xs text-stone-600">{j.description}</p>
                   )}
                 </div>
                 <button
                   type="button"
                   onClick={() => void delJob(j.id)}
-                  className="text-slate-400 hover:text-red-600"
+                  className="text-stone-500 hover:text-red-600"
                   aria-label="Entfernen"
                 >
                   <Trash2 size={18} />
@@ -1247,20 +1248,20 @@ export default function CareerProfilePage() {
                 value={jobTitle}
                 onChange={e => setJobTitle(e.target.value)}
                 placeholder="Stellentitel"
-                className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                className="rounded-lg border border-stone-300 px-3 py-2 text-sm"
               />
               <input
                 value={jobCompany}
                 onChange={e => setJobCompany(e.target.value)}
                 placeholder="Unternehmen"
-                className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                className="rounded-lg border border-stone-300 px-3 py-2 text-sm"
               />
               <textarea
                 value={jobDesc}
                 onChange={e => setJobDesc(e.target.value)}
                 placeholder="Stellenbeschreibung (optional)"
                 rows={3}
-                className="col-span-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                className="col-span-full rounded-lg border border-stone-300 px-3 py-2 text-sm"
               />
               <button
                 type="button"
@@ -1275,7 +1276,7 @@ export default function CareerProfilePage() {
         </section>
 
         {saving && (
-          <p className="flex items-center gap-2 text-sm text-slate-500">
+          <p className="flex items-center gap-2 text-sm text-stone-600">
             <Loader2 className="animate-spin" size={16} />
             Speichern…
           </p>
