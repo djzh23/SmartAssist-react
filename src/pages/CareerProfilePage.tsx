@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '@clerk/clerk-react'
-import { CheckCircle2, Lightbulb, Loader2, Plus, Trash2 } from 'lucide-react'
+import { CheckCircle2, Lightbulb, Loader2, Plus, Sparkles, Trash2 } from 'lucide-react'
 import {
   fetchJobApplications,
   fetchLearningInsights,
@@ -21,17 +21,25 @@ import type {
 import {
   addTargetJob,
   completeOnboarding,
+  fetchAnonymousCvSummary,
   fetchProfile,
   removeTargetJob,
   updateFullProfile,
   updateSkills,
   uploadCv,
+  type AnonymousSummaryLanguage,
 } from '../api/profileClient'
 import CvUploader from '../components/profile/CvUploader'
 import { ServerSyncControl } from '../components/ui/ServerSyncControl'
 
 function canMarkProfileSetupComplete(p: CareerProfile): boolean {
   return Boolean(p.field?.trim() && p.level?.trim() && p.goals.length > 0)
+}
+
+function hasEnoughForAnonymousCvSummary(p: CareerProfile): boolean {
+  if ((p.skills?.length ?? 0) > 0) return true
+  if ((p.experience?.length ?? 0) > 0) return true
+  return (p.cvRawText?.trim().length ?? 0) >= 50
 }
 
 function LearningInsightsPanel() {
@@ -303,6 +311,13 @@ export default function CareerProfilePage() {
   /** Oben: PDF/KI-Import oder klassisches Formular darunter */
   const [dataEntryTab, setDataEntryTab] = useState<'pdf' | 'manual'>('manual')
   const [cvPasteForUploader, setCvPasteForUploader] = useState('')
+  const [cvSummaryLoading, setCvSummaryLoading] = useState(false)
+  /** Server-Zusammenfassung passt evtl. nicht mehr zu geänderten Profildaten */
+  const [summaryStale, setSummaryStale] = useState(false)
+  /** PDF-Erkennung nur lokal ins Formular gemerged, noch kein PUT */
+  const [pendingMergedDraftHint, setPendingMergedDraftHint] = useState(false)
+  /** Welche Kurzfassung im UI betont wird (beide Felder sichtbar) */
+  const [summaryViewLang, setSummaryViewLang] = useState<'de' | 'en'>('de')
 
   const load = useCallback(async () => {
     if (!isLoaded) return
@@ -345,7 +360,10 @@ export default function CareerProfilePage() {
     }
   }, [profile])
 
-  const saveProfilePatch = async (patch: Partial<CareerProfile>) => {
+  const saveProfilePatch = async (
+    patch: Partial<CareerProfile>,
+    opts?: { markSummaryStale?: boolean },
+  ) => {
     const token = await getToken()
     if (!token || !profile) return
     setSaving(true)
@@ -353,6 +371,8 @@ export default function CareerProfilePage() {
     try {
       await updateFullProfile(token, { ...profile, ...patch })
       await load()
+      if (opts?.markSummaryStale !== false) setSummaryStale(true)
+      setPendingMergedDraftHint(false)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Speichern fehlgeschlagen')
     } finally {
@@ -388,6 +408,7 @@ export default function CareerProfilePage() {
         goals: profile.goals,
       })
       await load()
+      setSummaryStale(true)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Markieren fehlgeschlagen')
     } finally {
@@ -406,6 +427,7 @@ export default function CareerProfilePage() {
     try {
       await updateSkills(token, next)
       await load()
+      setSummaryStale(true)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Skill speichern fehlgeschlagen')
     } finally {
@@ -421,6 +443,7 @@ export default function CareerProfilePage() {
     try {
       await updateSkills(token, profile.skills.filter(x => x !== s))
       await load()
+      setSummaryStale(true)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Skill entfernen fehlgeschlagen')
     } finally {
@@ -436,6 +459,7 @@ export default function CareerProfilePage() {
     try {
       await uploadCv(token, profile.cvRawText ?? '')
       await load()
+      setSummaryStale(true)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'CV speichern fehlgeschlagen')
     } finally {
@@ -455,6 +479,8 @@ export default function CareerProfilePage() {
       await updateFullProfile(token, merged)
       await load()
       setDataEntryTab('manual')
+      setSummaryStale(true)
+      setPendingMergedDraftHint(false)
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Speichern fehlgeschlagen'
       setError(msg)
@@ -462,6 +488,80 @@ export default function CareerProfilePage() {
     } finally {
       setSaving(false)
     }
+  }
+
+  const applyManualDraftLocally = (draft: ParsedCvData) => {
+    setProfile(prev => (prev ? mergeParsedDraftIntoProfile(prev, draft) : null))
+    setDataEntryTab('manual')
+    setPendingMergedDraftHint(true)
+  }
+
+  const persistFullProfileFromState = async () => {
+    const token = await getToken()
+    if (!token || !profile) return
+    setSaving(true)
+    setError(null)
+    try {
+      await updateFullProfile(token, profile)
+      await load()
+      setSummaryStale(true)
+      setPendingMergedDraftHint(false)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Speichern fehlgeschlagen')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const generateAnonymousCvSummaryForLang = async (lang: AnonymousSummaryLanguage) => {
+    if (!profile || !hasEnoughForAnonymousCvSummary(profile)) return
+    const token = await getToken()
+    if (!token) return
+    setCvSummaryLoading(true)
+    setError(null)
+    try {
+      const text = await fetchAnonymousCvSummary(token, { language: lang })
+      const patch =
+        lang === 'de'
+          ? { cvSummary: text, cvSummaryEn: profile.cvSummaryEn ?? null }
+          : { cvSummary: profile.cvSummary ?? null, cvSummaryEn: text }
+      await updateFullProfile(token, { ...profile, ...patch })
+      await load()
+      setSummaryStale(false)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Zusammenfassung fehlgeschlagen')
+    } finally {
+      setCvSummaryLoading(false)
+    }
+  }
+
+  const saveSummaryTextsToServer = async () => {
+    if (!profile) return
+    await saveProfilePatch(
+      {
+        cvSummary: profile.cvSummary ?? null,
+        cvSummaryEn: profile.cvSummaryEn ?? null,
+      },
+      { markSummaryStale: false },
+    )
+  }
+
+  const removeExperienceRow = (index: number) => {
+    if (!profile) return
+    const experience = (profile.experience ?? []).filter((_, j) => j !== index)
+    void saveProfilePatch({ experience })
+  }
+
+  const removeEducationRow = (index: number) => {
+    if (!profile) return
+    const educationEntries = (profile.educationEntries ?? []).filter((_, j) => j !== index)
+    void saveProfilePatch({ educationEntries })
+  }
+
+  const removeLanguageRow = (index: number) => {
+    if (!profile) return
+    const languages = (profile.languages ?? []).filter((_, j) => j !== index)
+    void saveProfilePatch({ languages })
   }
 
   const addJob = async () => {
@@ -478,6 +578,7 @@ export default function CareerProfilePage() {
       setJobCompany('')
       setJobDesc('')
       await load()
+      setSummaryStale(true)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Stelle hinzufügen fehlgeschlagen')
     } finally {
@@ -492,6 +593,7 @@ export default function CareerProfilePage() {
     try {
       await removeTargetJob(token, id)
       await load()
+      setSummaryStale(true)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Stelle entfernen fehlgeschlagen')
     } finally {
@@ -555,9 +657,10 @@ export default function CareerProfilePage() {
         <section className="mb-8 rounded-xl border border-violet-200 bg-white p-5 shadow-sm">
           <h2 className="mb-1 text-sm font-semibold text-slate-900">Profil ausfüllen</h2>
           <p className="mb-4 text-sm text-slate-600">
-            Wähle, wie du startest: PDF-Lebenslauf hochladen — wir extrahieren Text und schlagen Felder vor (du bestätigst
-            vor dem Speichern). Oder trägst du die Daten direkt im Formular unten ein; viele Felder speichern beim
-            Verlassen automatisch.
+            PDF: Wir speichern den extrahierten Rohtext auf dem Server; die erkannten Felder sind Vorschläge — du kannst
+            im Formular unten ergänzen oder korrigieren und pro Abschnitt speichern. Manuell: Daten direkt eintragen;
+            Auswahl in <strong className="font-medium text-slate-800">Basis</strong> speichert beim Ändern, Rolle beim
+            Verlassen des Feldes.
           </p>
           <div className="mb-4 flex rounded-lg border border-slate-200 bg-slate-100 p-0.5 text-xs font-semibold sm:text-sm">
             <button
@@ -593,9 +696,7 @@ export default function CareerProfilePage() {
               cvPasteText={cvPasteForUploader}
               onCvPasteTextChange={setCvPasteForUploader}
               onApplyParsed={saveParsedDraftToProfile}
-              onManualAdjust={d => {
-                void saveParsedDraftToProfile(d)
-              }}
+              onManualAdjust={applyManualDraftLocally}
             />
           )}
           {dataEntryTab === 'manual' && (
@@ -657,6 +758,30 @@ export default function CareerProfilePage() {
         {error && (
           <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
             {error}
+          </div>
+        )}
+
+        {pendingMergedDraftHint && (
+          <div className="mb-4 flex flex-col gap-3 rounded-lg border border-violet-200 bg-violet-50/80 px-4 py-3 text-sm text-slate-800 sm:flex-row sm:items-center sm:justify-between">
+            <p>
+              Erkenntnis aus dem PDF wurde ins Formular übernommen — noch nicht auf dem Server. Mit „Jetzt
+              synchronisieren“ werden alle sichtbaren Felder gespeichert (inkl. Ergänzungen).
+            </p>
+            <button
+              type="button"
+              disabled={saving}
+              onClick={() => void persistFullProfileFromState()}
+              className="inline-flex shrink-0 items-center justify-center rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-white hover:bg-primary-hover disabled:opacity-50"
+            >
+              Jetzt synchronisieren
+            </button>
+          </div>
+        )}
+
+        {summaryStale && hasEnoughForAnonymousCvSummary(profile) && (
+          <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+            Profil wurde geändert — die gespeicherte Kurz-Zusammenfassung für den Assistenten kann veraltet sein. Bitte
+            unten bei „Anonyme Kurz-Zusammenfassung“ neu erzeugen (DE/EN).
           </div>
         )}
 
@@ -726,6 +851,23 @@ export default function CareerProfilePage() {
               </button>
             ))}
           </div>
+          <div className="mt-4">
+            <button
+              type="button"
+              disabled={saving}
+              onClick={() =>
+                void saveProfilePatch({
+                  field: field || null,
+                  fieldLabel: FIELDS.find(f => f.value === field)?.label ?? profile.fieldLabel ?? null,
+                  level: level || null,
+                  levelLabel: LEVELS.find(l => l.value === level)?.label ?? profile.levelLabel ?? null,
+                  currentRole: profile.currentRole?.trim() || null,
+                })}
+              className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 shadow-sm hover:bg-slate-50 disabled:opacity-50"
+            >
+              Änderungen speichern
+            </button>
+          </div>
         </section>
 
         <section className="mb-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -754,9 +896,10 @@ export default function CareerProfilePage() {
             <button
               type="button"
               onClick={() => void addSkill()}
-              className="rounded-lg bg-primary px-3 py-2 text-sm text-white hover:bg-primary-hover"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover"
             >
-              <Plus size={18} />
+              <Plus size={18} aria-hidden />
+              Hinzufügen
             </button>
           </div>
         </section>
@@ -805,22 +948,34 @@ export default function CareerProfilePage() {
                 }}
                 className="col-span-full rounded border border-slate-200 px-2 py-1 text-sm"
               />
+              <div className="col-span-full flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => removeExperienceRow(i)}
+                  className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-red-50 hover:text-red-700"
+                  aria-label="Eintrag entfernen"
+                >
+                  <Trash2 size={14} aria-hidden />
+                  Entfernen
+                </button>
+              </div>
             </div>
           ))}
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button
               type="button"
               onClick={() => setProfile({ ...profile, experience: [...(profile.experience ?? []), emptyExp()] })}
-              className="text-sm text-primary hover:underline"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-primary shadow-sm hover:bg-primary-light/40"
             >
-              + Eintrag
+              <Plus size={18} aria-hidden />
+              Eintrag hinzufügen
             </button>
             <button
               type="button"
               onClick={() => void saveProfilePatch({ experience: profile.experience ?? [] })}
-              className="rounded-lg border border-slate-200 px-3 py-1 text-sm text-slate-700 hover:bg-slate-50"
+              className="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover"
             >
-              Speichern
+              Änderungen speichern
             </button>
           </div>
         </section>
@@ -859,9 +1014,20 @@ export default function CareerProfilePage() {
                 }}
                 className="rounded border border-slate-200 px-2 py-1 text-sm"
               />
+              <div className="flex items-center justify-end md:col-span-3">
+                <button
+                  type="button"
+                  onClick={() => removeEducationRow(i)}
+                  className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-red-50 hover:text-red-700"
+                  aria-label="Eintrag entfernen"
+                >
+                  <Trash2 size={14} aria-hidden />
+                  Entfernen
+                </button>
+              </div>
             </div>
           ))}
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button
               type="button"
               onClick={() =>
@@ -869,16 +1035,17 @@ export default function CareerProfilePage() {
                   ...profile,
                   educationEntries: [...(profile.educationEntries ?? []), emptyEdu()],
                 })}
-              className="text-sm text-primary hover:underline"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-primary shadow-sm hover:bg-primary-light/40"
             >
-              + Eintrag
+              <Plus size={18} aria-hidden />
+              Eintrag hinzufügen
             </button>
             <button
               type="button"
               onClick={() => void saveProfilePatch({ educationEntries: profile.educationEntries ?? [] })}
-              className="rounded-lg border border-slate-200 px-3 py-1 text-sm text-slate-700 hover:bg-slate-50"
+              className="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover"
             >
-              Speichern
+              Änderungen speichern
             </button>
           </div>
         </section>
@@ -907,43 +1074,145 @@ export default function CareerProfilePage() {
                 }}
                 className="w-28 rounded border border-slate-200 px-2 py-1 text-sm"
               />
+              <button
+                type="button"
+                onClick={() => removeLanguageRow(i)}
+                className="inline-flex shrink-0 items-center justify-center rounded-lg border border-slate-200 p-2 text-slate-500 hover:bg-red-50 hover:text-red-700"
+                aria-label="Sprache entfernen"
+              >
+                <Trash2 size={16} aria-hidden />
+              </button>
             </div>
           ))}
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button
               type="button"
               onClick={() =>
                 setProfile({ ...profile, languages: [...(profile.languages ?? []), emptyLang()] })}
-              className="text-sm text-primary hover:underline"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-primary shadow-sm hover:bg-primary-light/40"
             >
-              + Sprache
+              <Plus size={18} aria-hidden />
+              Sprache hinzufügen
             </button>
             <button
               type="button"
               onClick={() => void saveProfilePatch({ languages: profile.languages ?? [] })}
-              className="rounded-lg border border-slate-200 px-3 py-1 text-sm text-slate-700 hover:bg-slate-50"
+              className="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover"
             >
-              Speichern
+              Änderungen speichern
             </button>
           </div>
         </section>
 
         <section className="mb-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="mb-3 text-sm font-semibold text-slate-800">Lebenslauf (Text)</h2>
+          <h2 className="mb-3 text-sm font-semibold text-slate-800">Lebenslauf &amp; Kurzfassung</h2>
+          <p className="mb-4 text-xs text-slate-600">
+            <strong className="font-medium text-slate-800">CV-Rohtext</strong> — extrahierter oder eingefügter
+            Lebenslauf (wird für die KI-Erkennung genutzt).{' '}
+            <strong className="font-medium text-slate-800">Anonyme Kurz-Zusammenfassung</strong> — für den Chat, wenn
+            „CV“ im Kontext aktiv ist (ohne Namen); basiert auf allen Profildaten inkl. Rohtext.
+          </p>
+
+          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">CV-Rohtext</h3>
           <textarea
             value={profile.cvRawText ?? ''}
             onChange={e => setProfile({ ...profile, cvRawText: e.target.value })}
-            rows={8}
-            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+            rows={6}
+            className="mb-3 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
           />
           <button
             type="button"
             onClick={() => void saveCv()}
-            disabled={saving}
-            className="mt-2 rounded-lg bg-primary px-4 py-2 text-sm text-white hover:bg-primary-hover disabled:opacity-50"
+            disabled={saving || cvSummaryLoading}
+            className="mb-8 inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-white hover:bg-primary-hover disabled:opacity-50"
           >
-            CV speichern
+            CV-Rohtext speichern
           </button>
+
+          <div className="mb-3 flex flex-col gap-3 border-t border-slate-100 pt-6 sm:flex-row sm:items-center sm:justify-between">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Anonyme Kurz-Zusammenfassung
+            </h3>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs text-slate-500">Anzeige</span>
+              <div className="inline-flex rounded-lg border border-slate-200 bg-slate-100 p-0.5 text-xs font-semibold">
+                <button
+                  type="button"
+                  onClick={() => setSummaryViewLang('de')}
+                  className={[
+                    'rounded-md px-3 py-1.5 transition-colors',
+                    summaryViewLang === 'de' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700',
+                  ].join(' ')}
+                >
+                  DE
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSummaryViewLang('en')}
+                  className={[
+                    'rounded-md px-3 py-1.5 transition-colors',
+                    summaryViewLang === 'en' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700',
+                  ].join(' ')}
+                >
+                  EN
+                </button>
+              </div>
+            </div>
+          </div>
+          <p className="mb-3 text-xs text-slate-600">
+            {hasEnoughForAnonymousCvSummary(profile)
+              ? 'Aus Skills, Berufserfahrung, Ausbildung, Sprachen und CV-Rohtext — jeweils für Deutsch oder Englisch neu erzeugen.'
+              : 'Mindestens Skills, eine Berufserfahrung oder CV-Rohtext mit 50+ Zeichen eintragen.'}
+          </p>
+          <div className="mb-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => void generateAnonymousCvSummaryForLang('de')}
+              disabled={saving || cvSummaryLoading || !hasEnoughForAnonymousCvSummary(profile)}
+              className="inline-flex items-center gap-2 rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 text-sm font-medium text-violet-900 hover:bg-violet-100 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {cvSummaryLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+              ) : (
+                <Sparkles className="h-4 w-4 shrink-0" aria-hidden />
+              )}
+              Zusammenfassung DE
+            </button>
+            <button
+              type="button"
+              onClick={() => void generateAnonymousCvSummaryForLang('en')}
+              disabled={saving || cvSummaryLoading || !hasEnoughForAnonymousCvSummary(profile)}
+              className="inline-flex items-center gap-2 rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 text-sm font-medium text-violet-900 hover:bg-violet-100 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {cvSummaryLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+              ) : (
+                <Sparkles className="h-4 w-4 shrink-0" aria-hidden />
+              )}
+              Summary EN
+            </button>
+            <button
+              type="button"
+              onClick={() => void saveSummaryTextsToServer()}
+              disabled={saving || cvSummaryLoading}
+              className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 hover:bg-slate-50 disabled:opacity-50"
+            >
+              Kurzfassungen speichern
+            </button>
+          </div>
+          <label className="mb-1 block text-xs font-medium text-slate-600">
+            {summaryViewLang === 'de' ? 'Deutsch (Chat-Kontext)' : 'English (profile)'}
+          </label>
+          <textarea
+            value={summaryViewLang === 'de' ? (profile.cvSummary ?? '') : (profile.cvSummaryEn ?? '')}
+            onChange={e => {
+              const v = e.target.value
+              if (summaryViewLang === 'de') setProfile({ ...profile, cvSummary: v || null })
+              else setProfile({ ...profile, cvSummaryEn: v || null })
+            }}
+            rows={8}
+            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+          />
         </section>
 
         <section className="mb-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
