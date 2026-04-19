@@ -759,6 +759,21 @@ export default function ChatPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [toolParam, location.state])
 
+  /** Deep-link from app sidebar “Letzte Gespräche” (switchToTool alone picks first tab per tool). */
+  useEffect(() => {
+    const st = location.state as { activateSessionId?: string } | null
+    const sessionId = st?.activateSessionId
+    if (!sessionId) return
+    const session = store.sessions[sessionId]
+    if (!session) return
+    if (session.toolType !== toolParam) {
+      navigate(`${location.pathname}${location.search}`, { replace: true, state: {} })
+      return
+    }
+    store.setActiveSession(sessionId)
+    navigate(`${location.pathname}${location.search}`, { replace: true, state: {} })
+  }, [location.state, location.pathname, location.search, toolParam, navigate, store.sessions, store.setActiveSession])
+
   useEffect(() => {
     const upgraded = (searchParams.get('upgraded') ?? '').toLowerCase() === 'true'
     const cancelled = (searchParams.get('cancelled') ?? '').toLowerCase() === 'true'

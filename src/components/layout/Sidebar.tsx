@@ -1,14 +1,10 @@
 import { useMemo } from 'react'
-import { NavLink, useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import {
-  ArrowRight,
-  ClipboardList,
   Loader2,
+  Plus,
   Sparkles,
-  ShieldCheck,
-  Tag,
-  User,
-  Wrench,
+  ArrowRight,
   Briefcase,
   Mic,
   MessageCircle,
@@ -19,31 +15,20 @@ import {
   FileText,
   TrendingUp,
   Linkedin,
-  FolderOpen,
-  BookOpen,
-  NotebookPen,
   type LucideIcon,
 } from 'lucide-react'
-import { useIsAdmin } from '../../hooks/useIsAdmin'
 import { useUserPlan } from '../../hooks/useUserPlan'
 import { useSkills } from '../../hooks/useSkills'
+import { useChatSessions, TOOL_TO_QUERY } from '../../hooks/useChatSessions'
 import type { SkillSummary } from '../../types'
-import AuthButton from '../ui/AuthButton'
+import type { ChatSession } from '../../types'
+import { sessionListLabel } from '../../utils/sessionTitle'
+import { formatRecentChatTime } from '../../utils/recentChatTime'
+import { toolSessionDotClass } from '../../utils/toolSessionDot'
 
 interface Props {
   onNavClick?: () => void
 }
-
-interface NavItem {
-  label: string
-  icon: React.ReactNode
-  to: string
-  exact?: boolean
-}
-
-const mainLinks: NavItem[] = [
-  { label: 'Startseite', icon: <Wrench size={15} />, to: '/tools' },
-]
 
 function iconForSkill(icon: string): LucideIcon {
   const map: Record<string, LucideIcon> = {
@@ -72,60 +57,6 @@ function badgeColorClass(color: string): string {
     default:
       return 'bg-white/10 text-slate-300'
   }
-}
-
-function SidebarLink({ item, onClick }: { item: NavItem; onClick?: () => void }) {
-  const navigate = useNavigate()
-  const location = useLocation()
-  const searchParams = new URLSearchParams(location.search)
-  const toolFromUrl = location.pathname === '/chat' ? (searchParams.get('tool') ?? 'general') : null
-
-  const isGeneralChat = item.to === '/chat'
-  const isChatLink = item.to.includes('?') || isGeneralChat
-  const targetTool = item.to.includes('?')
-    ? new URLSearchParams(item.to.split('?')[1]).get('tool')
-    : null
-
-  const isActive = isGeneralChat
-    ? location.pathname === '/chat' && toolFromUrl === 'general'
-    : isChatLink && targetTool
-      ? location.pathname === '/chat' && toolFromUrl === targetTool
-      : item.exact
-        ? location.pathname === '/'
-        : location.pathname.startsWith(item.to) && item.to !== '/'
-
-  const base = 'mb-0.5 flex items-center gap-2.5 rounded-lg border-l-[3px] px-4 py-2.5 text-sm font-medium no-underline transition-all duration-150'
-  const active = 'border-primary bg-sidebar-active text-white'
-  const inactive = 'border-transparent text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-text'
-
-  const handleClick = (event: React.MouseEvent) => {
-    if (isChatLink) {
-      event.preventDefault()
-      navigate(isGeneralChat ? '/chat' : item.to)
-    }
-    onClick?.()
-  }
-
-  if (isChatLink) {
-    return (
-      <a href={isGeneralChat ? '/chat' : item.to} onClick={handleClick} className={`${base} ${isActive ? active : inactive}`}>
-        <span className="flex w-4 flex-shrink-0 items-center justify-center">{item.icon}</span>
-        <span>{item.label}</span>
-      </a>
-    )
-  }
-
-  return (
-    <NavLink
-      to={item.to}
-      end={item.exact}
-      onClick={onClick}
-      className={({ isActive: navIsActive }) => `${base} ${navIsActive ? active : inactive}`}
-    >
-      <span className="flex w-4 flex-shrink-0 items-center justify-center">{item.icon}</span>
-      <span>{item.label}</span>
-    </NavLink>
-  )
 }
 
 function SkillSidebarRow({
@@ -259,10 +190,30 @@ function groupLabel(category: string): string {
   }
 }
 
+const RECENT_LIMIT = 15
+
+function recentSessionsList(
+  sessions: Record<string, ChatSession>,
+  sessionOrder: string[],
+): ChatSession[] {
+  const rows = sessionOrder
+    .map(id => sessions[id])
+    .filter(Boolean)
+    .map(s => ({
+      s,
+      t: new Date(s.messages[s.messages.length - 1]?.timestamp ?? s.createdAt).getTime(),
+    }))
+    .sort((a, b) => b.t - a.t)
+    .slice(0, RECENT_LIMIT)
+    .map(r => r.s)
+  return rows
+}
+
 export default function Sidebar({ onNavClick }: Props) {
+  const navigate = useNavigate()
   const { plan } = useUserPlan()
-  const { isAdmin } = useIsAdmin()
   const { skills, loading: skillsLoading } = useSkills()
+  const store = useChatSessions()
 
   const grouped = useMemo(() => {
     if (!skills?.length) return []
@@ -276,65 +227,105 @@ export default function Sidebar({ onNavClick }: Props) {
     return order.filter(c => map.has(c)).map(c => ({ category: c, items: map.get(c)! }))
   }, [skills])
 
-  return (
-    <div className="flex h-full flex-col overflow-x-hidden overflow-y-auto">
-      <div className="flex flex-shrink-0 items-center gap-2.5 px-4 py-5">
-        <img src="/favicon.png" alt="PrivatePrep" className="h-7 w-7 rounded-lg" />
-        <span className="text-[15px] font-bold tracking-wide text-white">PrivatePrep</span>
-      </div>
+  const recent = useMemo(
+    () => recentSessionsList(store.sessions, store.sessionOrder),
+    [store.sessions, store.sessionOrder],
+  )
 
-      <div className="mx-0 mb-2 h-px flex-shrink-0 bg-sidebar-border" />
+  const handleNewChat = () => {
+    void (async () => {
+      try {
+        const tool = store.currentToolType
+        await store.newSession(tool)
+        const q = TOOL_TO_QUERY[tool]
+        navigate(`/chat?tool=${encodeURIComponent(q)}`)
+        onNavClick?.()
+      }
+      catch (e) {
+        console.warn('[Sidebar] Neues Gespräch', e)
+        window.alert(e instanceof Error ? e.message : 'Neues Gespräch konnte nicht gestartet werden.')
+      }
+    })()
+  }
+
+  const openRecent = (s: ChatSession) => {
+    const q = TOOL_TO_QUERY[s.toolType]
+    navigate(`/chat?tool=${encodeURIComponent(q)}`, { state: { activateSessionId: s.id } })
+    onNavClick?.()
+  }
+
+  return (
+    <div className="flex h-full min-h-0 flex-col overflow-x-hidden">
       {plan !== 'pro' && <UsageBanner />}
 
-      <nav className="flex flex-1 flex-col px-2">
-        <p className="px-3 pb-1.5 pt-3 text-[10px] font-bold uppercase tracking-[1.5px] text-slate-500">Überblick</p>
-        {mainLinks.map(link => (
-          <SidebarLink key={link.to} item={link} onClick={onNavClick} />
-        ))}
-        <SidebarLink
-          item={{ label: 'Karriereprofil', icon: <ClipboardList size={15} />, to: '/career-profile' }}
-          onClick={onNavClick}
-        />
-        <SidebarLink
-          item={{ label: 'Meine Bewerbungen', icon: <FolderOpen size={15} />, to: '/applications' }}
-          onClick={onNavClick}
-        />
-        <SidebarLink item={{ label: 'Ratgeber', icon: <BookOpen size={15} />, to: '/guides' }} onClick={onNavClick} />
-        <SidebarLink item={{ label: 'Notizen', icon: <NotebookPen size={15} />, to: '/notes' }} onClick={onNavClick} />
+      <div className="flex min-h-0 flex-1 flex-col px-2 pt-3">
+        <button
+          type="button"
+          onClick={handleNewChat}
+          className="mb-2 flex flex-shrink-0 items-center justify-center gap-2 rounded-lg bg-primary px-3 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-hover"
+        >
+          <Plus size={18} strokeWidth={2.5} aria-hidden />
+          Neues Gespräch
+        </button>
 
-        <p className="px-3 pb-1.5 pt-5 text-[10px] font-bold uppercase tracking-[1.5px] text-slate-500">Coaching und Chat</p>
-        {skillsLoading && (
-          <div className="flex items-center gap-2 px-4 py-2 text-xs text-slate-500">
-            <Loader2 size={14} className="animate-spin" />
-            Tools laden…
-          </div>
-        )}
-        {!skillsLoading && grouped.map(({ category, items }) => (
-          <div key={category}>
-            <p className="px-3 pb-1 pt-2 text-[9px] font-semibold uppercase tracking-wider text-slate-500">
-              {groupLabel(category)}
-            </p>
-            {items.map(skill => (
-              <SkillSidebarRow key={skill.id} skill={skill} onNavClick={onNavClick} />
-            ))}
-          </div>
-        ))}
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          {skillsLoading && (
+            <div className="flex items-center gap-2 px-4 py-2 text-xs text-slate-500">
+              <Loader2 size={14} className="animate-spin" />
+              Tools laden…
+            </div>
+          )}
+          {!skillsLoading && grouped.map(({ category, items }) => (
+            <div key={category}>
+              <p className="px-3 pb-1 pt-2 text-[9px] font-semibold uppercase tracking-wider text-slate-500">
+                {groupLabel(category)}
+              </p>
+              {items.map(skill => (
+                <SkillSidebarRow key={skill.id} skill={skill} onNavClick={onNavClick} />
+              ))}
+            </div>
+          ))}
+        </div>
 
-        <p className="px-3 pb-1.5 pt-5 text-[10px] font-bold uppercase tracking-[1.5px] text-slate-500">Konto</p>
-        <SidebarLink item={{ label: 'Mein Profil', icon: <User size={15} />, to: '/profile' }} onClick={onNavClick} />
-        <SidebarLink item={{ label: 'Preise', icon: <Tag size={15} />, to: '/pricing' }} onClick={onNavClick} />
-        {isAdmin && (
-          <SidebarLink
-            item={{ label: 'Admin', icon: <ShieldCheck size={15} />, to: '/admin' }}
-            onClick={onNavClick}
-          />
-        )}
-      </nav>
+        <div className="mt-2 flex max-h-[min(280px,42vh)] min-h-0 flex-shrink-0 flex-col border-t border-sidebar-border pt-2">
+          <p className="flex-shrink-0 px-3 pb-1.5 text-[10px] font-bold uppercase tracking-[1.5px] text-slate-500">
+            Letzte Gespräche
+          </p>
+          <div className="min-h-0 flex-1 overflow-y-auto px-1 pb-1">
+            {recent.length === 0 ? (
+              <p className="px-3 py-2 text-xs text-slate-500">Noch keine Gespräche.</p>
+            ) : (
+              <ul className="space-y-0.5">
+                {recent.map(s => (
+                  <li key={s.id}>
+                    <button
+                      type="button"
+                      onClick={() => openRecent(s)}
+                      className="flex w-full items-start gap-2 rounded-lg px-2 py-1.5 text-left text-sm text-sidebar-text transition-colors hover:bg-sidebar-hover"
+                    >
+                      <span
+                        className={`mt-1.5 h-2 w-2 flex-shrink-0 rounded-full ${toolSessionDotClass(s.toolType)}`}
+                        aria-hidden
+                      />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate font-medium leading-tight">{sessionListLabel(s, 36)}</span>
+                      </span>
+                      <span className="flex-shrink-0 text-[10px] text-slate-500">
+                        {formatRecentChatTime(
+                          s.messages[s.messages.length - 1]?.timestamp ?? s.createdAt,
+                        )}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      </div>
 
       <div className="flex-shrink-0">
         <UsageBar />
-        <div className="mx-0 my-1 h-px bg-sidebar-border" />
-        <AuthButton variant="full" />
       </div>
     </div>
   )
