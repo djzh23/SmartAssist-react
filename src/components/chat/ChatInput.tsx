@@ -43,7 +43,7 @@ export default function ChatInput({ toolType, isLoading, noActiveSession = false
   }
 
   return (
-    <div className="flex-shrink-0 border-t border-slate-100 bg-white px-4 py-3">
+    <div className="flex-shrink-0 border-t border-slate-100 bg-white px-4 py-3 max-[768px]:pb-[max(0.75rem,env(safe-area-inset-bottom))]">
       <div className="max-w-3xl mx-auto flex items-end gap-2">
         <div
           className={[

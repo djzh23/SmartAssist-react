@@ -3,6 +3,10 @@ export default {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
   theme: {
     extend: {
+      screens: {
+        /** Full desktop shell (top bar + 240px sidebar) — do not use for general responsive tweaks */
+        desktop: '1025px',
+      },
       colors: {
         primary: {
           DEFAULT: '#D97706',   // amber-600 — vanilla gold

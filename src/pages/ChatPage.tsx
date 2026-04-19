@@ -21,7 +21,6 @@ import { useCareerProfile } from '../hooks/useCareerProfile'
 import { useUserPlan, dispatchServerUsage } from '../hooks/useUserPlan'
 import { sanitizeTechnicalContext } from '../utils/cvTechnicalContext'
 import { applyStreamText } from '../chat/streamTextBridge'
-import { sessionListLabel } from '../utils/sessionTitle'
 import { buildProfileStatsLine, getProfileCompleteness, getProfileCompletenessGapHint } from '../utils/profileCompleteness'
 
 /** German UI labels shown in sidebar / header chips */
@@ -1399,26 +1398,21 @@ export default function ChatPage() {
           </div>
         )}
 
-        {/* ── Mobile chat session bar (replaces floating chevron) ─── */}
-        <div className="flex flex-shrink-0 items-center gap-2 border-b border-slate-100 bg-white px-3 py-2 md:hidden">
+        {/* Mobile (≤768px): compact actions only — title lives in global top bar */}
+        <div className="flex min-[769px]:hidden flex-shrink-0 items-center justify-end gap-1 border-b border-slate-100 bg-white px-2 py-1.5">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-500 transition-colors active:bg-slate-100"
+            className="flex h-11 w-11 min-h-[44px] min-w-[44px] flex-shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-500 transition-colors active:bg-slate-100"
             aria-label="Gespräche öffnen"
           >
             <PanelLeft size={17} />
           </button>
-          <p className="min-w-0 flex-1 truncate text-sm text-slate-400">
-            {activeId && store.sessions[activeId]
-              ? sessionListLabel(store.sessions[activeId], 40)
-              : 'Neues Gespräch'}
-          </p>
           {isSignedIn && (
             <button
               type="button"
               onClick={() => void store.syncSessionsRemote()}
               disabled={store.sessionsRemoteSyncing}
-              className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-500 transition-colors active:bg-slate-100 disabled:opacity-50"
+              className="flex h-11 w-11 min-h-[44px] min-w-[44px] flex-shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-500 transition-colors active:bg-slate-100 disabled:opacity-50"
               aria-label="Mit Server synchronisieren"
             >
               <RefreshCw size={16} className={store.sessionsRemoteSyncing ? 'animate-spin' : ''} />
@@ -1426,7 +1420,7 @@ export default function ChatPage() {
           )}
           <button
             onClick={handleNewSession}
-            className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-500 transition-colors active:bg-slate-100"
+            className="flex h-11 w-11 min-h-[44px] min-w-[44px] flex-shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-500 transition-colors active:bg-slate-100"
             aria-label="Neues Gespräch starten"
           >
             <Plus size={16} />
@@ -1499,7 +1493,7 @@ export default function ChatPage() {
 
         {isInterview && (
           <div className="flex-shrink-0 px-4 pb-0 pt-3">
-            <div className="mx-auto flex max-w-3xl flex-wrap items-center gap-2">
+            <div className="mx-auto flex max-w-3xl flex-wrap items-center gap-2 max-[768px]:flex-nowrap max-[768px]:overflow-x-auto max-[768px]:[scrollbar-width:thin]">
               <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-50 px-3 py-1 text-xs font-medium text-sky-700">
                 Vorstellungsgespräch
               </span>
@@ -1524,7 +1518,7 @@ export default function ChatPage() {
 
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <div ref={chatScrollRef} className="min-h-0 flex-1 overflow-y-auto">
-            <div className="mx-auto max-w-3xl px-4 py-4">
+            <div className="mx-auto max-w-3xl px-3 py-4 desktop:px-4">
               <MessageList
                 messages={store.activeMessages}
                 viewSessionId={activeId}

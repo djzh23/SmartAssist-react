@@ -117,7 +117,7 @@ export default function ChatContextBar({
               <span className="font-medium text-slate-600">Hinweis:</span> {profileGapHint}
             </p>
           ) : null}
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 max-[768px]:flex-nowrap max-[768px]:overflow-x-auto max-[768px]:pb-0.5">
             <span className="mr-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400">Kontext</span>
             <TogglePill
               active={profileToggles.includeBasicProfile}
