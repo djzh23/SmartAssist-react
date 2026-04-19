@@ -57,25 +57,33 @@ export default function TopNavBar({ onMenuClick, menuOpen }: Props) {
   }, [location.pathname, location.search])
 
   return (
-    <header className="sticky top-0 z-50 flex h-[52px] flex-shrink-0 items-center gap-2 border-b border-slate-200 bg-white px-3 md:px-4">
-      <button
-        type="button"
-        onClick={onMenuClick}
-        className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg text-slate-600 transition-colors hover:bg-slate-100 md:hidden"
-        aria-label={menuOpen ? 'Navigation schließen' : 'Navigation öffnen'}
-      >
-        {menuOpen ? <X size={20} /> : <Menu size={20} />}
-      </button>
+    <header
+      className={[
+        'sticky top-0 z-50 flex h-[52px] flex-shrink-0 items-center gap-2 border-b border-slate-200 bg-white px-3 md:px-4',
+        'md:grid md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:items-center md:gap-3',
+      ].join(' ')}
+    >
+      <div className="flex min-w-0 items-center justify-start gap-2">
+        <button
+          type="button"
+          onClick={onMenuClick}
+          className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg text-slate-600 transition-colors hover:bg-slate-100 md:hidden"
+          aria-label={menuOpen ? 'Navigation schließen' : 'Navigation öffnen'}
+        >
+          {menuOpen ? <X size={20} /> : <Menu size={20} />}
+        </button>
 
-      <Link
-        to="/tools"
-        className="flex min-w-0 flex-shrink-0 items-center gap-2 rounded-lg py-1 pr-2 no-underline hover:opacity-90"
-      >
-        <img src="/favicon.png" alt="" className="h-8 w-8 rounded-lg" width={32} height={32} />
-        <span className="hidden text-[15px] font-bold tracking-wide text-slate-900 sm:inline">PrivatePrep</span>
-      </Link>
+        <Link
+          to="/tools"
+          className="flex min-w-0 flex-shrink-0 items-center gap-2 rounded-lg py-1 pr-2 no-underline hover:opacity-90"
+        >
+          <img src="/favicon.png" alt="" className="h-8 w-8 rounded-lg" width={32} height={32} />
+          <span className="hidden text-[15px] font-bold tracking-wide text-slate-900 sm:inline">PrivatePrep</span>
+        </Link>
+      </div>
 
-      <nav className="ml-1 hidden min-w-0 flex-1 items-center gap-0.5 overflow-x-auto md:flex lg:ml-3 lg:gap-1">
+      {/* Mittig im Viewport: gleiche Außenflächen links/rechts durch 1fr | auto | 1fr */}
+      <nav className="hidden shrink-0 items-center justify-center gap-0.5 md:flex lg:gap-1">
         <NavLink to="/tools" end className={({ isActive }) => navClass(isActive)}>
           <span className="inline-flex items-center gap-1.5">
             <Wrench size={15} className="shrink-0 opacity-80" aria-hidden />
@@ -121,7 +129,7 @@ export default function TopNavBar({ onMenuClick, menuOpen }: Props) {
         </NavLink>
       </nav>
 
-      <div className="ml-auto flex flex-shrink-0 items-center gap-1.5 sm:gap-2">
+      <div className="ml-auto flex min-w-0 flex-shrink-0 items-center justify-end gap-1.5 sm:gap-2 md:ml-0">
         {showPlanBadge && (
           <span
             className="hidden rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide sm:inline"
