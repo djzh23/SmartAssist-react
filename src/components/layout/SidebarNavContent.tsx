@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import {
   Loader2,
@@ -215,13 +215,13 @@ function groupLabel(category: string): string {
   }
 }
 
-const RECENT_LIMIT = 15
+const RECENT_PAGE_SIZE = 3
 
 function recentSessionsList(
   sessions: Record<string, ChatSession>,
   sessionOrder: string[],
 ): ChatSession[] {
-  const rows = sessionOrder
+  return sessionOrder
     .map(id => sessions[id])
     .filter(Boolean)
     .map(s => ({
@@ -229,9 +229,7 @@ function recentSessionsList(
       t: new Date(s.messages[s.messages.length - 1]?.timestamp ?? s.createdAt).getTime(),
     }))
     .sort((a, b) => b.t - a.t)
-    .slice(0, RECENT_LIMIT)
     .map(r => r.s)
-  return rows
 }
 
 export default function SidebarNavContent({ density = 'full', onNavClick }: Props) {
@@ -240,6 +238,7 @@ export default function SidebarNavContent({ density = 'full', onNavClick }: Prop
   const { skills, loading: skillsLoading } = useSkills()
   const store = useChatSessions()
   const iconsOnly = density === 'icons'
+  const [recentVisible, setRecentVisible] = useState(RECENT_PAGE_SIZE)
 
   const grouped = useMemo(() => {
     if (!skills?.length) return []
@@ -253,10 +252,12 @@ export default function SidebarNavContent({ density = 'full', onNavClick }: Prop
     return order.filter(c => map.has(c)).map(c => ({ category: c, items: map.get(c)! }))
   }, [skills])
 
-  const recent = useMemo(
+  const allRecent = useMemo(
     () => recentSessionsList(store.sessions, store.sessionOrder),
     [store.sessions, store.sessionOrder],
   )
+  const recent = allRecent.slice(0, recentVisible)
+  const hasMore = allRecent.length > recentVisible
 
   const handleNewChat = () => {
     void (async () => {
@@ -326,38 +327,49 @@ export default function SidebarNavContent({ density = 'full', onNavClick }: Prop
         </div>
 
         {!iconsOnly && (
-          <div className="mt-2 flex max-h-[min(280px,42vh)] min-h-0 flex-shrink-0 flex-col border-t border-sidebar-border pt-2">
-            <p className="flex-shrink-0 px-3 pb-1.5 text-[10px] font-bold uppercase tracking-[1.5px] text-slate-500">
+          <div className="mt-2 flex max-h-[min(160px,22vh)] min-h-0 flex-shrink-0 flex-col border-t border-sidebar-border pt-2">
+            <p className="flex-shrink-0 px-3 pb-1 text-[10px] font-bold uppercase tracking-[1.5px] text-slate-500">
               Letzte Gespräche
             </p>
-            <div className="min-h-0 flex-1 overflow-y-auto px-1 pb-1">
-              {recent.length === 0 ? (
-                <p className="px-3 py-2 text-xs text-slate-500">Noch keine Gespräche.</p>
+            <div className="min-h-0 flex-1 overflow-y-auto px-1 pb-0.5">
+              {allRecent.length === 0 ? (
+                <p className="px-3 py-1.5 text-xs text-slate-500">Noch keine Gespräche.</p>
               ) : (
-                <ul className="space-y-0.5">
-                  {recent.map(s => (
-                    <li key={s.id}>
-                      <button
-                        type="button"
-                        onClick={() => openRecent(s)}
-                        className="flex w-full items-start gap-2 rounded-lg px-2 py-1.5 text-left text-sm text-sidebar-text transition-colors hover:bg-sidebar-hover"
-                      >
-                        <span
-                          className={`mt-1.5 h-2 w-2 flex-shrink-0 rounded-full ${toolSessionDotClass(s.toolType)}`}
-                          aria-hidden
-                        />
-                        <span className="min-w-0 flex-1">
-                          <span className="block truncate font-medium leading-tight">{sessionListLabel(s, 36)}</span>
-                        </span>
-                        <span className="flex-shrink-0 text-[10px] text-slate-500">
-                          {formatRecentChatTime(
-                            s.messages[s.messages.length - 1]?.timestamp ?? s.createdAt,
-                          )}
-                        </span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
+                <>
+                  <ul className="space-y-px">
+                    {recent.map(s => (
+                      <li key={s.id}>
+                        <button
+                          type="button"
+                          onClick={() => openRecent(s)}
+                          className="flex w-full items-center gap-2 rounded-lg px-2 py-1 text-left text-xs text-sidebar-text transition-colors hover:bg-sidebar-hover"
+                        >
+                          <span
+                            className={`h-1.5 w-1.5 flex-shrink-0 rounded-full ${toolSessionDotClass(s.toolType)}`}
+                            aria-hidden
+                          />
+                          <span className="min-w-0 flex-1 truncate font-medium leading-tight">
+                            {sessionListLabel(s, 32)}
+                          </span>
+                          <span className="flex-shrink-0 text-[10px] text-slate-500">
+                            {formatRecentChatTime(
+                              s.messages[s.messages.length - 1]?.timestamp ?? s.createdAt,
+                            )}
+                          </span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                  {hasMore && (
+                    <button
+                      type="button"
+                      onClick={() => setRecentVisible(v => v + RECENT_PAGE_SIZE)}
+                      className="mt-0.5 w-full rounded-lg px-2 py-1 text-left text-[10px] font-medium text-slate-500 transition-colors hover:bg-sidebar-hover hover:text-slate-300"
+                    >
+                      + {Math.min(RECENT_PAGE_SIZE, allRecent.length - recentVisible)} weitere laden
+                    </button>
+                  )}
+                </>
               )}
             </div>
           </div>

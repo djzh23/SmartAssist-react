@@ -70,8 +70,11 @@ export default function ChatInput({ toolType, isLoading, noActiveSession = false
             disabled={isLoading || noActiveSession}
             className="block max-h-[120px] w-full resize-none overflow-y-auto border-none bg-transparent px-4 pb-2 pt-3 text-sm text-stone-100 outline-none placeholder-stone-500 disabled:opacity-50"
           />
-          <div className="flex items-center justify-between px-4 pb-2.5">
-            <span className="text-[11px] text-stone-500">Enter zum Senden · Umschalt+Enter für neue Zeile</span>
+          <div className="flex items-center justify-between px-4 pb-2">
+            <span className="hidden min-[769px]:inline text-[11px] text-stone-500">
+              Enter zum Senden · Umschalt+Enter für neue Zeile
+            </span>
+            <span className="min-[769px]:hidden text-[10px] text-stone-600">⏎ Senden</span>
             <span className={`text-[11px] ${near ? 'text-red-400 font-semibold' : 'text-stone-500'}`}>
               {text.length}/4000
             </span>

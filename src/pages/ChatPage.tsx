@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
-import { AlertCircle, CheckCircle2, PanelLeft, Plus, RefreshCw, X } from 'lucide-react'
+import { AlertCircle, Briefcase, ChevronDown, CheckCircle2, Code2, Globe2, MessageCircle, Plus, RefreshCw, Target, X, type LucideIcon } from 'lucide-react'
 import type { CareerToolSetup, ToolType } from '../types'
 import { PROGRAMMING_LANGUAGES } from '../types'
 import { UsageLimitError, askAgentStream, linkJobApplicationSession } from '../api/client'
@@ -22,6 +22,7 @@ import { useUserPlan, dispatchServerUsage } from '../hooks/useUserPlan'
 import { sanitizeTechnicalContext } from '../utils/cvTechnicalContext'
 import { applyStreamText } from '../chat/streamTextBridge'
 import { buildProfileStatsLine, getProfileCompleteness, getProfileCompletenessGapHint } from '../utils/profileCompleteness'
+import { sessionListLabel } from '../utils/sessionTitle'
 
 /** German UI labels shown in sidebar / header chips */
 const LANG_DISPLAY: Record<string, string> = {
@@ -843,6 +844,20 @@ export default function ChatPage() {
   const targetApiName = LANG_API[targetLang] ?? targetLang
   const progMeta = PROGRAMMING_LANGUAGES.find(lang => lang.id === progLang)
 
+  // Mobile compact header helpers
+  const mobileActiveSession = store.visibleSessions.find(s => s.id === store.activeSessionId) ?? null
+  const mobileSessionLabel = mobileActiveSession
+    ? sessionListLabel(mobileActiveSession, 28)
+    : 'Gespräch wählen'
+  const MOBILE_TOOL_ICON: Record<string, LucideIcon> = {
+    general: MessageCircle,
+    jobanalyzer: Briefcase,
+    language: Globe2,
+    programming: Code2,
+    interview: Target,
+  }
+  const MobileToolIcon: LucideIcon = MOBILE_TOOL_ICON[store.currentToolType] ?? MessageCircle
+
   const activeContextTool = asContextTool(store.currentToolType)
   const activeContextKey = activeContextTool && store.activeSessionId
     ? contextKey(activeContextTool, store.activeSessionId)
@@ -1398,29 +1413,47 @@ export default function ChatPage() {
           </div>
         )}
 
-        {/* Mobile (≤768px): compact actions only — title lives in global top bar */}
-        <div className="flex min-[769px]:hidden flex-shrink-0 items-center justify-end gap-1 border-b border-stone-600/35 bg-app-muted/90 px-2 py-1.5 backdrop-blur-sm">
+        {/* Mobile (≤768px): compact unified session + status bar */}
+        <div className="flex min-[769px]:hidden flex-shrink-0 items-center gap-1 border-b border-stone-600/35 bg-app-muted/90 px-1.5 py-0.5 backdrop-blur-sm">
+          {/* Session toggle — tap to open sessions panel */}
           <button
             onClick={() => setSidebarOpen(true)}
-            className="flex h-11 w-11 min-h-[44px] min-w-[44px] flex-shrink-0 items-center justify-center rounded-lg border border-stone-600/45 bg-app-raised/90 text-stone-400 transition-colors active:bg-white/10"
+            className="flex min-w-0 flex-1 items-center gap-1.5 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-white/5 active:bg-white/10"
             aria-label="Gespräche öffnen"
           >
-            <PanelLeft size={17} />
+            <MobileToolIcon size={13} className="shrink-0 text-stone-500" />
+            <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-stone-300">
+              {mobileSessionLabel}
+            </span>
+            {isInterview && (
+              <span className="shrink-0 rounded bg-sky-900/70 px-1.5 py-0.5 text-[9px] font-bold uppercase text-sky-300">Intv</span>
+            )}
+            {isProgramming && (
+              <span className="shrink-0 rounded bg-emerald-900/70 px-1.5 py-0.5 text-[9px] font-bold uppercase text-emerald-300">
+                {(progMeta?.label ?? progLang).slice(0, 4)}
+              </span>
+            )}
+            {isLanguage && (
+              <span className="shrink-0 rounded bg-amber-900/70 px-1.5 py-0.5 text-[9px] font-bold uppercase text-amber-300">
+                {targetDisplay.slice(0, 3)}
+              </span>
+            )}
+            <ChevronDown size={11} className="shrink-0 text-stone-500" />
           </button>
-          {isSignedIn && (
+          {/* Interview: quick setup access */}
+          {isInterview && (
             <button
               type="button"
-              onClick={() => void store.syncSessionsRemote()}
-              disabled={store.sessionsRemoteSyncing}
-              className="flex h-11 w-11 min-h-[44px] min-w-[44px] flex-shrink-0 items-center justify-center rounded-lg border border-stone-600/45 bg-app-raised/90 text-stone-400 transition-colors active:bg-white/10 disabled:opacity-50"
-              aria-label="Mit Server synchronisieren"
+              onClick={() => setShowContextModal(true)}
+              className="flex h-8 shrink-0 items-center gap-1 rounded-lg px-2 text-[10px] font-medium text-sky-400 transition-colors hover:bg-sky-900/30 active:bg-sky-900/50"
             >
-              <RefreshCw size={16} className={store.sessionsRemoteSyncing ? 'animate-spin' : ''} />
+              Setup
             </button>
           )}
+          {/* New chat */}
           <button
             onClick={handleNewSession}
-            className="flex h-11 w-11 min-h-[44px] min-w-[44px] flex-shrink-0 items-center justify-center rounded-lg border border-stone-600/45 bg-app-raised/90 text-stone-400 transition-colors active:bg-white/10"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-stone-400 transition-colors hover:bg-white/8 active:bg-white/15"
             aria-label="Neues Gespräch starten"
           >
             <Plus size={16} />
@@ -1451,7 +1484,7 @@ export default function ChatPage() {
         )}
 
         {isSignedIn && store.activeSessionId && linkedJobApplicationBySession[store.activeSessionId] && (
-          <div className="flex-shrink-0 px-4 pb-0 pt-3">
+          <div className="hidden min-[769px]:block flex-shrink-0 px-4 pb-0 pt-3">
             <div className="mx-auto max-w-3xl">
               <span className="inline-flex items-center gap-1.5 rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-xs font-medium text-violet-800">
                 Bewerbung:
@@ -1472,7 +1505,7 @@ export default function ChatPage() {
         )}
 
         {isLanguage && (
-          <div className="flex-shrink-0 px-4 pb-0 pt-3">
+          <div className="hidden min-[769px]:block flex-shrink-0 px-4 pb-0 pt-3">
             <div className="mx-auto max-w-3xl">
               <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-light px-3 py-1 text-xs font-medium text-primary">
                 Lernen: {targetDisplay}
@@ -1482,7 +1515,7 @@ export default function ChatPage() {
         )}
 
         {isProgramming && (
-          <div className="flex-shrink-0 px-4 pb-0 pt-3">
+          <div className="hidden min-[769px]:block flex-shrink-0 px-4 pb-0 pt-3">
             <div className="mx-auto max-w-3xl">
               <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
                 Programmierung: {progMeta?.label ?? progLang}
@@ -1492,8 +1525,8 @@ export default function ChatPage() {
         )}
 
         {isInterview && (
-          <div className="flex-shrink-0 px-4 pb-0 pt-3">
-            <div className="mx-auto flex max-w-3xl flex-wrap items-center gap-2 max-[768px]:flex-nowrap max-[768px]:overflow-x-auto max-[768px]:[scrollbar-width:thin]">
+          <div className="hidden min-[769px]:flex flex-shrink-0 px-4 pb-0 pt-3">
+            <div className="mx-auto flex max-w-3xl flex-wrap items-center gap-2">
               <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-50 px-3 py-1 text-xs font-medium text-sky-700">
                 Vorstellungsgespräch
               </span>
