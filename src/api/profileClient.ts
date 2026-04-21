@@ -202,3 +202,11 @@ export async function updateFullProfile(token: string, profile: Partial<CareerPr
   })
   if (!res.ok) throw new Error(await readError(res, `Profile update failed (${res.status})`))
 }
+
+export async function deleteCareerProfile(token: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/api/profile`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok) throw new Error(await readError(res, `Profile delete failed (${res.status})`))
+}

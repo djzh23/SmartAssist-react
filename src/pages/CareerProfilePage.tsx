@@ -1,7 +1,20 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '@clerk/clerk-react'
-import { CheckCircle2, Lightbulb, Loader2, Plus, Sparkles, Trash2 } from 'lucide-react'
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Edit3,
+  Eye,
+  HelpCircle,
+  Lightbulb,
+  Loader2,
+  Plus,
+  Sparkles,
+  Target,
+  Trash2,
+  X,
+} from 'lucide-react'
 import {
   fetchJobApplications,
   fetchLearningInsights,
@@ -21,16 +34,17 @@ import type {
 import {
   addTargetJob,
   completeOnboarding,
+  deleteCareerProfile,
   fetchAnonymousCvSummary,
   fetchProfile,
   removeTargetJob,
   updateFullProfile,
   updateSkills,
-  uploadCv,
   type AnonymousSummaryLanguage,
 } from '../api/profileClient'
 import CvUploader from '../components/profile/CvUploader'
-import { ServerSyncControl } from '../components/ui/ServerSyncControl'
+
+// ─── helpers ────────────────────────────────────────────────────────────────
 
 function canMarkProfileSetupComplete(p: CareerProfile): boolean {
   return Boolean(p.field?.trim() && p.level?.trim() && p.goals.length > 0)
@@ -41,6 +55,473 @@ function hasEnoughForAnonymousCvSummary(p: CareerProfile): boolean {
   if ((p.experience?.length ?? 0) > 0) return true
   return (p.cvRawText?.trim().length ?? 0) >= 50
 }
+
+const FIELDS: { value: string; label: string }[] = [
+  { value: 'it', label: 'IT / Softwareentwicklung' },
+  { value: 'marketing', label: 'Marketing / Kommunikation' },
+  { value: 'finance', label: 'Finanzen / Buchhaltung' },
+  { value: 'healthcare', label: 'Gesundheit / Pflege' },
+  { value: 'engineering', label: 'Ingenieurwesen / Technik' },
+  { value: 'education', label: 'Bildung / Wissenschaft' },
+  { value: 'sales', label: 'Vertrieb / Sales' },
+  { value: 'hr', label: 'Personal / HR' },
+  { value: 'legal', label: 'Recht / Jura' },
+  { value: 'trades', label: 'Handwerk / Produktion' },
+  { value: 'design', label: 'Design / Kreativ' },
+  { value: 'other', label: 'Sonstiges' },
+]
+
+const LEVELS: { value: string; label: string }[] = [
+  { value: 'entry', label: 'Berufseinsteiger (0–1 Jahre)' },
+  { value: 'junior', label: 'Junior (1–3 Jahre)' },
+  { value: 'mid', label: 'Mid-Level (3–5 Jahre)' },
+  { value: 'senior', label: 'Senior (5–10 Jahre)' },
+  { value: 'lead', label: 'Lead / Führungskraft (10+ Jahre)' },
+  { value: 'career_change', label: 'Karrierewechsler' },
+]
+
+const GOALS: { id: string; label: string }[] = [
+  { id: 'new_job', label: 'Neuen Job finden' },
+  { id: 'career_switch', label: 'Karrierewechsel' },
+  { id: 'interview_prep', label: 'Interview vorbereiten' },
+  { id: 'cv_improvement', label: 'Lebenslauf verbessern' },
+  { id: 'salary_negotiation', label: 'Gehaltsverhandlung' },
+  { id: 'language', label: 'Sprachen / Kommunikation' },
+]
+
+function emptyExp(): WorkExperience {
+  return { title: '', company: '', duration: '', summary: '' }
+}
+
+function emptyEdu(): Education {
+  return { degree: '', institution: '', year: '' }
+}
+
+function emptyLang(): ProfileLanguage {
+  return { name: '', level: '' }
+}
+
+const PENDING_CV_KEY = 'privateprep_pending_cv_parsed'
+
+function mergeParsedDraftIntoProfile(
+  profile: CareerProfile,
+  draft: ParsedCvData,
+): CareerProfile {
+  const effField = (draft.field?.trim() || profile.field)?.trim() || profile.field
+  const effLevel = (draft.level?.trim() || profile.level)?.trim() || profile.level
+  const exFiltered =
+    draft.experience?.filter(e => (e.title ?? '').trim() || (e.company ?? '').trim()) ?? []
+  const eduFiltered =
+    draft.education?.filter(e => (e.degree ?? '').trim() || (e.institution ?? '').trim()) ?? []
+  const langFiltered = draft.languages?.filter(l => (l.name ?? '').trim()) ?? []
+
+  return {
+    ...profile,
+    field: effField ?? null,
+    fieldLabel: FIELDS.find(f => f.value === effField)?.label ?? profile.fieldLabel,
+    level: effLevel ?? null,
+    levelLabel: LEVELS.find(l => l.value === effLevel)?.label ?? profile.levelLabel,
+    currentRole: draft.currentRole?.trim() || profile.currentRole,
+    skills: draft.skills?.length ? draft.skills : profile.skills,
+    experience: exFiltered.length > 0 ? exFiltered : profile.experience,
+    educationEntries: eduFiltered.length > 0 ? eduFiltered : profile.educationEntries,
+    languages: langFiltered.length > 0 ? langFiltered : profile.languages,
+  }
+}
+
+// ─── markdown renderer ───────────────────────────────────────────────────────
+
+function renderInline(text: string): ReactNode {
+  const parts = text.split(/(\*\*[^*]+\*\*)/)
+  return parts.map((part, i) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return (
+        <strong key={i} className="font-semibold text-stone-900">
+          {part.slice(2, -2)}
+        </strong>
+      )
+    }
+    return part
+  })
+}
+
+function renderSummaryMarkdown(text: string): ReactNode {
+  const lines = text.split('\n')
+  return (
+    <div className="space-y-1 text-sm text-stone-800">
+      {lines.map((line, i) => {
+        if (line.startsWith('### ')) {
+          return (
+            <h4 key={i} className="mt-3 mb-1 text-xs font-bold uppercase tracking-wide text-violet-700">
+              {line.slice(4)}
+            </h4>
+          )
+        }
+        if (line.startsWith('## ')) {
+          return (
+            <h3 key={i} className="mt-4 mb-1 text-sm font-bold text-violet-900">
+              {line.slice(3)}
+            </h3>
+          )
+        }
+        if (line.startsWith('# ')) {
+          return (
+            <h2 key={i} className="mt-4 mb-2 text-base font-bold text-violet-950">
+              {line.slice(2)}
+            </h2>
+          )
+        }
+        if (line.startsWith('- ') || line.startsWith('• ')) {
+          return (
+            <div key={i} className="flex gap-2 items-start pl-1">
+              <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-violet-500" aria-hidden />
+              <span>{renderInline(line.slice(2))}</span>
+            </div>
+          )
+        }
+        if (line.trim() === '') return <div key={i} className="h-1.5" />
+        return <p key={i}>{renderInline(line)}</p>
+      })}
+    </div>
+  )
+}
+
+// ─── HelpModal ───────────────────────────────────────────────────────────────
+
+const HELP_TABS = [
+  { id: 'overview', label: 'Übersicht' },
+  { id: 'summary', label: 'Zusammenfassung' },
+  { id: 'jobs', label: 'Wunschstellen' },
+  { id: 'privacy', label: 'Datenschutz' },
+] as const
+
+type HelpTab = (typeof HELP_TABS)[number]['id']
+
+function HelpModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const [tab, setTab] = useState<HelpTab>('overview')
+
+  if (!open) return null
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full max-w-lg rounded-2xl border border-stone-300/40 bg-white shadow-2xl">
+        <div className="flex items-center justify-between border-b border-stone-200 px-5 py-4">
+          <h2 className="text-base font-semibold text-stone-900">Karriereprofil — Hilfe</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-1.5 text-stone-500 hover:bg-stone-100 hover:text-stone-900"
+            aria-label="Schließen"
+          >
+            <X size={18} />
+          </button>
+        </div>
+        <div className="flex gap-1 border-b border-stone-200 px-4 pt-3">
+          {HELP_TABS.map(t => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => setTab(t.id)}
+              className={[
+                'rounded-t-lg px-3 py-2 text-xs font-semibold transition-colors',
+                tab === t.id
+                  ? 'border-b-2 border-violet-600 text-violet-700'
+                  : 'text-stone-500 hover:text-stone-900',
+              ].join(' ')}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+        <div className="max-h-[60vh] overflow-y-auto px-5 py-5 text-sm text-stone-700 leading-relaxed">
+          {tab === 'overview' && (
+            <div className="space-y-3">
+              <p>
+                Das <strong className="text-stone-900">Karriereprofil</strong> ist das Herzstück deiner
+                Personalisierung. Je vollständiger es ist, desto gezielter kann der Assistent dir bei
+                Bewerbungen, Interviews und Jobsuche helfen.
+              </p>
+              <div className="rounded-xl border border-violet-200 bg-violet-50 p-4 space-y-2">
+                <p className="font-semibold text-violet-900">Was wird verwendet?</p>
+                <ul className="space-y-1">
+                  {[
+                    'Berufsfeld & Level → Grundlage aller Analysen',
+                    'Skills → Stärken-/Lückenanalyse im Chat',
+                    'Berufserfahrung → Kontext für Interviewvorbereitung',
+                    'Zusammenfassung → kompakter Kontext für den Assistenten',
+                    'Wunschstellen → präzisere Stellenanalysen',
+                  ].map(item => (
+                    <li key={item} className="flex gap-2 items-start">
+                      <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-violet-500" />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <p className="text-xs text-stone-500">
+                Im Chat aktivierst du den Kontext über die Schalter über dem Eingabefeld.{' '}
+                <strong>Farbig = aktiv</strong>.
+              </p>
+            </div>
+          )}
+          {tab === 'summary' && (
+            <div className="space-y-3">
+              <p>
+                Die <strong className="text-stone-900">KI-Zusammenfassung</strong> fasst dein Profil
+                anonymisiert und strukturiert zusammen — kein Name, keine persönlichen Daten, nur
+                berufliche Stärken und Erfahrung.
+              </p>
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 space-y-2">
+                <p className="font-semibold text-emerald-900">Ablauf</p>
+                <ul className="space-y-1.5 text-sm">
+                  {[
+                    'Sprache wählen (DE oder EN)',
+                    'Auf „Zusammenfassung erstellen" klicken',
+                    'KI verarbeitet Profil + hochgeladenen CV im Hintergrund',
+                    'Ergebnis als Modal öffnen, lesen, ggf. anpassen, speichern',
+                  ].map((step, i) => (
+                    <li key={step} className="flex gap-2 items-start">
+                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-[10px] font-bold text-white">
+                        {i + 1}
+                      </span>
+                      <span>{step}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <p>
+                DE und EN sind <strong className="text-stone-900">unabhängig</strong> — die Erstellung
+                einer Sprache löst die andere nicht automatisch aus. Du entscheidest, welche Sprache du
+                brauchst.
+              </p>
+              <p className="text-xs text-stone-500">
+                Tipp: Erstelle DE für deutschsprachige und EN für internationale Bewerbungen.
+              </p>
+            </div>
+          )}
+          {tab === 'jobs' && (
+            <div className="space-y-3">
+              <div className="flex gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
+                <Target className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" />
+                <div>
+                  <p className="font-semibold text-amber-900">Wunschstellen sind entscheidend</p>
+                  <p className="mt-1 text-sm">
+                    Die Stellenanalyse im Chat vergleicht eine Jobanzeige direkt mit deinen
+                    Wunschstellen — so bekommst du eine präzise Passgenauigkeit statt einer
+                    generischen Einschätzung.
+                  </p>
+                </div>
+              </div>
+              <ul className="space-y-2 text-sm">
+                {[
+                  'Bis zu 3 Wunschstellen speichern',
+                  'Stellentitel ist Pflicht — Unternehmen und Beschreibung optional',
+                  'Die Beschreibung fließt direkt in die Jobanalyse ein',
+                  'Du kannst im Chat eine Wunschstelle als aktive Referenz wählen',
+                ].map(item => (
+                  <li key={item} className="flex gap-2 items-start">
+                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {tab === 'privacy' && (
+            <div className="space-y-3">
+              <div className="rounded-xl border border-stone-200 bg-stone-50 p-4 space-y-2">
+                <p className="font-semibold text-stone-900">Was wird anonymisiert?</p>
+                <p>
+                  Die KI-Zusammenfassung wird ohne deinen Namen, deine Adresse oder andere direkt
+                  identifizierende Angaben erstellt. Der Assistent erhält nur berufliche Fakten.
+                </p>
+              </div>
+              <p>
+                Dein hochgeladener <strong className="text-stone-900">CV-Rohtext</strong> wird sicher
+                auf dem Server gespeichert und nur für die Zusammenfassungs-Generierung und die
+                PDF-Erkennung verwendet — er erscheint nicht direkt im Chat.
+              </p>
+              <p>
+                Du kannst jederzeit alle Karriereprofil-Daten über den Button{' '}
+                <strong className="text-stone-900">„Alle Daten löschen"</strong> oben auf der Seite
+                vollständig entfernen.
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── SummaryModal ─────────────────────────────────────────────────────────────
+
+function SummaryModal({
+  lang,
+  initialText,
+  onSave,
+  onClose,
+  saving,
+}: {
+  lang: 'de' | 'en'
+  initialText: string
+  onSave: (text: string) => Promise<void>
+  onClose: () => void
+  saving: boolean
+}) {
+  const [mode, setMode] = useState<'preview' | 'edit'>('preview')
+  const [text, setText] = useState(initialText)
+
+  const langLabel = lang === 'de' ? 'Deutsch' : 'English'
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-12">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative flex w-full max-w-2xl flex-col rounded-2xl border border-stone-300/40 bg-white shadow-2xl max-h-[85vh]">
+        <div className="flex items-center justify-between border-b border-stone-200 px-5 py-4">
+          <div>
+            <h2 className="text-base font-semibold text-stone-900">
+              KI-Zusammenfassung{' '}
+              <span className="ml-1 rounded-md border border-violet-200 bg-violet-50 px-2 py-0.5 text-xs font-bold text-violet-700">
+                {langLabel}
+              </span>
+            </h2>
+            <p className="mt-0.5 text-xs text-stone-500">Anonym — kein Name, nur berufliche Stärken</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-1.5 text-stone-500 hover:bg-stone-100 hover:text-stone-900"
+            aria-label="Schließen"
+          >
+            <X size={18} />
+          </button>
+        </div>
+        <div className="flex items-center gap-1 border-b border-stone-200 px-4 pt-2">
+          <button
+            type="button"
+            onClick={() => setMode('preview')}
+            className={[
+              'flex items-center gap-1.5 rounded-t-lg px-3 py-2 text-xs font-semibold transition-colors',
+              mode === 'preview'
+                ? 'border-b-2 border-violet-600 text-violet-700'
+                : 'text-stone-500 hover:text-stone-900',
+            ].join(' ')}
+          >
+            <Eye size={13} />
+            Vorschau
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode('edit')}
+            className={[
+              'flex items-center gap-1.5 rounded-t-lg px-3 py-2 text-xs font-semibold transition-colors',
+              mode === 'edit'
+                ? 'border-b-2 border-violet-600 text-violet-700'
+                : 'text-stone-500 hover:text-stone-900',
+            ].join(' ')}
+          >
+            <Edit3 size={13} />
+            Bearbeiten
+          </button>
+        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
+          {mode === 'preview' ? (
+            text.trim() ? (
+              renderSummaryMarkdown(text)
+            ) : (
+              <p className="text-sm text-stone-400 italic">Kein Inhalt vorhanden.</p>
+            )
+          ) : (
+            <textarea
+              value={text}
+              onChange={e => setText(e.target.value)}
+              rows={16}
+              className="w-full rounded-lg border border-stone-300 px-3 py-2.5 text-sm text-stone-900 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-200"
+            />
+          )}
+        </div>
+        <div className="flex items-center justify-end gap-2 border-t border-stone-200 px-5 py-4">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-xl border border-stone-300 px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-100"
+          >
+            Abbrechen
+          </button>
+          <button
+            type="button"
+            disabled={saving}
+            onClick={() => void onSave(text)}
+            className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 disabled:opacity-50"
+          >
+            {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+            Speichern
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── DeleteConfirmModal ──────────────────────────────────────────────────────
+
+function DeleteConfirmModal({
+  onConfirm,
+  onClose,
+  busy,
+}: {
+  onConfirm: () => Promise<void>
+  onClose: () => void
+  busy: boolean
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full max-w-md rounded-2xl border border-red-200 bg-white shadow-2xl">
+        <div className="p-6">
+          <div className="flex items-start gap-4">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-red-100">
+              <AlertTriangle className="h-6 w-6 text-red-600" />
+            </div>
+            <div>
+              <h2 className="text-base font-semibold text-stone-900">Karriereprofil löschen?</h2>
+              <p className="mt-2 text-sm text-stone-600 leading-relaxed">
+                Alle gespeicherten Daten werden unwiderruflich gelöscht: Basis-Infos, Skills,
+                Berufserfahrung, Ausbildung, Sprachen, CV und Zusammenfassungen.
+              </p>
+              <p className="mt-2 text-sm font-medium text-red-700">
+                Diese Aktion kann nicht rückgängig gemacht werden.
+              </p>
+            </div>
+          </div>
+          <div className="mt-6 flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={busy}
+              className="rounded-xl border border-stone-300 px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-100 disabled:opacity-50"
+            >
+              Abbrechen
+            </button>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void onConfirm()}
+              className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+            >
+              {busy && <Loader2 className="h-4 w-4 animate-spin" />}
+              Ja, alles löschen
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── LearningInsightsPanel ───────────────────────────────────────────────────
 
 function LearningInsightsPanel() {
   const { getToken, isSignedIn } = useAuth()
@@ -134,8 +615,8 @@ function LearningInsightsPanel() {
         <h2 className="text-sm font-semibold text-stone-900">To-dos aus Chats</h2>
       </div>
       <p className="mb-4 text-sm text-stone-700">
-        Einträge aus Stellenanalyse und Interview-Coach — gebündelt pro Bewerbung, wenn die Session verknüpft war.
-        Bearbeite Titel oder Text; „Erledigt“ entfernt den Eintrag aus dem KI-Kontext.
+        Einträge aus Stellenanalyse und Interview-Coach — gebündelt pro Bewerbung.
+        Bearbeite Titel oder Text; „Erledigt" entfernt den Eintrag aus dem KI-Kontext.
       </p>
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <label className="flex items-center gap-2 text-xs text-stone-700">
@@ -145,7 +626,7 @@ function LearningInsightsPanel() {
             onChange={e => setFilterAppId(e.target.value)}
             className="rounded-md border border-stone-400/50 bg-white px-2 py-1 text-xs text-stone-900"
           >
-            <option value="">Alle offenen + passende allgemeine</option>
+            <option value="">Alle offenen</option>
             {applications.map(a => (
               <option key={a.id} value={a.id}>
                 {a.jobTitle} · {a.company}
@@ -222,102 +703,34 @@ function LearningInsightsPanel() {
   )
 }
 
-const FIELDS: { value: string; label: string }[] = [
-  { value: 'it', label: 'IT / Softwareentwicklung' },
-  { value: 'marketing', label: 'Marketing / Kommunikation' },
-  { value: 'finance', label: 'Finanzen / Buchhaltung' },
-  { value: 'healthcare', label: 'Gesundheit / Pflege' },
-  { value: 'engineering', label: 'Ingenieurwesen / Technik' },
-  { value: 'education', label: 'Bildung / Wissenschaft' },
-  { value: 'sales', label: 'Vertrieb / Sales' },
-  { value: 'hr', label: 'Personal / HR' },
-  { value: 'legal', label: 'Recht / Jura' },
-  { value: 'trades', label: 'Handwerk / Produktion' },
-  { value: 'design', label: 'Design / Kreativ' },
-  { value: 'other', label: 'Sonstiges' },
-]
-
-const LEVELS: { value: string; label: string }[] = [
-  { value: 'entry', label: 'Berufseinsteiger (0-1 Jahre)' },
-  { value: 'junior', label: 'Junior (1-3 Jahre)' },
-  { value: 'mid', label: 'Mid-Level (3-5 Jahre)' },
-  { value: 'senior', label: 'Senior (5-10 Jahre)' },
-  { value: 'lead', label: 'Lead / Führungskraft (10+ Jahre)' },
-  { value: 'career_change', label: 'Karrierewechsler' },
-]
-
-const GOALS: { id: string; label: string }[] = [
-  { id: 'new_job', label: 'Neuen Job finden' },
-  { id: 'career_switch', label: 'Karrierewechsel' },
-  { id: 'interview_prep', label: 'Interview vorbereiten' },
-  { id: 'cv_improvement', label: 'Lebenslauf verbessern' },
-  { id: 'salary_negotiation', label: 'Gehaltsverhandlung' },
-  { id: 'language', label: 'Sprachen / Kommunikation' },
-]
-
-function emptyExp(): WorkExperience {
-  return { title: '', company: '', duration: '', summary: '' }
-}
-
-function emptyEdu(): Education {
-  return { degree: '', institution: '', year: '' }
-}
-
-function emptyLang(): ProfileLanguage {
-  return { name: '', level: '' }
-}
-
-const PENDING_CV_KEY = 'privateprep_pending_cv_parsed'
-
-function mergeParsedDraftIntoProfile(
-  profile: CareerProfile,
-  draft: ParsedCvData,
-): CareerProfile {
-  const effField = (draft.field?.trim() || profile.field)?.trim() || profile.field
-  const effLevel = (draft.level?.trim() || profile.level)?.trim() || profile.level
-  const exFiltered =
-    draft.experience?.filter(e => (e.title ?? '').trim() || (e.company ?? '').trim()) ?? []
-  const eduFiltered =
-    draft.education?.filter(e => (e.degree ?? '').trim() || (e.institution ?? '').trim()) ?? []
-  const langFiltered = draft.languages?.filter(l => (l.name ?? '').trim()) ?? []
-
-  return {
-    ...profile,
-    field: effField ?? null,
-    fieldLabel: FIELDS.find(f => f.value === effField)?.label ?? profile.fieldLabel,
-    level: effLevel ?? null,
-    levelLabel: LEVELS.find(l => l.value === effLevel)?.label ?? profile.levelLabel,
-    currentRole: draft.currentRole?.trim() || profile.currentRole,
-    skills: draft.skills?.length ? draft.skills : profile.skills,
-    experience: exFiltered.length > 0 ? exFiltered : profile.experience,
-    educationEntries: eduFiltered.length > 0 ? eduFiltered : profile.educationEntries,
-    languages: langFiltered.length > 0 ? langFiltered : profile.languages,
-  }
-}
+// ─── CareerProfilePage ───────────────────────────────────────────────────────
 
 export default function CareerProfilePage() {
   const { getToken, isLoaded } = useAuth()
   const mergedPendingCv = useRef(false)
+
   const [profile, setProfile] = useState<CareerProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [profileLastSyncedAt, setProfileLastSyncedAt] = useState<string | null>(null)
   const [skillDraft, setSkillDraft] = useState('')
   const [jobTitle, setJobTitle] = useState('')
   const [jobCompany, setJobCompany] = useState('')
   const [jobDesc, setJobDesc] = useState('')
   const [markSetupBusy, setMarkSetupBusy] = useState(false)
-  /** Oben: PDF/KI-Import oder klassisches Formular darunter */
   const [dataEntryTab, setDataEntryTab] = useState<'pdf' | 'manual'>('manual')
   const [cvPasteForUploader, setCvPasteForUploader] = useState('')
   const [cvSummaryLoading, setCvSummaryLoading] = useState(false)
-  /** Server-Zusammenfassung passt evtl. nicht mehr zu geänderten Profildaten */
   const [summaryStale, setSummaryStale] = useState(false)
-  /** PDF-Erkennung nur lokal ins Formular gemerged, noch kein PUT */
   const [pendingMergedDraftHint, setPendingMergedDraftHint] = useState(false)
-  /** Welche Kurzfassung im UI betont wird (beide Felder sichtbar) */
-  const [summaryViewLang, setSummaryViewLang] = useState<'de' | 'en'>('de')
+  /** Which language the user wants to generate next */
+  const [selectedGenLang, setSelectedGenLang] = useState<AnonymousSummaryLanguage>('de')
+  /** Which language summary is open in the modal (null = closed) */
+  const [summaryModalLang, setSummaryModalLang] = useState<'de' | 'en' | null>(null)
+  const [helpOpen, setHelpOpen] = useState(false)
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [profileDeleted, setProfileDeleted] = useState(false)
 
   const load = useCallback(async () => {
     if (!isLoaded) return
@@ -328,7 +741,6 @@ export default function CareerProfilePage() {
       if (!token) throw new Error('Nicht angemeldet')
       const p = await fetchProfile(token)
       setProfile(p)
-      setProfileLastSyncedAt(new Date().toISOString())
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Laden fehlgeschlagen')
     } finally {
@@ -451,23 +863,6 @@ export default function CareerProfilePage() {
     }
   }
 
-  const saveCv = async () => {
-    if (!profile) return
-    const token = await getToken()
-    if (!token) return
-    setSaving(true)
-    try {
-      await uploadCv(token, profile.cvRawText ?? '')
-      await load()
-      setSummaryStale(true)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'CV speichern fehlgeschlagen')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  /** Geparste CV-Daten ins Profil schreiben (Rohtext ist nach PDF-Upload schon auf dem Server). */
   const saveParsedDraftToProfile = async (draft: ParsedCvData) => {
     if (!profile) return
     const token = await getToken()
@@ -513,7 +908,8 @@ export default function CareerProfilePage() {
     }
   }
 
-  const generateAnonymousCvSummaryForLang = async (lang: AnonymousSummaryLanguage) => {
+  /** Generates summary for ONE language only — does not touch the other. */
+  const generateSummaryForLang = async (lang: AnonymousSummaryLanguage) => {
     if (!profile || !hasEnoughForAnonymousCvSummary(profile)) return
     const token = await getToken()
     if (!token) return
@@ -528,6 +924,7 @@ export default function CareerProfilePage() {
       await updateFullProfile(token, { ...profile, ...patch })
       await load()
       setSummaryStale(false)
+      setSummaryModalLang(lang)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Zusammenfassung fehlgeschlagen')
     } finally {
@@ -535,15 +932,22 @@ export default function CareerProfilePage() {
     }
   }
 
-  const saveSummaryTextsToServer = async () => {
+  const saveSummaryEdit = async (lang: 'de' | 'en', text: string) => {
     if (!profile) return
-    await saveProfilePatch(
-      {
-        cvSummary: profile.cvSummary ?? null,
-        cvSummaryEn: profile.cvSummaryEn ?? null,
-      },
-      { markSummaryStale: false },
-    )
+    setSaving(true)
+    try {
+      const patch =
+        lang === 'de'
+          ? { cvSummary: text || null, cvSummaryEn: profile.cvSummaryEn ?? null }
+          : { cvSummary: profile.cvSummary ?? null, cvSummaryEn: text || null }
+      await updateFullProfile(await getToken().then(t => t!), { ...profile, ...patch })
+      await load()
+      setSummaryModalLang(null)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Speichern fehlgeschlagen')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const removeExperienceRow = (index: number) => {
@@ -601,10 +1005,56 @@ export default function CareerProfilePage() {
     }
   }
 
+  const handleDeleteProfile = async () => {
+    const token = await getToken()
+    if (!token) return
+    setDeleting(true)
+    setError(null)
+    try {
+      await deleteCareerProfile(token)
+      setProfileDeleted(true)
+      setDeleteConfirmOpen(false)
+      setProfile(null)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Löschen fehlgeschlagen')
+      setDeleteConfirmOpen(false)
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  // ─── render states ─────────────────────────────────────────────────────────
+
   if (!isLoaded || loading) {
     return (
       <div className="flex min-h-0 flex-1 items-center justify-center text-stone-400">
         <Loader2 className="animate-spin" size={28} />
+      </div>
+    )
+  }
+
+  if (profileDeleted) {
+    return (
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-4 p-6 text-center">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-stone-100">
+          <Trash2 className="h-8 w-8 text-stone-400" />
+        </div>
+        <div>
+          <p className="text-base font-semibold text-stone-900">Karriereprofil gelöscht</p>
+          <p className="mt-1 text-sm text-stone-600">
+            Alle Karrieredaten wurden entfernt. Du kannst jederzeit neu beginnen.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            setProfileDeleted(false)
+            void load()
+          }}
+          className="rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-white hover:bg-primary-hover"
+        >
+          Neues Profil anlegen
+        </button>
       </div>
     )
   }
@@ -628,40 +1078,69 @@ export default function CareerProfilePage() {
 
   const field = profile.field ?? ''
   const level = profile.level ?? ''
+  const hasDeSummary = Boolean(profile.cvSummary?.trim())
+  const hasEnSummary = Boolean(profile.cvSummaryEn?.trim())
+  const canGenerate = hasEnoughForAnonymousCvSummary(profile)
 
   return (
     <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden bg-transparent">
+      {helpOpen && <HelpModal open={helpOpen} onClose={() => setHelpOpen(false)} />}
+      {deleteConfirmOpen && (
+        <DeleteConfirmModal
+          onConfirm={handleDeleteProfile}
+          onClose={() => setDeleteConfirmOpen(false)}
+          busy={deleting}
+        />
+      )}
+      {summaryModalLang && (
+        <SummaryModal
+          lang={summaryModalLang}
+          initialText={
+            summaryModalLang === 'de' ? (profile.cvSummary ?? '') : (profile.cvSummaryEn ?? '')
+          }
+          onSave={text => saveSummaryEdit(summaryModalLang, text)}
+          onClose={() => setSummaryModalLang(null)}
+          saving={saving}
+        />
+      )}
+
       <div className="mx-auto w-full max-w-3xl px-4 py-6">
+        {/* ── Header ─────────────────────────────────────────────────── */}
         <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0">
-            <h1 className="mb-1 text-2xl font-semibold text-stone-50">Karriereprofil</h1>
-            <p className="text-sm text-stone-400">
-              Diese Daten kannst du in den Chat-Kontext einbinden (Schalter über dem Eingabefeld). Du bearbeitest hier
-              dieselben Infos wie in der{' '}
-              <Link to="/onboarding" className="font-medium text-primary hover:underline">
-                geführten Einrichtung (3 Schritte)
-              </Link>
-              — nichts doppelt pflegen nötig.
-            </p>
+          <div className="min-w-0 flex items-start gap-2">
+            <div>
+              <h1 className="mb-1 text-2xl font-semibold text-stone-50">Karriereprofil</h1>
+              <p className="text-sm text-stone-400">
+                Personalisiere den Assistenten — je vollständiger, desto präziser die Antworten.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setHelpOpen(true)}
+              className="mt-1 shrink-0 rounded-full p-1.5 text-stone-400 hover:bg-stone-700 hover:text-stone-100 transition-colors"
+              aria-label="Hilfe & Hinweise"
+            >
+              <HelpCircle size={18} />
+            </button>
           </div>
-          <ServerSyncControl
-            variant="dark"
-            className="shrink-0"
-            onSync={() => void load()}
-            syncing={loading}
-            lastSyncedAt={profileLastSyncedAt}
-          />
+          <button
+            type="button"
+            onClick={() => setDeleteConfirmOpen(true)}
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-red-500/40 px-3 py-2 text-xs font-medium text-red-400 hover:border-red-400 hover:bg-red-950/30 hover:text-red-300 transition-colors"
+          >
+            <Trash2 size={14} aria-hidden />
+            Alle Daten löschen
+          </button>
         </div>
 
         <LearningInsightsPanel />
 
+        {/* ── CV-Import ──────────────────────────────────────────────── */}
         <section className="mb-8 rounded-xl border border-violet-500/35 bg-app-parchment p-5 shadow-landing text-stone-900">
-          <h2 className="mb-1 text-sm font-semibold text-stone-900">Profil ausfüllen</h2>
+          <h2 className="mb-1 text-sm font-semibold text-stone-900">Profil befüllen</h2>
           <p className="mb-4 text-sm text-stone-700">
-            PDF: Wir speichern den extrahierten Rohtext auf dem Server; die erkannten Felder sind Vorschläge — du kannst
-            im Formular unten ergänzen oder korrigieren und pro Abschnitt speichern. Manuell: Daten direkt eintragen;
-            Auswahl in <strong className="font-medium text-stone-900">Basis</strong> speichert beim Ändern, Rolle beim
-            Verlassen des Feldes.
+            PDF hochladen → KI erkennt Felder automatisch und befüllt das Formular.
+            Oder manuell direkt in den Abschnitten unten ausfüllen.
           </p>
           <div className="mb-4 flex rounded-lg border border-stone-400/40 bg-app-parchmentDeep p-0.5 text-xs font-semibold sm:text-sm">
             <button
@@ -702,37 +1181,30 @@ export default function CareerProfilePage() {
           )}
           {dataEntryTab === 'manual' && (
             <p className="rounded-lg border border-stone-400/30 bg-app-parchmentDeep px-3 py-2.5 text-sm text-stone-700">
-              Nutze die Abschnitte <strong className="font-medium text-stone-900">Basis</strong>,{' '}
-              <strong className="font-medium text-stone-900">Skills</strong>,{' '}
-              <strong className="font-medium text-stone-900">Berufserfahrung</strong> usw. unten auf dieser Seite. Zum
-              Vorbelegen per KI kannst du jederzeit auf <strong className="font-medium text-stone-900">PDF hochladen</strong>{' '}
-              wechseln.
+              Fülle die Abschnitte unten aus. Zum KI-gestützten Vorbelegen jederzeit auf{' '}
+              <strong className="font-medium text-stone-900">PDF hochladen</strong> wechseln.
             </p>
           )}
         </section>
 
+        {/* ── Onboarding status ──────────────────────────────────────── */}
         {profile.onboardingCompleted ? (
           <div className="mb-6 flex gap-3 rounded-xl border border-emerald-600/35 bg-app-parchment px-4 py-3 text-sm text-stone-900">
             <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-emerald-600" aria-hidden />
             <div>
               <p className="font-semibold text-emerald-900">Profil eingerichtet</p>
-              <p className="mt-1.5 leading-relaxed text-stone-800">
-                Das Setup ist abgehakt: der Chat zeigt keinen Einrichtungs-Hinweis mehr. Ob deine Daten beim Senden
-                wirklich mit an den Assistenten gehen, siehst du im Chat an den <strong className="font-medium">Kontext</strong>
-                -Schaltern — <strong className="font-medium">farbig = aktiv</strong> (z.&nbsp;B. Profil, Skills).
+              <p className="mt-1 leading-relaxed text-stone-800">
+                Im Chat aktivierst du den Kontext über die Schalter über dem Eingabefeld —{' '}
+                <strong className="font-medium">farbig = aktiv</strong>.
               </p>
             </div>
           </div>
         ) : canMarkProfileSetupComplete(profile) ? (
           <div className="mb-6 rounded-xl border border-amber-600/35 bg-app-parchment px-4 py-3 text-sm text-stone-900">
-            <p className="font-semibold text-amber-950">Daten gespeichert — Setup noch nicht abgeschlossen</p>
+            <p className="font-semibold text-amber-950">Daten gespeichert — Setup noch offen</p>
             <p className="mt-2 leading-relaxed text-stone-800">
-              Deine Eingaben sind schon auf dem Server. „Eingerichtet“ ist nur die Bestätigung, dass du das Onboarding
-              nicht mehr brauchst (wie der letzte Schritt der{' '}
-              <Link to="/onboarding" className="font-medium text-primary underline-offset-2 hover:underline">
-                geführten Einrichtung
-              </Link>
-              ). Danach erscheint unten die grüne Box und der Chat-Hinweis entfällt.
+              Klicke unten, um das Profil als eingerichtet zu markieren — danach entfällt der
+              Chat-Hinweis.
             </p>
             <button
               type="button"
@@ -747,12 +1219,14 @@ export default function CareerProfilePage() {
         ) : (
           <div className="mb-6 rounded-xl border border-amber-600/35 bg-app-parchment px-4 py-3 text-sm text-stone-900">
             <strong className="font-medium">Noch nicht eingerichtet:</strong> Wähle mindestens{' '}
-            <strong className="font-medium">Berufsfeld</strong>, <strong className="font-medium">Level</strong> und ein{' '}
-            <strong className="font-medium">Ziel</strong>, dann kannst du das Setup hier oder per{' '}
+            <strong className="font-medium">Berufsfeld</strong>,{' '}
+            <strong className="font-medium">Level</strong> und ein{' '}
+            <strong className="font-medium">Ziel</strong>, dann kannst du das Setup abschließen oder
+            den{' '}
             <Link to="/onboarding" className="font-medium text-primary underline-offset-2 hover:underline">
-              geführtem Ablauf
+              geführten Ablauf
             </Link>{' '}
-            abschließen.
+            nutzen.
           </div>
         )}
 
@@ -762,30 +1236,26 @@ export default function CareerProfilePage() {
           </div>
         )}
 
+        {/* ── Pending merge hint ─────────────────────────────────────── */}
         {pendingMergedDraftHint && (
           <div className="mb-4 flex flex-col gap-3 rounded-lg border border-violet-500/35 bg-app-parchment px-4 py-3 text-sm text-stone-900 sm:flex-row sm:items-center sm:justify-between">
             <p>
-              Erkenntnis aus dem PDF wurde ins Formular übernommen — noch nicht auf dem Server. Mit „Jetzt
-              synchronisieren“ werden alle sichtbaren Felder gespeichert (inkl. Ergänzungen).
+              PDF-Daten wurden ins Formular übernommen — noch nicht gespeichert. Jetzt alle
+              sichtbaren Felder auf dem Server speichern?
             </p>
             <button
               type="button"
               disabled={saving}
               onClick={() => void persistFullProfileFromState()}
-              className="inline-flex shrink-0 items-center justify-center rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-white hover:bg-primary-hover disabled:opacity-50"
+              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-white hover:bg-primary-hover disabled:opacity-50"
             >
-              Jetzt synchronisieren
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+              Jetzt speichern
             </button>
           </div>
         )}
 
-        {summaryStale && hasEnoughForAnonymousCvSummary(profile) && (
-          <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-            Profil wurde geändert — die gespeicherte Kurz-Zusammenfassung für den Assistenten kann veraltet sein. Bitte
-            unten bei „Anonyme Kurz-Zusammenfassung“ neu erzeugen (DE/EN).
-          </div>
-        )}
-
+        {/* ── Basis ──────────────────────────────────────────────────── */}
         <section className="mb-8 rounded-xl border border-stone-400/40 bg-app-parchment p-5 shadow-landing text-stone-900">
           <h2 className="mb-3 text-sm font-semibold text-stone-900">Basis</h2>
           <div className="grid gap-3 md:grid-cols-2">
@@ -871,6 +1341,7 @@ export default function CareerProfilePage() {
           </div>
         </section>
 
+        {/* ── Skills ─────────────────────────────────────────────────── */}
         <section className="mb-8 rounded-xl border border-stone-400/40 bg-app-parchment p-5 shadow-landing text-stone-900">
           <h2 className="mb-3 text-sm font-semibold text-stone-900">Skills (max. 30)</h2>
           <div className="mb-3 flex flex-wrap gap-2">
@@ -905,6 +1376,7 @@ export default function CareerProfilePage() {
           </div>
         </section>
 
+        {/* ── Berufserfahrung ─────────────────────────────────────────── */}
         <section className="mb-8 rounded-xl border border-stone-400/40 bg-app-parchment p-5 shadow-landing text-stone-900">
           <h2 className="mb-3 text-sm font-semibold text-stone-900">Berufserfahrung</h2>
           {(profile.experience ?? []).map((exp, i) => (
@@ -954,7 +1426,6 @@ export default function CareerProfilePage() {
                   type="button"
                   onClick={() => removeExperienceRow(i)}
                   className="inline-flex items-center gap-1 rounded-lg border border-stone-300 px-3 py-1.5 text-xs font-medium text-stone-700 hover:bg-red-50 hover:text-red-700"
-                  aria-label="Eintrag entfernen"
                 >
                   <Trash2 size={14} aria-hidden />
                   Entfernen
@@ -981,6 +1452,7 @@ export default function CareerProfilePage() {
           </div>
         </section>
 
+        {/* ── Ausbildung ──────────────────────────────────────────────── */}
         <section className="mb-8 rounded-xl border border-stone-400/40 bg-app-parchment p-5 shadow-landing text-stone-900">
           <h2 className="mb-3 text-sm font-semibold text-stone-900">Ausbildung</h2>
           {(profile.educationEntries ?? []).map((ed, i) => (
@@ -1020,7 +1492,6 @@ export default function CareerProfilePage() {
                   type="button"
                   onClick={() => removeEducationRow(i)}
                   className="inline-flex items-center gap-1 rounded-lg border border-stone-300 px-3 py-1.5 text-xs font-medium text-stone-700 hover:bg-red-50 hover:text-red-700"
-                  aria-label="Eintrag entfernen"
                 >
                   <Trash2 size={14} aria-hidden />
                   Entfernen
@@ -1051,6 +1522,7 @@ export default function CareerProfilePage() {
           </div>
         </section>
 
+        {/* ── Sprachen ────────────────────────────────────────────────── */}
         <section className="mb-8 rounded-xl border border-stone-400/40 bg-app-parchment p-5 shadow-landing text-stone-900">
           <h2 className="mb-3 text-sm font-semibold text-stone-900">Sprachen</h2>
           {(profile.languages ?? []).map((lang, i) => (
@@ -1105,119 +1577,130 @@ export default function CareerProfilePage() {
           </div>
         </section>
 
-        <section className="mb-8 rounded-xl border border-stone-400/40 bg-app-parchment p-5 shadow-landing text-stone-900">
-          <h2 className="mb-3 text-sm font-semibold text-stone-900">Lebenslauf &amp; Kurzfassung</h2>
-          <p className="mb-4 text-xs text-stone-700">
-            <strong className="font-medium text-stone-900">CV-Rohtext</strong> — extrahierter oder eingefügter
-            Lebenslauf (wird für die KI-Erkennung genutzt).{' '}
-            <strong className="font-medium text-stone-900">Anonyme Kurz-Zusammenfassung</strong> — für den Chat, wenn
-            „CV“ im Kontext aktiv ist (ohne Namen); basiert auf allen Profildaten inkl. Rohtext.
-          </p>
-
-          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-stone-600">CV-Rohtext</h3>
-          <textarea
-            value={profile.cvRawText ?? ''}
-            onChange={e => setProfile({ ...profile, cvRawText: e.target.value })}
-            rows={6}
-            className="mb-3 w-full rounded-lg border border-stone-300 px-3 py-2 text-sm"
-          />
-          <button
-            type="button"
-            onClick={() => void saveCv()}
-            disabled={saving || cvSummaryLoading}
-            className="mb-8 inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-white hover:bg-primary-hover disabled:opacity-50"
-          >
-            CV-Rohtext speichern
-          </button>
-
-          <div className="mb-3 flex flex-col gap-3 border-t border-stone-300/40 pt-6 sm:flex-row sm:items-center sm:justify-between">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-stone-600">
-              Anonyme Kurz-Zusammenfassung
-            </h3>
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs text-stone-600">Anzeige</span>
-              <div className="inline-flex rounded-lg border border-stone-400/45 bg-app-parchmentDeep p-0.5 text-xs font-semibold">
-                <button
-                  type="button"
-                  onClick={() => setSummaryViewLang('de')}
-                  className={[
-                    'rounded-md px-3 py-1.5 transition-colors',
-                    summaryViewLang === 'de' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-600 hover:text-stone-900',
-                  ].join(' ')}
-                >
-                  DE
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSummaryViewLang('en')}
-                  className={[
-                    'rounded-md px-3 py-1.5 transition-colors',
-                    summaryViewLang === 'en' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-600 hover:text-stone-900',
-                  ].join(' ')}
-                >
-                  EN
-                </button>
-              </div>
+        {/* ── KI-Zusammenfassung ─────────────────────────────────────── */}
+        <section className="mb-8 rounded-xl border border-violet-500/35 bg-app-parchment p-5 shadow-landing text-stone-900">
+          <div className="mb-4 flex items-start justify-between gap-3">
+            <div>
+              <h2 className="text-sm font-semibold text-stone-900">KI-Zusammenfassung</h2>
+              <p className="mt-1 text-xs text-stone-600">
+                Anonymisierter Profil-Kontext für den Assistenten — kein Name, nur berufliche Stärken.
+                Wird aus allen Profildaten + CV generiert.
+              </p>
             </div>
+            {summaryStale && (
+              <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-800">
+                <AlertTriangle size={11} />
+                Veraltet
+              </span>
+            )}
           </div>
-          <p className="mb-3 text-xs text-stone-700">
-            {hasEnoughForAnonymousCvSummary(profile)
-              ? 'Aus Skills, Berufserfahrung, Ausbildung, Sprachen und CV-Rohtext — jeweils für Deutsch oder Englisch neu erzeugen.'
-              : 'Mindestens Skills, eine Berufserfahrung oder CV-Rohtext mit 50+ Zeichen eintragen.'}
-          </p>
-          <div className="mb-3 flex flex-wrap gap-2">
+
+          {!canGenerate && (
+            <div className="mb-4 rounded-lg border border-stone-300/40 bg-stone-100/60 px-3 py-2.5 text-xs text-stone-600">
+              Mindestens Skills, eine Berufserfahrung oder hochgeladener CV erforderlich.
+            </div>
+          )}
+
+          {/* Language selector + generate */}
+          <div className="mb-5 flex flex-wrap items-center gap-3">
+            <div className="inline-flex rounded-lg border border-stone-400/45 bg-app-parchmentDeep p-0.5 text-xs font-semibold">
+              <button
+                type="button"
+                onClick={() => setSelectedGenLang('de')}
+                className={[
+                  'rounded-md px-4 py-2 transition-colors',
+                  selectedGenLang === 'de' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-600 hover:text-stone-900',
+                ].join(' ')}
+              >
+                Deutsch (DE)
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedGenLang('en')}
+                className={[
+                  'rounded-md px-4 py-2 transition-colors',
+                  selectedGenLang === 'en' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-600 hover:text-stone-900',
+                ].join(' ')}
+              >
+                English (EN)
+              </button>
+            </div>
             <button
               type="button"
-              onClick={() => void generateAnonymousCvSummaryForLang('de')}
-              disabled={saving || cvSummaryLoading || !hasEnoughForAnonymousCvSummary(profile)}
-              className="inline-flex items-center gap-2 rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 text-sm font-medium text-violet-900 hover:bg-violet-100 disabled:cursor-not-allowed disabled:opacity-50"
+              onClick={() => void generateSummaryForLang(selectedGenLang)}
+              disabled={saving || cvSummaryLoading || !canGenerate}
+              className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {cvSummaryLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
               ) : (
                 <Sparkles className="h-4 w-4 shrink-0" aria-hidden />
               )}
-              Zusammenfassung DE
-            </button>
-            <button
-              type="button"
-              onClick={() => void generateAnonymousCvSummaryForLang('en')}
-              disabled={saving || cvSummaryLoading || !hasEnoughForAnonymousCvSummary(profile)}
-              className="inline-flex items-center gap-2 rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 text-sm font-medium text-violet-900 hover:bg-violet-100 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {cvSummaryLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-              ) : (
-                <Sparkles className="h-4 w-4 shrink-0" aria-hidden />
-              )}
-              Summary EN
-            </button>
-            <button
-              type="button"
-              onClick={() => void saveSummaryTextsToServer()}
-              disabled={saving || cvSummaryLoading}
-              className="inline-flex items-center justify-center rounded-xl border border-stone-400/50 bg-white px-3 py-2 text-sm font-medium text-stone-900 hover:bg-stone-100 disabled:opacity-50"
-            >
-              Kurzfassungen speichern
+              {cvSummaryLoading ? 'Erstelle…' : 'Zusammenfassung erstellen'}
             </button>
           </div>
-          <label className="mb-1 block text-xs font-medium text-stone-700">
-            {summaryViewLang === 'de' ? 'Deutsch (Chat-Kontext)' : 'English (profile)'}
-          </label>
-          <textarea
-            value={summaryViewLang === 'de' ? (profile.cvSummary ?? '') : (profile.cvSummaryEn ?? '')}
-            onChange={e => {
-              const v = e.target.value
-              if (summaryViewLang === 'de') setProfile({ ...profile, cvSummary: v || null })
-              else setProfile({ ...profile, cvSummaryEn: v || null })
-            }}
-            rows={8}
-            className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm"
-          />
+
+          {/* Status cards for DE / EN */}
+          <div className="grid gap-3 sm:grid-cols-2">
+            {(
+              [
+                { lang: 'de' as const, label: 'Deutsch', exists: hasDeSummary },
+                { lang: 'en' as const, label: 'English', exists: hasEnSummary },
+              ] as const
+            ).map(({ lang: l, label, exists }) => (
+              <div
+                key={l}
+                className={[
+                  'rounded-xl border p-4',
+                  exists
+                    ? 'border-emerald-300/60 bg-emerald-50/60'
+                    : 'border-stone-300/40 bg-stone-100/40',
+                ].join(' ')}
+              >
+                <div className="mb-2 flex items-center justify-between">
+                  <span className="text-xs font-bold uppercase tracking-wide text-stone-600">
+                    {label}
+                  </span>
+                  {exists ? (
+                    <span className="flex items-center gap-1 text-xs font-medium text-emerald-700">
+                      <CheckCircle2 size={13} />
+                      Vorhanden
+                    </span>
+                  ) : (
+                    <span className="text-xs text-stone-400">Noch nicht erstellt</span>
+                  )}
+                </div>
+                {exists ? (
+                  <button
+                    type="button"
+                    onClick={() => setSummaryModalLang(l)}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-300/60 bg-white px-3 py-1.5 text-xs font-medium text-emerald-800 hover:bg-emerald-50"
+                  >
+                    <Eye size={13} />
+                    Anzeigen &amp; bearbeiten
+                  </button>
+                ) : (
+                  <p className="text-xs text-stone-500">
+                    Sprache wählen &amp; „Zusammenfassung erstellen" klicken.
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
         </section>
 
-        <section className="mb-8 rounded-xl border border-stone-400/40 bg-app-parchment p-5 shadow-landing text-stone-900">
-          <h2 className="mb-3 text-sm font-semibold text-stone-900">Wunschstellen (max. 3)</h2>
+        {/* ── Wunschstellen ───────────────────────────────────────────── */}
+        <section className="mb-8 rounded-xl border border-amber-500/35 bg-app-parchment p-5 shadow-landing text-stone-900">
+          <div className="mb-4 flex items-start gap-3">
+            <Target className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" aria-hidden />
+            <div>
+              <h2 className="text-sm font-semibold text-stone-900">Wunschstellen (max. 3)</h2>
+              <p className="mt-1 text-xs text-amber-800 font-medium">
+                Wichtig für die Stellenanalyse — je mehr Details, desto präziser der Match mit
+                Jobanzeigen im Chat.
+              </p>
+            </div>
+          </div>
           <div className="mb-4 space-y-3">
             {(profile.targetJobs ?? []).map((j: TargetJob) => (
               <div
@@ -1247,19 +1730,19 @@ export default function CareerProfilePage() {
               <input
                 value={jobTitle}
                 onChange={e => setJobTitle(e.target.value)}
-                placeholder="Stellentitel"
+                placeholder="Stellentitel *"
                 className="rounded-lg border border-stone-300 px-3 py-2 text-sm"
               />
               <input
                 value={jobCompany}
                 onChange={e => setJobCompany(e.target.value)}
-                placeholder="Unternehmen"
+                placeholder="Unternehmen (optional)"
                 className="rounded-lg border border-stone-300 px-3 py-2 text-sm"
               />
               <textarea
                 value={jobDesc}
                 onChange={e => setJobDesc(e.target.value)}
-                placeholder="Stellenbeschreibung (optional)"
+                placeholder="Stellenbeschreibung — fließt direkt in die Jobanalyse ein (optional)"
                 rows={3}
                 className="col-span-full rounded-lg border border-stone-300 px-3 py-2 text-sm"
               />
@@ -1276,7 +1759,7 @@ export default function CareerProfilePage() {
         </section>
 
         {saving && (
-          <p className="flex items-center gap-2 text-sm text-stone-600">
+          <p className="flex items-center gap-2 pb-4 text-sm text-stone-600">
             <Loader2 className="animate-spin" size={16} />
             Speichern…
           </p>
