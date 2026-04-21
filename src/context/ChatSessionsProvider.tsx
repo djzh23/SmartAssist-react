@@ -295,6 +295,8 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
 
   const persistIdsRef = useRef(new Set<string>())
   const persistTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pendingTitlesRef = useRef<Map<string, string>>(new Map())
+  const titleFlushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const flushPersist = useCallback(async () => {
     const token = await getToken()
@@ -311,6 +313,32 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
       }
     }
   }, [getToken])
+
+  const flushAutoTitles = useCallback(async () => {
+    const token = await getToken()
+    if (!token) return
+    const entries = [...pendingTitlesRef.current.entries()]
+    pendingTitlesRef.current.clear()
+    for (const [sessionId, title] of entries) {
+      try {
+        await patchChatSessionTitle(token, sessionId, title)
+      } catch (e) {
+        console.warn('[sessions] Auto-title persist failed', sessionId, e)
+      }
+    }
+  }, [getToken])
+
+  const scheduleAutoTitle = useCallback(
+    (sessionId: string, title: string) => {
+      pendingTitlesRef.current.set(sessionId, title)
+      if (titleFlushTimerRef.current) clearTimeout(titleFlushTimerRef.current)
+      titleFlushTimerRef.current = setTimeout(() => {
+        titleFlushTimerRef.current = null
+        void flushAutoTitles()
+      }, 800)
+    },
+    [flushAutoTitles],
+  )
 
   const schedulePersist = useCallback(
     (sessionId: string) => {
@@ -565,6 +593,10 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
         clearTimeout(remoteSyncToastTimerRef.current)
         remoteSyncToastTimerRef.current = null
       }
+      if (titleFlushTimerRef.current) {
+        clearTimeout(titleFlushTimerRef.current)
+        titleFlushTimerRef.current = null
+      }
     }
   }, [])
 
@@ -720,11 +752,13 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
         timestamp: new Date().toISOString(),
         ...msg,
       }
+      let autoTitle: string | null = null
       setSessions(prev => {
         const session = prev[sessionId]
         if (!session) return prev
         const shouldSetTitle = full.isUser && !(session.title?.trim())
         const title = shouldSetTitle ? suggestSessionTitle(session.toolType, full.text) : session.title
+        if (shouldSetTitle && title) autoTitle = title
         return {
           ...prev,
           [sessionId]: {
@@ -735,8 +769,9 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
         }
       })
       schedulePersist(sessionId)
+      if (autoTitle) scheduleAutoTitle(sessionId, autoTitle)
     },
-    [schedulePersist],
+    [schedulePersist, scheduleAutoTitle],
   )
 
   const updateMessageText = useCallback(

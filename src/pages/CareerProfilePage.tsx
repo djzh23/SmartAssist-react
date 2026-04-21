@@ -16,13 +16,12 @@ import {
   X,
 } from 'lucide-react'
 import {
-  createLearningInsight,
   fetchJobApplications,
   fetchLearningInsights,
+  patchLearningInsight,
   resolveLearningInsight,
   type JobApplicationApi,
 } from '../api/client'
-import { getProfileCompleteness } from '../utils/profileCompleteness'
 import type { LearningInsight as LearningInsightRow } from '../types'
 import type {
   CareerProfile,
@@ -524,20 +523,6 @@ function DeleteConfirmModal({
 
 // ─── LearningInsightsPanel ───────────────────────────────────────────────────
 
-const INSIGHT_CATEGORIES = [
-  { value: 'todo',          label: 'To-Do',        chipCls: 'bg-violet-100 text-violet-800 border-violet-300', dotCls: 'bg-violet-500' },
-  { value: 'vorbereitung',  label: 'Vorbereitung',  chipCls: 'bg-amber-100 text-amber-800 border-amber-300',   dotCls: 'bg-amber-500' },
-  { value: 'skill',         label: 'Skill-Lücke',   chipCls: 'bg-blue-100 text-blue-800 border-blue-300',      dotCls: 'bg-blue-500' },
-  { value: 'followup',      label: 'Follow-up',     chipCls: 'bg-emerald-100 text-emerald-800 border-emerald-300', dotCls: 'bg-emerald-500' },
-  { value: 'notiz',         label: 'Notiz',         chipCls: 'bg-stone-100 text-stone-700 border-stone-300',   dotCls: 'bg-stone-400' },
-] as const
-
-type InsightCategory = typeof INSIGHT_CATEGORIES[number]
-
-function categoryInfo(cat: string): InsightCategory {
-  return (INSIGHT_CATEGORIES.find(c => c.value === cat) ?? INSIGHT_CATEGORIES[4]) as InsightCategory
-}
-
 function LearningInsightsPanel() {
   const { getToken, isSignedIn } = useAuth()
   const [rows, setRows] = useState<LearningInsightRow[]>([])
@@ -546,12 +531,6 @@ function LearningInsightsPanel() {
   const [loading, setLoading] = useState(true)
   const [err, setErr] = useState<string | null>(null)
   const [busyId, setBusyId] = useState<string | null>(null)
-  // Create-form state
-  const [createOpen, setCreateOpen] = useState(false)
-  const [createCategory, setCreateCategory] = useState('todo')
-  const [createTitle, setCreateTitle] = useState('')
-  const [createContent, setCreateContent] = useState('')
-  const [creating, setCreating] = useState(false)
 
   const load = useCallback(async () => {
     if (!isSignedIn) {
@@ -603,26 +582,13 @@ function LearningInsightsPanel() {
     }
   }
 
-  const onCreateInsight = async () => {
-    if (!createContent.trim()) return
+  const onPatchBlur = async (id: string, patch: { title?: string; content?: string }) => {
     const token = await getToken()
     if (!token) return
-    setCreating(true)
     try {
-      await createLearningInsight(token, {
-        category: createCategory,
-        content: createContent.trim(),
-        title: createTitle.trim() || undefined,
-      })
-      setCreateContent('')
-      setCreateTitle('')
-      setCreateCategory('todo')
-      setCreateOpen(false)
-      await load()
+      await patchLearningInsight(token, id, patch)
     } catch (e) {
-      setErr(e instanceof Error ? e.message : 'Erstellen fehlgeschlagen')
-    } finally {
-      setCreating(false)
+      setErr(e instanceof Error ? e.message : 'Speichern fehlgeschlagen')
     }
   }
 
@@ -644,159 +610,90 @@ function LearningInsightsPanel() {
 
   return (
     <section className="mb-8 rounded-xl border border-amber-500/35 bg-app-parchment p-5 shadow-landing text-stone-900">
-      {/* Header */}
-      <div className="mb-4 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <Lightbulb className="h-5 w-5 text-amber-700" aria-hidden />
-          <h2 className="text-sm font-semibold text-stone-900">Meine To-dos</h2>
-          {rows.length > 0 && (
-            <span className="rounded-full border border-amber-300 bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">
-              {rows.length}
-            </span>
-          )}
-        </div>
-        <button
-          type="button"
-          onClick={() => setCreateOpen(o => !o)}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-stone-300/60 bg-white px-3 py-1.5 text-xs font-medium text-stone-800 transition-colors hover:bg-stone-100"
-        >
-          <Plus size={13} />
-          Neuer Todo
-        </button>
+      <div className="mb-3 flex items-center gap-2">
+        <Lightbulb className="h-5 w-5 text-amber-700" aria-hidden />
+        <h2 className="text-sm font-semibold text-stone-900">To-dos aus Chats</h2>
       </div>
-
-      {/* Create form */}
-      {createOpen && (
-        <div className="mb-4 space-y-3 rounded-xl border border-violet-300/50 bg-white/70 p-4">
-          <div className="flex flex-wrap gap-2">
-            {INSIGHT_CATEGORIES.map(cat => (
-              <button
-                key={cat.value}
-                type="button"
-                onClick={() => setCreateCategory(cat.value)}
-                className={[
-                  'rounded-full border px-2.5 py-1 text-xs font-semibold transition-colors',
-                  createCategory === cat.value
-                    ? cat.chipCls + ' ring-2 ring-violet-400 ring-offset-1'
-                    : 'border-stone-300 bg-stone-100 text-stone-600 hover:bg-stone-200',
-                ].join(' ')}
-              >
-                {cat.label}
-              </button>
+      <p className="mb-4 text-sm text-stone-700">
+        Einträge aus Stellenanalyse und Interview-Coach — gebündelt pro Bewerbung.
+        Bearbeite Titel oder Text; „Erledigt" entfernt den Eintrag aus dem KI-Kontext.
+      </p>
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <label className="flex items-center gap-2 text-xs text-stone-700">
+          <span className="font-medium text-stone-800">Filter</span>
+          <select
+            value={filterAppId}
+            onChange={e => setFilterAppId(e.target.value)}
+            className="rounded-md border border-stone-400/50 bg-white px-2 py-1 text-xs text-stone-900"
+          >
+            <option value="">Alle offenen</option>
+            {applications.map(a => (
+              <option key={a.id} value={a.id}>
+                {a.jobTitle} · {a.company}
+              </option>
             ))}
-          </div>
-          <input
-            type="text"
-            value={createTitle}
-            onChange={e => setCreateTitle(e.target.value)}
-            placeholder="Titel (optional)"
-            className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm text-stone-900 focus:border-violet-400 focus:outline-none"
-          />
-          <textarea
-            value={createContent}
-            onChange={e => setCreateContent(e.target.value)}
-            placeholder="Was möchtest du festhalten?"
-            rows={3}
-            className="w-full resize-none rounded-lg border border-stone-300 px-3 py-2 text-sm text-stone-900 focus:border-violet-400 focus:outline-none"
-          />
-          <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={() => { setCreateOpen(false); setCreateContent(''); setCreateTitle('') }}
-              className="rounded-lg border border-stone-300 px-3 py-1.5 text-xs font-medium text-stone-700 hover:bg-stone-100"
-            >
-              Abbrechen
-            </button>
-            <button
-              type="button"
-              disabled={creating || !createContent.trim()}
-              onClick={() => void onCreateInsight()}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-violet-700 disabled:opacity-50"
-            >
-              {creating && <Loader2 className="h-3 w-3 animate-spin" />}
-              Speichern
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* App filter — only when there are linked applications */}
-      {applications.length > 0 && (
-        <div className="mb-3 flex items-center gap-2">
-          <label className="flex items-center gap-2 text-xs text-stone-700">
-            <span className="font-medium">Filter:</span>
-            <select
-              value={filterAppId}
-              onChange={e => setFilterAppId(e.target.value)}
-              className="rounded-md border border-stone-400/50 bg-white px-2 py-1 text-xs text-stone-900"
-            >
-              <option value="">Alle offenen</option>
-              {applications.map(a => (
-                <option key={a.id} value={a.id}>
-                  {a.jobTitle} · {a.company}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-      )}
-
+          </select>
+        </label>
+      </div>
       {loading && (
-        <div className="flex items-center gap-2 py-2 text-sm text-stone-600">
-          <Loader2 className="animate-spin" size={16} />
+        <div className="flex items-center gap-2 text-sm text-stone-600">
+          <Loader2 className="animate-spin" size={18} />
           Lade…
         </div>
       )}
       {err && <p className="text-sm text-red-600">{err}</p>}
       {!loading && !err && rows.length === 0 && (
-        <p className="py-1 text-sm text-stone-500">
-          Noch keine offenen To-dos. Erstelle einen eigenen oder nutze Stellenanalyse &amp;
-          Interview-Coach im Chat — To-dos werden automatisch erkannt.
-        </p>
+        <p className="text-sm text-stone-600">Noch keine offenen To-dos für diesen Filter.</p>
       )}
-
       {!loading && rows.length > 0 && (
-        <div className="flex flex-col gap-2.5">
+        <div className="flex flex-col gap-5">
           {[...grouped.entries()].map(([gid, list]) => (
             <div key={gid}>
-              {grouped.size > 1 && (
-                <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-amber-900/80">
-                  {appLabel(gid)}
-                </p>
-              )}
+              <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-amber-900/90">
+                {appLabel(gid)}
+              </p>
               <ul className="flex flex-col gap-2">
-                {list.map(r => {
-                  const cat = categoryInfo(r.category)
-                  return (
-                    <li
-                      key={r.id}
-                      className="rounded-xl border border-stone-300/50 bg-white/80 px-4 py-3 shadow-sm"
-                    >
-                      <div className="mb-2 flex items-center justify-between gap-2">
-                        <span className={['rounded-full border px-2.5 py-0.5 text-[10px] font-bold', cat.chipCls].join(' ')}>
-                          {cat.label}
-                        </span>
-                        <button
-                          type="button"
-                          disabled={busyId === r.id}
-                          onClick={() => void onResolve(r.id)}
-                          className="inline-flex items-center gap-1 rounded-lg border border-stone-300 bg-white px-2.5 py-1 text-[11px] font-medium text-stone-600 transition-colors hover:border-emerald-400 hover:text-emerald-700 disabled:opacity-50"
-                        >
-                          {busyId === r.id ? (
-                            <Loader2 className="h-3 w-3 animate-spin" />
-                          ) : (
-                            <CheckCircle2 size={12} />
-                          )}
-                          Erledigt
-                        </button>
-                      </div>
-                      {r.title && (
-                        <p className="mb-1 text-sm font-semibold text-stone-900">{r.title}</p>
-                      )}
-                      <p className="text-sm leading-relaxed text-stone-700">{r.content}</p>
-                    </li>
-                  )
-                })}
+                {list.map(r => (
+                  <li
+                    key={r.id}
+                    className="rounded-lg border border-stone-400/35 bg-white/90 px-3 py-2.5 shadow-sm"
+                  >
+                    <div className="mb-2 flex flex-wrap items-center gap-2">
+                      <span className="text-[10px] font-bold uppercase text-amber-700">{r.category}</span>
+                    </div>
+                    <input
+                      type="text"
+                      defaultValue={r.title ?? ''}
+                      placeholder="Kurztitel (optional)"
+                      onBlur={e => {
+                        const v = e.target.value.trim()
+                        if (v !== (r.title ?? '').trim())
+                          void onPatchBlur(r.id, { title: v || undefined })
+                      }}
+                      className="mb-2 w-full rounded border border-stone-300 px-2 py-1 text-xs text-stone-900"
+                    />
+                    <textarea
+                      defaultValue={r.content}
+                      rows={3}
+                      onBlur={e => {
+                        const v = e.target.value.trim()
+                        if (v && v !== r.content.trim())
+                          void onPatchBlur(r.id, { content: v })
+                      }}
+                      className="mb-2 w-full resize-y rounded border border-stone-300 px-2 py-1 text-sm text-stone-900"
+                    />
+                    <div className="flex justify-end">
+                      <button
+                        type="button"
+                        disabled={busyId === r.id}
+                        onClick={() => void onResolve(r.id)}
+                        className="rounded-md border border-stone-300 bg-white px-3 py-1.5 text-xs font-medium text-stone-800 hover:bg-stone-100 disabled:opacity-50"
+                      >
+                        {busyId === r.id ? '…' : 'Erledigt'}
+                      </button>
+                    </div>
+                  </li>
+                ))}
               </ul>
             </div>
           ))}
@@ -1184,7 +1081,6 @@ export default function CareerProfilePage() {
   const hasDeSummary = Boolean(profile.cvSummary?.trim())
   const hasEnSummary = Boolean(profile.cvSummaryEn?.trim())
   const canGenerate = hasEnoughForAnonymousCvSummary(profile)
-  const completeness = getProfileCompleteness(profile)
 
   return (
     <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden bg-transparent">
@@ -1210,71 +1106,31 @@ export default function CareerProfilePage() {
 
       <div className="mx-auto w-full max-w-3xl px-4 py-6">
         {/* ── Header ─────────────────────────────────────────────────── */}
-        <div className="mb-6">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div className="min-w-0 flex items-start gap-2">
-              <div>
-                <h1 className="mb-1 text-2xl font-semibold text-stone-50">Karriereprofil</h1>
-                <p className="text-sm text-stone-400">
-                  Personalisiere den Assistenten — je vollständiger, desto präziser die Antworten.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setHelpOpen(true)}
-                className="mt-1 shrink-0 rounded-full p-1.5 text-stone-400 hover:bg-stone-700 hover:text-stone-100 transition-colors"
-                aria-label="Hilfe & Hinweise"
-              >
-                <HelpCircle size={18} />
-              </button>
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0 flex items-start gap-2">
+            <div>
+              <h1 className="mb-1 text-2xl font-semibold text-stone-50">Karriereprofil</h1>
+              <p className="text-sm text-stone-400">
+                Personalisiere den Assistenten — je vollständiger, desto präziser die Antworten.
+              </p>
             </div>
             <button
               type="button"
-              onClick={() => setDeleteConfirmOpen(true)}
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-red-500/40 px-3 py-2 text-xs font-medium text-red-400 hover:border-red-400 hover:bg-red-950/30 hover:text-red-300 transition-colors"
+              onClick={() => setHelpOpen(true)}
+              className="mt-1 shrink-0 rounded-full p-1.5 text-stone-400 hover:bg-stone-700 hover:text-stone-100 transition-colors"
+              aria-label="Hilfe & Hinweise"
             >
-              <Trash2 size={14} aria-hidden />
-              Alle Daten löschen
+              <HelpCircle size={18} />
             </button>
           </div>
-          {/* Compact completeness bar */}
-          <div className="mt-4">
-            <div className="mb-1.5 flex items-center justify-between text-xs">
-              <span className="text-stone-500">Profilvollständigkeit</span>
-              <div className="flex items-center gap-2">
-                <span
-                  className={
-                    completeness >= 70
-                      ? 'font-semibold text-emerald-400'
-                      : completeness >= 40
-                        ? 'font-semibold text-amber-400'
-                        : 'text-stone-500'
-                  }
-                >
-                  {completeness}%
-                </span>
-                {profile.onboardingCompleted && (
-                  <span className="flex items-center gap-1 rounded-full border border-emerald-600/40 bg-emerald-900/20 px-2 py-0.5 text-[10px] font-semibold text-emerald-400">
-                    <CheckCircle2 size={10} />
-                    Eingerichtet
-                  </span>
-                )}
-              </div>
-            </div>
-            <div className="h-1.5 w-full overflow-hidden rounded-full bg-stone-700/50">
-              <div
-                className={[
-                  'h-1.5 rounded-full transition-all duration-500',
-                  completeness >= 70
-                    ? 'bg-emerald-500'
-                    : completeness >= 40
-                      ? 'bg-amber-500'
-                      : 'bg-stone-500',
-                ].join(' ')}
-                style={{ width: `${completeness}%` }}
-              />
-            </div>
-          </div>
+          <button
+            type="button"
+            onClick={() => setDeleteConfirmOpen(true)}
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-red-500/40 px-3 py-2 text-xs font-medium text-red-400 hover:border-red-400 hover:bg-red-950/30 hover:text-red-300 transition-colors"
+          >
+            <Trash2 size={14} aria-hidden />
+            Alle Daten löschen
+          </button>
         </div>
 
         <LearningInsightsPanel />
@@ -1331,34 +1187,46 @@ export default function CareerProfilePage() {
           )}
         </section>
 
-        {/* ── Setup hint (compact) ───────────────────────────────────── */}
-        {!profile.onboardingCompleted && (
-          <div className="mb-5 flex flex-wrap items-center gap-3 rounded-xl border border-amber-500/35 bg-app-parchment px-4 py-3">
-            {canMarkProfileSetupComplete(profile) ? (
-              <>
-                <p className="flex-1 text-xs font-medium text-amber-900">
-                  Daten gespeichert — Setup noch nicht abgeschlossen.
-                </p>
-                <button
-                  type="button"
-                  disabled={markSetupBusy || saving}
-                  onClick={() => void handleMarkSetupComplete()}
-                  className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-primary px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-hover disabled:opacity-50"
-                >
-                  {markSetupBusy && <Loader2 className="h-3 w-3 animate-spin" aria-hidden />}
-                  Profil einrichten
-                </button>
-              </>
-            ) : (
-              <p className="text-xs text-stone-700">
-                <strong className="text-stone-900">Noch nicht eingerichtet:</strong> Berufsfeld,
-                Level und ein Ziel wählen — oder{' '}
-                <Link to="/onboarding" className="font-medium text-primary underline-offset-2 hover:underline">
-                  geführtes Setup
-                </Link>{' '}
-                nutzen.
+        {/* ── Onboarding status ──────────────────────────────────────── */}
+        {profile.onboardingCompleted ? (
+          <div className="mb-6 flex gap-3 rounded-xl border border-emerald-600/35 bg-app-parchment px-4 py-3 text-sm text-stone-900">
+            <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-emerald-600" aria-hidden />
+            <div>
+              <p className="font-semibold text-emerald-900">Profil eingerichtet</p>
+              <p className="mt-1 leading-relaxed text-stone-800">
+                Im Chat aktivierst du den Kontext über die Schalter über dem Eingabefeld —{' '}
+                <strong className="font-medium">farbig = aktiv</strong>.
               </p>
-            )}
+            </div>
+          </div>
+        ) : canMarkProfileSetupComplete(profile) ? (
+          <div className="mb-6 rounded-xl border border-amber-600/35 bg-app-parchment px-4 py-3 text-sm text-stone-900">
+            <p className="font-semibold text-amber-950">Daten gespeichert — Setup noch offen</p>
+            <p className="mt-2 leading-relaxed text-stone-800">
+              Klicke unten, um das Profil als eingerichtet zu markieren — danach entfällt der
+              Chat-Hinweis.
+            </p>
+            <button
+              type="button"
+              disabled={markSetupBusy || saving}
+              onClick={() => void handleMarkSetupComplete()}
+              className="mt-3 inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-50"
+            >
+              {markSetupBusy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
+              Profil als eingerichtet markieren
+            </button>
+          </div>
+        ) : (
+          <div className="mb-6 rounded-xl border border-amber-600/35 bg-app-parchment px-4 py-3 text-sm text-stone-900">
+            <strong className="font-medium">Noch nicht eingerichtet:</strong> Wähle mindestens{' '}
+            <strong className="font-medium">Berufsfeld</strong>,{' '}
+            <strong className="font-medium">Level</strong> und ein{' '}
+            <strong className="font-medium">Ziel</strong>, dann kannst du das Setup abschließen oder
+            den{' '}
+            <Link to="/onboarding" className="font-medium text-primary underline-offset-2 hover:underline">
+              geführten Ablauf
+            </Link>{' '}
+            nutzen.
           </div>
         )}
 
