@@ -290,6 +290,19 @@ export async function resolveLearningInsight(token: string, insightId: string): 
   }
 }
 
+export async function createLearningInsight(
+  token: string,
+  data: { category: string; content: string; title?: string },
+): Promise<LearningInsight> {
+  const res = await fetch(`${BASE}/api/learning/insights`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  })
+  if (!res.ok) throw new Error(await readApiError(res, `Create insight failed (${res.status})`))
+  return res.json() as Promise<LearningInsight>
+}
+
 // ── TTS via backend ────────────────────────────────────────────────────────
 
 /**
