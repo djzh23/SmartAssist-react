@@ -423,13 +423,13 @@ export default function CvStudioEditorPage() {
           </div>
 
           <div className="flex flex-wrap gap-1 border-b border-white/10 p-2">
+            <button type="button" className={tabClass('darstellung')} onClick={() => setActiveTab('darstellung')}>
+              <SlidersHorizontal size={14} aria-hidden />
+              Darstellung
+            </button>
             <button type="button" className={tabClass('profil')} onClick={() => setActiveTab('profil')}>
               <User size={14} aria-hidden />
               Profil
-            </button>
-            <button type="button" className={tabClass('beruf')} onClick={() => setActiveTab('beruf')}>
-              <Briefcase size={14} aria-hidden />
-              Beruf
             </button>
             <button type="button" className={tabClass('ausbildung')} onClick={() => setActiveTab('ausbildung')}>
               <GraduationCap size={14} aria-hidden />
@@ -439,17 +439,17 @@ export default function CvStudioEditorPage() {
               <Wrench size={14} aria-hidden />
               Kenntnisse
             </button>
-            <button type="button" className={tabClass('hobby')} onClick={() => setActiveTab('hobby')}>
-              <Heart size={14} aria-hidden />
-              Hobbys
-            </button>
             <button type="button" className={tabClass('sprachen')} onClick={() => setActiveTab('sprachen')}>
               <Languages size={14} aria-hidden />
               Sprachen
             </button>
-            <button type="button" className={tabClass('darstellung')} onClick={() => setActiveTab('darstellung')}>
-              <SlidersHorizontal size={14} aria-hidden />
-              Darstellung
+            <button type="button" className={tabClass('beruf')} onClick={() => setActiveTab('beruf')}>
+              <Briefcase size={14} aria-hidden />
+              Berufe
+            </button>
+            <button type="button" className={tabClass('hobby')} onClick={() => setActiveTab('hobby')}>
+              <Heart size={14} aria-hidden />
+              Hobbys
             </button>
           </div>
 

@@ -1,4 +1,4 @@
-import { Fragment } from 'react'
+import { Fragment, useLayoutEffect, useRef, useState } from 'react'
 import { CvSectionTitleResolver } from '../lib/sectionTitles'
 import { formatUrl } from '../lib/formatting'
 import {
@@ -10,6 +10,89 @@ import type { PdfDesign, ProfileData, ResumeData, ResumeDto } from '../cvTypes'
 
 function hasSocialLinks(profile: ProfileData): boolean {
   return Boolean(profile.linkedInUrl?.trim() || profile.gitHubUrl?.trim() || profile.portfolioUrl?.trim())
+}
+
+function splitCompanyField(company: string): { org: string; location?: string } {
+  const i = company.indexOf('|')
+  if (i < 0)
+    return { org: company.trim() }
+  return { org: company.slice(0, i).trim(), location: company.slice(i + 1).trim() }
+}
+
+function ClassicHeaderA({ p }: { p: ProfileData }) {
+  const contactLine = [p.email, p.phone, p.location].filter(x => x?.trim()).join('  |  ')
+  return (
+    <div className="mb-3 flex gap-2.5">
+      <div className="h-[82px] w-[82px] shrink-0 overflow-hidden border border-[#C5D5E8] bg-slate-100">
+        {p.profileImageUrl?.trim() ? (
+          <img src={p.profileImageUrl} alt="" className="h-full w-full object-cover" />
+        ) : null}
+      </div>
+      <div className="min-w-0 flex-1 border-l-[3px] border-[#1A3A5C] pl-2.5">
+        <h3 className="text-[26px] font-bold leading-tight tracking-tight text-[#111827]">
+          {p.firstName} {p.lastName}
+        </h3>
+        {p.headline?.trim() ? (
+          <p className="mt-1 text-[11.5px] font-semibold tracking-wide text-[#4B5563]">{p.headline}</p>
+        ) : null}
+        {contactLine ? (
+          <p className="mt-2 whitespace-normal break-words text-[10.5px] font-semibold leading-snug text-[#1C2833]">{contactLine}</p>
+        ) : null}
+        {hasSocialLinks(p) ? (
+          <div className="mt-1.5 flex flex-wrap gap-x-2 gap-y-0.5 text-[9.5px] font-semibold text-[#374151]">
+            {p.linkedInUrl?.trim() ? <span>in: {formatUrl(p.linkedInUrl)}</span> : null}
+            {p.gitHubUrl?.trim() ? <span>gh: {formatUrl(p.gitHubUrl)}</span> : null}
+            {p.portfolioUrl?.trim() ? <span>web: {formatUrl(p.portfolioUrl)}</span> : null}
+          </div>
+        ) : null}
+        {p.workPermit?.trim() ? (
+          <div className="mt-2 inline-block max-w-full rounded border border-emerald-200 bg-emerald-50 px-1.5 py-1 text-[9px] font-semibold leading-snug text-emerald-800">
+            ✓
+            {' '}
+            {p.workPermit}
+          </div>
+        ) : null}
+      </div>
+    </div>
+  )
+}
+
+function HeaderModernB({ p }: { p: ProfileData }) {
+  const contacts = [p.email, p.phone, p.location].filter(x => x?.trim()).join('  |  ')
+  return (
+    <div className="mb-3">
+      <div className="flex gap-3.5">
+        <div className="h-[92px] w-[92px] shrink-0 overflow-hidden border border-[#D5D7DC] bg-[#F1F2F6]">
+          {p.profileImageUrl?.trim() ? (
+            <img src={p.profileImageUrl} alt="" className="h-full w-full object-cover" />
+          ) : null}
+        </div>
+        <div className="flex min-w-0 flex-1 flex-col justify-center">
+          <h3 className="text-[25px] font-bold text-[#111827]">
+            {p.firstName} {p.lastName}
+          </h3>
+          {p.headline?.trim() ? <p className="text-[14px] text-[#5F6C7A]">{p.headline}</p> : null}
+        </div>
+      </div>
+      {contacts ? (
+        <p className="mt-2 text-[8px] font-semibold text-[#6B7280]">{contacts}</p>
+      ) : null}
+      {hasSocialLinks(p) ? (
+        <div className="mt-1 flex flex-wrap gap-x-2 text-[7.5px] font-semibold text-[#6B7280]">
+          {p.linkedInUrl?.trim() ? <span>LinkedIn: {formatUrl(p.linkedInUrl)}</span> : null}
+          {p.gitHubUrl?.trim() ? <span>GitHub: {formatUrl(p.gitHubUrl)}</span> : null}
+          {p.portfolioUrl?.trim() ? <span>Portfolio: {formatUrl(p.portfolioUrl)}</span> : null}
+        </div>
+      ) : null}
+      {p.workPermit?.trim() ? (
+        <div className="mt-2 inline-block rounded border border-emerald-200 bg-emerald-50 px-1.5 py-1 text-[7.5px] font-semibold text-emerald-800">
+          ✓
+          {' '}
+          {p.workPermit}
+        </div>
+      ) : null}
+    </div>
+  )
 }
 
 interface Props {
@@ -29,10 +112,10 @@ function sectionHeadingClass(pdf: PdfDesign): string {
 
 function outerShellClass(pdf: PdfDesign): string {
   if (pdf === 'A') {
-    return 'rounded-xl border border-[#C5D5E8] bg-[#F8FAFC] p-4 text-sm text-[#1C2833] shadow-md'
+    return "rounded-xl border border-[#C5D5E8] bg-[#F8FAFC] p-3 text-[10.5px] leading-[1.2] text-[#1C2833] shadow-md font-['Lato',ui-sans-serif,'Segoe_UI',sans-serif]"
   }
   if (pdf === 'B') {
-    return 'rounded-xl border border-stone-200 bg-white p-4 text-sm text-stone-900 shadow-md font-sans'
+    return "rounded-xl border border-stone-200 bg-white p-3 text-[10.8px] leading-[1.22] text-[#222222] shadow-md font-['Lato',ui-sans-serif,'Segoe_UI',sans-serif]"
   }
   return 'rounded-xl border border-slate-200 bg-[#f8fafc] p-4 text-sm text-slate-800 shadow-md'
 }
@@ -58,22 +141,56 @@ function renderOrderedBlock(key: CvMainSectionKey, d: ResumeData, p: ProfileData
           {d.workItems.length === 0 ? (
             <p className="text-stone-500">Keine Einträge</p>
           ) : (
-            d.workItems.map((work, idx) => (
-              <article key={idx} className="mb-3 border-b border-stone-200/70 pb-2 last:border-0">
-                <strong className="text-inherit">{work.role} — {work.company}</strong>
-                <div className="text-xs opacity-70">
-                  {work.startDate} — {work.endDate}
-                </div>
-                {work.description?.trim() ? <p className="mt-1">{work.description}</p> : null}
-                {work.bullets.length > 0 ? (
-                  <ul className="mt-1 list-disc pl-4">
-                    {work.bullets.map((b, i) => (
-                      <li key={i}>{b}</li>
-                    ))}
-                  </ul>
-                ) : null}
-              </article>
-            ))
+            d.workItems.map((work, idx) => {
+              if (pdfDesign === 'A') {
+                const { org, location: loc } = splitCompanyField(work.company)
+                return (
+                  <article key={idx} className="mb-3 break-inside-avoid border-b border-[#C5D5E8]/70 pb-2 last:border-0">
+                    <div className="flex flex-wrap items-baseline justify-between gap-2">
+                      <strong className="font-bold text-[#1A3A5C]">{org}</strong>
+                      <span className="shrink-0 text-right text-[9.2px] italic text-[#7D8A99]">
+                        {work.startDate} — {work.endDate}
+                      </span>
+                    </div>
+                    {(loc || work.role?.trim()) ? (
+                      <div className="mt-0.5 text-[9.2px] text-[#7D8A99]">
+                        {loc ? <span>{loc}</span> : null}
+                        {loc && work.role?.trim() ? <span className="px-1"> </span> : null}
+                        {work.role?.trim() ? (
+                          <span className="font-bold italic text-[#1A7A6E]">{work.role.trim()}</span>
+                        ) : null}
+                      </div>
+                    ) : null}
+                    {work.description?.trim() ? (
+                      <p className="mt-1 italic text-[#7D8A99]">{work.description}</p>
+                    ) : null}
+                    {work.bullets.length > 0 ? (
+                      <ul className="mt-1 list-disc pl-4 text-[#1C2833]">
+                        {work.bullets.map((b, i) => (
+                          <li key={i}>{b}</li>
+                        ))}
+                      </ul>
+                    ) : null}
+                  </article>
+                )
+              }
+              return (
+                <article key={idx} className="mb-3 break-inside-avoid border-b border-stone-200/70 pb-2 last:border-0">
+                  <strong className="text-inherit">{work.role} — {work.company}</strong>
+                  <div className="text-xs opacity-70">
+                    {work.startDate} — {work.endDate}
+                  </div>
+                  {work.description?.trim() ? <p className="mt-1">{work.description}</p> : null}
+                  {work.bullets.length > 0 ? (
+                    <ul className="mt-1 list-disc pl-4">
+                      {work.bullets.map((b, i) => (
+                        <li key={i}>{b}</li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </article>
+              )
+            })
           )}
         </Fragment>
       )
@@ -86,7 +203,7 @@ function renderOrderedBlock(key: CvMainSectionKey, d: ResumeData, p: ProfileData
             <p className="text-stone-500">Keine Einträge</p>
           ) : (
             d.educationItems.map((edu, idx) => (
-              <article key={idx} className="mb-2">
+              <article key={idx} className="mb-2 break-inside-avoid">
                 <strong>{edu.degree}</strong>
                 <div>{edu.school}</div>
                 <div className="text-xs opacity-70">
@@ -161,26 +278,78 @@ function renderOrderedBlock(key: CvMainSectionKey, d: ResumeData, p: ProfileData
   }
 }
 
+function PreviewBodyAB({ resume, pdfDesign }: { resume: ResumeDto; pdfDesign: 'A' | 'B' }) {
+  const d = resume.resumeData
+  const p = d.profile
+  const order = normalizeContentSectionOrder(d.contentSectionOrder)
+  return (
+    <>
+      {pdfDesign === 'A' ? (
+        <>
+          <ClassicHeaderA p={p} />
+          <div className="mb-2 border-b-[1.2px] border-[#1A3A5C]" />
+        </>
+      ) : (
+        <HeaderModernB p={p} />
+      )}
+      {order.map(key => renderOrderedBlock(key, d, p, pdfDesign))}
+    </>
+  )
+}
+
 export function LivePreview({ resume, pdfDesign }: Props) {
+  const shellRef = useRef<HTMLDivElement>(null)
+  const measureRef = useRef<HTMLDivElement>(null)
+  const [innerW, setInnerW] = useState(0)
+  const [needsSecondPage, setNeedsSecondPage] = useState(false)
+
+  useLayoutEffect(() => {
+    const el = shellRef.current
+    if (!el)
+      return
+    const ro = new ResizeObserver(() => {
+      setInnerW(el.clientWidth)
+    })
+    ro.observe(el)
+    setInnerW(el.clientWidth)
+    return () => ro.disconnect()
+  }, [])
+
+  const contentW = Math.max(0, innerW)
+  const pageH = contentW > 0 ? contentW * (297 / 210) : 0
+
+  useLayoutEffect(() => {
+    if (pdfDesign === 'C' || !pageH)
+      return
+    const el = measureRef.current
+    if (!el)
+      return
+    const measure = () => {
+      setNeedsSecondPage(el.scrollHeight > pageH + 2)
+    }
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [pdfDesign, pageH, resume?.id, resume?.updatedAtUtc, resume?.resumeData])
+
   if (!resume) return null
   const d = resume.resumeData
   const p = d.profile
   const order = normalizeContentSectionOrder(d.contentSectionOrder)
   const shell = outerShellClass(pdfDesign)
 
-  const headerBlock = (
+  const headerBlockC = (
     <>
       <div className="mb-3 flex gap-3 border-b border-stone-300/80 pb-3">
         {p.profileImageUrl?.trim() ? (
           <img src={p.profileImageUrl} alt="" className="h-16 w-16 rounded-lg object-cover" />
         ) : null}
         <div>
-          <h3 className={`text-lg font-semibold ${pdfDesign === 'C' ? 'uppercase tracking-tight text-slate-900' : 'text-inherit'}`}>
+          <h3 className="text-lg font-semibold uppercase tracking-tight text-slate-900">
             {p.firstName} {p.lastName}
           </h3>
-          <p className={pdfDesign === 'B' ? 'text-stone-600' : pdfDesign === 'C' ? 'text-xs font-semibold uppercase text-cyan-800' : 'text-stone-600'}>
-            {p.headline}
-          </p>
+          <p className="text-xs font-semibold uppercase text-cyan-800">{p.headline}</p>
         </div>
       </div>
       <p className="mb-2 text-xs opacity-75">
@@ -199,11 +368,11 @@ export function LivePreview({ resume, pdfDesign }: Props) {
     </>
   )
 
-  const mainFlow = <>{order.map(key => renderOrderedBlock(key, d, p, pdfDesign))}</>
+  const mainFlowC = <>{order.map(key => renderOrderedBlock(key, d, p, pdfDesign))}</>
 
   if (pdfDesign === 'C') {
     return (
-      <div className={shell}>
+      <div ref={shellRef} className={shell}>
         <div className="flex min-h-[220px] gap-0 overflow-hidden rounded-lg border border-slate-200">
           <aside className="w-[28%] shrink-0 bg-slate-800 p-2.5 text-[10px] leading-snug text-slate-100">
             {p.profileImageUrl?.trim() ? (
@@ -220,18 +389,45 @@ export function LivePreview({ resume, pdfDesign }: Props) {
             {p.location?.trim() ? <p className="opacity-80">{p.location}</p> : null}
           </aside>
           <div className="min-w-0 flex-1 bg-white/90 p-3">
-            {headerBlock}
-            {mainFlow}
+            {headerBlockC}
+            {mainFlowC}
           </div>
         </div>
       </div>
     )
   }
 
+  const pageFrameClass =
+    pdfDesign === 'A'
+      ? 'overflow-hidden rounded-sm border border-[#C5D5E8] bg-white shadow-sm'
+      : 'overflow-hidden rounded-sm border border-stone-200 bg-white shadow-sm'
+
   return (
-    <div className={shell}>
-      {headerBlock}
-      {mainFlow}
+    <div ref={shellRef} className={`${shell} relative`}>
+      <div
+        ref={measureRef}
+        className="pointer-events-none absolute left-0 right-0 top-0 -z-10 opacity-0"
+        aria-hidden
+      >
+        <PreviewBodyAB resume={resume} pdfDesign={pdfDesign} />
+      </div>
+      <p className="mb-1 text-center text-[9px] font-semibold uppercase tracking-wide text-stone-500">Seite 1</p>
+      <div
+        className={`mb-3 ${pageFrameClass}`}
+        style={{ height: pageH > 0 ? `${pageH}px` : undefined }}
+      >
+        <PreviewBodyAB resume={resume} pdfDesign={pdfDesign} />
+      </div>
+      {needsSecondPage && pageH > 0 ? (
+        <>
+          <p className="mb-1 mt-2 text-center text-[9px] font-semibold uppercase tracking-wide text-stone-500">Seite 2</p>
+          <div className={pageFrameClass} style={{ height: `${pageH}px` }}>
+            <div style={{ marginTop: `-${pageH}px` }}>
+              <PreviewBodyAB resume={resume} pdfDesign={pdfDesign} />
+            </div>
+          </div>
+        </>
+      ) : null}
     </div>
   )
 }
