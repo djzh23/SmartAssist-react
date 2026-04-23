@@ -49,6 +49,8 @@ export interface EducationItemData {
   degree: string
   startDate: string
   endDate: string
+  /** Freitext zu Schwerpunkt, Abschlussarbeit, relevanten Modulen … */
+  description?: string
 }
 
 export interface SkillGroupData {
@@ -70,6 +72,8 @@ export interface ResumeData {
   skills: SkillGroupData[]
   hobbies: string[]
   sectionTitles?: CvSectionTitleOverrides | null
+  /** Reihenfolge der Haupt-Sektionen in PDF/DOCX/Vorschau (Keys siehe cvStudioSectionOrder). */
+  contentSectionOrder?: string[] | null
 }
 
 export interface ResumeDto {

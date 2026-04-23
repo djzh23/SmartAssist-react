@@ -21,9 +21,9 @@ import type { CvStudioPdfExportRow, CvStudioResumeSummary } from '../types'
 import type { ResumeTemplateDto } from './cvTypes'
 
 function templateIcon(key: string) {
-  if (key === 'softwareentwickler') return Code2
+  if (key === 'software-developer' || key === 'softwareentwickler') return Code2
   if (key === 'it-support') return Headphones
-  if (key === 'service-gastro-zustellung') return Briefcase
+  if (key === 'service-general' || key === 'service-gastro-zustellung') return Briefcase
   return FileText
 }
 

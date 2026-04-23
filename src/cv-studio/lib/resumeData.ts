@@ -1,4 +1,5 @@
 import type { ProfileData, ResumeData } from '../cvTypes'
+import { normalizeContentSectionOrder } from './cvStudioSectionOrder'
 
 const emptyProfile = (): ProfileData => ({
   firstName: '',
@@ -25,6 +26,7 @@ export function coerceResumeData(raw: ResumeData | undefined | null): ResumeData
     skills: r.skills ?? [],
     hobbies: r.hobbies ?? [],
     sectionTitles: r.sectionTitles ? { ...r.sectionTitles } : {},
+    contentSectionOrder: normalizeContentSectionOrder(r.contentSectionOrder ?? undefined),
   }
 }
 

@@ -7,8 +7,10 @@ import {
   Download,
   FileText,
   GraduationCap,
+  GripVertical,
   Headphones,
   Heart,
+  LayoutList,
   Loader2,
   Pencil,
   Plus,
@@ -21,6 +23,7 @@ import { downloadCvStudioDocx, downloadCvStudioPdf } from '../api/client'
 import { LivePreview } from './components/LivePreview'
 import { useCvStudioResumeEditor } from './hooks/useCvStudioResumeEditor'
 import { downloadBlob, notify } from './lib/cvStudio'
+import { CV_MAIN_SECTION_LABELS, normalizeContentSectionOrder, type CvMainSectionKey } from './lib/cvStudioSectionOrder'
 import { formatVariantenName, versionBadgeClass } from './lib/formatting'
 import type { PdfDesign, ResumeVersionDto, SkillGroupData, WorkItemData } from './cvTypes'
 
@@ -42,12 +45,12 @@ function splitComma(input: string | undefined): string[] {
     .filter(Boolean)
 }
 
-type TabId = 'profil' | 'beruf' | 'ausbildung' | 'kenntnisse' | 'hobby' | 'cvTitel'
+type TabId = 'profil' | 'beruf' | 'ausbildung' | 'kenntnisse' | 'hobby' | 'cvTitel' | 'abschnitte'
 
 function templateIconComponent(key: string) {
-  if (key === 'softwareentwickler') return Code2
+  if (key === 'software-developer' || key === 'softwareentwickler') return Code2
   if (key === 'it-support') return Headphones
-  if (key === 'service-gastro-zustellung') return Briefcase
+  if (key === 'service-general' || key === 'service-gastro-zustellung') return Briefcase
   return FileText
 }
 
@@ -84,6 +87,13 @@ export default function CvStudioEditorPage() {
 
   const [activeTab, setActiveTab] = useState<TabId>('profil')
   const [showSaveDropdown, setShowSaveDropdown] = useState(false)
+  const [pdfExportName, setPdfExportName] = useState('')
+
+  useEffect(() => {
+    if (!resume?.title) return
+    const stem = resume.title.replace(/\.pdf$/i, '').trim()
+    setPdfExportName(stem || `Lebenslauf-${resume.id.slice(0, 8)}`)
+  }, [resume?.id, resume?.title])
 
   useEffect(() => {
     let cancelled = false
@@ -115,9 +125,16 @@ export default function CvStudioEditorPage() {
         notify('Bitte anmelden.')
         return
       }
-      const { blob } = await downloadCvStudioPdf(token, resume.id, { versionId: vId ?? undefined, design: pdfDesign })
-      const name = vId ? `variante-${vId}.pdf` : `arbeitsversion-${resume.id}.pdf`
-      downloadBlob(name, blob)
+      const stem = pdfExportName.trim()
+      const { blob } = await downloadCvStudioPdf(token, resume.id, {
+        versionId: vId ?? undefined,
+        design: pdfDesign,
+        fileName: stem || null,
+      })
+      const downloadName = stem
+        ? (stem.toLowerCase().endsWith('.pdf') ? stem : `${stem}.pdf`)
+        : (vId ? `variante-${vId}.pdf` : `arbeitsversion-${resume.id}.pdf`)
+      downloadBlob(downloadName, blob)
     }
     catch (e) {
       notify(e instanceof Error ? e.message : 'PDF-Export fehlgeschlagen.')
@@ -260,6 +277,17 @@ export default function CvStudioEditorPage() {
                 <option value="B">Design B — Modern</option>
                 <option value="C">Design C — Professional</option>
               </select>
+              <label className={`${lab} min-w-[140px] max-w-[220px] flex-1`}>
+                PDF-Dateiname
+                <input
+                  className={field}
+                  maxLength={180}
+                  value={pdfExportName}
+                  onChange={e => setPdfExportName(e.target.value)}
+                  placeholder="z. B. Bewerbung Muster GmbH"
+                  title="Wird in der PDF-Export-Liste und beim Download verwendet"
+                />
+              </label>
               <button
                 type="button"
                 disabled={busy}
@@ -319,8 +347,16 @@ export default function CvStudioEditorPage() {
                           const token = await getToken()
                           if (token) {
                             try {
-                              const { blob } = await downloadCvStudioPdf(token, resume.id, { versionId: v.id, design: pdfDesign })
-                              downloadBlob(`variante-${v.id}.pdf`, blob)
+                              const stem = pdfExportName.trim()
+                              const { blob } = await downloadCvStudioPdf(token, resume.id, {
+                                versionId: v.id,
+                                design: pdfDesign,
+                                fileName: stem || null,
+                              })
+                              const downloadName = stem
+                                ? (stem.toLowerCase().endsWith('.pdf') ? stem : `${stem}.pdf`)
+                                : `variante-${v.id}.pdf`
+                              downloadBlob(downloadName, blob)
                             }
                             catch (e) {
                               notify(e instanceof Error ? e.message : 'PDF fehlgeschlagen')
@@ -361,6 +397,10 @@ export default function CvStudioEditorPage() {
             <button type="button" className={tabClass('cvTitel')} onClick={() => setActiveTab('cvTitel')}>
               <FileText size={14} aria-hidden />
               CV-Titel
+            </button>
+            <button type="button" className={tabClass('abschnitte')} onClick={() => setActiveTab('abschnitte')}>
+              <LayoutList size={14} aria-hidden />
+              Abschnitte
             </button>
           </div>
 
@@ -513,6 +553,15 @@ export default function CvStudioEditorPage() {
                         <input className={field} value={item.endDate} onChange={e => updateResume(r => void (r.resumeData.educationItems[index].endDate = e.target.value))} />
                       </label>
                     </div>
+                    <label className={`${lab} mt-2`}>
+                      Beschreibung (Schwerpunkte, Thesis, Module …)
+                      <textarea
+                        className={field}
+                        rows={3}
+                        value={item.description ?? ''}
+                        onChange={e => updateResume(r => void (r.resumeData.educationItems[index].description = e.target.value))}
+                      />
+                    </label>
                     <button
                       type="button"
                       className="mt-2 inline-flex items-center gap-1 text-xs text-rose-300"
@@ -528,7 +577,7 @@ export default function CvStudioEditorPage() {
                   className="rounded-lg border border-white/15 px-3 py-2 text-xs text-stone-200 hover:bg-white/5"
                   onClick={() =>
                     updateResume((r) => {
-                      r.resumeData.educationItems.push({ school: '', degree: '', startDate: '', endDate: '' })
+                      r.resumeData.educationItems.push({ school: '', degree: '', startDate: '', endDate: '', description: '' })
                     })}
                 >
                   <Plus className="inline" size={14} aria-hidden />
@@ -576,6 +625,53 @@ export default function CvStudioEditorPage() {
                   Eine Zeile = ein Hobby
                   <textarea className={field} rows={8} value={d.hobbies.join('\n')} onChange={e => updateResume(r => void (r.resumeData.hobbies = splitLines(e.target.value)))} />
                 </label>
+              </div>
+            ) : null}
+
+            {activeTab === 'abschnitte' ? (
+              <div className="space-y-4">
+                <h2 className="text-sm font-semibold text-white">Reihenfolge der Hauptabschnitte</h2>
+                <p className="text-xs text-stone-500">
+                  Ziehe eine Zeile an eine andere Position (Drag-and-Drop). Die Reihenfolge gilt für PDF- und DOCX-Export (Hauptspalte). Design C: Sprachen/Hobbys bleiben in der Seitenleiste.
+                </p>
+                <ul className="space-y-2">
+                  {normalizeContentSectionOrder(d.contentSectionOrder).map((key) => {
+                    const label = CV_MAIN_SECTION_LABELS[key]
+                    return (
+                      <li
+                        key={key}
+                        draggable
+                        onDragStart={(e) => {
+                          e.dataTransfer.setData('application/x-cv-section', key)
+                          e.dataTransfer.effectAllowed = 'move'
+                        }}
+                        onDragOver={(e) => {
+                          e.preventDefault()
+                          e.dataTransfer.dropEffect = 'move'
+                        }}
+                        onDrop={(e) => {
+                          e.preventDefault()
+                          const fromKey = e.dataTransfer.getData('application/x-cv-section') as CvMainSectionKey
+                          if (!fromKey || fromKey === key) return
+                          updateResume((r) => {
+                            const o = [...normalizeContentSectionOrder(r.resumeData.contentSectionOrder)]
+                            const fromIdx = o.indexOf(fromKey)
+                            const toIdx = o.indexOf(key)
+                            if (fromIdx < 0 || toIdx < 0) return
+                            const [moved] = o.splice(fromIdx, 1)
+                            o.splice(toIdx, 0, moved)
+                            r.resumeData.contentSectionOrder = o
+                          })
+                        }}
+                        className="flex cursor-grab items-center gap-3 rounded-lg border border-white/10 bg-black/30 px-3 py-2.5 active:cursor-grabbing"
+                      >
+                        <GripVertical size={18} className="flex-shrink-0 text-stone-500" aria-hidden />
+                        <span className="text-sm text-stone-200">{label}</span>
+                        <span className="ml-auto font-mono text-[10px] text-stone-600">{key}</span>
+                      </li>
+                    )
+                  })}
+                </ul>
               </div>
             ) : null}
 

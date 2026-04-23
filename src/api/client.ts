@@ -918,12 +918,14 @@ export async function deleteCvStudioVersion(token: string, resumeId: string, ver
 export async function downloadCvStudioPdf(
   token: string,
   resumeId: string,
-  opts?: { versionId?: string | null; design?: 'A' | 'B' | 'C' },
+  opts?: { versionId?: string | null; design?: 'A' | 'B' | 'C'; fileName?: string | null },
 ): Promise<{ blob: Blob; exportId: string | null; limit: number; used: number }> {
   const params = new URLSearchParams()
   params.set('design', opts?.design ?? 'A')
   if (opts?.versionId)
     params.set('versionId', opts.versionId)
+  if (opts?.fileName?.trim())
+    params.set('fileName', opts.fileName.trim())
   const res = await fetch(
     `${BASE}/api/cv-studio/resumes/${encodeURIComponent(resumeId)}/pdf?${params.toString()}`,
     { headers: { Authorization: `Bearer ${token}` } },
