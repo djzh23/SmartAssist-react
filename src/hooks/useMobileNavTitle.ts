@@ -25,6 +25,7 @@ function routeTitle(pathname: string): string {
   if (pathname === '/' || pathname === '/tools') return 'PrivatePrep'
   if (pathname.startsWith('/career-profile')) return 'Karriereprofil'
   if (pathname.startsWith('/applications')) return 'Bewerbungen'
+  if (pathname.startsWith('/cv-studio')) return 'CV.Studio'
   if (pathname.startsWith('/guides')) return 'Ratgeber'
   if (pathname.startsWith('/notes')) return 'Notizen'
   if (pathname.startsWith('/profile')) return 'Mein Profil'

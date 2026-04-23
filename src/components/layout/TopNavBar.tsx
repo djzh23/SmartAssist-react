@@ -5,6 +5,7 @@ import {
   ArrowLeft,
   BookOpen,
   ClipboardList,
+  FileText,
   FolderOpen,
   Menu,
   NotebookPen,
@@ -235,6 +236,12 @@ export default function TopNavBar({ onMenuClick, menuOpen }: Props) {
           <span className="inline-flex items-center gap-1.5">
             <FolderOpen size={15} className="shrink-0 opacity-80" aria-hidden />
             Bewerbungen
+          </span>
+        </NavLink>
+        <NavLink to="/cv-studio" className={({ isActive }) => navClass(isActive)}>
+          <span className="inline-flex items-center gap-1.5">
+            <FileText size={15} className="shrink-0 opacity-80" aria-hidden />
+            CV.Studio
           </span>
         </NavLink>
         <NavLink

@@ -175,6 +175,25 @@ export interface SkillSummary {
   isAccessible: boolean
 }
 
+/** /api/cv-studio/resumes — Lebenslauf-Übersicht (camelCase vom Backend) */
+export interface CvStudioResumeSummary {
+  id: string
+  title: string
+  templateKey: string | null
+  updatedAtUtc: string
+}
+
+/** /api/cv-studio/pdf-exports — getrackte PDF-Downloads (Kontingent) */
+export interface CvStudioPdfExportRow {
+  id: string
+  resumeId: string
+  versionId: string | null
+  design: string
+  fileLabel: string
+  createdAtUtc: string
+  hasStoredFile: boolean
+}
+
 /** /api/learning/insights */
 export interface LearningInsight {
   id: string

@@ -19,6 +19,7 @@ const ApplicationDetailPage = lazy(() => import('./pages/ApplicationDetailPage')
 const GuidesIndexPage = lazy(() => import('./pages/guides/GuidesIndexPage'))
 const GuideArticlePage = lazy(() => import('./pages/guides/GuideArticlePage'))
 const NotesPage = lazy(() => import('./pages/NotesPage'))
+const CvStudioRouter = lazy(() => import('./cv-studio/CvStudioRouter'))
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string
 
@@ -144,6 +145,14 @@ function AppRoutes() {
           element={(
             <Suspense fallback={<RouteFallback />}>
               <NotesPage />
+            </Suspense>
+          )}
+        />
+        <Route
+          path="/cv-studio/*"
+          element={(
+            <Suspense fallback={<RouteFallback />}>
+              <CvStudioRouter />
             </Suspense>
           )}
         />

@@ -4,10 +4,20 @@ import type {
   ChatMessage,
   ChatSavedNote,
   ChatSavedNoteSource,
+  CvStudioPdfExportRow,
+  CvStudioResumeSummary,
   LearningInsight,
   SkillSummary,
   ToolType,
 } from '../types'
+import type {
+  CreateResumeRequest,
+  CreateVersionRequest,
+  ResumeDto,
+  ResumeTemplateDto,
+  ResumeVersionDto,
+  UpdateResumeRequest,
+} from '../cv-studio/cvTypes'
 
 const BASE = import.meta.env.VITE_API_BASE_URL
   ? `${import.meta.env.VITE_API_BASE_URL}`
@@ -190,8 +200,8 @@ export interface UsageStatus {
 
 async function readApiError(response: Response, fallback: string): Promise<string> {
   try {
-    const payload = await response.json() as { error?: string; message?: string }
-    return payload.error ?? payload.message ?? fallback
+    const payload = await response.json() as { error?: string; message?: string; detail?: string }
+    return payload.detail ?? payload.error ?? payload.message ?? fallback
   } catch {
     return fallback
   }
@@ -809,4 +819,167 @@ export async function deleteJobApplication(token: string, id: string): Promise<v
   })
   if (!res.ok)
     throw new Error(await readApiError(res, `Bewerbung löschen fehlgeschlagen (${res.status})`))
+}
+
+// ── CV.Studio (integrated resume API) ───────────────────────────────────────
+
+async function parseCvStudioJson<T>(res: Response, fallbackLabel: string): Promise<T> {
+  if (res.status === 401)
+    throw new Error('Bitte anmelden, um CV.Studio zu nutzen.')
+  if (!res.ok)
+    throw new Error(await readApiError(res, `${fallbackLabel} (${res.status})`))
+  return (await res.json()) as T
+}
+
+export async function listCvStudioResumes(token: string): Promise<CvStudioResumeSummary[]> {
+  const res = await fetch(`${BASE}/api/cv-studio/resumes`, { headers: authHeaders(token) })
+  return parseCvStudioJson<CvStudioResumeSummary[]>(res, 'CV.Studio: Lebensläufe laden')
+}
+
+export async function getCvStudioResumeTemplates(token: string): Promise<ResumeTemplateDto[]> {
+  const res = await fetch(`${BASE}/api/cv-studio/resume-templates`, { headers: authHeaders(token) })
+  return parseCvStudioJson<ResumeTemplateDto[]>(res, 'CV.Studio: Vorlagen')
+}
+
+export async function getCvStudioResume(token: string, id: string): Promise<ResumeDto> {
+  const res = await fetch(`${BASE}/api/cv-studio/resumes/${encodeURIComponent(id)}`, { headers: authHeaders(token) })
+  return parseCvStudioJson<ResumeDto>(res, 'CV.Studio: Lebenslauf laden')
+}
+
+export async function createCvStudioResume(token: string, body: CreateResumeRequest): Promise<ResumeDto> {
+  const res = await fetch(`${BASE}/api/cv-studio/resumes`, {
+    method: 'POST',
+    headers: authHeaders(token),
+    body: JSON.stringify(body),
+  })
+  return parseCvStudioJson<ResumeDto>(res, 'CV.Studio: Lebenslauf anlegen')
+}
+
+export async function createCvStudioResumeFromTemplate(token: string, templateKey: string): Promise<ResumeDto> {
+  const res = await fetch(
+    `${BASE}/api/cv-studio/resumes/templates/${encodeURIComponent(templateKey)}`,
+    { method: 'POST', headers: authHeaders(token) },
+  )
+  return parseCvStudioJson<ResumeDto>(res, 'CV.Studio: aus Vorlage')
+}
+
+export async function updateCvStudioResume(token: string, id: string, body: UpdateResumeRequest): Promise<ResumeDto> {
+  const res = await fetch(`${BASE}/api/cv-studio/resumes/${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    headers: authHeaders(token),
+    body: JSON.stringify(body),
+  })
+  return parseCvStudioJson<ResumeDto>(res, 'CV.Studio: speichern')
+}
+
+export async function deleteAllCvStudioResumes(token: string): Promise<void> {
+  const res = await fetch(`${BASE}/api/cv-studio/resumes`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } })
+  if (res.status === 401)
+    throw new Error('Bitte anmelden.')
+  if (!res.ok)
+    throw new Error(await readApiError(res, `CV.Studio: alles löschen (${res.status})`))
+}
+
+export async function listCvStudioVersions(token: string, resumeId: string): Promise<ResumeVersionDto[]> {
+  const res = await fetch(`${BASE}/api/cv-studio/resumes/${encodeURIComponent(resumeId)}/versions`, {
+    headers: authHeaders(token),
+  })
+  return parseCvStudioJson<ResumeVersionDto[]>(res, 'CV.Studio: Varianten')
+}
+
+export async function getCvStudioVersion(token: string, resumeId: string, versionId: string): Promise<ResumeVersionDto> {
+  const res = await fetch(
+    `${BASE}/api/cv-studio/resumes/${encodeURIComponent(resumeId)}/versions/${encodeURIComponent(versionId)}`,
+    { headers: authHeaders(token) },
+  )
+  return parseCvStudioJson<ResumeVersionDto>(res, 'CV.Studio: Variante')
+}
+
+export async function createCvStudioVersion(token: string, resumeId: string, body: CreateVersionRequest): Promise<ResumeVersionDto> {
+  const res = await fetch(`${BASE}/api/cv-studio/resumes/${encodeURIComponent(resumeId)}/versions`, {
+    method: 'POST',
+    headers: authHeaders(token),
+    body: JSON.stringify(body),
+  })
+  return parseCvStudioJson<ResumeVersionDto>(res, 'CV.Studio: Variante speichern')
+}
+
+export async function deleteCvStudioVersion(token: string, resumeId: string, versionId: string): Promise<void> {
+  const res = await fetch(
+    `${BASE}/api/cv-studio/resumes/${encodeURIComponent(resumeId)}/versions/${encodeURIComponent(versionId)}`,
+    { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } },
+  )
+  if (res.status === 401)
+    throw new Error('Bitte anmelden.')
+  if (!res.ok)
+    throw new Error(await readApiError(res, `CV.Studio: Variante löschen (${res.status})`))
+}
+
+export async function downloadCvStudioPdf(
+  token: string,
+  resumeId: string,
+  opts?: { versionId?: string | null; design?: 'A' | 'B' | 'C' },
+): Promise<{ blob: Blob; exportId: string | null; limit: number; used: number }> {
+  const params = new URLSearchParams()
+  params.set('design', opts?.design ?? 'A')
+  if (opts?.versionId)
+    params.set('versionId', opts.versionId)
+  const res = await fetch(
+    `${BASE}/api/cv-studio/resumes/${encodeURIComponent(resumeId)}/pdf?${params.toString()}`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  )
+  if (res.status === 401)
+    throw new Error('Bitte anmelden.')
+  if (res.status === 429)
+    throw new Error(await readApiError(res, 'PDF-Export-Limit'))
+  if (!res.ok)
+    throw new Error(await readApiError(res, `CV.Studio: PDF (${res.status})`))
+  const blob = await res.blob()
+  return {
+    blob,
+    exportId: res.headers.get('X-Cv-Pdf-Export-Id'),
+    limit: Number(res.headers.get('X-Cv-Pdf-Quota-Limit') ?? '0'),
+    used: Number(res.headers.get('X-Cv-Pdf-Quota-Used') ?? '0'),
+  }
+}
+
+export async function downloadCvStudioDocx(token: string, resumeId: string, versionId?: string | null): Promise<Blob> {
+  const params = new URLSearchParams()
+  if (versionId)
+    params.set('versionId', versionId)
+  const qs = params.toString()
+  const res = await fetch(
+    `${BASE}/api/cv-studio/resumes/${encodeURIComponent(resumeId)}/docx${qs ? `?${qs}` : ''}`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  )
+  if (res.status === 401)
+    throw new Error('Bitte anmelden.')
+  if (!res.ok)
+    throw new Error(await readApiError(res, `CV.Studio: DOCX (${res.status})`))
+  return res.blob()
+}
+
+export async function listCvStudioPdfExports(token: string): Promise<{ rows: CvStudioPdfExportRow[]; limit: number; used: number }> {
+  const res = await fetch(`${BASE}/api/cv-studio/pdf-exports`, { headers: authHeaders(token) })
+  if (res.status === 401)
+    throw new Error('Bitte anmelden.')
+  if (!res.ok)
+    throw new Error(await readApiError(res, `CV.Studio: PDF-Liste (${res.status})`))
+  const rows = (await res.json()) as CvStudioPdfExportRow[]
+  return {
+    rows,
+    limit: Number(res.headers.get('X-Cv-Pdf-Quota-Limit') ?? '0'),
+    used: Number(res.headers.get('X-Cv-Pdf-Quota-Used') ?? '0'),
+  }
+}
+
+export async function deleteCvStudioPdfExport(token: string, exportId: string): Promise<void> {
+  const res = await fetch(`${BASE}/api/cv-studio/pdf-exports/${encodeURIComponent(exportId)}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (res.status === 401)
+    throw new Error('Bitte anmelden.')
+  if (!res.ok && res.status !== 404)
+    throw new Error(await readApiError(res, `CV.Studio: PDF-Eintrag löschen (${res.status})`))
 }

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { SignOutButton } from '@clerk/clerk-react'
 import {
   BookOpen,
+  FileText,
   FolderOpen,
   NotebookPen,
   ShieldCheck,
@@ -66,6 +67,14 @@ export default function MobileMoreSheet() {
           >
             <FolderOpen size={18} className="text-slate-400" aria-hidden />
             Bewerbungen
+          </button>
+          <button
+            type="button"
+            className="flex min-h-[44px] w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm hover:bg-sidebar-hover"
+            onClick={() => go('/cv-studio')}
+          >
+            <FileText size={18} className="text-slate-400" aria-hidden />
+            CV.Studio
           </button>
           <button
             type="button"

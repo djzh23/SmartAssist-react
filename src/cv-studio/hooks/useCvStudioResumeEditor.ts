@@ -1,0 +1,359 @@
+import { useCallback, useEffect, useRef, useState } from 'react'
+import {
+  createCvStudioResume,
+  createCvStudioResumeFromTemplate,
+  createCvStudioVersion,
+  deleteAllCvStudioResumes,
+  getCvStudioResume,
+  getCvStudioResumeTemplates,
+  getCvStudioVersion,
+  listCvStudioResumes,
+  listCvStudioVersions,
+  updateCvStudioResume,
+} from '../../api/client'
+import { clearLastResumeId, setLastResumeId } from '../lib/cvStudio'
+import { formatVariantenName } from '../lib/formatting'
+import { coerceResumeData, normalizeResumeDto } from '../lib/resumeData'
+import { ensureSectionTitles } from '../lib/sectionTitles'
+import type { CvStudioResumeSummary } from '../../types'
+import type { PdfDesign, ResumeDto, ResumeTemplateDto, ResumeVersionDto } from '../cvTypes'
+
+function patchResume(r: ResumeDto): ResumeDto {
+  const n = normalizeResumeDto(r)
+  ensureSectionTitles(n.resumeData)
+  return n
+}
+
+export function useCvStudioResumeEditor(getToken: () => Promise<string | null>) {
+  const [templates, setTemplates] = useState<ResumeTemplateDto[]>([])
+  const [summaries, setSummaries] = useState<CvStudioResumeSummary[]>([])
+  const [resume, setResumeState] = useState<ResumeDto | null>(null)
+  const [versions, setVersions] = useState<ResumeVersionDto[]>([])
+  const [activeVariant, setActiveVariant] = useState<ResumeVersionDto | null>(null)
+  const [selectedTemplateKey, setSelectedTemplateKey] = useState('')
+  const [pdfDesign, setPdfDesign] = useState<PdfDesign>('A')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [variantNameDraft, setVariantNameDraft] = useState('')
+  const [autoSaving, setAutoSaving] = useState(false)
+  const [lastSavedAtUtc, setLastSavedAtUtc] = useState<Date | null>(null)
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+
+  const resumeRef = useRef<ResumeDto | null>(null)
+  const hasUnsavedRef = useRef(false)
+  const selectedTemplateKeyRef = useRef('')
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    resumeRef.current = resume
+  }, [resume])
+
+  useEffect(() => {
+    selectedTemplateKeyRef.current = selectedTemplateKey
+  }, [selectedTemplateKey])
+
+  const refreshSummaries = useCallback(async () => {
+    const token = await getToken()
+    if (!token) return
+    const list = await listCvStudioResumes(token)
+    setSummaries(list)
+  }, [getToken])
+
+  const refreshVersions = useCallback(
+    async (resumeId: string) => {
+      const token = await getToken()
+      if (!token) return
+      const v = await listCvStudioVersions(token, resumeId)
+      setVersions(v)
+    },
+    [getToken],
+  )
+
+  const assignResume = useCallback(
+    (
+      r: ResumeDto | null,
+      opts?: { keepDirty?: boolean; activeVar?: ResumeVersionDto | null | undefined },
+    ) => {
+      const patched = r ? patchResume(r) : null
+      resumeRef.current = patched
+      setResumeState(patched)
+      if (opts && 'activeVar' in opts)
+        setActiveVariant(opts.activeVar ?? null)
+      if (!patched) {
+        hasUnsavedRef.current = false
+        setHasUnsavedChanges(false)
+        return
+      }
+      if (opts?.keepDirty) {
+        hasUnsavedRef.current = true
+        setHasUnsavedChanges(true)
+      }
+      else {
+        hasUnsavedRef.current = false
+        setHasUnsavedChanges(false)
+      }
+    },
+    [],
+  )
+
+  const runBusy = useCallback(async <T,>(fn: () => Promise<T>): Promise<T | undefined> => {
+    setBusy(true)
+    setError(null)
+    try {
+      return await fn()
+    }
+    catch (e) {
+      setError(e instanceof Error ? e.message : String(e))
+      return undefined
+    }
+    finally {
+      setBusy(false)
+    }
+  }, [])
+
+  const saveNow = useCallback(async () => {
+    const r = resumeRef.current
+    if (!r || !hasUnsavedRef.current)
+      return
+    const token = await getToken()
+    if (!token) {
+      setError('Bitte anmelden.')
+      return
+    }
+    setAutoSaving(true)
+    setError(null)
+    try {
+      const tk = selectedTemplateKeyRef.current || r.templateKey || null
+      const updated = await updateCvStudioResume(token, r.id, {
+        title: r.title,
+        templateKey: tk,
+        resumeData: coerceResumeData(r.resumeData),
+      })
+      const patched = patchResume(updated)
+      hasUnsavedRef.current = false
+      setHasUnsavedChanges(false)
+      setLastSavedAtUtc(new Date())
+      resumeRef.current = patched
+      setResumeState(patched)
+      await refreshSummaries()
+      setLastResumeId(patched.id)
+    }
+    catch (e) {
+      setError(e instanceof Error ? e.message : String(e))
+    }
+    finally {
+      setAutoSaving(false)
+    }
+  }, [getToken, refreshSummaries])
+
+  const queueAutoSave = useCallback(() => {
+    if (saveTimerRef.current)
+      clearTimeout(saveTimerRef.current)
+    saveTimerRef.current = setTimeout(() => {
+      void saveNow()
+    }, 1000)
+  }, [saveNow])
+
+  const flushAutoSave = useCallback(async () => {
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current)
+      saveTimerRef.current = null
+    }
+    await saveNow()
+  }, [saveNow])
+
+  const updateResume = useCallback(
+    (recipe: (r: ResumeDto) => void) => {
+      setResumeState((prev) => {
+        if (!prev)
+          return prev
+        const next = structuredClone(prev)
+        recipe(next)
+        ensureSectionTitles(next.resumeData)
+        resumeRef.current = next
+        hasUnsavedRef.current = true
+        setHasUnsavedChanges(true)
+        setActiveVariant(null)
+        queueAutoSave()
+        return next
+      })
+    },
+    [queueAutoSave],
+  )
+
+  useEffect(
+    () => () => {
+      if (saveTimerRef.current)
+        clearTimeout(saveTimerRef.current)
+    },
+    [],
+  )
+
+  const loadTemplates = useCallback(async () => {
+    await runBusy(async () => {
+      const token = await getToken()
+      if (!token)
+        throw new Error('Bitte anmelden.')
+      const t = await getCvStudioResumeTemplates(token)
+      setTemplates(t)
+      const list = await listCvStudioResumes(token)
+      setSummaries(list)
+      if (!selectedTemplateKeyRef.current && t.length > 0)
+        setSelectedTemplateKey(t[0].key)
+    })
+  }, [getToken, runBusy])
+
+  const createArbeitsversion = useCallback(async () => {
+    const token = await getToken()
+    if (!token) {
+      setError('Bitte anmelden.')
+      return null
+    }
+    const created = await runBusy(async () => {
+      if (selectedTemplateKeyRef.current)
+        return createCvStudioResumeFromTemplate(token, selectedTemplateKeyRef.current)
+      return createCvStudioResume(token, {
+        title: 'Neue Arbeitsversion',
+        resumeData: coerceResumeData(undefined),
+      })
+    })
+    if (!created)
+      return null
+    assignResume(created)
+    await refreshVersions(created.id)
+    await refreshSummaries()
+    setLastResumeId(created.id)
+    return created.id
+  }, [assignResume, getToken, refreshSummaries, refreshVersions, runBusy])
+
+  const openResume = useCallback(
+    async (id: string) => {
+      const token = await getToken()
+      if (!token) {
+        setError('Bitte anmelden.')
+        return
+      }
+      const loaded = await runBusy(async () => getCvStudioResume(token, id))
+      if (!loaded)
+        return
+      assignResume(loaded)
+      if (loaded.templateKey)
+        setSelectedTemplateKey(loaded.templateKey)
+      await refreshVersions(loaded.id)
+      await refreshSummaries()
+      setLastResumeId(loaded.id)
+    },
+    [assignResume, getToken, refreshSummaries, refreshVersions, runBusy],
+  )
+
+  const saveVariant = useCallback(
+    async (name?: string | null) => {
+      const r = resumeRef.current
+      if (!r)
+        return null
+      const token = await getToken()
+      if (!token) {
+        setError('Bitte anmelden.')
+        return null
+      }
+      await flushAutoSave()
+      const label = (name ?? variantNameDraft).trim()
+      const created = await runBusy(async () =>
+        createCvStudioVersion(token, r.id, { label: label || null }),
+      )
+      if (!created)
+        return null
+      setVariantNameDraft('')
+      assignResume(r, { keepDirty: false, activeVar: created })
+      await refreshVersions(r.id)
+      await refreshSummaries()
+      setLastResumeId(r.id)
+      return created
+    },
+    [assignResume, flushAutoSave, getToken, refreshSummaries, refreshVersions, runBusy, variantNameDraft],
+  )
+
+  const loadVariantIntoEditor = useCallback(
+    async (versionId: string) => {
+      const r = resumeRef.current
+      if (!r)
+        return
+      const token = await getToken()
+      if (!token) {
+        setError('Bitte anmelden.')
+        return
+      }
+      const variante = await runBusy(async () => getCvStudioVersion(token, r.id, versionId))
+      if (!variante)
+        return
+      const merged: ResumeDto = {
+        ...r,
+        resumeData: coerceResumeData(variante.resumeData),
+        updatedAtUtc: new Date().toISOString(),
+      }
+      assignResume(merged, { keepDirty: true, activeVar: variante })
+      queueAutoSave()
+      setLastResumeId(r.id)
+    },
+    [assignResume, getToken, queueAutoSave, runBusy],
+  )
+
+  const resetAll = useCallback(async () => {
+    const token = await getToken()
+    if (!token) {
+      setError('Bitte anmelden.')
+      return
+    }
+    await runBusy(async () => {
+      await deleteAllCvStudioResumes(token)
+      assignResume(null)
+      setVersions([])
+      clearLastResumeId()
+      await refreshSummaries()
+    })
+  }, [assignResume, getToken, refreshSummaries, runBusy])
+
+  const aktivKontextText =
+    activeVariant === null ? 'Arbeitsversion' : `Gespeicherte Variante ${formatVariantenName(activeVariant)}`
+
+  const autoSaveText = autoSaving
+    ? 'Auto-Save: speichert…'
+    : hasUnsavedChanges
+      ? 'Auto-Save: wartend'
+      : lastSavedAtUtc
+        ? `Auto-Save: gespeichert (${lastSavedAtUtc.toLocaleTimeString('de-DE')})`
+        : 'Auto-Save: bereit'
+
+  return {
+    templates,
+    summaries,
+    resume,
+    versions,
+    activeVariant,
+    selectedTemplateKey,
+    setSelectedTemplateKey,
+    pdfDesign,
+    setPdfDesign,
+    busy,
+    error,
+    setError,
+    variantNameDraft,
+    setVariantNameDraft,
+    autoSaving,
+    lastSavedAtUtc,
+    hasUnsavedChanges,
+    aktivKontextText,
+    autoSaveText,
+    loadTemplates,
+    createArbeitsversion,
+    openResume,
+    updateResume,
+    flushAutoSave,
+    saveVariant,
+    loadVariantIntoEditor,
+    resetAll,
+    refreshSummaries,
+    refreshVersions,
+    assignResume,
+  }
+}
