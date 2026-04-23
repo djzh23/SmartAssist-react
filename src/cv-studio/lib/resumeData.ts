@@ -1,5 +1,19 @@
-import type { ProfileData, ResumeData } from '../cvTypes'
+import type { CvSectionTitleOverrides, ProfileData, ResumeData } from '../cvTypes'
 import { normalizeContentSectionOrder } from './cvStudioSectionOrder'
+
+function migrateLegacySectionTitles(st: CvSectionTitleOverrides | null | undefined): CvSectionTitleOverrides {
+  const out: CvSectionTitleOverrides = { ...(st ?? {}) }
+  const combo = out.languagesAndInterests?.trim()
+  if (!combo)
+    return out
+  if (!out.languages?.trim())
+    out.languages = 'Sprachen'
+  if (!out.interests?.trim())
+    out.interests = 'Interessen'
+  delete out.languagesAndInterests
+  return out
+}
+
 
 const emptyProfile = (): ProfileData => ({
   firstName: '',
@@ -28,8 +42,9 @@ export function coerceResumeData(raw: ResumeData | undefined | null): ResumeData
     languageItems: (r.languageItems ?? []).map(li => ({
       label: li.label ?? '',
       level: li.level ?? '',
+      rowKey: li.rowKey?.trim() || null,
     })),
-    sectionTitles: r.sectionTitles ? { ...r.sectionTitles } : {},
+    sectionTitles: migrateLegacySectionTitles(r.sectionTitles ? { ...r.sectionTitles } : {}),
     contentSectionOrder: normalizeContentSectionOrder(r.contentSectionOrder ?? undefined),
   }
 }

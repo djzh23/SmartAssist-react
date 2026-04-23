@@ -11,13 +11,13 @@ import {
   Headphones,
   Heart,
   Languages,
-  LayoutList,
   Loader2,
   PanelLeftClose,
   PanelRightOpen,
   Pencil,
   Plus,
   Save,
+  SlidersHorizontal,
   Trash2,
   User,
   Wrench,
@@ -61,7 +61,7 @@ function useMediaMinWidth(px: number): boolean {
   return matches
 }
 
-type TabId = 'profil' | 'beruf' | 'ausbildung' | 'kenntnisse' | 'hobby' | 'sprachen' | 'cvTitel' | 'abschnitte'
+type TabId = 'profil' | 'beruf' | 'ausbildung' | 'kenntnisse' | 'hobby' | 'sprachen' | 'darstellung'
 
 function templateIconComponent(key: string) {
   if (key === 'software-developer' || key === 'softwareentwickler') return Code2
@@ -166,7 +166,8 @@ export default function CvStudioEditorPage() {
     const startW = previewWidthPx
     const onMove = (ev: MouseEvent) => {
       const dx = ev.clientX - startX
-      setPreviewWidthPx(Math.min(560, Math.max(280, startW + dx)))
+      // Vorschau rechts: nach links ziehen verbreitert die Vorschau.
+      setPreviewWidthPx(Math.min(560, Math.max(280, startW - dx)))
     }
     const onUp = () => {
       window.removeEventListener('mousemove', onMove)
@@ -446,13 +447,9 @@ export default function CvStudioEditorPage() {
               <Languages size={14} aria-hidden />
               Sprachen
             </button>
-            <button type="button" className={tabClass('cvTitel')} onClick={() => setActiveTab('cvTitel')}>
-              <FileText size={14} aria-hidden />
-              CV-Titel
-            </button>
-            <button type="button" className={tabClass('abschnitte')} onClick={() => setActiveTab('abschnitte')}>
-              <LayoutList size={14} aria-hidden />
-              Abschnitte
+            <button type="button" className={tabClass('darstellung')} onClick={() => setActiveTab('darstellung')}>
+              <SlidersHorizontal size={14} aria-hidden />
+              Darstellung
             </button>
           </div>
 
@@ -684,13 +681,13 @@ export default function CvStudioEditorPage() {
               <div className="space-y-4">
                 <h2 className="text-sm font-semibold text-white">Sprachen</h2>
                 <p className="text-xs text-stone-500">
-                  Überschrift für PDF/Vorschau unter „CV-Titel“ → „Sprachen“. Wenn die Liste leer ist, werden weiterhin Einträge aus einer Sprach-Kategorie unter Kenntnissen verwendet.
+                  Überschrift für PDF/Vorschau unter „Darstellung“ → „Sprachen“. Wenn die Liste leer ist, werden weiterhin Einträge aus einer Sprach-Kategorie unter Kenntnissen verwendet.
                 </p>
                 {d.languageItems.length === 0 ? (
                   <p className="text-xs text-stone-500">Noch keine Einträge — „Sprache hinzufügen“ oder Kenntnisse nutzen.</p>
                 ) : null}
                 {d.languageItems.map((li, index) => (
-                  <div key={index} className="rounded-lg border border-white/10 bg-black/30 p-3">
+                  <div key={li.rowKey ?? `lang-${index}`} className="rounded-lg border border-white/10 bg-black/30 p-3">
                     <div className="grid gap-2 sm:grid-cols-2">
                       <label className={lab}>
                         Sprache
@@ -723,7 +720,11 @@ export default function CvStudioEditorPage() {
                   className="rounded-lg border border-white/15 px-3 py-2 text-xs text-stone-200 hover:bg-white/5"
                   onClick={() =>
                     updateResume((r) => {
-                      r.resumeData.languageItems.push({ label: '', level: '' } satisfies LanguageItemData)
+                      r.resumeData.languageItems.push({
+                        label: '',
+                        level: '',
+                        rowKey: typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `lang-${Date.now()}`,
+                      } satisfies LanguageItemData)
                     })}
                 >
                   Sprache hinzufügen
@@ -731,86 +732,87 @@ export default function CvStudioEditorPage() {
               </div>
             ) : null}
 
-            {activeTab === 'abschnitte' ? (
-              <div className="space-y-4">
-                <h2 className="text-sm font-semibold text-white">Reihenfolge der Hauptabschnitte</h2>
-                <p className="text-xs text-stone-500">
-                  Ziehe eine Zeile an eine andere Position (Drag-and-Drop). Die Reihenfolge gilt für PDF- und DOCX-Export (Hauptspalte). „Sprachen“ und „Interessen“ sind getrennte Blöcke.
-                </p>
-                <ul className="space-y-2">
-                  {normalizeContentSectionOrder(d.contentSectionOrder).map((key) => {
-                    const label = CV_MAIN_SECTION_LABELS[key]
-                    return (
-                      <li
-                        key={key}
-                        draggable
-                        onDragStart={(e) => {
-                          e.dataTransfer.setData('application/x-cv-section', key)
-                          e.dataTransfer.effectAllowed = 'move'
-                        }}
-                        onDragOver={(e) => {
-                          e.preventDefault()
-                          e.dataTransfer.dropEffect = 'move'
-                        }}
-                        onDrop={(e) => {
-                          e.preventDefault()
-                          const fromKey = e.dataTransfer.getData('application/x-cv-section') as CvMainSectionKey
-                          if (!fromKey || fromKey === key) return
-                          updateResume((r) => {
-                            const o = [...normalizeContentSectionOrder(r.resumeData.contentSectionOrder)]
-                            const fromIdx = o.indexOf(fromKey)
-                            const toIdx = o.indexOf(key)
-                            if (fromIdx < 0 || toIdx < 0) return
-                            const [moved] = o.splice(fromIdx, 1)
-                            o.splice(toIdx, 0, moved)
-                            r.resumeData.contentSectionOrder = o
-                          })
-                        }}
-                        className="flex cursor-grab items-center gap-3 rounded-lg border border-white/10 bg-black/30 px-3 py-2.5 active:cursor-grabbing"
-                      >
-                        <GripVertical size={18} className="flex-shrink-0 text-stone-500" aria-hidden />
-                        <span className="text-sm text-stone-200">{label}</span>
-                        <span className="ml-auto font-mono text-[10px] text-stone-600">{key}</span>
-                      </li>
-                    )
-                  })}
-                </ul>
-              </div>
-            ) : null}
+            {activeTab === 'darstellung' ? (
+              <div className="space-y-8">
+                <div className="space-y-4">
+                  <h2 className="text-sm font-semibold text-white">CV-Sektionstitel</h2>
+                  <p className="text-xs text-stone-500">
+                    Optional: Überschriften für PDF und Vorschau. Leer = Standard. „Sprachen“ und „Interessen“ sind getrennte Sektionen (keine kombinierte Überschrift mehr).
+                  </p>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {(
+                      [
+                        ['qualificationsProfile', 'Qualifikationsprofil'],
+                        ['workExperience', 'Berufserfahrung'],
+                        ['education', 'Ausbildung'],
+                        ['skills', 'Kenntnisse'],
+                        ['projects', 'Projekte'],
+                        ['languages', 'Sprachen'],
+                        ['interests', 'Interessen'],
+                      ] as const
+                    ).map(([key, ph]) => (
+                      <label key={key} className={lab}>
+                        {ph}
+                        <input
+                          className={field}
+                          maxLength={120}
+                          value={(st as Record<string, string | null | undefined>)[key] ?? ''}
+                          onChange={(e) => {
+                            updateResume((r) => {
+                              if (!r.resumeData.sectionTitles) r.resumeData.sectionTitles = {}
+                              ;(r.resumeData.sectionTitles as Record<string, string>)[key] = e.target.value
+                            })
+                          }}
+                          placeholder={ph}
+                        />
+                      </label>
+                    ))}
+                  </div>
+                </div>
 
-            {activeTab === 'cvTitel' ? (
-              <div className="space-y-3">
-                <h2 className="text-sm font-semibold text-white">CV-Sektionstitel</h2>
-                <p className="text-xs text-stone-500">Optional: Überschriften für PDF und Vorschau. Leer = Standard.</p>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {(
-                    [
-                      ['qualificationsProfile', 'Qualifikationsprofil'],
-                      ['workExperience', 'Berufserfahrung'],
-                      ['education', 'Ausbildung'],
-                      ['skills', 'Kenntnisse'],
-                      ['projects', 'Projekte'],
-                      ['languages', 'Sprachen (eigene Sektion)'],
-                      ['interests', 'Interessen'],
-                      ['languagesAndInterests', 'Kombi-Überschrift (Legacy, selten)'],
-                    ] as const
-                  ).map(([key, ph]) => (
-                    <label key={key} className={lab}>
-                      {ph}
-                      <input
-                        className={field}
-                        maxLength={120}
-                        value={(st as Record<string, string | null | undefined>)[key] ?? ''}
-                        onChange={(e) => {
-                          updateResume((r) => {
-                            if (!r.resumeData.sectionTitles) r.resumeData.sectionTitles = {}
-                            ;(r.resumeData.sectionTitles as Record<string, string>)[key] = e.target.value
-                          })
-                        }}
-                        placeholder={ph}
-                      />
-                    </label>
-                  ))}
+                <div className="space-y-4 border-t border-white/10 pt-6">
+                  <h2 className="text-sm font-semibold text-white">Reihenfolge der Hauptabschnitte</h2>
+                  <p className="text-xs text-stone-500">
+                    Ziehe eine Zeile an eine andere Position (Drag-and-Drop). Die Reihenfolge gilt für PDF- und DOCX-Export (Hauptspalte). „Sprachen“ und „Interessen“ sind getrennte Blöcke.
+                  </p>
+                  <ul className="space-y-2">
+                    {normalizeContentSectionOrder(d.contentSectionOrder).map((key) => {
+                      const label = CV_MAIN_SECTION_LABELS[key]
+                      return (
+                        <li
+                          key={key}
+                          draggable
+                          onDragStart={(e) => {
+                            e.dataTransfer.setData('application/x-cv-section', key)
+                            e.dataTransfer.effectAllowed = 'move'
+                          }}
+                          onDragOver={(e) => {
+                            e.preventDefault()
+                            e.dataTransfer.dropEffect = 'move'
+                          }}
+                          onDrop={(e) => {
+                            e.preventDefault()
+                            const fromKey = e.dataTransfer.getData('application/x-cv-section') as CvMainSectionKey
+                            if (!fromKey || fromKey === key) return
+                            updateResume((r) => {
+                              const o = [...normalizeContentSectionOrder(r.resumeData.contentSectionOrder)]
+                              const fromIdx = o.indexOf(fromKey)
+                              const toIdx = o.indexOf(key)
+                              if (fromIdx < 0 || toIdx < 0) return
+                              const [moved] = o.splice(fromIdx, 1)
+                              o.splice(toIdx, 0, moved)
+                              r.resumeData.contentSectionOrder = o
+                            })
+                          }}
+                          className="flex cursor-grab items-center gap-3 rounded-lg border border-white/10 bg-black/30 px-3 py-2.5 active:cursor-grabbing"
+                        >
+                          <GripVertical size={18} className="flex-shrink-0 text-stone-500" aria-hidden />
+                          <span className="text-sm text-stone-200">{label}</span>
+                          <span className="ml-auto font-mono text-[10px] text-stone-600">{key}</span>
+                        </li>
+                      )
+                    })}
+                  </ul>
                 </div>
               </div>
             ) : null}

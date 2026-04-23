@@ -61,6 +61,8 @@ export interface SkillGroupData {
 export interface LanguageItemData {
   label: string
   level?: string | null
+  /** Stable id for React lists (optional, generated on add). */
+  rowKey?: string | null
 }
 
 export interface ResumeProjectItem {
