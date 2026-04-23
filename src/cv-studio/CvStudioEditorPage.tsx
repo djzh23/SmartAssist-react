@@ -10,8 +10,11 @@ import {
   GripVertical,
   Headphones,
   Heart,
+  Languages,
   LayoutList,
   Loader2,
+  PanelLeftClose,
+  PanelRightOpen,
   Pencil,
   Plus,
   Save,
@@ -25,7 +28,7 @@ import { useCvStudioResumeEditor } from './hooks/useCvStudioResumeEditor'
 import { downloadBlob, notify } from './lib/cvStudio'
 import { CV_MAIN_SECTION_LABELS, normalizeContentSectionOrder, type CvMainSectionKey } from './lib/cvStudioSectionOrder'
 import { formatVariantenName, versionBadgeClass } from './lib/formatting'
-import type { PdfDesign, ResumeVersionDto, SkillGroupData, WorkItemData } from './cvTypes'
+import type { LanguageItemData, PdfDesign, ResumeVersionDto, SkillGroupData, WorkItemData } from './cvTypes'
 
 const field =
   'mt-1 block w-full rounded-lg border border-white/15 bg-black/25 px-3 py-2 text-sm text-stone-100 placeholder:text-stone-600 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary'
@@ -45,7 +48,20 @@ function splitComma(input: string | undefined): string[] {
     .filter(Boolean)
 }
 
-type TabId = 'profil' | 'beruf' | 'ausbildung' | 'kenntnisse' | 'hobby' | 'cvTitel' | 'abschnitte'
+/** Tailwind `xl` breakpoint — sync with tailwind.config for preview column width. */
+function useMediaMinWidth(px: number): boolean {
+  const [matches, setMatches] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia(`(min-width: ${px}px)`)
+    const fn = () => setMatches(mq.matches)
+    fn()
+    mq.addEventListener('change', fn)
+    return () => mq.removeEventListener('change', fn)
+  }, [px])
+  return matches
+}
+
+type TabId = 'profil' | 'beruf' | 'ausbildung' | 'kenntnisse' | 'hobby' | 'sprachen' | 'cvTitel' | 'abschnitte'
 
 function templateIconComponent(key: string) {
   if (key === 'software-developer' || key === 'softwareentwickler') return Code2
@@ -88,6 +104,9 @@ export default function CvStudioEditorPage() {
   const [activeTab, setActiveTab] = useState<TabId>('profil')
   const [showSaveDropdown, setShowSaveDropdown] = useState(false)
   const [pdfExportName, setPdfExportName] = useState('')
+  const [previewWidthPx, setPreviewWidthPx] = useState(380)
+  const [previewCollapsed, setPreviewCollapsed] = useState(false)
+  const previewLayoutXl = useMediaMinWidth(1280)
 
   useEffect(() => {
     if (!resume?.title) return
@@ -139,6 +158,22 @@ export default function CvStudioEditorPage() {
     catch (e) {
       notify(e instanceof Error ? e.message : 'PDF-Export fehlgeschlagen.')
     }
+  }
+
+  const onPreviewResizeMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    const startX = e.clientX
+    const startW = previewWidthPx
+    const onMove = (ev: MouseEvent) => {
+      const dx = ev.clientX - startX
+      setPreviewWidthPx(Math.min(560, Math.max(280, startW + dx)))
+    }
+    const onUp = () => {
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+    }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
   }
 
   const exportDocx = async (vId?: string | null) => {
@@ -264,8 +299,21 @@ export default function CvStudioEditorPage() {
         {aktivKontextText}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(280px,380px)]">
-        <section className="min-w-0 rounded-xl border border-white/10 bg-black/20">
+      {previewCollapsed ? (
+        <div className="mb-2 hidden justify-end lg:flex">
+          <button
+            type="button"
+            className="inline-flex items-center gap-1 rounded-lg border border-white/15 px-2 py-1 text-xs text-primary-light hover:bg-white/5"
+            onClick={() => setPreviewCollapsed(false)}
+          >
+            <PanelRightOpen size={14} aria-hidden />
+            Vorschau einblenden
+          </button>
+        </div>
+      ) : null}
+
+      <div className="flex flex-col gap-6 xl:flex-row xl:items-stretch">
+        <section className="min-w-0 flex-1 rounded-xl border border-white/10 bg-black/20">
           <div className="flex flex-col gap-3 border-b border-white/10 p-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
             <div className="flex flex-wrap items-center gap-2">
               <select
@@ -393,6 +441,10 @@ export default function CvStudioEditorPage() {
             <button type="button" className={tabClass('hobby')} onClick={() => setActiveTab('hobby')}>
               <Heart size={14} aria-hidden />
               Hobbys
+            </button>
+            <button type="button" className={tabClass('sprachen')} onClick={() => setActiveTab('sprachen')}>
+              <Languages size={14} aria-hidden />
+              Sprachen
             </button>
             <button type="button" className={tabClass('cvTitel')} onClick={() => setActiveTab('cvTitel')}>
               <FileText size={14} aria-hidden />
@@ -628,11 +680,62 @@ export default function CvStudioEditorPage() {
               </div>
             ) : null}
 
+            {activeTab === 'sprachen' ? (
+              <div className="space-y-4">
+                <h2 className="text-sm font-semibold text-white">Sprachen</h2>
+                <p className="text-xs text-stone-500">
+                  Überschrift für PDF/Vorschau unter „CV-Titel“ → „Sprachen“. Wenn die Liste leer ist, werden weiterhin Einträge aus einer Sprach-Kategorie unter Kenntnissen verwendet.
+                </p>
+                {d.languageItems.length === 0 ? (
+                  <p className="text-xs text-stone-500">Noch keine Einträge — „Sprache hinzufügen“ oder Kenntnisse nutzen.</p>
+                ) : null}
+                {d.languageItems.map((li, index) => (
+                  <div key={index} className="rounded-lg border border-white/10 bg-black/30 p-3">
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      <label className={lab}>
+                        Sprache
+                        <input
+                          className={field}
+                          value={li.label}
+                          onChange={e => updateResume(r => void (r.resumeData.languageItems[index].label = e.target.value))}
+                        />
+                      </label>
+                      <label className={lab}>
+                        Niveau (optional)
+                        <input
+                          className={field}
+                          value={li.level ?? ''}
+                          onChange={e => updateResume(r => void (r.resumeData.languageItems[index].level = e.target.value))}
+                        />
+                      </label>
+                    </div>
+                    <button
+                      type="button"
+                      className="mt-2 text-xs text-rose-300 hover:text-rose-200"
+                      onClick={() => updateResume(r => void r.resumeData.languageItems.splice(index, 1))}
+                    >
+                      Entfernen
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  className="rounded-lg border border-white/15 px-3 py-2 text-xs text-stone-200 hover:bg-white/5"
+                  onClick={() =>
+                    updateResume((r) => {
+                      r.resumeData.languageItems.push({ label: '', level: '' } satisfies LanguageItemData)
+                    })}
+                >
+                  Sprache hinzufügen
+                </button>
+              </div>
+            ) : null}
+
             {activeTab === 'abschnitte' ? (
               <div className="space-y-4">
                 <h2 className="text-sm font-semibold text-white">Reihenfolge der Hauptabschnitte</h2>
                 <p className="text-xs text-stone-500">
-                  Ziehe eine Zeile an eine andere Position (Drag-and-Drop). Die Reihenfolge gilt für PDF- und DOCX-Export (Hauptspalte). Design C: Sprachen/Hobbys bleiben in der Seitenleiste.
+                  Ziehe eine Zeile an eine andere Position (Drag-and-Drop). Die Reihenfolge gilt für PDF- und DOCX-Export (Hauptspalte). „Sprachen“ und „Interessen“ sind getrennte Blöcke.
                 </p>
                 <ul className="space-y-2">
                   {normalizeContentSectionOrder(d.contentSectionOrder).map((key) => {
@@ -687,7 +790,9 @@ export default function CvStudioEditorPage() {
                       ['education', 'Ausbildung'],
                       ['skills', 'Kenntnisse'],
                       ['projects', 'Projekte'],
-                      ['languagesAndInterests', 'Sprachen & Interessen'],
+                      ['languages', 'Sprachen (eigene Sektion)'],
+                      ['interests', 'Interessen'],
+                      ['languagesAndInterests', 'Kombi-Überschrift (Legacy, selten)'],
                     ] as const
                   ).map(([key, ph]) => (
                     <label key={key} className={lab}>
@@ -712,12 +817,42 @@ export default function CvStudioEditorPage() {
           </div>
         </section>
 
-        <aside className="min-w-0">
-          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-stone-400">Live-Vorschau</h2>
-          <div className="max-h-[80vh] overflow-y-auto pr-1">
-            <LivePreview resume={resume} pdfDesign={pdfDesign} />
-          </div>
-        </aside>
+        {!previewCollapsed ? (
+          <>
+            <div
+              role="separator"
+              aria-orientation="vertical"
+              aria-label="Breite der Live-Vorschau anpassen"
+              className="hidden w-1 shrink-0 cursor-col-resize self-stretch rounded-full bg-white/15 hover:bg-primary/35 xl:block"
+              onMouseDown={onPreviewResizeMouseDown}
+            />
+            <aside
+              className="min-w-0 w-full shrink-0"
+              style={
+                previewLayoutXl
+                  ? { flex: `0 0 ${previewWidthPx}px`, width: previewWidthPx, minWidth: 280, maxWidth: 560 }
+                  : undefined
+              }
+            >
+              <div className="mx-auto w-full max-w-full">
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <h2 className="text-xs font-semibold uppercase tracking-wide text-stone-400">Live-Vorschau</h2>
+                  <button
+                    type="button"
+                    className="hidden rounded p-1 text-stone-400 hover:bg-white/10 hover:text-white xl:block"
+                    title="Vorschau ausblenden"
+                    onClick={() => setPreviewCollapsed(true)}
+                  >
+                    <PanelLeftClose size={18} aria-hidden />
+                  </button>
+                </div>
+                <div className="max-h-[80vh] overflow-y-auto pr-1">
+                  <LivePreview resume={resume} pdfDesign={pdfDesign} />
+                </div>
+              </div>
+            </aside>
+          </>
+        ) : null}
       </div>
 
       <section className="mt-8 rounded-xl border border-white/10 bg-white/[0.03] p-4">

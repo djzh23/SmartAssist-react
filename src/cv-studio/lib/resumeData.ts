@@ -25,6 +25,10 @@ export function coerceResumeData(raw: ResumeData | undefined | null): ResumeData
     projects: r.projects ?? [],
     skills: r.skills ?? [],
     hobbies: r.hobbies ?? [],
+    languageItems: (r.languageItems ?? []).map(li => ({
+      label: li.label ?? '',
+      level: li.level ?? '',
+    })),
     sectionTitles: r.sectionTitles ? { ...r.sectionTitles } : {},
     contentSectionOrder: normalizeContentSectionOrder(r.contentSectionOrder ?? undefined),
   }

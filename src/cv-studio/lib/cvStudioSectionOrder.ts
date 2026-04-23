@@ -1,6 +1,14 @@
 /** Must match CvStudio.Application.Contracts.CvStudioMainSectionOrder (PDF/DOCX). */
 
-export const CV_MAIN_SECTION_KEYS = ['summary', 'skills', 'work', 'education', 'languages', 'projects'] as const
+export const CV_MAIN_SECTION_KEYS = [
+  'summary',
+  'skills',
+  'work',
+  'education',
+  'languages',
+  'interests',
+  'projects',
+] as const
 
 export type CvMainSectionKey = (typeof CV_MAIN_SECTION_KEYS)[number]
 
@@ -9,9 +17,12 @@ export const CV_MAIN_SECTION_LABELS: Record<CvMainSectionKey, string> = {
   skills: 'Kenntnisse',
   work: 'Berufserfahrung',
   education: 'Ausbildung',
-  languages: 'Sprachen & Interessen',
+  languages: 'Sprachen',
+  interests: 'Interessen',
   projects: 'Projekte',
 }
+
+const DEFAULT_BASE = ['summary', 'skills', 'work', 'education', 'languages', 'projects'] as const
 
 export function normalizeContentSectionOrder(raw: string[] | null | undefined): CvMainSectionKey[] {
   const result: string[] = []
@@ -24,9 +35,15 @@ export function normalizeContentSectionOrder(raw: string[] | null | undefined): 
       continue
     result.push(key)
   }
-  for (const d of CV_MAIN_SECTION_KEYS) {
+  for (const d of DEFAULT_BASE) {
     if (!result.includes(d))
       result.push(d)
   }
+
+  const langIdx = result.indexOf('languages')
+  const intIdx = result.indexOf('interests')
+  if (langIdx >= 0 && intIdx < 0)
+    result.splice(langIdx + 1, 0, 'interests')
+
   return result as CvMainSectionKey[]
 }

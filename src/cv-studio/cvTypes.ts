@@ -58,6 +58,11 @@ export interface SkillGroupData {
   items: string[]
 }
 
+export interface LanguageItemData {
+  label: string
+  level?: string | null
+}
+
 export interface ResumeProjectItem {
   name: string
   description: string
@@ -71,6 +76,8 @@ export interface ResumeData {
   projects: ResumeProjectItem[]
   skills: SkillGroupData[]
   hobbies: string[]
+  /** Eigene Sprachen (Sektion „Sprachen“); leer = Fallback aus Kenntnissen mit Sprach-Kategorie. */
+  languageItems: LanguageItemData[]
   sectionTitles?: CvSectionTitleOverrides | null
   /** Reihenfolge der Haupt-Sektionen in PDF/DOCX/Vorschau (Keys siehe cvStudioSectionOrder). */
   contentSectionOrder?: string[] | null
