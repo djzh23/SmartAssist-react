@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import { RenderedMarkdown } from '../components/chat/RenderedMarkdown'
 import { ServerSyncControl } from '../components/ui/ServerSyncControl'
+import { useAppUi } from '../context/AppUiContext'
 import { useChatNotes } from '../hooks/useChatNotes'
 import { useMediaQuery } from '../hooks/useMediaQuery'
 import type { ChatSavedNote } from '../types'
@@ -35,6 +36,7 @@ function previewBody(text: string, max = 140): string {
 }
 
 export default function NotesPage() {
+  const { requestConfirm, showToast } = useAppUi()
   const {
     isSignedIn,
     notes,
@@ -135,20 +137,27 @@ export default function NotesPage() {
 
   const handleDelete = useCallback(
     async (id: string) => {
-      if (!window.confirm('Notiz wirklich löschen?')) return
+      const ok = await requestConfirm({
+        title: 'Notiz löschen?',
+        message: 'Die Notiz wird dauerhaft entfernt.',
+        confirmLabel: 'Löschen',
+        cancelLabel: 'Abbrechen',
+        danger: true,
+      })
+      if (!ok) return
       setDeletingId(id)
       try {
         await deleteNote(id)
         if (selectedId === id) setSelectedId(null)
       }
       catch (e) {
-        window.alert(e instanceof Error ? e.message : 'Löschen fehlgeschlagen.')
+        showToast(e instanceof Error ? e.message : 'Löschen fehlgeschlagen.', 'error')
       }
       finally {
         setDeletingId(null)
       }
     },
-    [deleteNote, selectedId],
+    [deleteNote, requestConfirm, selectedId, showToast],
   )
 
   const emptyHint = useMemo(

@@ -21,6 +21,9 @@ export interface CreateParams {
   targetCompany?: string
   targetRole?: string
   cloneFromId?: string
+  /** Legt eine neue Zeile unter „Bewerbungen“ an und verknüpft den CV. */
+  createJobApplicationEntry?: boolean
+  jobUrl?: string
 }
 
 interface CloneSource {
@@ -50,6 +53,8 @@ export default function CvCreateDialog({
   const [manualRole, setManualRole] = useState(prefillGroup?.role ?? '')
   const [selectedTemplateKey, setSelectedTemplateKey] = useState(templates[0]?.key ?? '')
   const [cloneFromId, setCloneFromId] = useState('')
+  const [saveNewToApplicationList, setSaveNewToApplicationList] = useState(true)
+  const [newAppJobUrl, setNewAppJobUrl] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -79,6 +84,16 @@ export default function CvCreateDialog({
     setBusy(true)
     setError(null)
     try {
+      if (
+        purpose === 'application' &&
+        saveNewToApplicationList &&
+        !selectedAppId &&
+        (!manualCompany.trim() || !manualRole.trim())
+      ) {
+        setError('Für „In Bewerbungsliste speichern“ bitte Unternehmen und Stelle ausfüllen — oder das Häkchen entfernen.')
+        setBusy(false)
+        return
+      }
       const params: CreateParams = { templateKey: selectedTemplateKey }
       if (purpose === 'application') {
         if (selectedAppId) {
@@ -88,6 +103,10 @@ export default function CvCreateDialog({
         } else {
           if (manualCompany) params.targetCompany = manualCompany
           if (manualRole) params.targetRole = manualRole
+          if (saveNewToApplicationList && manualCompany.trim() && manualRole.trim()) {
+            params.createJobApplicationEntry = true
+            if (newAppJobUrl.trim()) params.jobUrl = newAppJobUrl.trim()
+          }
         }
       } else if (purpose === 'clone' && cloneFromId) {
         params.cloneFromId = cloneFromId
@@ -143,7 +162,7 @@ export default function CvCreateDialog({
               <PurposeButton
                 icon={<Briefcase size={18} />}
                 label="Für eine Bewerbung"
-                description="Verknüpfe den CV mit einer Stelle oder gib Unternehmen & Rolle ein"
+                description="Mit bestehender oder neuer Bewerbung verknüpfen — optional gleich in der Bewerbungsliste anlegen"
                 onClick={() => handlePurpose('application')}
               />
               <PurposeButton
@@ -212,6 +231,34 @@ export default function CvCreateDialog({
                       className="w-full rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm text-white placeholder:text-stone-600 focus:border-primary/60 focus:outline-none"
                     />
                   </div>
+                  <label className="flex cursor-pointer items-start gap-2 rounded-lg border border-white/10 bg-black/20 px-3 py-2.5">
+                    <input
+                      type="checkbox"
+                      className="mt-0.5 rounded border-white/30 bg-black/40 text-primary focus:ring-primary"
+                      checked={saveNewToApplicationList}
+                      onChange={e => setSaveNewToApplicationList(e.target.checked)}
+                    />
+                    <span className="text-xs text-stone-300">
+                      <span className="font-medium text-stone-200">In Bewerbungsliste speichern</span>
+                      {' — '}
+                      legt unter „Bewerbungen“ einen neuen Eintrag an und verknüpft diesen CV. Zum Bearbeiten nur
+                      Kontext: Häkchen entfernen.
+                    </span>
+                  </label>
+                  {saveNewToApplicationList ? (
+                    <div>
+                      <label className="mb-1.5 block text-xs font-semibold text-stone-400">
+                        Stellen-URL (optional)
+                      </label>
+                      <input
+                        type="url"
+                        value={newAppJobUrl}
+                        onChange={e => setNewAppJobUrl(e.target.value)}
+                        placeholder="https://…"
+                        className="w-full rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm text-white placeholder:text-stone-600 focus:border-primary/60 focus:outline-none"
+                      />
+                    </div>
+                  ) : null}
                 </>
               )}
 

@@ -5,6 +5,7 @@ import { Loader2, Plus, Sparkles } from 'lucide-react'
 import {
   createCvStudioResume,
   createCvStudioResumeFromTemplate,
+  createJobApplication,
   deleteCvStudioPdfExport,
   fetchJobApplications,
   getCvStudioResume,
@@ -14,6 +15,7 @@ import {
   listCvStudioResumes,
   type JobApplicationApi,
 } from '../api/client'
+import { useAppUi } from '../context/AppUiContext'
 import type { CvStudioPdfExportRow, CvStudioResumeSummary } from '../types'
 import type { ResumeTemplateDto } from './cvTypes'
 import { filterGroups, groupResumes, type CvResumeGroup } from './lib/cvStudioGroups'
@@ -27,6 +29,7 @@ export default function CvStudioOverviewPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const forApplication = searchParams.get('forApplication')
   const { getToken } = useAuth()
+  const { requestConfirm } = useAppUi()
 
   // ── Data state ────────────────────────────────────────────────────────────
   const [resumes, setResumes] = useState<CvStudioResumeSummary[] | null>(null)
@@ -107,6 +110,20 @@ export default function CvStudioOverviewPage() {
     const token = await getToken()
     if (!token) throw new Error('Kein Sitzungs-Token. Bitte neu anmelden.')
 
+    let linkedJobApplicationId = params.linkedJobApplicationId
+    if (
+      params.createJobApplicationEntry &&
+      params.targetCompany?.trim() &&
+      params.targetRole?.trim()
+    ) {
+      const app = await createJobApplication(token, {
+        company: params.targetCompany.trim(),
+        jobTitle: params.targetRole.trim(),
+        jobUrl: params.jobUrl?.trim() || undefined,
+      })
+      linkedJobApplicationId = app.id
+    }
+
     let created
     if (params.cloneFromId) {
       // Clone: fetch source data, create new resume with it
@@ -121,9 +138,9 @@ export default function CvStudioOverviewPage() {
     }
 
     // Link application / context if provided
-    if (params.linkedJobApplicationId || params.targetCompany || params.targetRole) {
+    if (linkedJobApplicationId || params.targetCompany || params.targetRole) {
       await linkCvStudioJobApplication(token, created.id, {
-        jobApplicationId: params.linkedJobApplicationId ?? null,
+        jobApplicationId: linkedJobApplicationId ?? null,
         targetCompany: params.targetCompany ?? null,
         targetRole: params.targetRole ?? null,
       })
@@ -258,6 +275,7 @@ export default function CvStudioOverviewPage() {
             used={pdfUsed}
             limit={pdfLimit}
             onDelete={handleDeletePdf}
+            requestConfirm={requestConfirm}
           />
         </>
       )}

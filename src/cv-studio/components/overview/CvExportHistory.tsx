@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { ChevronDown, ChevronRight, Download, Trash2 } from 'lucide-react'
+import type { AppConfirmOptions } from '../../../context/appUiBridge'
 import type { CvStudioPdfExportRow } from '../../../types'
 import CvQuotaBadge from './CvQuotaBadge'
 
@@ -8,14 +9,22 @@ interface CvExportHistoryProps {
   used: number
   limit: number
   onDelete: (id: string) => Promise<void>
+  requestConfirm: (opts: AppConfirmOptions) => Promise<boolean>
 }
 
-export default function CvExportHistory({ rows, used, limit, onDelete }: CvExportHistoryProps) {
+export default function CvExportHistory({ rows, used, limit, onDelete, requestConfirm }: CvExportHistoryProps) {
   const [open, setOpen] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
   async function handleDelete(id: string) {
-    if (!window.confirm('PDF-Eintrag löschen und Kontingent freigeben?')) return
+    const ok = await requestConfirm({
+      title: 'PDF-Eintrag löschen?',
+      message: 'Der Eintrag wird entfernt und das Kontingent wieder freigegeben.',
+      confirmLabel: 'Löschen',
+      cancelLabel: 'Abbrechen',
+      danger: true,
+    })
+    if (!ok) return
     setDeletingId(id)
     try {
       await onDelete(id)

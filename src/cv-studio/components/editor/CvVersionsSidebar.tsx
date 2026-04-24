@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Download, History, Loader2, RotateCcw, Save, Star } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Download, History, Loader2, RotateCcw, Star, Trash2 } from 'lucide-react'
 import type { ResumeVersionDto } from '../../cvTypes'
 import { formatVariantenName, versionBadgeClass } from '../../lib/formatting'
 
@@ -12,7 +12,7 @@ interface CvVersionsSidebarProps {
   onLoadForEdit: (versionId: string) => void | Promise<void>
   onExportPdf: (versionId: string) => void | Promise<void>
   onExportDocx: (versionId: string) => void | Promise<void>
-  onNewVersion: () => void
+  onDelete: (versionId: string) => void | Promise<void>
 }
 
 export default function CvVersionsSidebar({
@@ -25,7 +25,7 @@ export default function CvVersionsSidebar({
   onLoadForEdit,
   onExportPdf,
   onExportDocx,
-  onNewVersion,
+  onDelete,
 }: CvVersionsSidebarProps) {
   const sorted = [...versions].sort((a, b) => b.versionNumber - a.versionNumber)
 
@@ -36,7 +36,7 @@ export default function CvVersionsSidebar({
           type="button"
           onClick={onToggle}
           className="flex w-10 flex-col items-center gap-2 border-l border-white/10 bg-black/20 py-4 text-stone-400 transition-colors hover:bg-white/5 hover:text-primary-light"
-          title="Versionen einblenden"
+          title="Snapshot-Leiste einblenden"
         >
           <History size={18} aria-hidden />
           <ChevronLeft size={16} aria-hidden />
@@ -50,28 +50,23 @@ export default function CvVersionsSidebar({
       <div className="flex items-center justify-between gap-2 border-b border-white/10 px-3 py-2">
         <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-stone-400">
           <History size={14} aria-hidden />
-          Versionen
+          Snapshots
         </div>
         <button
           type="button"
           onClick={onToggle}
           className="rounded p-1 text-stone-500 hover:bg-white/10 hover:text-stone-200"
-          title="Versionen ausblenden"
-          aria-label="Versionen ausblenden"
+          title="Snapshot-Leiste ausblenden"
+          aria-label="Snapshot-Leiste ausblenden"
         >
           <ChevronRight size={16} aria-hidden />
         </button>
       </div>
       <div className="max-h-[min(70vh,32rem)] flex-1 overflow-y-auto p-2">
-        <button
-          type="button"
-          disabled={busy}
-          onClick={onNewVersion}
-          className="mb-2 flex w-full items-center justify-center gap-1.5 rounded-lg bg-primary px-2 py-2 text-xs font-semibold text-white hover:bg-primary-hover disabled:opacity-50"
-        >
-          <Save size={13} aria-hidden />
-          Neue Version
-        </button>
+        <p className="mb-2 rounded-lg border border-white/10 bg-black/30 px-2 py-2 text-[10px] leading-relaxed text-stone-500">
+          Neuen Snapshot anlegen: oben auf{' '}
+          <span className="font-medium text-stone-400">„Snapshot speichern“</span> (oder Tab „Snapshots“).
+        </p>
         {sorted.length === 0 ? (
           <p className="px-1 py-4 text-center text-xs text-stone-500">Noch keine Snapshots.</p>
         ) : (
@@ -139,6 +134,15 @@ export default function CvVersionsSidebar({
                       className="rounded border border-white/20 px-1.5 py-1 text-[10px] text-stone-200 disabled:opacity-50"
                     >
                       DOCX
+                    </button>
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => void onDelete(v.id)}
+                      className="rounded border border-rose-500/40 px-1.5 py-1 text-[10px] text-rose-200 hover:bg-rose-950/40 disabled:opacity-50"
+                      title="Diesen Snapshot löschen"
+                    >
+                      <Trash2 size={10} className="inline" aria-hidden /> Löschen
                     </button>
                   </div>
                 </li>

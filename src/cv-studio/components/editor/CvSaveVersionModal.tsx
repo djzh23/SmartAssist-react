@@ -20,7 +20,7 @@ export default function CvSaveVersionModal({
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Version speichern"
+      aria-label="Snapshot speichern"
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
     >
@@ -38,7 +38,7 @@ export default function CvSaveVersionModal({
           <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-primary-light">
             Neue Version
           </p>
-          <h2 className="mb-4 text-lg font-semibold text-white">Als neue Version speichern</h2>
+          <h2 className="mb-4 text-lg font-semibold text-white">Snapshot speichern</h2>
 
           <label className="block text-xs font-medium text-stone-400">
             Was hast du geändert? (optional)
@@ -63,7 +63,7 @@ export default function CvSaveVersionModal({
               className="flex items-center justify-center gap-2 rounded-lg bg-primary py-2.5 text-sm font-semibold text-white hover:bg-primary-hover disabled:opacity-40"
             >
               {busy && <Loader2 size={15} className="animate-spin" aria-hidden />}
-              Speichern & PDF
+              Snapshot speichern & PDF
             </button>
             <button
               type="button"
@@ -71,7 +71,7 @@ export default function CvSaveVersionModal({
               onClick={() => void onSave(label)}
               className="rounded-lg border border-white/20 py-2.5 text-sm text-stone-200 hover:bg-white/5 disabled:opacity-40"
             >
-              Nur speichern
+              Nur Snapshot speichern
             </button>
           </div>
         </div>

@@ -17,6 +17,7 @@ import {
   Linkedin,
   type LucideIcon,
 } from 'lucide-react'
+import { useAppUi } from '../../context/AppUiContext'
 import { useUserPlan } from '../../hooks/useUserPlan'
 import { useSkills } from '../../hooks/useSkills'
 import { useChatSessions, TOOL_TO_QUERY } from '../../hooks/useChatSessions'
@@ -71,6 +72,7 @@ function SkillSidebarRow({
   onNavClick?: () => void
   density: SidebarDensity
 }) {
+  const { showToast } = useAppUi()
   const navigate = useNavigate()
   const location = useLocation()
   const searchParams = new URLSearchParams(location.search)
@@ -99,12 +101,12 @@ function SkillSidebarRow({
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault()
     if (!skill.isEnabled) {
-      window.alert(`${skill.name} ist bald verfügbar.`)
+      showToast(`${skill.name} ist bald verfügbar.`, 'info')
       onNavClick?.()
       return
     }
     if (!skill.isAccessible) {
-      window.alert('Für dieses Werkzeug ist ein höherer Tarif nötig. Siehe Preise.')
+      showToast('Für dieses Werkzeug ist ein höherer Tarif nötig. Siehe Preise.', 'info')
       onNavClick?.()
       return
     }
@@ -233,6 +235,7 @@ function recentSessionsList(
 }
 
 export default function SidebarNavContent({ density = 'full', onNavClick }: Props) {
+  const { showToast } = useAppUi()
   const navigate = useNavigate()
   const { plan } = useUserPlan()
   const { skills, loading: skillsLoading } = useSkills()
@@ -270,7 +273,10 @@ export default function SidebarNavContent({ density = 'full', onNavClick }: Prop
       }
       catch (e) {
         console.warn('[SidebarNavContent] Neues Gespräch', e)
-        window.alert(e instanceof Error ? e.message : 'Neues Gespräch konnte nicht gestartet werden.')
+        showToast(
+          e instanceof Error ? e.message : 'Neues Gespräch konnte nicht gestartet werden.',
+          'error',
+        )
       }
     })()
   }

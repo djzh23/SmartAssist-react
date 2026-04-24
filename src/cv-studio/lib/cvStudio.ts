@@ -1,3 +1,6 @@
+import { emitAppToast } from '../../context/appUiBridge'
+import type { AppToastVariant } from '../../context/appUiBridge'
+
 const LAST_RESUME_KEY = 'smartassist_cv_studio_last_resume_id'
 
 export function getLastResumeId(): string | null {
@@ -39,6 +42,6 @@ export function downloadBlob(fileName: string, blob: Blob): void {
   URL.revokeObjectURL(url)
 }
 
-export function notify(message: string): void {
-  window.alert(message)
+export function notify(message: string, variant: AppToastVariant = 'info'): void {
+  emitAppToast(message, variant)
 }

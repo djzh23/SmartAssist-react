@@ -15,6 +15,7 @@ import { ThinkingIndicator, shouldSkipThinkingUi, STREAM_CHARS_PER_SECOND } from
 import ChatAnswerReadyBanner from '../components/chat/ChatAnswerReadyBanner'
 import OnboardingPromptModal, { ONBOARDING_CHAT_PROMPT_DISMISS_KEY } from '../components/chat/OnboardingPromptModal'
 import UsageLimitModal from '../components/ui/UsageLimitModal'
+import { useAppUi } from '../context/AppUiContext'
 import { useDeliberateStream } from '../hooks/useDeliberateStream'
 import { useChatSessions } from '../hooks/useChatSessions'
 import { useCareerProfile } from '../hooks/useCareerProfile'
@@ -554,6 +555,7 @@ export default function ChatPage() {
   const modalToolType = modalToolTypeFromParam(rawToolParam, toolParam)
 
   const store = useChatSessions()
+  const { requestConfirm } = useAppUi()
   const applicationSeedKey = useRef<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -1041,12 +1043,21 @@ export default function ChatPage() {
   }
 
   const handleClear = () => {
-    if (!window.confirm('Alle Konversationen löschen?')) return
-    void store.clearHistory()
-    setContextBySessionKey({})
-    setDismissedContextKeys({})
-    localStorage.removeItem(LS_CONTEXT)
-    localStorage.removeItem(LS_CONTEXT_DISMISSED)
+    void (async () => {
+      const ok = await requestConfirm({
+        title: 'Konversationen löschen?',
+        message: 'Alle gespeicherten Chats werden von diesem Gerät entfernt. Das kann nicht rückgängig gemacht werden.',
+        confirmLabel: 'Alle löschen',
+        cancelLabel: 'Abbrechen',
+        danger: true,
+      })
+      if (!ok) return
+      void store.clearHistory()
+      setContextBySessionKey({})
+      setDismissedContextKeys({})
+      localStorage.removeItem(LS_CONTEXT)
+      localStorage.removeItem(LS_CONTEXT_DISMISSED)
+    })()
   }
 
   const handleSend = async (text: string, options?: HandleSendOptions) => {

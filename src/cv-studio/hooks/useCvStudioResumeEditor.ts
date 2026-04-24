@@ -4,6 +4,7 @@ import {
   createCvStudioResumeFromTemplate,
   createCvStudioVersion,
   deleteAllCvStudioResumes,
+  deleteCvStudioVersion,
   getCvStudioResume,
   getCvStudioResumeTemplates,
   getCvStudioVersion,
@@ -19,8 +20,11 @@ import { clearLastResumeId, setLastResumeId } from '../lib/cvStudio'
 import { formatVariantenName } from '../lib/formatting'
 import { coerceResumeData, normalizeResumeDto } from '../lib/resumeData'
 import { ensureSectionTitles } from '../lib/sectionTitles'
+import type { AppConfirmOptions } from '../../context/appUiBridge'
 import type { CvStudioResumeSummary } from '../../types'
 import type { PdfDesign, ResumeDto, ResumeTemplateDto, ResumeVersionDto } from '../cvTypes'
+
+export type CvStudioRequestConfirm = (opts: AppConfirmOptions) => Promise<boolean>
 
 function patchResume(r: ResumeDto): ResumeDto {
   const n = normalizeResumeDto(r)
@@ -28,12 +32,16 @@ function patchResume(r: ResumeDto): ResumeDto {
   return n
 }
 
-export function useCvStudioResumeEditor(getToken: () => Promise<string | null>) {
+export function useCvStudioResumeEditor(
+  getToken: () => Promise<string | null>,
+  requestConfirm: CvStudioRequestConfirm,
+) {
   const [templates, setTemplates] = useState<ResumeTemplateDto[]>([])
   const [summaries, setSummaries] = useState<CvStudioResumeSummary[]>([])
   const [resume, setResumeState] = useState<ResumeDto | null>(null)
   const [versions, setVersions] = useState<ResumeVersionDto[]>([])
   const [activeVariant, setActiveVariant] = useState<ResumeVersionDto | null>(null)
+  const activeVariantRef = useRef<ResumeVersionDto | null>(null)
   const [selectedTemplateKey, setSelectedTemplateKey] = useState('')
   const [pdfDesign, setPdfDesign] = useState<PdfDesign>('A')
   const [busy, setBusy] = useState(false)
@@ -51,6 +59,10 @@ export function useCvStudioResumeEditor(getToken: () => Promise<string | null>) 
   useEffect(() => {
     resumeRef.current = resume
   }, [resume])
+
+  useEffect(() => {
+    activeVariantRef.current = activeVariant
+  }, [activeVariant])
 
   useEffect(() => {
     selectedTemplateKeyRef.current = selectedTemplateKey
@@ -306,9 +318,14 @@ export function useCvStudioResumeEditor(getToken: () => Promise<string | null>) 
   const restoreSnapshotToWorkingCopy = useCallback(
     async (versionId: string): Promise<boolean> => {
       if (hasUnsavedRef.current) {
-        const ok = window.confirm(
-          'Arbeitsversion durch diese Snapshot-Version ersetzen? Lokale, noch nicht per Auto-Save übernommene Änderungen gehen verloren.',
-        )
+        const ok = await requestConfirm({
+          title: 'Arbeitsversion ersetzen?',
+          message:
+            'Die Arbeitsversion wird durch diese Snapshot-Version ersetzt. Lokale, noch nicht per Auto-Save übernommene Änderungen gehen verloren.',
+          confirmLabel: 'Wiederherstellen',
+          cancelLabel: 'Abbrechen',
+          danger: true,
+        })
         if (!ok) return false
       }
       if (saveTimerRef.current) {
@@ -334,8 +351,72 @@ export function useCvStudioResumeEditor(getToken: () => Promise<string | null>) 
       setLastResumeId(r.id)
       return true
     },
-    [assignResume, getToken, refreshSummaries, runBusy],
+    [assignResume, getToken, refreshSummaries, requestConfirm, runBusy],
   )
+
+  const deleteSnapshotVersion = useCallback(
+    async (versionId: string): Promise<boolean> => {
+      const r = resumeRef.current
+      if (!r) return false
+      const meta = versions.find(v => v.id === versionId)
+      const name = meta ? formatVariantenName(meta) : 'dieser Snapshot'
+      const confirmed = await requestConfirm({
+        title: 'Snapshot löschen?',
+        message: `Snapshot „${name}“ dauerhaft löschen?\n\nDie Arbeitsversion (aktueller Editor-Inhalt) bleibt erhalten. Exporte, die diesen Snapshot nutzen, sind danach ggf. nicht mehr verfügbar.`,
+        confirmLabel: 'Löschen',
+        cancelLabel: 'Abbrechen',
+        danger: true,
+      })
+      if (!confirmed) return false
+      const token = await getToken()
+      if (!token) {
+        setError('Bitte anmelden.')
+        return false
+      }
+      const done = await runBusy(async () => {
+        await deleteCvStudioVersion(token, r.id, versionId)
+        return true
+      })
+      if (!done) return false
+      const vlist = await listCvStudioVersions(token, r.id)
+      setVersions(vlist)
+      if (activeVariantRef.current?.id === versionId)
+        assignResume(r, { activeVar: null })
+      await refreshSummaries()
+      return true
+    },
+    [assignResume, getToken, refreshSummaries, requestConfirm, runBusy, versions],
+  )
+
+  const deleteAllSnapshotVersions = useCallback(async (): Promise<boolean> => {
+    const r = resumeRef.current
+    if (!r || versions.length === 0) return false
+    const confirmed = await requestConfirm({
+      title: 'Alle Snapshots löschen?',
+      message: `Alle ${versions.length} gespeicherten Snapshots dauerhaft löschen?\n\nDie Arbeitsversion (dein aktueller Lebenslauf im Editor) bleibt erhalten.`,
+      confirmLabel: 'Alle löschen',
+      cancelLabel: 'Abbrechen',
+      danger: true,
+    })
+    if (!confirmed) return false
+    const token = await getToken()
+    if (!token) {
+      setError('Bitte anmelden.')
+      return false
+    }
+    const toDelete = [...versions]
+    const done = await runBusy(async () => {
+      for (const v of toDelete)
+        await deleteCvStudioVersion(token, r.id, v.id)
+      return true
+    })
+    if (!done) return false
+    const vlist = await listCvStudioVersions(token, r.id)
+    setVersions(vlist)
+    assignResume(r, { activeVar: null })
+    await refreshSummaries()
+    return true
+  }, [assignResume, getToken, refreshSummaries, requestConfirm, runBusy, versions])
 
   const linkApplication = useCallback(
     async (body: LinkJobApplicationRequest) => {
@@ -418,6 +499,8 @@ export function useCvStudioResumeEditor(getToken: () => Promise<string | null>) 
     saveVariant,
     loadVariantIntoEditor,
     restoreSnapshotToWorkingCopy,
+    deleteSnapshotVersion,
+    deleteAllSnapshotVersions,
     linkApplication,
     patchNotes,
     resetAll,

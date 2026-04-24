@@ -11,6 +11,7 @@ import {
   saveJobApplicationInterviewNotes,
   updateJobApplicationStatus,
 } from '../api/client'
+import { useAppUi } from '../context/AppUiContext'
 import { useCareerProfile } from '../hooks/useCareerProfile'
 import { getProfileCompleteness, getProfileCompletenessGapHint } from '../utils/profileCompleteness'
 
@@ -41,6 +42,7 @@ function interviewSeedText(app: JobApplicationApi): string {
 export default function ApplicationDetailPage() {
   const { id } = useParams<{ id: string }>()
   const { getToken } = useAuth()
+  const { requestConfirm } = useAppUi()
   const { profile: careerProfile, loading: careerProfileLoading } = useCareerProfile()
   const navigate = useNavigate()
   const [app, setApp] = useState<JobApplicationApi | null>(null)
@@ -181,7 +183,14 @@ export default function ApplicationDetailPage() {
 
   const removeApp = async () => {
     if (!id || !app) return
-    if (!window.confirm('Diese Bewerbung wirklich löschen?')) return
+    const ok = await requestConfirm({
+      title: 'Bewerbung löschen?',
+      message: 'Diese Bewerbung wird dauerhaft entfernt.',
+      confirmLabel: 'Löschen',
+      cancelLabel: 'Abbrechen',
+      danger: true,
+    })
+    if (!ok) return
     try {
       const token = await getToken()
       if (!token) return

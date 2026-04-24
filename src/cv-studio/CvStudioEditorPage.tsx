@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@clerk/clerk-react'
 import {
@@ -9,7 +9,6 @@ import {
   Code2,
   Download,
   ExternalLink,
-  GitCompare,
   FileText,
   GraduationCap,
   GripVertical,
@@ -36,8 +35,10 @@ import {
   fetchJobApplications,
   type JobApplicationApi,
 } from '../api/client'
+import { useAppUi } from '../context/AppUiContext'
 import { LivePreview } from './components/LivePreview'
 import CvSaveVersionModal from './components/editor/CvSaveVersionModal'
+import CvExportUnsavedModal from './components/editor/CvExportUnsavedModal'
 import CvLinkApplicationModal from './components/editor/CvLinkApplicationModal'
 import CvVersionsSidebar from './components/editor/CvVersionsSidebar'
 import { useCvStudioResumeEditor } from './hooks/useCvStudioResumeEditor'
@@ -93,7 +94,8 @@ export default function CvStudioEditorPage() {
   const tabParam = searchParams.get('tab')
   const navigate = useNavigate()
   const { getToken } = useAuth()
-  const vm = useCvStudioResumeEditor(getToken)
+  const { requestConfirm } = useAppUi()
+  const vm = useCvStudioResumeEditor(getToken, requestConfirm)
   const {
     templates,
     resume,
@@ -117,6 +119,8 @@ export default function CvStudioEditorPage() {
     saveVariant,
     loadVariantIntoEditor,
     restoreSnapshotToWorkingCopy,
+    deleteSnapshotVersion,
+    deleteAllSnapshotVersions,
     linkApplication,
     patchNotes,
     resetAll,
@@ -137,8 +141,10 @@ export default function CvStudioEditorPage() {
   const [notesSaving, setNotesSaving] = useState(false)
   const [jobApplications, setJobApplications] = useState<JobApplicationApi[]>([])
   const [loadingApps, setLoadingApps] = useState(false)
-  const [exportMenuOpen, setExportMenuOpen] = useState(false)
-  const exportMenuRef = useRef<HTMLDivElement>(null)
+  const [exportUnsavedModal, setExportUnsavedModal] = useState<
+    null | { kind: 'pdf' | 'docx'; vId?: string | null; fileStem?: string | null }
+  >(null)
+
   const [versionsSidebarOpen, setVersionsSidebarOpen] = useState(() => {
     try {
       const v = localStorage.getItem('cvStudioVersionsSidebarOpen')
@@ -170,16 +176,6 @@ export default function CvStudioEditorPage() {
   useEffect(() => {
     if (tabParam === 'versionen') setActiveTab('versionen')
   }, [tabParam])
-
-  useEffect(() => {
-    if (!exportMenuOpen) return
-    const onPointerDown = (e: PointerEvent) => {
-      const el = exportMenuRef.current
-      if (el && !el.contains(e.target as Node)) setExportMenuOpen(false)
-    }
-    document.addEventListener('pointerdown', onPointerDown, true)
-    return () => document.removeEventListener('pointerdown', onPointerDown, true)
-  }, [exportMenuOpen])
 
   useEffect(() => {
     if (resume?.notes !== undefined) {
@@ -221,29 +217,31 @@ export default function CvStudioEditorPage() {
     return top.label?.trim() ?? ''
   }, [activeVariant?.label, activeVariant?.id, versions])
 
+  const versionStandHint = useMemo(() => {
+    if (activeVariant) {
+      return `Du bearbeitest den Inhalt von Snapshot v${activeVariant.versionNumber}. „Übernehmen (Auto-Save)“ kopiert einen älteren Stand in die Arbeitsversion und speichert anschließend.`
+    }
+    if (versions.length === 0) {
+      return 'Noch kein Snapshot: Änderungen leben nur in der Arbeitsversion. Mit „Snapshot speichern“ legst du eine erste gesicherte Version an.'
+    }
+    return 'Arbeitsversion: hier liegen deine aktuellen Bearbeitungen. Ältere Stände siehst du unter „Verlauf“ oder im Tab „Snapshots“.'
+  }, [activeVariant?.versionNumber, versions.length])
+
   const tabClass = (t: TabId) =>
     [
       'flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-colors sm:text-sm',
       activeTab === t ? 'bg-primary/20 text-white' : 'text-stone-400 hover:bg-white/5 hover:text-stone-200',
     ].join(' ')
 
-  const exportPdf = async (vId?: string | null, fileStem?: string | null) => {
+  const runExportPdf = async (vId?: string | null, fileStem?: string | null) => {
     if (!resume) return
-    if (hasUnsavedChanges && vId == null) {
-      if (
-        window.confirm(
-          'Als neue Version speichern, bevor du exportierst?\n\nOK: Dialog „Version speichern“ öffnen.\nAbbrechen: Export des Arbeitsstands (nach Auto-Save).',
-        )
-      ) {
-        setShowSaveModal(true)
-        setExportMenuOpen(false)
-        return
-      }
-    }
     await flushAutoSave()
     try {
       const token = await getToken()
-      if (!token) { notify('Bitte anmelden.'); return }
+      if (!token) {
+        notify('Bitte anmelden.', 'error')
+        return
+      }
       const stem =
         (fileStem?.trim() || pdfExportName.trim()) ||
         buildCvExportStem(
@@ -261,28 +259,28 @@ export default function CvStudioEditorPage() {
         : (vId ? `variante-${vId}.pdf` : `arbeitsversion-${resume.id}.pdf`)
       downloadBlob(downloadName, blob)
     } catch (e) {
-      notify(e instanceof Error ? e.message : 'PDF-Export fehlgeschlagen.')
+      notify(e instanceof Error ? e.message : 'PDF-Export fehlgeschlagen.', 'error')
     }
-    setExportMenuOpen(false)
   }
 
-  const exportDocx = async (vId?: string | null, fileStem?: string | null) => {
+  const exportPdf = async (vId?: string | null, fileStem?: string | null) => {
     if (!resume) return
     if (hasUnsavedChanges && vId == null) {
-      if (
-        window.confirm(
-          'Als neue Version speichern, bevor du exportierst?\n\nOK: Dialog „Version speichern“ öffnen.\nAbbrechen: Export des Arbeitsstands (nach Auto-Save).',
-        )
-      ) {
-        setShowSaveModal(true)
-        setExportMenuOpen(false)
-        return
-      }
+      setExportUnsavedModal({ kind: 'pdf', vId, fileStem })
+      return
     }
+    await runExportPdf(vId, fileStem)
+  }
+
+  const runExportDocx = async (vId?: string | null, fileStem?: string | null) => {
+    if (!resume) return
     await flushAutoSave()
     try {
       const token = await getToken()
-      if (!token) { notify('Bitte anmelden.'); return }
+      if (!token) {
+        notify('Bitte anmelden.', 'error')
+        return
+      }
       const stem =
         (fileStem?.trim() || pdfExportName.trim()) ||
         buildCvExportStem(
@@ -295,9 +293,17 @@ export default function CvStudioEditorPage() {
       const name = base ? `${base}.docx` : (vId ? `variante-${vId}.docx` : `arbeitsversion-${resume.id}.docx`)
       downloadBlob(name, blob)
     } catch (e) {
-      notify(e instanceof Error ? e.message : 'DOCX-Export fehlgeschlagen.')
+      notify(e instanceof Error ? e.message : 'DOCX-Export fehlgeschlagen.', 'error')
     }
-    setExportMenuOpen(false)
+  }
+
+  const exportDocx = async (vId?: string | null, fileStem?: string | null) => {
+    if (!resume) return
+    if (hasUnsavedChanges && vId == null) {
+      setExportUnsavedModal({ kind: 'docx', vId, fileStem })
+      return
+    }
+    await runExportDocx(vId, fileStem)
   }
 
   const handleSaveVersion = async (label: string) => {
@@ -305,6 +311,7 @@ export default function CvStudioEditorPage() {
     if (v) {
       notify(
         `Version ${v.versionNumber} gespeichert — Du kannst jederzeit zu früheren Versionen zurückkehren.`,
+        'success',
       )
       if (!exportNameTouched && resume) {
         setPdfExportName(buildCvExportStem(resume, versions, { pinnedVersionNumber: v.versionNumber }))
@@ -333,7 +340,7 @@ export default function CvStudioEditorPage() {
         : `variante-${v.id}.pdf`
       downloadBlob(downloadName, blob)
     } catch (e) {
-      notify(e instanceof Error ? e.message : 'PDF fehlgeschlagen')
+      notify(e instanceof Error ? e.message : 'PDF fehlgeschlagen', 'error')
     }
   }
 
@@ -464,78 +471,31 @@ export default function CvStudioEditorPage() {
               )}
             </div>
             <p className="text-[11px] text-stone-600">{aktivKontextText}</p>
+            <p className="text-[11px] leading-relaxed text-stone-500">{versionStandHint}</p>
           </div>
 
           <div className="flex flex-shrink-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
             <button
               type="button"
               disabled={busy}
+              title="Sichert den aktuellen Stand als nummerierten Snapshot (optional mit Kurznotiz)."
               onClick={() => setShowSaveModal(true)}
               className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white hover:bg-primary-hover disabled:opacity-50 sm:text-sm"
             >
               <Save size={14} aria-hidden />
-              Als neue Version speichern
+              Snapshot speichern
             </button>
-            <div className="relative" ref={exportMenuRef}>
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => setExportMenuOpen(o => !o)}
-                className="inline-flex w-full items-center justify-center gap-1 rounded-lg border border-white/15 px-3 py-2 text-xs text-stone-200 hover:bg-white/5 disabled:opacity-50 sm:w-auto sm:text-sm"
-              >
-                <Download size={14} aria-hidden />
-                Exportieren
-                <ChevronDown size={14} className={exportMenuOpen ? 'rotate-180 transition-transform' : 'transition-transform'} aria-hidden />
-              </button>
-              {exportMenuOpen ? (
-                <ul
-                  className="absolute right-0 z-40 mt-1 min-w-[11rem] rounded-lg border border-white/15 bg-[#1a1510] py-1 shadow-xl"
-                  role="menu"
-                >
-                  <li role="none">
-                    <button
-                      type="button"
-                      role="menuitem"
-                      disabled={busy}
-                      className="w-full px-3 py-2 text-left text-xs text-stone-200 hover:bg-white/10 disabled:opacity-50"
-                      onClick={() => void exportPdf(null)}
-                    >
-                      PDF exportieren
-                    </button>
-                  </li>
-                  <li role="none">
-                    <button
-                      type="button"
-                      role="menuitem"
-                      disabled={busy}
-                      className="w-full px-3 py-2 text-left text-xs text-stone-200 hover:bg-white/10 disabled:opacity-50"
-                      onClick={() => void exportDocx(null)}
-                    >
-                      DOCX exportieren
-                    </button>
-                  </li>
-                </ul>
-              ) : null}
-            </div>
             <button
               type="button"
+              title="Öffnet die Leiste mit allen Snapshots und den Tab „Snapshots“."
               onClick={() => {
                 setVersionsSidebarOpen(true)
                 setActiveTab('versionen')
               }}
               className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-white/15 px-3 py-2 text-xs text-stone-200 hover:bg-white/5 sm:text-sm"
             >
-              <GitCompare size={14} aria-hidden />
-              Versionen vergleichen
-            </button>
-            <button
-              type="button"
-              onClick={() => setVersionsSidebarOpen(o => !o)}
-              className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-white/15 px-3 py-2 text-xs text-stone-200 hover:bg-white/5 sm:text-sm xl:hidden"
-              title="Versionen-Leiste"
-            >
               <History size={14} aria-hidden />
-              Versionen
+              Verlauf
             </button>
             <button
               type="button"
@@ -645,7 +605,7 @@ export default function CvStudioEditorPage() {
                 <option value="C">Design C — Professional</option>
               </select>
               <label className={`${lab} min-w-[140px] max-w-[220px] flex-1`}>
-                PDF-Dateiname
+                Dateiname (ohne Endung)
                 <input
                   className={field}
                   maxLength={180}
@@ -658,6 +618,29 @@ export default function CvStudioEditorPage() {
                 />
               </label>
             </div>
+            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+              <span className="sr-only">Herunterladen</span>
+              <button
+                type="button"
+                disabled={busy}
+                title="Lebenslauf als PDF speichern"
+                onClick={() => void exportPdf(null)}
+                className="inline-flex min-h-[40px] flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary-hover disabled:opacity-50 sm:flex-initial sm:min-w-[9.5rem]"
+              >
+                <Download size={16} aria-hidden />
+                PDF herunterladen
+              </button>
+              <button
+                type="button"
+                disabled={busy}
+                title="Lebenslauf als Word-Datei speichern"
+                onClick={() => void exportDocx(null)}
+                className="inline-flex min-h-[40px] flex-1 items-center justify-center gap-2 rounded-lg border border-white/20 bg-white/[0.06] px-4 py-2.5 text-sm font-semibold text-stone-100 hover:bg-white/10 disabled:opacity-50 sm:flex-initial sm:min-w-[9.5rem]"
+              >
+                <FileText size={16} aria-hidden />
+                Word (.docx)
+              </button>
+            </div>
             <button
               type="button"
               disabled={busy}
@@ -666,14 +649,6 @@ export default function CvStudioEditorPage() {
             >
               <Plus size={13} aria-hidden />
               Neue Arbeitsversion
-            </button>
-            <button
-              type="button"
-              onClick={() => setVersionsSidebarOpen(o => !o)}
-              className="inline-flex items-center gap-1 rounded-lg border border-white/15 px-3 py-2 text-xs text-stone-300 hover:bg-white/5 xl:hidden"
-            >
-              <History size={13} aria-hidden />
-              Versionen-Leiste
             </button>
           </div>
 
@@ -743,7 +718,7 @@ export default function CvStudioEditorPage() {
             </button>
             <button type="button" className={tabClass('versionen')} onClick={() => setActiveTab('versionen')}>
               <History size={14} aria-hidden />
-              Versionen
+              Snapshots
               {versions.length > 0 && (
                 <span className="rounded-full bg-white/15 px-1.5 py-px text-[10px]">
                   {versions.length}
@@ -1083,24 +1058,40 @@ export default function CvStudioEditorPage() {
             {/* ── Versionen ───────────────────────────────────────────── */}
             {activeTab === 'versionen' ? (
               <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-sm font-semibold text-white">Gespeicherte Versionen</h2>
-                  <button
-                    type="button"
-                    disabled={busy}
-                    onClick={() => setShowSaveModal(true)}
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary-hover disabled:opacity-50"
-                  >
-                    <Save size={13} aria-hidden />
-                    Neue Version
-                  </button>
+                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+                  <h2 className="text-sm font-semibold text-white">Gespeicherte Snapshots</h2>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => setShowSaveModal(true)}
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary-hover disabled:opacity-50"
+                    >
+                      <Save size={13} aria-hidden />
+                      Snapshot speichern
+                    </button>
+                    {versions.length > 0 ? (
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() =>
+                          void deleteAllSnapshotVersions().then(ok => {
+                            if (ok) notify('Alle Snapshots wurden gelöscht.', 'success')
+                          })}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-rose-500/40 px-3 py-1.5 text-xs font-medium text-rose-200 hover:bg-rose-950/30 disabled:opacity-50"
+                      >
+                        <Trash2 size={13} aria-hidden />
+                        Alle Snapshots löschen
+                      </button>
+                    ) : null}
+                  </div>
                 </div>
 
                 {versions.length === 0 ? (
                   <div className="rounded-xl border border-dashed border-white/15 bg-white/[0.02] px-4 py-8 text-center">
                     <History size={24} className="mx-auto mb-2 text-stone-600" aria-hidden />
-                    <p className="text-xs text-stone-500">Noch keine gespeicherten Versionen.</p>
-                    <p className="mt-1 text-xs text-stone-600">Versionen sind Snapshots des aktuellen Stands.</p>
+                    <p className="text-xs text-stone-500">Noch keine Snapshots.</p>
+                    <p className="mt-1 text-xs text-stone-600">Ein Snapshot sichert den Lebenslauf zu einem Zeitpunkt — unabhängig von der Arbeitsversion.</p>
                   </div>
                 ) : (
                   <ul className="divide-y divide-white/10">
@@ -1133,7 +1124,7 @@ export default function CvStudioEditorPage() {
                               className="rounded border border-amber-500/35 bg-amber-500/10 px-2 py-1 text-xs font-medium text-amber-100 hover:bg-amber-500/20"
                               onClick={() =>
                                 void restoreSnapshotToWorkingCopy(variante.id).then(ok => {
-                                  if (ok) notify('Arbeitsstand wurde wiederhergestellt.')
+                                  if (ok) notify('Arbeitsstand wurde wiederhergestellt.', 'success')
                                 })}
                             >
                               Wiederherstellen
@@ -1171,6 +1162,18 @@ export default function CvStudioEditorPage() {
                             >
                               DOCX
                             </button>
+                            <button
+                              type="button"
+                              disabled={busy}
+                              className="inline-flex items-center gap-1 rounded border border-rose-500/40 px-2 py-1 text-xs text-rose-200 hover:bg-rose-950/30 disabled:opacity-50"
+                              onClick={() =>
+                                void deleteSnapshotVersion(variante.id).then(ok => {
+                                  if (ok) notify('Snapshot gelöscht.', 'success')
+                                })}
+                            >
+                              <Trash2 size={13} aria-hidden />
+                              Löschen
+                            </button>
                           </div>
                         </li>
                       )
@@ -1183,8 +1186,19 @@ export default function CvStudioEditorPage() {
                     type="button"
                     className="text-xs text-rose-300 hover:text-rose-200"
                     onClick={() => {
-                      if (!window.confirm('Alle Arbeitsversionen und Varianten löschen?')) return
-                      void resetAll().then(() => navigate('/cv-studio'))
+                      void (async () => {
+                        const ok = await requestConfirm({
+                          title: 'Alles zurücksetzen?',
+                          message:
+                            'Alle Arbeitsversionen und gespeicherten Lebensläufe in CV.Studio werden unwiderruflich gelöscht (Fresh Start).',
+                          confirmLabel: 'Zurücksetzen',
+                          cancelLabel: 'Abbrechen',
+                          danger: true,
+                        })
+                        if (!ok) return
+                        await resetAll()
+                        navigate('/cv-studio')
+                      })()
                     }}
                   >
                     Alles zurücksetzen (Fresh Start)
@@ -1203,7 +1217,7 @@ export default function CvStudioEditorPage() {
           busy={busy}
           onRestore={id =>
             void restoreSnapshotToWorkingCopy(id).then(ok => {
-              if (ok) notify('Arbeitsstand wurde wiederhergestellt.')
+              if (ok) notify('Arbeitsstand wurde wiederhergestellt.', 'success')
             })}
           onLoadForEdit={id => void loadVariantIntoEditor(id)}
           onExportPdf={id =>
@@ -1220,7 +1234,10 @@ export default function CvStudioEditorPage() {
                 pinnedVersionNumber: versions.find(v => v.id === id)?.versionNumber,
               }),
             )}
-          onNewVersion={() => setShowSaveModal(true)}
+          onDelete={id =>
+            void deleteSnapshotVersion(id).then(ok => {
+              if (ok) notify('Snapshot gelöscht.', 'success')
+            })}
         />
         </div>
 
@@ -1264,6 +1281,22 @@ export default function CvStudioEditorPage() {
       </div>
 
       {/* ── Modals ──────────────────────────────────────────────────────── */}
+      {exportUnsavedModal && (
+        <CvExportUnsavedModal
+          onSaveFirst={() => {
+            setExportUnsavedModal(null)
+            setShowSaveModal(true)
+          }}
+          onExportWithoutSnapshot={() => {
+            const p = exportUnsavedModal
+            setExportUnsavedModal(null)
+            if (p.kind === 'pdf') void runExportPdf(p.vId, p.fileStem)
+            else void runExportDocx(p.vId, p.fileStem)
+          }}
+          onDismiss={() => setExportUnsavedModal(null)}
+        />
+      )}
+
       {showSaveModal && (
         <CvSaveVersionModal
           busy={busy}

@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { ChatSessionsProvider } from '../../hooks/useChatSessions'
 import { ChatNotesProvider } from '../../hooks/useChatNotes'
+import { AppUiProvider } from '../../context/AppUiContext'
 import { LayoutChromeProvider, useLayoutChrome } from '../../context/LayoutChromeContext'
 import { useBreakpoint } from '../../hooks/useBreakpoint'
 import ChatNotesStorageBanner from './ChatNotesStorageBanner'
@@ -120,7 +121,9 @@ export default function MainLayout() {
     <ChatSessionsProvider>
       <ChatNotesProvider>
         <LayoutChromeProvider>
-          <MainLayoutShell />
+          <AppUiProvider>
+            <MainLayoutShell />
+          </AppUiProvider>
         </LayoutChromeProvider>
       </ChatNotesProvider>
     </ChatSessionsProvider>
