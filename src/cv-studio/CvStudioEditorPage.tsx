@@ -14,7 +14,6 @@ import {
   GripVertical,
   Headphones,
   Heart,
-  History,
   Languages,
   Loader2,
   Link2,
@@ -45,8 +44,7 @@ import { useCvStudioResumeEditor } from './hooks/useCvStudioResumeEditor'
 import { downloadBlob, notify } from './lib/cvStudio'
 import { CV_MAIN_SECTION_LABELS, normalizeContentSectionOrder, type CvMainSectionKey } from './lib/cvStudioSectionOrder'
 import { buildCvExportStem, formatRelativeTimeDe } from './lib/cvStudioPhase3'
-import { formatVariantenName, versionBadgeClass } from './lib/formatting'
-import type { LanguageItemData, PdfDesign, ResumeVersionDto, SkillGroupData, WorkItemData } from './cvTypes'
+import type { LanguageItemData, PdfDesign, SkillGroupData, WorkItemData } from './cvTypes'
 
 const field =
   'mt-1 block w-full rounded-lg border border-white/15 bg-black/25 px-3 py-2 text-sm text-stone-100 placeholder:text-stone-600 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary'
@@ -78,7 +76,7 @@ function useMediaMinWidth(px: number): boolean {
   return matches
 }
 
-type TabId = 'profil' | 'beruf' | 'ausbildung' | 'kenntnisse' | 'hobby' | 'sprachen' | 'darstellung' | 'versionen'
+type TabId = 'profil' | 'beruf' | 'ausbildung' | 'kenntnisse' | 'hobby' | 'sprachen' | 'darstellung'
 
 function templateIconComponent(key: string) {
   if (key === 'software-developer' || key === 'softwareentwickler') return Code2
@@ -174,7 +172,10 @@ export default function CvStudioEditorPage() {
   }, [resume, versions, exportNameTouched])
 
   useEffect(() => {
-    if (tabParam === 'versionen') setActiveTab('versionen')
+    if (tabParam === 'versionen') {
+      setVersionsSidebarOpen(true)
+      setActiveTab('darstellung')
+    }
   }, [tabParam])
 
   useEffect(() => {
@@ -224,7 +225,7 @@ export default function CvStudioEditorPage() {
     if (versions.length === 0) {
       return 'Noch kein Snapshot: Änderungen leben nur in der Arbeitsversion. Mit „Snapshot speichern“ legst du eine erste gesicherte Version an.'
     }
-    return 'Arbeitsversion: hier liegen deine aktuellen Bearbeitungen. Ältere Stände siehst du unter „Verlauf“ oder im Tab „Snapshots“.'
+    return 'Arbeitsversion: hier liegen deine aktuellen Bearbeitungen. Gespeicherte Stände findest du in der Snapshot-Leiste rechts (zwischen Editor und Vorschau).'
   }, [activeVariant?.versionNumber, versions.length])
 
   const tabClass = (t: TabId) =>
@@ -487,18 +488,6 @@ export default function CvStudioEditorPage() {
             </button>
             <button
               type="button"
-              title="Öffnet die Leiste mit allen Snapshots und den Tab „Snapshots“."
-              onClick={() => {
-                setVersionsSidebarOpen(true)
-                setActiveTab('versionen')
-              }}
-              className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-white/15 px-3 py-2 text-xs text-stone-200 hover:bg-white/5 sm:text-sm"
-            >
-              <History size={14} aria-hidden />
-              Verlauf
-            </button>
-            <button
-              type="button"
               onClick={() => void openLinkModal()}
               className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-white/15 px-3 py-2 text-xs text-stone-200 hover:bg-white/5 sm:text-sm"
             >
@@ -715,15 +704,6 @@ export default function CvStudioEditorPage() {
             <button type="button" className={tabClass('hobby')} onClick={() => setActiveTab('hobby')}>
               <Heart size={14} aria-hidden />
               Hobbys
-            </button>
-            <button type="button" className={tabClass('versionen')} onClick={() => setActiveTab('versionen')}>
-              <History size={14} aria-hidden />
-              Snapshots
-              {versions.length > 0 && (
-                <span className="rounded-full bg-white/15 px-1.5 py-px text-[10px]">
-                  {versions.length}
-                </span>
-              )}
             </button>
           </div>
 
@@ -1054,158 +1034,6 @@ export default function CvStudioEditorPage() {
                 </div>
               </div>
             ) : null}
-
-            {/* ── Versionen ───────────────────────────────────────────── */}
-            {activeTab === 'versionen' ? (
-              <div className="space-y-3">
-                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-                  <h2 className="text-sm font-semibold text-white">Gespeicherte Snapshots</h2>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <button
-                      type="button"
-                      disabled={busy}
-                      onClick={() => setShowSaveModal(true)}
-                      className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary-hover disabled:opacity-50"
-                    >
-                      <Save size={13} aria-hidden />
-                      Snapshot speichern
-                    </button>
-                    {versions.length > 0 ? (
-                      <button
-                        type="button"
-                        disabled={busy}
-                        onClick={() =>
-                          void deleteAllSnapshotVersions().then(ok => {
-                            if (ok) notify('Alle Snapshots wurden gelöscht.', 'success')
-                          })}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-rose-500/40 px-3 py-1.5 text-xs font-medium text-rose-200 hover:bg-rose-950/30 disabled:opacity-50"
-                      >
-                        <Trash2 size={13} aria-hidden />
-                        Alle Snapshots löschen
-                      </button>
-                    ) : null}
-                  </div>
-                </div>
-
-                {versions.length === 0 ? (
-                  <div className="rounded-xl border border-dashed border-white/15 bg-white/[0.02] px-4 py-8 text-center">
-                    <History size={24} className="mx-auto mb-2 text-stone-600" aria-hidden />
-                    <p className="text-xs text-stone-500">Noch keine Snapshots.</p>
-                    <p className="mt-1 text-xs text-stone-600">Ein Snapshot sichert den Lebenslauf zu einem Zeitpunkt — unabhängig von der Arbeitsversion.</p>
-                  </div>
-                ) : (
-                  <ul className="divide-y divide-white/10">
-                    {versions.map((variante: ResumeVersionDto) => {
-                      const isActive = activeVariant?.id === variante.id
-                      return (
-                        <li
-                          key={variante.id}
-                          className={`flex flex-col gap-2 rounded-lg px-3 py-3 sm:flex-row sm:items-center sm:justify-between ${isActive ? 'bg-primary/10' : ''}`}
-                        >
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <span className={`inline-flex rounded px-1.5 py-0.5 text-[10px] font-bold ${versionBadgeClass(variante.versionNumber)}`}>
-                                v{variante.versionNumber}
-                              </span>
-                              <strong className="text-sm text-white">{formatVariantenName(variante)}</strong>
-                              {isActive && (
-                                <span className="rounded-full bg-primary/20 px-2 py-px text-[10px] text-primary-light">
-                                  aktiv
-                                </span>
-                              )}
-                            </div>
-                            <p className="mt-0.5 text-xs text-stone-500">
-                              {new Date(variante.createdAtUtc).toLocaleString('de-DE')}
-                            </p>
-                          </div>
-                          <div className="flex flex-wrap gap-2">
-                            <button
-                              type="button"
-                              className="rounded border border-amber-500/35 bg-amber-500/10 px-2 py-1 text-xs font-medium text-amber-100 hover:bg-amber-500/20"
-                              onClick={() =>
-                                void restoreSnapshotToWorkingCopy(variante.id).then(ok => {
-                                  if (ok) notify('Arbeitsstand wurde wiederhergestellt.', 'success')
-                                })}
-                            >
-                              Wiederherstellen
-                            </button>
-                            <button
-                              type="button"
-                              className="rounded border border-white/15 px-2 py-1 text-xs text-stone-200 hover:bg-white/5"
-                              onClick={() => void loadVariantIntoEditor(variante.id)}
-                            >
-                              Übernehmen (Auto-Save)
-                            </button>
-                            <button
-                              type="button"
-                              className="rounded bg-primary/90 px-2 py-1 text-xs text-white"
-                              onClick={() =>
-                                void exportPdf(
-                                  variante.id,
-                                  buildCvExportStem(resume, versions, {
-                                    pinnedVersionNumber: variante.versionNumber,
-                                  }),
-                                )}
-                            >
-                              PDF
-                            </button>
-                            <button
-                              type="button"
-                              className="rounded border border-white/20 px-2 py-1 text-xs text-stone-200"
-                              onClick={() =>
-                                void exportDocx(
-                                  variante.id,
-                                  buildCvExportStem(resume, versions, {
-                                    pinnedVersionNumber: variante.versionNumber,
-                                  }),
-                                )}
-                            >
-                              DOCX
-                            </button>
-                            <button
-                              type="button"
-                              disabled={busy}
-                              className="inline-flex items-center gap-1 rounded border border-rose-500/40 px-2 py-1 text-xs text-rose-200 hover:bg-rose-950/30 disabled:opacity-50"
-                              onClick={() =>
-                                void deleteSnapshotVersion(variante.id).then(ok => {
-                                  if (ok) notify('Snapshot gelöscht.', 'success')
-                                })}
-                            >
-                              <Trash2 size={13} aria-hidden />
-                              Löschen
-                            </button>
-                          </div>
-                        </li>
-                      )
-                    })}
-                  </ul>
-                )}
-
-                <div className="border-t border-white/10 pt-3">
-                  <button
-                    type="button"
-                    className="text-xs text-rose-300 hover:text-rose-200"
-                    onClick={() => {
-                      void (async () => {
-                        const ok = await requestConfirm({
-                          title: 'Alles zurücksetzen?',
-                          message:
-                            'Alle Arbeitsversionen und gespeicherten Lebensläufe in CV.Studio werden unwiderruflich gelöscht (Fresh Start).',
-                          confirmLabel: 'Zurücksetzen',
-                          cancelLabel: 'Abbrechen',
-                          danger: true,
-                        })
-                        if (!ok) return
-                        await resetAll()
-                        navigate('/cv-studio')
-                      })()
-                    }}
-                  >
-                    Alles zurücksetzen (Fresh Start)
-                  </button>
-                </div>
-              </div>
-            ) : null}
           </div>
         </section>
 
@@ -1238,6 +1066,25 @@ export default function CvStudioEditorPage() {
             void deleteSnapshotVersion(id).then(ok => {
               if (ok) notify('Snapshot gelöscht.', 'success')
             })}
+          onDeleteAllSnapshots={() =>
+            void deleteAllSnapshotVersions().then(ok => {
+              if (ok) notify('Alle Snapshots wurden gelöscht.', 'success')
+            })}
+          onFreshStart={() => {
+            void (async () => {
+              const ok = await requestConfirm({
+                title: 'Alles zurücksetzen?',
+                message:
+                  'Alle Arbeitsversionen und gespeicherten Lebensläufe in CV.Studio werden unwiderruflich gelöscht (Fresh Start).',
+                confirmLabel: 'Zurücksetzen',
+                cancelLabel: 'Abbrechen',
+                danger: true,
+              })
+              if (!ok) return
+              await resetAll()
+              navigate('/cv-studio')
+            })()
+          }}
         />
         </div>
 

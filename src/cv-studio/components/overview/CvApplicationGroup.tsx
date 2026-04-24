@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Briefcase, ChevronDown, ChevronRight, Link2, Plus, Unlink } from 'lucide-react'
+import type { CvStudioResumeSummary } from '../../../types'
 import type { CvResumeGroup } from '../../lib/cvStudioGroups'
 import CvResumeCard from './CvResumeCard'
 
@@ -7,12 +8,14 @@ interface CvApplicationGroupProps {
   group: CvResumeGroup
   defaultOpen?: boolean
   onCreateResume: (group: CvResumeGroup) => void
+  onDeleteResume: (resume: CvStudioResumeSummary) => void | Promise<void>
 }
 
 export default function CvApplicationGroup({
   group,
   defaultOpen = false,
   onCreateResume,
+  onDeleteResume,
 }: CvApplicationGroupProps) {
   const [open, setOpen] = useState(defaultOpen)
 
@@ -65,7 +68,7 @@ export default function CvApplicationGroup({
           <ul className="space-y-2">
             {group.resumes.map(r => (
               <li key={r.id}>
-                <CvResumeCard resume={r} />
+                <CvResumeCard resume={r} onDelete={() => void onDeleteResume(r)} />
               </li>
             ))}
           </ul>

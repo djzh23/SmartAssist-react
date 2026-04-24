@@ -61,6 +61,12 @@ export default function CvStudioApplicationBasisPage() {
     const token = await getToken()
     if (!token) throw new Error('Kein Sitzungs-Token.')
 
+    const link = {
+      jobApplicationId: params.linkedJobApplicationId ?? applicationId ?? null,
+      targetCompany: params.targetCompany ?? null,
+      targetRole: params.targetRole ?? null,
+    }
+
     let created
     if (params.cloneFromId) {
       const source = await getCvStudioResume(token, params.cloneFromId)
@@ -69,15 +75,10 @@ export default function CvStudioApplicationBasisPage() {
         templateKey: source.templateKey ?? params.templateKey,
         resumeData: source.resumeData,
       })
+      await linkCvStudioJobApplication(token, created.id, link)
     } else {
-      created = await createCvStudioResumeFromTemplate(token, params.templateKey)
+      created = await createCvStudioResumeFromTemplate(token, params.templateKey, link)
     }
-
-    await linkCvStudioJobApplication(token, created.id, {
-      jobApplicationId: params.linkedJobApplicationId ?? applicationId ?? null,
-      targetCompany: params.targetCompany ?? null,
-      targetRole: params.targetRole ?? null,
-    })
 
     navigate(`/cv-studio/edit/${created.id}`, { replace: true })
   }

@@ -7,6 +7,7 @@ import {
   createCvStudioResumeFromTemplate,
   createJobApplication,
   deleteCvStudioPdfExport,
+  deleteCvStudioResume,
   fetchJobApplications,
   getCvStudioResume,
   getCvStudioResumeTemplates,
@@ -124,29 +125,53 @@ export default function CvStudioOverviewPage() {
       linkedJobApplicationId = app.id
     }
 
+    const linkPayload =
+      linkedJobApplicationId || params.targetCompany?.trim() || params.targetRole?.trim()
+        ? {
+            jobApplicationId: linkedJobApplicationId ?? null,
+            targetCompany: params.targetCompany?.trim() || null,
+            targetRole: params.targetRole?.trim() || null,
+          }
+        : null
+
     let created
     if (params.cloneFromId) {
-      // Clone: fetch source data, create new resume with it
       const source = await getCvStudioResume(token, params.cloneFromId)
       created = await createCvStudioResume(token, {
         title: `Kopie von ${source.title}`,
         templateKey: source.templateKey ?? params.templateKey,
         resumeData: source.resumeData,
       })
+      if (linkPayload)
+        await linkCvStudioJobApplication(token, created.id, linkPayload)
     } else {
-      created = await createCvStudioResumeFromTemplate(token, params.templateKey)
-    }
-
-    // Link application / context if provided
-    if (linkedJobApplicationId || params.targetCompany || params.targetRole) {
-      await linkCvStudioJobApplication(token, created.id, {
-        jobApplicationId: linkedJobApplicationId ?? null,
-        targetCompany: params.targetCompany ?? null,
-        targetRole: params.targetRole ?? null,
-      })
+      created = await createCvStudioResumeFromTemplate(token, params.templateKey, linkPayload)
     }
 
     navigate(`/cv-studio/edit/${created.id}`)
+  }
+
+  async function handleDeleteResume(resume: CvStudioResumeSummary) {
+    const ok = await requestConfirm({
+      title: 'Lebenslauf löschen?',
+      message:
+        `„${resume.title}“ wirklich löschen?\n\nAlle gespeicherten Snapshots (Versionen) dieses Lebenslaufs werden mit entfernt. Zugehörige PDF-Export-Einträge in der Liste werden ebenfalls gelöscht.`,
+      confirmLabel: 'Endgültig löschen',
+      cancelLabel: 'Abbrechen',
+      danger: true,
+    })
+    if (!ok) return
+    const token = await getToken()
+    if (!token) {
+      setError('Bitte anmelden.')
+      return
+    }
+    try {
+      await deleteCvStudioResume(token, resume.id)
+      await load()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Löschen fehlgeschlagen.')
+    }
   }
 
   // ── Delete PDF export ─────────────────────────────────────────────────────
@@ -244,6 +269,7 @@ export default function CvStudioOverviewPage() {
                   group={group}
                   defaultOpen={idx < defaultOpenCount}
                   onCreateResume={openDialog}
+                  onDeleteResume={handleDeleteResume}
                 />
               ))}
             </div>

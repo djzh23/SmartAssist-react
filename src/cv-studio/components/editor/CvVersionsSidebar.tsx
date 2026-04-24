@@ -1,4 +1,15 @@
-import { ChevronLeft, ChevronRight, Download, History, Loader2, RotateCcw, Star, Trash2 } from 'lucide-react'
+import {
+  ChevronLeft,
+  ChevronRight,
+  FileDown,
+  FileType,
+  History,
+  Loader2,
+  PencilLine,
+  RotateCcw,
+  Star,
+  Trash2,
+} from 'lucide-react'
 import type { ResumeVersionDto } from '../../cvTypes'
 import { formatVariantenName, versionBadgeClass } from '../../lib/formatting'
 
@@ -13,7 +24,12 @@ interface CvVersionsSidebarProps {
   onExportPdf: (versionId: string) => void | Promise<void>
   onExportDocx: (versionId: string) => void | Promise<void>
   onDelete: (versionId: string) => void | Promise<void>
+  onDeleteAllSnapshots: () => void | Promise<void>
+  onFreshStart: () => void | Promise<void>
 }
+
+const iconBtn =
+  'inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg border border-white/10 bg-black/30 text-stone-300 transition-colors hover:border-white/25 hover:bg-white/10 hover:text-white disabled:pointer-events-none disabled:opacity-40'
 
 export default function CvVersionsSidebar({
   open,
@@ -26,6 +42,8 @@ export default function CvVersionsSidebar({
   onExportPdf,
   onExportDocx,
   onDelete,
+  onDeleteAllSnapshots,
+  onFreshStart,
 }: CvVersionsSidebarProps) {
   const sorted = [...versions].sort((a, b) => b.versionNumber - a.versionNumber)
 
@@ -65,7 +83,7 @@ export default function CvVersionsSidebar({
       <div className="max-h-[min(70vh,32rem)] flex-1 overflow-y-auto p-2">
         <p className="mb-2 rounded-lg border border-white/10 bg-black/30 px-2 py-2 text-[10px] leading-relaxed text-stone-500">
           Neuen Snapshot anlegen: oben auf{' '}
-          <span className="font-medium text-stone-400">„Snapshot speichern“</span> (oder Tab „Snapshots“).
+          <span className="font-medium text-stone-400">„Snapshot speichern“</span>.
         </p>
         {sorted.length === 0 ? (
           <p className="px-1 py-4 text-center text-xs text-stone-500">Noch keine Snapshots.</p>
@@ -99,50 +117,55 @@ export default function CvVersionsSidebar({
                       </p>
                     </div>
                   </div>
-                  <div className="mt-2 flex flex-wrap gap-1">
+                  <div
+                    className="mt-2 flex flex-wrap items-center justify-end gap-1 border-t border-white/5 pt-2"
+                    role="toolbar"
+                    aria-label="Aktionen für diesen Snapshot"
+                  >
                     <button
                       type="button"
                       disabled={busy}
                       onClick={() => void onRestore(v.id)}
-                      className="inline-flex items-center gap-0.5 rounded border border-amber-500/35 bg-amber-500/10 px-1.5 py-1 text-[10px] font-medium text-amber-100 hover:bg-amber-500/20 disabled:opacity-50"
-                      title="Arbeitsversion auf Server auf diesen Stand setzen"
+                      className={iconBtn}
+                      title="Arbeitsversion auf diesen Stand setzen (Server)"
                     >
-                      <RotateCcw size={10} aria-hidden />
-                      Wiederherstellen
+                      <RotateCcw size={15} aria-hidden />
                     </button>
                     <button
                       type="button"
                       disabled={busy}
                       onClick={() => void onLoadForEdit(v.id)}
-                      className="rounded border border-white/15 px-1.5 py-1 text-[10px] text-stone-300 hover:bg-white/5 disabled:opacity-50"
-                      title="Inhalt übernehmen und als Änderung speichern"
+                      className={iconBtn}
+                      title="Inhalt übernehmen und per Auto-Save speichern"
                     >
-                      Bearbeiten
+                      <PencilLine size={15} aria-hidden />
                     </button>
                     <button
                       type="button"
                       disabled={busy}
                       onClick={() => void onExportPdf(v.id)}
-                      className="rounded bg-primary/90 px-1.5 py-1 text-[10px] text-white disabled:opacity-50"
+                      className={`${iconBtn} border-primary/35 bg-primary/15 text-primary-light hover:bg-primary/25`}
+                      title="PDF exportieren"
                     >
-                      <Download size={10} className="inline" aria-hidden /> PDF
+                      <FileDown size={15} aria-hidden />
                     </button>
                     <button
                       type="button"
                       disabled={busy}
                       onClick={() => void onExportDocx(v.id)}
-                      className="rounded border border-white/20 px-1.5 py-1 text-[10px] text-stone-200 disabled:opacity-50"
+                      className={iconBtn}
+                      title="DOCX exportieren"
                     >
-                      DOCX
+                      <FileType size={15} aria-hidden />
                     </button>
                     <button
                       type="button"
                       disabled={busy}
                       onClick={() => void onDelete(v.id)}
-                      className="rounded border border-rose-500/40 px-1.5 py-1 text-[10px] text-rose-200 hover:bg-rose-950/40 disabled:opacity-50"
-                      title="Diesen Snapshot löschen"
+                      className={`${iconBtn} border-rose-500/30 text-rose-200 hover:border-rose-500/50 hover:bg-rose-950/40`}
+                      title="Snapshot löschen"
                     >
-                      <Trash2 size={10} className="inline" aria-hidden /> Löschen
+                      <Trash2 size={15} aria-hidden />
                     </button>
                   </div>
                 </li>
@@ -156,6 +179,28 @@ export default function CvVersionsSidebar({
             …
           </div>
         ) : null}
+      </div>
+
+      <div className="mt-auto border-t border-white/10 p-2">
+        {versions.length > 0 ? (
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => void onDeleteAllSnapshots()}
+            className="mb-1.5 flex w-full items-center justify-center gap-1.5 rounded-lg border border-rose-500/35 py-2 text-[11px] font-medium text-rose-200 transition-colors hover:bg-rose-950/35 disabled:opacity-40"
+          >
+            <Trash2 size={12} aria-hidden />
+            Alle Snapshots löschen
+          </button>
+        ) : null}
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => void onFreshStart()}
+          className="flex w-full justify-center py-1.5 text-[10px] text-rose-300/90 underline-offset-2 hover:text-rose-200 hover:underline disabled:opacity-40"
+        >
+          Alles zurücksetzen (Fresh Start)
+        </button>
       </div>
     </aside>
   )

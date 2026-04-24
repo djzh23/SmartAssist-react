@@ -832,6 +832,17 @@ async function parseCvStudioJson<T>(res: Response, fallbackLabel: string): Promi
   return (await res.json()) as T
 }
 
+/** Ensures `id` is present (camelCase or PascalCase from older APIs). */
+function normalizeResumeDto(dto: ResumeDto): ResumeDto {
+  const loose = dto as unknown as Record<string, unknown>
+  const rawId = dto.id ?? loose.Id
+  const id = typeof rawId === 'string' ? rawId.trim() : ''
+  if (!/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/i.test(id)) {
+    throw new Error('CV.Studio: Antwort ohne gültige Lebenslauf-ID — bitte API aktualisieren oder Support kontaktieren.')
+  }
+  return { ...dto, id }
+}
+
 export async function listCvStudioResumes(token: string): Promise<CvStudioResumeSummary[]> {
   const res = await fetch(`${BASE}/api/cv-studio/resumes`, { headers: authHeaders(token) })
   return parseCvStudioJson<CvStudioResumeSummary[]>(res, 'CV.Studio: Lebensläufe laden')
@@ -850,18 +861,38 @@ export async function getCvStudioResume(token: string, id: string): Promise<Resu
 export async function createCvStudioResume(token: string, body: CreateResumeRequest): Promise<ResumeDto> {
   const res = await fetch(`${BASE}/api/cv-studio/resumes`, {
     method: 'POST',
-    headers: authHeaders(token),
+    headers: { ...authHeaders(token), 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   })
-  return parseCvStudioJson<ResumeDto>(res, 'CV.Studio: Lebenslauf anlegen')
+  const dto = await parseCvStudioJson<ResumeDto>(res, 'CV.Studio: Lebenslauf anlegen')
+  return normalizeResumeDto(dto)
 }
 
-export async function createCvStudioResumeFromTemplate(token: string, templateKey: string): Promise<ResumeDto> {
+/** Optional `link` is applied in the same request on the server (avoids a second PATCH that could 404). */
+export async function createCvStudioResumeFromTemplate(
+  token: string,
+  templateKey: string,
+  link?: LinkJobApplicationRequest | null,
+): Promise<ResumeDto> {
+  const hasLink =
+    !!link
+    && (
+      (link.jobApplicationId != null && String(link.jobApplicationId).trim() !== '')
+      || (link.targetCompany != null && String(link.targetCompany).trim() !== '')
+      || (link.targetRole != null && String(link.targetRole).trim() !== '')
+    )
   const res = await fetch(
     `${BASE}/api/cv-studio/resumes/templates/${encodeURIComponent(templateKey)}`,
-    { method: 'POST', headers: authHeaders(token) },
+    {
+      method: 'POST',
+      headers: hasLink
+        ? { ...authHeaders(token), 'Content-Type': 'application/json' }
+        : authHeaders(token),
+      body: hasLink ? JSON.stringify({ link }) : undefined,
+    },
   )
-  return parseCvStudioJson<ResumeDto>(res, 'CV.Studio: aus Vorlage')
+  const dto = await parseCvStudioJson<ResumeDto>(res, 'CV.Studio: aus Vorlage')
+  return normalizeResumeDto(dto)
 }
 
 export async function updateCvStudioResume(token: string, id: string, body: UpdateResumeRequest): Promise<ResumeDto> {
@@ -879,6 +910,17 @@ export async function deleteAllCvStudioResumes(token: string): Promise<void> {
     throw new Error('Bitte anmelden.')
   if (!res.ok)
     throw new Error(await readApiError(res, `CV.Studio: alles löschen (${res.status})`))
+}
+
+export async function deleteCvStudioResume(token: string, id: string): Promise<void> {
+  const res = await fetch(`${BASE}/api/cv-studio/resumes/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (res.status === 401)
+    throw new Error('Bitte anmelden.')
+  if (!res.ok)
+    throw new Error(await readApiError(res, `CV.Studio: Lebenslauf löschen (${res.status})`))
 }
 
 export async function listCvStudioVersions(token: string, resumeId: string): Promise<ResumeVersionDto[]> {
