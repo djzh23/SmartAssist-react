@@ -916,7 +916,7 @@ export async function deleteCvStudioVersion(token: string, resumeId: string, ver
     throw new Error(await readApiError(res, `CV.Studio: Variante löschen (${res.status})`))
 }
 
-export async function restoreCvStudioVersion(token: string, resumeId: string, versionId: string): Promise<ResumeVersionDto> {
+export async function restoreCvStudioVersion(token: string, resumeId: string, versionId: string): Promise<ResumeDto> {
   const res = await fetch(
     `${BASE}/api/cv-studio/resumes/${encodeURIComponent(resumeId)}/versions/${encodeURIComponent(versionId)}/restore`,
     { method: 'POST', headers: { Authorization: `Bearer ${token}` } },
@@ -925,7 +925,7 @@ export async function restoreCvStudioVersion(token: string, resumeId: string, ve
     throw new Error('Bitte anmelden.')
   if (!res.ok)
     throw new Error(await readApiError(res, `CV.Studio: Version wiederherstellen (${res.status})`))
-  return parseCvStudioJson<ResumeVersionDto>(res, 'CV.Studio: Version wiederherstellen')
+  return parseCvStudioJson<ResumeDto>(res, 'CV.Studio: Version wiederherstellen')
 }
 
 export async function linkCvStudioJobApplication(

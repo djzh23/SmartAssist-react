@@ -1,45 +1,49 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@clerk/clerk-react'
+import { Loader2, Plus, Sparkles } from 'lucide-react'
 import {
-  Briefcase,
-  Code2,
-  FileText,
-  Headphones,
-  Loader2,
-  Sparkles,
-  Trash2,
-} from 'lucide-react'
-import {
+  createCvStudioResume,
   createCvStudioResumeFromTemplate,
   deleteCvStudioPdfExport,
+  fetchJobApplications,
+  getCvStudioResume,
   getCvStudioResumeTemplates,
+  linkCvStudioJobApplication,
   listCvStudioPdfExports,
   listCvStudioResumes,
+  type JobApplicationApi,
 } from '../api/client'
 import type { CvStudioPdfExportRow, CvStudioResumeSummary } from '../types'
 import type { ResumeTemplateDto } from './cvTypes'
-
-function templateIcon(key: string) {
-  if (key === 'software-developer' || key === 'softwareentwickler') return Code2
-  if (key === 'it-support') return Headphones
-  if (key === 'service-general' || key === 'service-gastro-zustellung') return Briefcase
-  return FileText
-}
+import { filterGroups, groupResumes, type CvResumeGroup } from './lib/cvStudioGroups'
+import CvApplicationGroup from './components/overview/CvApplicationGroup'
+import CvCreateDialog, { type CreateParams } from './components/overview/CvCreateDialog'
+import CvExportHistory from './components/overview/CvExportHistory'
+import CvQuotaBadge from './components/overview/CvQuotaBadge'
 
 export default function CvStudioOverviewPage() {
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const forApplication = searchParams.get('forApplication')
   const { getToken } = useAuth()
-  const [items, setItems] = useState<CvStudioResumeSummary[] | null>(null)
+
+  // ── Data state ────────────────────────────────────────────────────────────
+  const [resumes, setResumes] = useState<CvStudioResumeSummary[] | null>(null)
   const [templates, setTemplates] = useState<ResumeTemplateDto[]>([])
-  const [selectedKey, setSelectedKey] = useState('')
+  const [jobApplications, setJobApplications] = useState<JobApplicationApi[]>([])
   const [pdfRows, setPdfRows] = useState<CvStudioPdfExportRow[]>([])
   const [pdfLimit, setPdfLimit] = useState(0)
   const [pdfUsed, setPdfUsed] = useState(0)
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [busy, setBusy] = useState(false)
 
+  // ── UI state ──────────────────────────────────────────────────────────────
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [showDialog, setShowDialog] = useState(false)
+  const [prefillGroup, setPrefillGroup] = useState<CvResumeGroup | null>(null)
+
+  // ── Load ──────────────────────────────────────────────────────────────────
   const load = useCallback(async () => {
     setLoading(true)
     setError(null)
@@ -47,26 +51,28 @@ export default function CvStudioOverviewPage() {
       const token = await getToken()
       if (!token) {
         setError('Kein Sitzungs-Token. Bitte neu anmelden.')
-        setItems(null)
         return
       }
-      const [rows, tpl, pdf] = await Promise.all([
+      const [rows, tpl, pdf, apps] = await Promise.all([
         listCvStudioResumes(token),
         getCvStudioResumeTemplates(token),
-        listCvStudioPdfExports(token).catch(() => ({ rows: [] as CvStudioPdfExportRow[], limit: 0, used: 0 })),
+        listCvStudioPdfExports(token).catch(() => ({
+          rows: [] as CvStudioPdfExportRow[],
+          limit: 0,
+          used: 0,
+        })),
+        fetchJobApplications(token).catch(() => [] as JobApplicationApi[]),
       ])
-      setItems(rows)
+      setResumes(rows)
       setTemplates(tpl)
-      setSelectedKey(prev => (prev || tpl[0]?.key || ''))
       setPdfRows(pdf.rows)
       setPdfLimit(pdf.limit)
       setPdfUsed(pdf.used)
-    }
-    catch (e) {
-      setItems(null)
+      setJobApplications(apps)
+    } catch (e) {
+      setResumes(null)
       setError(e instanceof Error ? e.message : 'CV.Studio konnte nicht geladen werden.')
-    }
-    finally {
+    } finally {
       setLoading(false)
     }
   }, [getToken])
@@ -75,186 +81,203 @@ export default function CvStudioOverviewPage() {
     void load()
   }, [load])
 
-  const createFromTemplate = async () => {
-    setBusy(true)
-    setError(null)
-    try {
-      const token = await getToken()
-      if (!token) {
-        setError('Bitte anmelden.')
-        return
-      }
-      const key = selectedKey || templates[0]?.key
-      if (!key) {
-        setError('Keine Vorlage verfügbar.')
-        return
-      }
-      const created = await createCvStudioResumeFromTemplate(token, key)
-      navigate(`/cv-studio/edit/${created.id}`)
+  /** Tracker „CV anzeigen“: vorhandenen CV öffnen oder Basiswahl-Seite. */
+  useEffect(() => {
+    if (!forApplication || loading || resumes === null) return
+
+    const linked = resumes.find(r => r.linkedJobApplicationId === forApplication)
+    if (linked) {
+      navigate(`/cv-studio/edit/${linked.id}`, { replace: true })
+      return
     }
-    catch (e) {
-      setError(e instanceof Error ? e.message : 'Anlegen fehlgeschlagen.')
+
+    navigate(`/cv-studio/basis/${encodeURIComponent(forApplication)}`, { replace: true })
+    setSearchParams(
+      prev => {
+        const p = new URLSearchParams(prev)
+        p.delete('forApplication')
+        return p
+      },
+      { replace: true },
+    )
+  }, [forApplication, loading, resumes, navigate, setSearchParams])
+
+  // ── Create resume ─────────────────────────────────────────────────────────
+  async function handleCreate(params: CreateParams) {
+    const token = await getToken()
+    if (!token) throw new Error('Kein Sitzungs-Token. Bitte neu anmelden.')
+
+    let created
+    if (params.cloneFromId) {
+      // Clone: fetch source data, create new resume with it
+      const source = await getCvStudioResume(token, params.cloneFromId)
+      created = await createCvStudioResume(token, {
+        title: `Kopie von ${source.title}`,
+        templateKey: source.templateKey ?? params.templateKey,
+        resumeData: source.resumeData,
+      })
+    } else {
+      created = await createCvStudioResumeFromTemplate(token, params.templateKey)
     }
-    finally {
-      setBusy(false)
+
+    // Link application / context if provided
+    if (params.linkedJobApplicationId || params.targetCompany || params.targetRole) {
+      await linkCvStudioJobApplication(token, created.id, {
+        jobApplicationId: params.linkedJobApplicationId ?? null,
+        targetCompany: params.targetCompany ?? null,
+        targetRole: params.targetRole ?? null,
+      })
     }
+
+    navigate(`/cv-studio/edit/${created.id}`)
   }
 
-  const deletePdf = async (id: string) => {
-    if (!window.confirm('PDF-Eintrag löschen und Kontingent freigeben?')) return
-    try {
-      const token = await getToken()
-      if (!token) return
-      await deleteCvStudioPdfExport(token, id)
-      await load()
-    }
-    catch (e) {
-      setError(e instanceof Error ? e.message : 'Löschen fehlgeschlagen.')
-    }
+  // ── Delete PDF export ─────────────────────────────────────────────────────
+  async function handleDeletePdf(id: string) {
+    const token = await getToken()
+    if (!token) return
+    await deleteCvStudioPdfExport(token, id)
+    await load()
   }
 
+  // ── Open dialog ───────────────────────────────────────────────────────────
+  function openDialog(group?: CvResumeGroup) {
+    setPrefillGroup(group ?? null)
+    setShowDialog(true)
+  }
+
+  // ── Derived ───────────────────────────────────────────────────────────────
+  const groups = resumes ? groupResumes(resumes) : []
+  const filteredGroups = filterGroups(groups, searchQuery)
+
+  const defaultOpenCount = 3
+  const hasResumes = (resumes?.length ?? 0) > 0
+
+  const existingResumes = (resumes ?? []).map(r => ({ id: r.id, title: r.title }))
+
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="pb-10">
+      {/* Page header */}
       <div className="mb-8 flex flex-col gap-2 border-b border-white/10 pb-6">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary-light">CV.Studio</p>
-        <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
-          Lebensläufe & PDF-Kontingent
-        </h1>
-        <p className="max-w-2xl text-sm leading-relaxed text-stone-400">
-          Erstelle eine Arbeitsversion aus einer Vorlage, bearbeite sie im Editor mit Live-Vorschau und exportiere PDFs.
-          Gespeicherte PDF-Exports zählen für dein Paket (Free: 3, Premium/Pro: 10) — lösche alte Einträge, um Platz zu schaffen.
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary-light">
+          CV.Studio
         </p>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+              Lebensläufe
+            </h1>
+            <p className="mt-1 max-w-2xl text-sm leading-relaxed text-stone-400">
+              Verwalte und erstelle CVs — nach Bewerbung oder Zweck gruppiert.
+            </p>
+          </div>
+          <div className="flex flex-col items-end gap-2">
+            <button
+              type="button"
+              onClick={() => openDialog()}
+              className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-hover"
+            >
+              <Plus size={16} aria-hidden />
+              Neuer Lebenslauf
+            </button>
+            <CvQuotaBadge used={pdfUsed} limit={pdfLimit} />
+          </div>
+        </div>
       </div>
 
+      {/* Error banner */}
       {error && (
-        <div role="alert" className="mb-6 rounded-lg border border-rose-500/40 bg-rose-950/40 px-4 py-3 text-sm text-rose-100">
+        <div
+          role="alert"
+          className="mb-6 rounded-lg border border-rose-500/40 bg-rose-950/40 px-4 py-3 text-sm text-rose-100"
+        >
           {error}
         </div>
       )}
 
-      <section className="mb-10 rounded-xl border border-white/10 bg-white/[0.03] p-4 sm:p-5">
-        <h2 className="mb-3 text-sm font-semibold text-white">Neue Arbeitsversion</h2>
-        {loading ? (
-          <div className="flex items-center gap-2 text-sm text-stone-400">
-            <Loader2 className="animate-spin" size={18} aria-hidden />
-            Laden…
-          </div>
-        ) : templates.length === 0 ? (
-          <p className="text-sm text-stone-500">Vorlagen konnten nicht geladen werden.</p>
-        ) : (
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
-            <div className="grid flex-1 gap-2 sm:grid-cols-3">
-              {templates.map(tpl => {
-                const Icon = templateIcon(tpl.key)
-                const active = selectedKey === tpl.key
-                return (
-                  <button
-                    key={tpl.key}
-                    type="button"
-                    onClick={() => setSelectedKey(tpl.key)}
-                    className={[
-                      'flex flex-col items-start gap-2 rounded-xl border p-3 text-left transition-colors',
-                      active ? 'border-primary bg-primary/15 text-white' : 'border-white/10 bg-black/20 text-stone-300 hover:border-white/20',
-                    ].join(' ')}
-                  >
-                    <Icon size={20} className="text-primary-light" aria-hidden />
-                    <span className="text-sm font-semibold">{tpl.displayName}</span>
-                    <span className="text-xs text-stone-500">{tpl.description}</span>
-                  </button>
-                )
-              })}
-            </div>
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => void createFromTemplate()}
-              className="rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-hover disabled:opacity-50"
-            >
-              {busy ? '…' : 'Arbeitsversion erstellen'}
-            </button>
-          </div>
-        )}
-      </section>
-
-      <section className="mb-10 rounded-xl border border-white/10 bg-white/[0.03] p-4 sm:p-5">
-        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-sm font-semibold text-white">PDF-Exports</h2>
-          {pdfLimit > 0 ? (
-            <span className="text-xs text-stone-400">
-              {pdfUsed}/{pdfLimit} genutzt
-            </span>
-          ) : null}
+      {/* Loading */}
+      {loading && (
+        <div className="flex items-center gap-2 py-8 text-sm text-stone-400">
+          <Loader2 className="animate-spin" size={18} aria-hidden />
+          Daten werden geladen…
         </div>
-        {pdfRows.length === 0 ? (
-          <p className="text-xs text-stone-500">Noch keine PDF-Exports erfasst. Nach jedem PDF-Download erscheint ein Eintrag.</p>
-        ) : (
-          <ul className="divide-y divide-white/10">
-            {pdfRows.map(row => (
-              <li key={row.id} className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm">
-                <div className="min-w-0">
-                  <p className="truncate font-medium text-stone-200">{row.fileLabel}</p>
-                  <p className="text-xs text-stone-500">
-                    Design {row.design}
-                    {row.versionId ? ' · Variante' : ' · Arbeitsversion'}
-                    {' · '}
-                    {new Date(row.createdAtUtc).toLocaleString('de-DE')}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => void deletePdf(row.id)}
-                  className="inline-flex items-center gap-1 rounded-lg border border-rose-500/40 px-2 py-1 text-xs text-rose-200 hover:bg-rose-950/40"
-                >
-                  <Trash2 size={14} aria-hidden />
-                  Löschen
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      )}
 
-      <section>
-        <h2 className="mb-3 text-sm font-semibold text-white">Arbeitsversionen</h2>
-        {loading ? (
-          <div className="flex items-center gap-2 text-sm text-stone-400">
-            <Loader2 className="animate-spin" size={18} aria-hidden />
-            Daten werden geladen…
-          </div>
-        ) : items && items.length > 0 ? (
-          <ul className="space-y-2">
-            {items.map(row => (
-              <li key={row.id}>
-                <Link
-                  to={`/cv-studio/edit/${row.id}`}
-                  className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 transition-colors hover:border-primary/40 hover:bg-white/[0.06]"
-                >
-                  <div className="flex min-w-0 items-center gap-3">
-                    <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-primary/20 text-primary-light">
-                      <FileText size={20} aria-hidden />
-                    </span>
-                    <div className="min-w-0">
-                      <p className="truncate font-medium text-white">{row.title}</p>
-                      <p className="truncate text-xs text-stone-500">
-                        {row.templateKey ? `Vorlage: ${row.templateKey}` : 'Ohne Vorlage'}
-                        {' · '}
-                        {new Date(row.updatedAtUtc).toLocaleString('de-DE')}
-                      </p>
-                    </div>
-                  </div>
-                  <span className="text-xs text-primary-light">Bearbeiten →</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <div className="rounded-xl border border-dashed border-white/15 bg-white/[0.03] px-5 py-10 text-center">
-            <Sparkles className="mx-auto mb-3 text-primary-light/80" size={28} aria-hidden />
-            <p className="text-sm font-medium text-stone-200">Noch kein Lebenslauf</p>
-            <p className="mt-1 text-xs text-stone-500">Wähle eine Vorlage und lege eine Arbeitsversion an.</p>
-          </div>
-        )}
-      </section>
+      {/* Resume groups */}
+      {!loading && resumes !== null && (
+        <>
+          {hasResumes && (
+            <div className="mb-4">
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder="CVs durchsuchen…"
+                className="w-full max-w-sm rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm text-white placeholder:text-stone-600 focus:border-primary/60 focus:outline-none"
+              />
+            </div>
+          )}
+
+          {filteredGroups.length > 0 ? (
+            <div className="mb-8 space-y-3">
+              {filteredGroups.map((group, idx) => (
+                <CvApplicationGroup
+                  key={group.key}
+                  group={group}
+                  defaultOpen={idx < defaultOpenCount}
+                  onCreateResume={openDialog}
+                />
+              ))}
+            </div>
+          ) : hasResumes ? (
+            <p className="mb-8 text-sm text-stone-500">
+              Keine Treffer für „{searchQuery}".
+            </p>
+          ) : (
+            <div className="mb-8 rounded-xl border border-dashed border-white/15 bg-white/[0.03] px-5 py-12 text-center">
+              <Sparkles className="mx-auto mb-3 text-primary-light/80" size={28} aria-hidden />
+              <p className="text-sm font-medium text-stone-200">Noch kein Lebenslauf</p>
+              <p className="mt-1 text-xs text-stone-500">
+                Lege deinen ersten Lebenslauf an.
+              </p>
+              <button
+                type="button"
+                onClick={() => openDialog()}
+                className="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover"
+              >
+                <Plus size={15} aria-hidden />
+                Neuer Lebenslauf
+              </button>
+            </div>
+          )}
+
+          {/* PDF export history */}
+          <CvExportHistory
+            rows={pdfRows}
+            used={pdfUsed}
+            limit={pdfLimit}
+            onDelete={handleDeletePdf}
+          />
+        </>
+      )}
+
+      {/* Create dialog */}
+      {showDialog && (
+        <CvCreateDialog
+          templates={templates}
+          jobApplications={jobApplications}
+          prefillGroup={prefillGroup}
+          existingResumes={existingResumes}
+          onConfirm={async params => {
+            await handleCreate(params)
+          }}
+          onClose={() => {
+            setShowDialog(false)
+            setPrefillGroup(null)
+          }}
+        />
+      )}
     </div>
   )
 }

@@ -7,10 +7,14 @@ import {
   getCvStudioResume,
   getCvStudioResumeTemplates,
   getCvStudioVersion,
+  linkCvStudioJobApplication,
   listCvStudioResumes,
   listCvStudioVersions,
+  patchCvStudioNotes,
+  restoreCvStudioVersion,
   updateCvStudioResume,
 } from '../../api/client'
+import type { LinkJobApplicationRequest } from '../cvTypes'
 import { clearLastResumeId, setLastResumeId } from '../lib/cvStudio'
 import { formatVariantenName } from '../lib/formatting'
 import { coerceResumeData, normalizeResumeDto } from '../lib/resumeData'
@@ -298,6 +302,68 @@ export function useCvStudioResumeEditor(getToken: () => Promise<string | null>) 
     [assignResume, getToken, queueAutoSave, runBusy],
   )
 
+  /** Server: Arbeitsversion = Snapshot-Inhalt; kein ausstehendes Auto-Save. */
+  const restoreSnapshotToWorkingCopy = useCallback(
+    async (versionId: string): Promise<boolean> => {
+      if (hasUnsavedRef.current) {
+        const ok = window.confirm(
+          'Arbeitsversion durch diese Snapshot-Version ersetzen? Lokale, noch nicht per Auto-Save übernommene Änderungen gehen verloren.',
+        )
+        if (!ok) return false
+      }
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current)
+        saveTimerRef.current = null
+      }
+      const r = resumeRef.current
+      if (!r) return false
+      const token = await getToken()
+      if (!token) {
+        setError('Bitte anmelden.')
+        return false
+      }
+      const updated = await runBusy(async () => restoreCvStudioVersion(token, r.id, versionId))
+      if (!updated) return false
+      const vlist = await listCvStudioVersions(token, r.id)
+      const meta = vlist.find(v => v.id === versionId) ?? null
+      hasUnsavedRef.current = false
+      setHasUnsavedChanges(false)
+      assignResume(patchResume(updated), { activeVar: meta })
+      setVersions(vlist)
+      await refreshSummaries()
+      setLastResumeId(r.id)
+      return true
+    },
+    [assignResume, getToken, refreshSummaries, runBusy],
+  )
+
+  const linkApplication = useCallback(
+    async (body: LinkJobApplicationRequest) => {
+      const r = resumeRef.current
+      if (!r) return
+      const token = await getToken()
+      if (!token) { setError('Bitte anmelden.'); return }
+      const updated = await runBusy(async () => linkCvStudioJobApplication(token, r.id, body))
+      if (!updated) return
+      assignResume(updated, { keepDirty: false })
+      await refreshSummaries()
+    },
+    [assignResume, getToken, refreshSummaries, runBusy],
+  )
+
+  const patchNotes = useCallback(
+    async (notes: string | null) => {
+      const r = resumeRef.current
+      if (!r) return
+      const token = await getToken()
+      if (!token) { setError('Bitte anmelden.'); return }
+      const updated = await runBusy(async () => patchCvStudioNotes(token, r.id, notes))
+      if (!updated) return
+      assignResume(updated, { keepDirty: false })
+    },
+    [assignResume, getToken, runBusy],
+  )
+
   const resetAll = useCallback(async () => {
     const token = await getToken()
     if (!token) {
@@ -351,6 +417,9 @@ export function useCvStudioResumeEditor(getToken: () => Promise<string | null>) 
     flushAutoSave,
     saveVariant,
     loadVariantIntoEditor,
+    restoreSnapshotToWorkingCopy,
+    linkApplication,
+    patchNotes,
     resetAll,
     refreshSummaries,
     refreshVersions,

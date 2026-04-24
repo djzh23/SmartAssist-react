@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '@clerk/clerk-react'
-import { ArrowLeft, ChevronDown, Copy, Loader2, Trash2 } from 'lucide-react'
+import { ArrowLeft, ChevronDown, Copy, FileText, Loader2, Trash2 } from 'lucide-react'
 import {
   type ApplicationStatusApi,
   type JobApplicationApi,
@@ -295,6 +295,13 @@ export default function ApplicationDetailPage() {
                 </ul>
               )}
             </div>
+            <Link
+              to={`/cv-studio/basis/${encodeURIComponent(app.id)}`}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
+            >
+              <FileText size={16} aria-hidden />
+              CV anzeigen
+            </Link>
             <button
               type="button"
               onClick={() => void removeApp()}

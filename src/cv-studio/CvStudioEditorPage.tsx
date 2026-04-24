@@ -1,32 +1,49 @@
-import { useEffect, useState } from 'react'
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@clerk/clerk-react'
 import {
+  ArrowLeft,
   Briefcase,
+  Check,
+  ChevronDown,
   Code2,
   Download,
+  ExternalLink,
+  GitCompare,
   FileText,
   GraduationCap,
   GripVertical,
   Headphones,
   Heart,
+  History,
   Languages,
   Loader2,
+  Link2,
+  MessageSquare,
   PanelLeftClose,
   PanelRightOpen,
-  Pencil,
   Plus,
   Save,
   SlidersHorizontal,
+  Star,
   Trash2,
   User,
   Wrench,
 } from 'lucide-react'
-import { downloadCvStudioDocx, downloadCvStudioPdf } from '../api/client'
+import {
+  downloadCvStudioDocx,
+  downloadCvStudioPdf,
+  fetchJobApplications,
+  type JobApplicationApi,
+} from '../api/client'
 import { LivePreview } from './components/LivePreview'
+import CvSaveVersionModal from './components/editor/CvSaveVersionModal'
+import CvLinkApplicationModal from './components/editor/CvLinkApplicationModal'
+import CvVersionsSidebar from './components/editor/CvVersionsSidebar'
 import { useCvStudioResumeEditor } from './hooks/useCvStudioResumeEditor'
 import { downloadBlob, notify } from './lib/cvStudio'
 import { CV_MAIN_SECTION_LABELS, normalizeContentSectionOrder, type CvMainSectionKey } from './lib/cvStudioSectionOrder'
+import { buildCvExportStem, formatRelativeTimeDe } from './lib/cvStudioPhase3'
 import { formatVariantenName, versionBadgeClass } from './lib/formatting'
 import type { LanguageItemData, PdfDesign, ResumeVersionDto, SkillGroupData, WorkItemData } from './cvTypes'
 
@@ -48,7 +65,6 @@ function splitComma(input: string | undefined): string[] {
     .filter(Boolean)
 }
 
-/** Tailwind `xl` breakpoint — sync with tailwind.config for preview column width. */
 function useMediaMinWidth(px: number): boolean {
   const [matches, setMatches] = useState(false)
   useEffect(() => {
@@ -61,7 +77,7 @@ function useMediaMinWidth(px: number): boolean {
   return matches
 }
 
-type TabId = 'profil' | 'beruf' | 'ausbildung' | 'kenntnisse' | 'hobby' | 'sprachen' | 'darstellung'
+type TabId = 'profil' | 'beruf' | 'ausbildung' | 'kenntnisse' | 'hobby' | 'sprachen' | 'darstellung' | 'versionen'
 
 function templateIconComponent(key: string) {
   if (key === 'software-developer' || key === 'softwareentwickler') return Code2
@@ -74,6 +90,7 @@ export default function CvStudioEditorPage() {
   const { resumeId } = useParams()
   const [searchParams] = useSearchParams()
   const versionId = searchParams.get('versionId')
+  const tabParam = searchParams.get('tab')
   const navigate = useNavigate()
   const { getToken } = useAuth()
   const vm = useCvStudioResumeEditor(getToken)
@@ -81,16 +98,17 @@ export default function CvStudioEditorPage() {
     templates,
     resume,
     versions,
+    activeVariant,
     selectedTemplateKey,
     setSelectedTemplateKey,
     pdfDesign,
     setPdfDesign,
     busy,
     error,
-    variantNameDraft,
-    setVariantNameDraft,
     aktivKontextText,
     autoSaveText,
+    autoSaving,
+    hasUnsavedChanges,
     loadTemplates,
     createArbeitsversion,
     openResume,
@@ -98,21 +116,76 @@ export default function CvStudioEditorPage() {
     flushAutoSave,
     saveVariant,
     loadVariantIntoEditor,
+    restoreSnapshotToWorkingCopy,
+    linkApplication,
+    patchNotes,
     resetAll,
   } = vm
 
   const [activeTab, setActiveTab] = useState<TabId>('profil')
-  const [showSaveDropdown, setShowSaveDropdown] = useState(false)
   const [pdfExportName, setPdfExportName] = useState('')
+  const [exportNameTouched, setExportNameTouched] = useState(false)
   const [previewWidthPx, setPreviewWidthPx] = useState(380)
   const [previewCollapsed, setPreviewCollapsed] = useState(false)
   const previewLayoutXl = useMediaMinWidth(1280)
 
+  // Phase 3 UI state
+  const [showSaveModal, setShowSaveModal] = useState(false)
+  const [showLinkModal, setShowLinkModal] = useState(false)
+  const [showNotes, setShowNotes] = useState(false)
+  const [notesDraft, setNotesDraft] = useState('')
+  const [notesSaving, setNotesSaving] = useState(false)
+  const [jobApplications, setJobApplications] = useState<JobApplicationApi[]>([])
+  const [loadingApps, setLoadingApps] = useState(false)
+  const [exportMenuOpen, setExportMenuOpen] = useState(false)
+  const exportMenuRef = useRef<HTMLDivElement>(null)
+  const [versionsSidebarOpen, setVersionsSidebarOpen] = useState(() => {
+    try {
+      const v = localStorage.getItem('cvStudioVersionsSidebarOpen')
+      if (v === '0') return false
+      if (v === '1') return true
+    } catch {
+      /* ignore */
+    }
+    return true
+  })
+
   useEffect(() => {
-    if (!resume?.title) return
-    const stem = resume.title.replace(/\.pdf$/i, '').trim()
-    setPdfExportName(stem || `Lebenslauf-${resume.id.slice(0, 8)}`)
-  }, [resume?.id, resume?.title])
+    try {
+      localStorage.setItem('cvStudioVersionsSidebarOpen', versionsSidebarOpen ? '1' : '0')
+    } catch {
+      /* ignore */
+    }
+  }, [versionsSidebarOpen])
+
+  useEffect(() => {
+    setExportNameTouched(false)
+  }, [resume?.id])
+
+  useEffect(() => {
+    if (!resume || exportNameTouched) return
+    setPdfExportName(buildCvExportStem(resume, versions))
+  }, [resume, versions, exportNameTouched])
+
+  useEffect(() => {
+    if (tabParam === 'versionen') setActiveTab('versionen')
+  }, [tabParam])
+
+  useEffect(() => {
+    if (!exportMenuOpen) return
+    const onPointerDown = (e: PointerEvent) => {
+      const el = exportMenuRef.current
+      if (el && !el.contains(e.target as Node)) setExportMenuOpen(false)
+    }
+    document.addEventListener('pointerdown', onPointerDown, true)
+    return () => document.removeEventListener('pointerdown', onPointerDown, true)
+  }, [exportMenuOpen])
+
+  useEffect(() => {
+    if (resume?.notes !== undefined) {
+      setNotesDraft(resume.notes ?? '')
+    }
+  }, [resume?.notes])
 
   useEffect(() => {
     let cancelled = false
@@ -121,13 +194,32 @@ export default function CvStudioEditorPage() {
       if (cancelled || !resumeId) return
       await openResume(resumeId)
       if (cancelled) return
-      if (versionId)
-        await loadVariantIntoEditor(versionId)
+      if (versionId) await loadVariantIntoEditor(versionId)
     })()
-    return () => {
-      cancelled = true
-    }
+    return () => { cancelled = true }
   }, [resumeId, versionId, loadTemplates, openResume, loadVariantIntoEditor])
+
+  // Lazy-load job applications when link modal opens
+  async function openLinkModal() {
+    setShowLinkModal(true)
+    if (jobApplications.length === 0) {
+      setLoadingApps(true)
+      try {
+        const token = await getToken()
+        if (token) setJobApplications(await fetchJobApplications(token).catch(() => []))
+      } finally {
+        setLoadingApps(false)
+      }
+    }
+  }
+
+  const headerChangeNote = useMemo(() => {
+    const fromVariant = activeVariant?.label?.trim()
+    if (fromVariant) return fromVariant
+    if (!versions.length) return ''
+    const top = versions.reduce((a, b) => (a.versionNumber >= b.versionNumber ? a : b))
+    return top.label?.trim() ?? ''
+  }, [activeVariant?.label, activeVariant?.id, versions])
 
   const tabClass = (t: TabId) =>
     [
@@ -135,16 +227,30 @@ export default function CvStudioEditorPage() {
       activeTab === t ? 'bg-primary/20 text-white' : 'text-stone-400 hover:bg-white/5 hover:text-stone-200',
     ].join(' ')
 
-  const exportPdf = async (vId?: string | null) => {
+  const exportPdf = async (vId?: string | null, fileStem?: string | null) => {
     if (!resume) return
+    if (hasUnsavedChanges && vId == null) {
+      if (
+        window.confirm(
+          'Als neue Version speichern, bevor du exportierst?\n\nOK: Dialog „Version speichern“ öffnen.\nAbbrechen: Export des Arbeitsstands (nach Auto-Save).',
+        )
+      ) {
+        setShowSaveModal(true)
+        setExportMenuOpen(false)
+        return
+      }
+    }
     await flushAutoSave()
     try {
       const token = await getToken()
-      if (!token) {
-        notify('Bitte anmelden.')
-        return
-      }
-      const stem = pdfExportName.trim()
+      if (!token) { notify('Bitte anmelden.'); return }
+      const stem =
+        (fileStem?.trim() || pdfExportName.trim()) ||
+        buildCvExportStem(
+          resume,
+          versions,
+          vId ? { pinnedVersionNumber: versions.find(v => v.id === vId)?.versionNumber } : undefined,
+        )
       const { blob } = await downloadCvStudioPdf(token, resume.id, {
         versionId: vId ?? undefined,
         design: pdfDesign,
@@ -154,9 +260,99 @@ export default function CvStudioEditorPage() {
         ? (stem.toLowerCase().endsWith('.pdf') ? stem : `${stem}.pdf`)
         : (vId ? `variante-${vId}.pdf` : `arbeitsversion-${resume.id}.pdf`)
       downloadBlob(downloadName, blob)
-    }
-    catch (e) {
+    } catch (e) {
       notify(e instanceof Error ? e.message : 'PDF-Export fehlgeschlagen.')
+    }
+    setExportMenuOpen(false)
+  }
+
+  const exportDocx = async (vId?: string | null, fileStem?: string | null) => {
+    if (!resume) return
+    if (hasUnsavedChanges && vId == null) {
+      if (
+        window.confirm(
+          'Als neue Version speichern, bevor du exportierst?\n\nOK: Dialog „Version speichern“ öffnen.\nAbbrechen: Export des Arbeitsstands (nach Auto-Save).',
+        )
+      ) {
+        setShowSaveModal(true)
+        setExportMenuOpen(false)
+        return
+      }
+    }
+    await flushAutoSave()
+    try {
+      const token = await getToken()
+      if (!token) { notify('Bitte anmelden.'); return }
+      const stem =
+        (fileStem?.trim() || pdfExportName.trim()) ||
+        buildCvExportStem(
+          resume,
+          versions,
+          vId ? { pinnedVersionNumber: versions.find(v => v.id === vId)?.versionNumber } : undefined,
+        )
+      const blob = await downloadCvStudioDocx(token, resume.id, vId ?? undefined)
+      const base = stem.toLowerCase().endsWith('.docx') ? stem.slice(0, -5) : stem
+      const name = base ? `${base}.docx` : (vId ? `variante-${vId}.docx` : `arbeitsversion-${resume.id}.docx`)
+      downloadBlob(name, blob)
+    } catch (e) {
+      notify(e instanceof Error ? e.message : 'DOCX-Export fehlgeschlagen.')
+    }
+    setExportMenuOpen(false)
+  }
+
+  const handleSaveVersion = async (label: string) => {
+    const v = await saveVariant(label)
+    if (v) {
+      notify(
+        `Version ${v.versionNumber} gespeichert — Du kannst jederzeit zu früheren Versionen zurückkehren.`,
+      )
+      if (!exportNameTouched && resume) {
+        setPdfExportName(buildCvExportStem(resume, versions, { pinnedVersionNumber: v.versionNumber }))
+      }
+    }
+    setShowSaveModal(false)
+  }
+
+  const handleSaveAndPdf = async (label: string) => {
+    const v = await saveVariant(label)
+    setShowSaveModal(false)
+    if (!v || !resume) return
+    try {
+      const token = await getToken()
+      if (!token) return
+      const stem =
+        (pdfExportName.trim()) ||
+        buildCvExportStem(resume, versions, { pinnedVersionNumber: v.versionNumber })
+      const { blob } = await downloadCvStudioPdf(token, resume.id, {
+        versionId: v.id,
+        design: pdfDesign,
+        fileName: stem || null,
+      })
+      const downloadName = stem
+        ? (stem.toLowerCase().endsWith('.pdf') ? stem : `${stem}.pdf`)
+        : `variante-${v.id}.pdf`
+      downloadBlob(downloadName, blob)
+    } catch (e) {
+      notify(e instanceof Error ? e.message : 'PDF fehlgeschlagen')
+    }
+  }
+
+  const handleLink = async (
+    appId: string | null,
+    company: string | null,
+    role: string | null,
+  ) => {
+    await linkApplication({ jobApplicationId: appId, targetCompany: company, targetRole: role })
+    setShowLinkModal(false)
+  }
+
+  const handleSaveNotes = async () => {
+    setNotesSaving(true)
+    try {
+      await patchNotes(notesDraft.trim() || null)
+      setShowNotes(false)
+    } finally {
+      setNotesSaving(false)
     }
   }
 
@@ -165,9 +361,7 @@ export default function CvStudioEditorPage() {
     const startX = e.clientX
     const startW = previewWidthPx
     const onMove = (ev: MouseEvent) => {
-      const dx = ev.clientX - startX
-      // Vorschau rechts: nach links ziehen verbreitert die Vorschau.
-      setPreviewWidthPx(Math.min(560, Math.max(280, startW - dx)))
+      setPreviewWidthPx(Math.min(560, Math.max(280, startW - (ev.clientX - startX))))
     }
     const onUp = () => {
       window.removeEventListener('mousemove', onMove)
@@ -175,30 +369,6 @@ export default function CvStudioEditorPage() {
     }
     window.addEventListener('mousemove', onMove)
     window.addEventListener('mouseup', onUp)
-  }
-
-  const exportDocx = async (vId?: string | null) => {
-    if (!resume) return
-    await flushAutoSave()
-    try {
-      const token = await getToken()
-      if (!token) {
-        notify('Bitte anmelden.')
-        return
-      }
-      const blob = await downloadCvStudioDocx(token, resume.id, vId ?? undefined)
-      const name = vId ? `variante-${vId}.docx` : `arbeitsversion-${resume.id}.docx`
-      downloadBlob(name, blob)
-    }
-    catch (e) {
-      notify(e instanceof Error ? e.message : 'DOCX-Export fehlgeschlagen.')
-    }
-  }
-
-  const varianteSpeichern = async () => {
-    const variante = await saveVariant()
-    if (variante)
-      notify(`Gespeicherte Variante: ${formatVariantenName(variante)}`)
   }
 
   if (!resumeId) {
@@ -216,42 +386,227 @@ export default function CvStudioEditorPage() {
 
   const d = resume.resumeData
   const st = d.sectionTitles ?? {}
+  const contextLabel = [resume.targetCompany, resume.targetRole].filter(Boolean).join(' — ')
 
   return (
     <div className="pb-12">
-      <header className="mb-4 flex flex-col gap-3 border-b border-white/10 pb-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-xl font-semibold text-white sm:text-2xl">{resume.title}</h1>
-          <p className="mt-1 flex flex-wrap items-center gap-2 text-xs text-stone-500">
-            <span className="inline-flex items-center gap-1">
-              <Pencil size={12} aria-hidden />
-              {aktivKontextText}
-            </span>
-            <span className="text-stone-600">·</span>
-            <span>{autoSaveText}</span>
-          </p>
-          <p className="mt-0.5 font-mono text-[10px] text-stone-600">ID: {resume.id}</p>
+      {/* ── Editor header ───────────────────────────────────────────────── */}
+      <header className="mb-4 border-b border-white/10 pb-4">
+        <Link
+          to="/cv-studio"
+          className="mb-3 inline-flex items-center gap-1 text-xs text-stone-500 hover:text-stone-300"
+        >
+          <ArrowLeft size={13} aria-hidden />
+          CV.Studio
+        </Link>
+
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0 space-y-2">
+            <h1 className="text-xl font-semibold leading-snug text-white sm:text-2xl">
+              {contextLabel || resume.title}
+            </h1>
+            <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-stone-400">
+              <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/35 bg-amber-500/10 px-2 py-0.5 font-medium text-amber-100">
+                {activeVariant ? (
+                  <>
+                    Version {activeVariant.versionNumber}
+                    <Star size={11} className="text-amber-300" fill="currentColor" aria-hidden />
+                  </>
+                ) : (
+                  'Arbeitsversion'
+                )}
+              </span>
+              <span className="text-stone-600" aria-hidden>
+                ·
+              </span>
+              <span>
+                Letzte Änderung:{' '}
+                {formatRelativeTimeDe(resume.updatedAtUtc) || '—'}
+              </span>
+              <span className="text-stone-600" aria-hidden>
+                ·
+              </span>
+              <span className="inline-flex items-center gap-1">
+                {autoSaving ? (
+                  'Auto-Save …'
+                ) : hasUnsavedChanges ? (
+                  'Auto-Save ausstehend'
+                ) : (
+                  <>
+                    <Check size={12} className="text-emerald-400" aria-hidden />
+                    Auto-Save
+                  </>
+                )}
+              </span>
+            </p>
+            {headerChangeNote ? (
+              <p className="text-xs text-stone-500">
+                Notiz:{' '}
+                <span className="text-stone-300">&ldquo;{headerChangeNote}&rdquo;</span>
+              </p>
+            ) : null}
+            <div className="flex flex-wrap items-center gap-2">
+              {resume.linkedJobApplicationId && (
+                <Link
+                  to={`/applications/${encodeURIComponent(resume.linkedJobApplicationId)}`}
+                  className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary-light hover:bg-primary/20"
+                >
+                  <Link2 size={11} aria-hidden />
+                  Zur Bewerbung
+                  <ExternalLink size={10} aria-hidden />
+                </Link>
+              )}
+              <span className="text-xs text-stone-500">{autoSaveText}</span>
+              {hasUnsavedChanges && (
+                <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-semibold text-amber-300">
+                  Ungespeicherte Änderungen
+                </span>
+              )}
+            </div>
+            <p className="text-[11px] text-stone-600">{aktivKontextText}</p>
+          </div>
+
+          <div className="flex flex-shrink-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => setShowSaveModal(true)}
+              className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white hover:bg-primary-hover disabled:opacity-50 sm:text-sm"
+            >
+              <Save size={14} aria-hidden />
+              Als neue Version speichern
+            </button>
+            <div className="relative" ref={exportMenuRef}>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => setExportMenuOpen(o => !o)}
+                className="inline-flex w-full items-center justify-center gap-1 rounded-lg border border-white/15 px-3 py-2 text-xs text-stone-200 hover:bg-white/5 disabled:opacity-50 sm:w-auto sm:text-sm"
+              >
+                <Download size={14} aria-hidden />
+                Exportieren
+                <ChevronDown size={14} className={exportMenuOpen ? 'rotate-180 transition-transform' : 'transition-transform'} aria-hidden />
+              </button>
+              {exportMenuOpen ? (
+                <ul
+                  className="absolute right-0 z-40 mt-1 min-w-[11rem] rounded-lg border border-white/15 bg-[#1a1510] py-1 shadow-xl"
+                  role="menu"
+                >
+                  <li role="none">
+                    <button
+                      type="button"
+                      role="menuitem"
+                      disabled={busy}
+                      className="w-full px-3 py-2 text-left text-xs text-stone-200 hover:bg-white/10 disabled:opacity-50"
+                      onClick={() => void exportPdf(null)}
+                    >
+                      PDF exportieren
+                    </button>
+                  </li>
+                  <li role="none">
+                    <button
+                      type="button"
+                      role="menuitem"
+                      disabled={busy}
+                      className="w-full px-3 py-2 text-left text-xs text-stone-200 hover:bg-white/10 disabled:opacity-50"
+                      onClick={() => void exportDocx(null)}
+                    >
+                      DOCX exportieren
+                    </button>
+                  </li>
+                </ul>
+              ) : null}
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setVersionsSidebarOpen(true)
+                setActiveTab('versionen')
+              }}
+              className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-white/15 px-3 py-2 text-xs text-stone-200 hover:bg-white/5 sm:text-sm"
+            >
+              <GitCompare size={14} aria-hidden />
+              Versionen vergleichen
+            </button>
+            <button
+              type="button"
+              onClick={() => setVersionsSidebarOpen(o => !o)}
+              className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-white/15 px-3 py-2 text-xs text-stone-200 hover:bg-white/5 sm:text-sm xl:hidden"
+              title="Versionen-Leiste"
+            >
+              <History size={14} aria-hidden />
+              Versionen
+            </button>
+            <button
+              type="button"
+              onClick={() => void openLinkModal()}
+              className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-white/15 px-3 py-2 text-xs text-stone-200 hover:bg-white/5 sm:text-sm"
+            >
+              <Link2 size={14} aria-hidden />
+              {contextLabel ? 'Kontext ändern' : 'Mit Bewerbung verknüpfen'}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setShowNotes(v => !v)
+                if (!showNotes) setNotesDraft(resume.notes ?? '')
+              }}
+              className={[
+                'inline-flex items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-xs transition-colors sm:text-sm',
+                showNotes
+                  ? 'border-primary/40 bg-primary/10 text-primary-light'
+                  : 'border-white/15 text-stone-200 hover:bg-white/5',
+              ].join(' ')}
+            >
+              <MessageSquare size={14} aria-hidden />
+              Notizen
+              {resume.notes && !showNotes && (
+                <span className="ml-0.5 h-1.5 w-1.5 rounded-full bg-amber-400" aria-label="Hat Notizen" />
+              )}
+            </button>
+            <Link
+              to="/cv-studio"
+              className="inline-flex items-center justify-center gap-1 rounded-lg border border-white/10 px-3 py-2 text-center text-xs text-stone-400 hover:bg-white/5 hover:text-stone-200 sm:text-sm"
+            >
+              <ArrowLeft size={14} aria-hidden />
+              Übersicht
+            </Link>
+          </div>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            disabled={busy}
-            onClick={() => void createArbeitsversion().then(id => id && navigate(`/cv-studio/edit/${id}`))}
-            className="rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white hover:bg-primary-hover disabled:opacity-50 sm:text-sm"
-          >
-            <Plus className="inline" size={14} aria-hidden />
-            {' '}
-            Neue Arbeitsversion
-          </button>
-          <button
-            type="button"
-            disabled={busy}
-            onClick={() => navigate(`/cv-studio`)}
-            className="rounded-lg border border-white/15 px-3 py-2 text-xs text-stone-200 hover:bg-white/5 sm:text-sm"
-          >
-            Übersicht
-          </button>
-        </div>
+
+        {/* Notes panel */}
+        {showNotes && (
+          <div className="mt-3 rounded-xl border border-white/10 bg-black/20 p-4">
+            <label className="block text-xs font-medium text-stone-400">
+              Notizen zu diesem Lebenslauf
+              <textarea
+                className={`${field} mt-1.5`}
+                rows={4}
+                value={notesDraft}
+                onChange={e => setNotesDraft(e.target.value)}
+                placeholder="z. B. Zielstelle, offene Punkte, Anpassungsideen …"
+              />
+            </label>
+            <div className="mt-2 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setShowNotes(false)}
+                className="text-xs text-stone-500 hover:text-stone-300"
+              >
+                Abbrechen
+              </button>
+              <button
+                type="button"
+                disabled={notesSaving}
+                onClick={() => void handleSaveNotes()}
+                className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary-hover disabled:opacity-40"
+              >
+                {notesSaving && <Loader2 size={13} className="animate-spin" aria-hidden />}
+                Speichern
+              </button>
+            </div>
+          </div>
+        )}
       </header>
 
       {error ? (
@@ -259,46 +614,6 @@ export default function CvStudioEditorPage() {
           {error}
         </div>
       ) : null}
-
-      <section className="mb-6 rounded-xl border border-white/10 bg-white/[0.03] p-4">
-        <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-stone-400">Vorlage für neue Version</h2>
-        <div className="grid gap-2 sm:grid-cols-3">
-          {templates.map(vorlage => {
-            const Icon = templateIconComponent(vorlage.key)
-            const active = selectedTemplateKey === vorlage.key
-            return (
-              <button
-                key={vorlage.key}
-                type="button"
-                disabled={busy}
-                onClick={() => setSelectedTemplateKey(vorlage.key)}
-                className={[
-                  'flex flex-col items-start gap-1 rounded-lg border p-3 text-left text-xs transition-colors',
-                  active ? 'border-primary bg-primary/10 text-white' : 'border-white/10 bg-black/20 text-stone-300 hover:border-white/20',
-                ].join(' ')}
-              >
-                <Icon size={18} className="text-primary-light" aria-hidden />
-                <span className="font-semibold">{vorlage.displayName}</span>
-                <span className="text-stone-500">{vorlage.description}</span>
-              </button>
-            )
-          })}
-        </div>
-        <button
-          type="button"
-          disabled={busy}
-          onClick={() => void createArbeitsversion().then(id => id && navigate(`/cv-studio/edit/${id}`))}
-          className="mt-3 rounded-lg border border-white/15 px-3 py-2 text-xs text-stone-200 hover:bg-white/5"
-        >
-          Mit gewählter Vorlage neue Arbeitsversion
-        </button>
-      </section>
-
-      <div className="mb-2 flex flex-wrap items-center gap-2 rounded-lg border border-white/10 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
-        <strong>Bearbeitung:</strong>
-        {' '}
-        {aktivKontextText}
-      </div>
 
       {previewCollapsed ? (
         <div className="mb-2 hidden justify-end lg:flex">
@@ -314,7 +629,10 @@ export default function CvStudioEditorPage() {
       ) : null}
 
       <div className="flex flex-col gap-6 xl:flex-row xl:items-stretch">
+        <div className="flex min-w-0 flex-1 flex-col gap-0 xl:flex-row xl:items-stretch">
+        {/* ── Editor panel ──────────────────────────────────────────────── */}
         <section className="min-w-0 flex-1 rounded-xl border border-white/10 bg-black/20">
+          {/* Toolbar */}
           <div className="flex flex-col gap-3 border-b border-white/10 p-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
             <div className="flex flex-wrap items-center gap-2">
               <select
@@ -332,96 +650,68 @@ export default function CvStudioEditorPage() {
                   className={field}
                   maxLength={180}
                   value={pdfExportName}
-                  onChange={e => setPdfExportName(e.target.value)}
-                  placeholder="z. B. Bewerbung Muster GmbH"
-                  title="Wird in der PDF-Export-Liste und beim Download verwendet"
+                  onChange={e => {
+                    setExportNameTouched(true)
+                    setPdfExportName(e.target.value)
+                  }}
+                  placeholder="z. B. CV_Meier_Firma_Rolle_v2"
                 />
               </label>
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => void exportPdf(null)}
-                className="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white hover:bg-primary-hover disabled:opacity-50"
-              >
-                <Download size={14} aria-hidden />
-                PDF
-              </button>
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => void exportDocx(null)}
-                className="inline-flex items-center gap-1 rounded-lg border border-white/20 px-3 py-2 text-xs text-stone-200 hover:bg-white/5 disabled:opacity-50"
-              >
-                <Download size={14} aria-hidden />
-                DOCX
-              </button>
             </div>
-            <div className="relative">
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => setShowSaveDropdown(s => !s)}
-                className="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white hover:bg-primary-hover disabled:opacity-50"
-              >
-                <Save size={14} aria-hidden />
-                Variante speichern
-              </button>
-              {showSaveDropdown ? (
-                <div className="absolute right-0 z-20 mt-1 w-64 rounded-lg border border-white/15 bg-[#1a1512] p-3 shadow-xl">
-                  <p className="mb-2 text-xs font-semibold text-white">Variante</p>
-                  <input
-                    className={field}
-                    placeholder="z. B. SAP Bewerbung"
-                    value={variantNameDraft}
-                    onChange={e => setVariantNameDraft(e.target.value)}
-                  />
-                  <div className="mt-2 flex flex-col gap-1">
-                    <button
-                      type="button"
-                      className="rounded border border-white/10 py-1.5 text-xs text-stone-200 hover:bg-white/5"
-                      onClick={() => {
-                        void varianteSpeichern()
-                        setShowSaveDropdown(false)
-                      }}
-                    >
-                      Nur speichern
-                    </button>
-                    <button
-                      type="button"
-                      className="rounded bg-primary py-1.5 text-xs text-white"
-                      onClick={async () => {
-                        const v = await saveVariant()
-                        setShowSaveDropdown(false)
-                        if (v && resume) {
-                          const token = await getToken()
-                          if (token) {
-                            try {
-                              const stem = pdfExportName.trim()
-                              const { blob } = await downloadCvStudioPdf(token, resume.id, {
-                                versionId: v.id,
-                                design: pdfDesign,
-                                fileName: stem || null,
-                              })
-                              const downloadName = stem
-                                ? (stem.toLowerCase().endsWith('.pdf') ? stem : `${stem}.pdf`)
-                                : `variante-${v.id}.pdf`
-                              downloadBlob(downloadName, blob)
-                            }
-                            catch (e) {
-                              notify(e instanceof Error ? e.message : 'PDF fehlgeschlagen')
-                            }
-                          }
-                        }
-                      }}
-                    >
-                      Speichern + PDF
-                    </button>
-                  </div>
-                </div>
-              ) : null}
-            </div>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void createArbeitsversion().then(id => id && navigate(`/cv-studio/edit/${id}`))}
+              className="inline-flex items-center gap-1 rounded-lg border border-white/15 px-3 py-2 text-xs text-stone-200 hover:bg-white/5"
+            >
+              <Plus size={13} aria-hidden />
+              Neue Arbeitsversion
+            </button>
+            <button
+              type="button"
+              onClick={() => setVersionsSidebarOpen(o => !o)}
+              className="inline-flex items-center gap-1 rounded-lg border border-white/15 px-3 py-2 text-xs text-stone-300 hover:bg-white/5 xl:hidden"
+            >
+              <History size={13} aria-hidden />
+              Versionen-Leiste
+            </button>
           </div>
 
+          {/* Template selector (for new Arbeitsversion) */}
+          {templates.length > 0 && (
+            <details className="border-b border-white/10">
+              <summary className="flex cursor-pointer items-center justify-between px-4 py-2.5 text-xs text-stone-500 hover:text-stone-300">
+                <span>Vorlage für neue Arbeitsversion</span>
+                <ChevronDown size={14} aria-hidden className="details-chevron" />
+              </summary>
+              <div className="px-4 pb-3 pt-1">
+                <div className="grid gap-2 sm:grid-cols-3">
+                  {templates.map(vorlage => {
+                    const Icon = templateIconComponent(vorlage.key)
+                    const active = selectedTemplateKey === vorlage.key
+                    return (
+                      <button
+                        key={vorlage.key}
+                        type="button"
+                        disabled={busy}
+                        onClick={() => setSelectedTemplateKey(vorlage.key)}
+                        className={[
+                          'flex flex-col items-start gap-1 rounded-lg border p-3 text-left text-xs transition-colors',
+                          active ? 'border-primary bg-primary/10 text-white' : 'border-white/10 bg-black/20 text-stone-300 hover:border-white/20',
+                        ].join(' ')}
+                      >
+                        <Icon size={18} className="text-primary-light" aria-hidden />
+                        <span className="font-semibold">{vorlage.displayName}</span>
+                        <span className="text-stone-500">{vorlage.description}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            </details>
+          )}
+
+          {/* Tabs */}
           <div className="flex flex-wrap gap-1 border-b border-white/10 p-2">
             <button type="button" className={tabClass('darstellung')} onClick={() => setActiveTab('darstellung')}>
               <SlidersHorizontal size={14} aria-hidden />
@@ -451,9 +741,20 @@ export default function CvStudioEditorPage() {
               <Heart size={14} aria-hidden />
               Hobbys
             </button>
+            <button type="button" className={tabClass('versionen')} onClick={() => setActiveTab('versionen')}>
+              <History size={14} aria-hidden />
+              Versionen
+              {versions.length > 0 && (
+                <span className="rounded-full bg-white/15 px-1.5 py-px text-[10px]">
+                  {versions.length}
+                </span>
+              )}
+            </button>
           </div>
 
+          {/* Tab content */}
           <div className="max-h-[70vh] overflow-y-auto p-4 text-sm">
+            {/* ── Profil ──────────────────────────────────────────────── */}
             {activeTab === 'profil' ? (
               <div className="space-y-4">
                 <h2 className="text-sm font-semibold text-white">Profil</h2>
@@ -516,6 +817,7 @@ export default function CvStudioEditorPage() {
               </div>
             ) : null}
 
+            {/* ── Beruf ───────────────────────────────────────────────── */}
             {activeTab === 'beruf' ? (
               <div className="space-y-4">
                 <h2 className="text-sm font-semibold text-white">Berufserfahrung</h2>
@@ -560,25 +862,15 @@ export default function CvStudioEditorPage() {
                 <button
                   type="button"
                   className="rounded-lg border border-white/15 px-3 py-2 text-xs text-stone-200 hover:bg-white/5"
-                  onClick={() =>
-                    updateResume((r) => {
-                      r.resumeData.workItems.push({
-                        company: '',
-                        role: '',
-                        startDate: '',
-                        endDate: '',
-                        description: '',
-                        bullets: [],
-                      } satisfies WorkItemData)
-                    })}
+                  onClick={() => updateResume(r => { r.resumeData.workItems.push({ company: '', role: '', startDate: '', endDate: '', description: '', bullets: [] } satisfies WorkItemData) })}
                 >
                   <Plus className="inline" size={14} aria-hidden />
-                  {' '}
-                  Eintrag hinzufügen
+                  {' '}Eintrag hinzufügen
                 </button>
               </div>
             ) : null}
 
+            {/* ── Ausbildung ──────────────────────────────────────────── */}
             {activeTab === 'ausbildung' ? (
               <div className="space-y-4">
                 <h2 className="text-sm font-semibold text-white">Ausbildung</h2>
@@ -604,12 +896,7 @@ export default function CvStudioEditorPage() {
                     </div>
                     <label className={`${lab} mt-2`}>
                       Beschreibung (Schwerpunkte, Thesis, Module …)
-                      <textarea
-                        className={field}
-                        rows={3}
-                        value={item.description ?? ''}
-                        onChange={e => updateResume(r => void (r.resumeData.educationItems[index].description = e.target.value))}
-                      />
+                      <textarea className={field} rows={3} value={item.description ?? ''} onChange={e => updateResume(r => void (r.resumeData.educationItems[index].description = e.target.value))} />
                     </label>
                     <button
                       type="button"
@@ -624,18 +911,15 @@ export default function CvStudioEditorPage() {
                 <button
                   type="button"
                   className="rounded-lg border border-white/15 px-3 py-2 text-xs text-stone-200 hover:bg-white/5"
-                  onClick={() =>
-                    updateResume((r) => {
-                      r.resumeData.educationItems.push({ school: '', degree: '', startDate: '', endDate: '', description: '' })
-                    })}
+                  onClick={() => updateResume(r => { r.resumeData.educationItems.push({ school: '', degree: '', startDate: '', endDate: '', description: '' }) })}
                 >
                   <Plus className="inline" size={14} aria-hidden />
-                  {' '}
-                  Eintrag hinzufügen
+                  {' '}Eintrag hinzufügen
                 </button>
               </div>
             ) : null}
 
+            {/* ── Kenntnisse ──────────────────────────────────────────── */}
             {activeTab === 'kenntnisse' ? (
               <div className="space-y-4">
                 <h2 className="text-sm font-semibold text-white">Kenntnisse</h2>
@@ -657,53 +941,30 @@ export default function CvStudioEditorPage() {
                 <button
                   type="button"
                   className="rounded-lg border border-white/15 px-3 py-2 text-xs text-stone-200 hover:bg-white/5"
-                  onClick={() =>
-                    updateResume((r) => {
-                      r.resumeData.skills.push({ categoryName: '', items: [] } satisfies SkillGroupData)
-                    })}
+                  onClick={() => updateResume(r => { r.resumeData.skills.push({ categoryName: '', items: [] } satisfies SkillGroupData) })}
                 >
                   Kategorie hinzufügen
                 </button>
               </div>
             ) : null}
 
-            {activeTab === 'hobby' ? (
-              <div>
-                <h2 className="mb-2 text-sm font-semibold text-white">Hobbys</h2>
-                <label className={lab}>
-                  Eine Zeile = ein Hobby
-                  <textarea className={field} rows={8} value={d.hobbies.join('\n')} onChange={e => updateResume(r => void (r.resumeData.hobbies = splitLines(e.target.value)))} />
-                </label>
-              </div>
-            ) : null}
-
+            {/* ── Sprachen ────────────────────────────────────────────── */}
             {activeTab === 'sprachen' ? (
               <div className="space-y-4">
                 <h2 className="text-sm font-semibold text-white">Sprachen</h2>
                 <p className="text-xs text-stone-500">
-                  Überschrift für PDF/Vorschau unter „Darstellung“ → „Sprachen“. Wenn die Liste leer ist, werden weiterhin Einträge aus einer Sprach-Kategorie unter Kenntnissen verwendet.
+                  Wenn die Liste leer ist, werden Einträge aus einer Sprach-Kategorie unter Kenntnissen verwendet.
                 </p>
-                {d.languageItems.length === 0 ? (
-                  <p className="text-xs text-stone-500">Noch keine Einträge — „Sprache hinzufügen“ oder Kenntnisse nutzen.</p>
-                ) : null}
                 {d.languageItems.map((li, index) => (
                   <div key={li.rowKey ?? `lang-${index}`} className="rounded-lg border border-white/10 bg-black/30 p-3">
                     <div className="grid gap-2 sm:grid-cols-2">
                       <label className={lab}>
                         Sprache
-                        <input
-                          className={field}
-                          value={li.label}
-                          onChange={e => updateResume(r => void (r.resumeData.languageItems[index].label = e.target.value))}
-                        />
+                        <input className={field} value={li.label} onChange={e => updateResume(r => void (r.resumeData.languageItems[index].label = e.target.value))} />
                       </label>
                       <label className={lab}>
                         Niveau (optional)
-                        <input
-                          className={field}
-                          value={li.level ?? ''}
-                          onChange={e => updateResume(r => void (r.resumeData.languageItems[index].level = e.target.value))}
-                        />
+                        <input className={field} value={li.level ?? ''} onChange={e => updateResume(r => void (r.resumeData.languageItems[index].level = e.target.value))} />
                       </label>
                     </div>
                     <button
@@ -718,26 +979,31 @@ export default function CvStudioEditorPage() {
                 <button
                   type="button"
                   className="rounded-lg border border-white/15 px-3 py-2 text-xs text-stone-200 hover:bg-white/5"
-                  onClick={() =>
-                    updateResume((r) => {
-                      r.resumeData.languageItems.push({
-                        label: '',
-                        level: '',
-                        rowKey: typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `lang-${Date.now()}`,
-                      } satisfies LanguageItemData)
-                    })}
+                  onClick={() => updateResume(r => { r.resumeData.languageItems.push({ label: '', level: '', rowKey: typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `lang-${Date.now()}` } satisfies LanguageItemData) })}
                 >
                   Sprache hinzufügen
                 </button>
               </div>
             ) : null}
 
+            {/* ── Hobbys ──────────────────────────────────────────────── */}
+            {activeTab === 'hobby' ? (
+              <div>
+                <h2 className="mb-2 text-sm font-semibold text-white">Hobbys</h2>
+                <label className={lab}>
+                  Eine Zeile = ein Hobby
+                  <textarea className={field} rows={8} value={d.hobbies.join('\n')} onChange={e => updateResume(r => void (r.resumeData.hobbies = splitLines(e.target.value)))} />
+                </label>
+              </div>
+            ) : null}
+
+            {/* ── Darstellung ─────────────────────────────────────────── */}
             {activeTab === 'darstellung' ? (
               <div className="space-y-8">
                 <div className="space-y-4">
                   <h2 className="text-sm font-semibold text-white">CV-Sektionstitel</h2>
                   <p className="text-xs text-stone-500">
-                    Optional: Überschriften für PDF und Vorschau. Leer = Standard. „Sprachen“ und „Interessen“ sind getrennte Sektionen (keine kombinierte Überschrift mehr).
+                    Optional: Überschriften für PDF und Vorschau. Leer = Standard.
                   </p>
                   <div className="grid gap-3 sm:grid-cols-2">
                     {(
@@ -757,8 +1023,8 @@ export default function CvStudioEditorPage() {
                           className={field}
                           maxLength={120}
                           value={(st as Record<string, string | null | undefined>)[key] ?? ''}
-                          onChange={(e) => {
-                            updateResume((r) => {
+                          onChange={e => {
+                            updateResume(r => {
                               if (!r.resumeData.sectionTitles) r.resumeData.sectionTitles = {}
                               ;(r.resumeData.sectionTitles as Record<string, string>)[key] = e.target.value
                             })
@@ -773,28 +1039,25 @@ export default function CvStudioEditorPage() {
                 <div className="space-y-4 border-t border-white/10 pt-6">
                   <h2 className="text-sm font-semibold text-white">Reihenfolge der Hauptabschnitte</h2>
                   <p className="text-xs text-stone-500">
-                    Ziehe eine Zeile an eine andere Position (Drag-and-Drop). Die Reihenfolge gilt für PDF- und DOCX-Export (Hauptspalte). „Sprachen“ und „Interessen“ sind getrennte Blöcke.
+                    Drag-and-Drop — gilt für PDF- und DOCX-Export.
                   </p>
                   <ul className="space-y-2">
-                    {normalizeContentSectionOrder(d.contentSectionOrder).map((key) => {
+                    {normalizeContentSectionOrder(d.contentSectionOrder).map(key => {
                       const label = CV_MAIN_SECTION_LABELS[key]
                       return (
                         <li
                           key={key}
                           draggable
-                          onDragStart={(e) => {
+                          onDragStart={e => {
                             e.dataTransfer.setData('application/x-cv-section', key)
                             e.dataTransfer.effectAllowed = 'move'
                           }}
-                          onDragOver={(e) => {
-                            e.preventDefault()
-                            e.dataTransfer.dropEffect = 'move'
-                          }}
-                          onDrop={(e) => {
+                          onDragOver={e => { e.preventDefault(); e.dataTransfer.dropEffect = 'move' }}
+                          onDrop={e => {
                             e.preventDefault()
                             const fromKey = e.dataTransfer.getData('application/x-cv-section') as CvMainSectionKey
                             if (!fromKey || fromKey === key) return
-                            updateResume((r) => {
+                            updateResume(r => {
                               const o = [...normalizeContentSectionOrder(r.resumeData.contentSectionOrder)]
                               const fromIdx = o.indexOf(fromKey)
                               const toIdx = o.indexOf(key)
@@ -816,9 +1079,152 @@ export default function CvStudioEditorPage() {
                 </div>
               </div>
             ) : null}
+
+            {/* ── Versionen ───────────────────────────────────────────── */}
+            {activeTab === 'versionen' ? (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-sm font-semibold text-white">Gespeicherte Versionen</h2>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => setShowSaveModal(true)}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary-hover disabled:opacity-50"
+                  >
+                    <Save size={13} aria-hidden />
+                    Neue Version
+                  </button>
+                </div>
+
+                {versions.length === 0 ? (
+                  <div className="rounded-xl border border-dashed border-white/15 bg-white/[0.02] px-4 py-8 text-center">
+                    <History size={24} className="mx-auto mb-2 text-stone-600" aria-hidden />
+                    <p className="text-xs text-stone-500">Noch keine gespeicherten Versionen.</p>
+                    <p className="mt-1 text-xs text-stone-600">Versionen sind Snapshots des aktuellen Stands.</p>
+                  </div>
+                ) : (
+                  <ul className="divide-y divide-white/10">
+                    {versions.map((variante: ResumeVersionDto) => {
+                      const isActive = activeVariant?.id === variante.id
+                      return (
+                        <li
+                          key={variante.id}
+                          className={`flex flex-col gap-2 rounded-lg px-3 py-3 sm:flex-row sm:items-center sm:justify-between ${isActive ? 'bg-primary/10' : ''}`}
+                        >
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className={`inline-flex rounded px-1.5 py-0.5 text-[10px] font-bold ${versionBadgeClass(variante.versionNumber)}`}>
+                                v{variante.versionNumber}
+                              </span>
+                              <strong className="text-sm text-white">{formatVariantenName(variante)}</strong>
+                              {isActive && (
+                                <span className="rounded-full bg-primary/20 px-2 py-px text-[10px] text-primary-light">
+                                  aktiv
+                                </span>
+                              )}
+                            </div>
+                            <p className="mt-0.5 text-xs text-stone-500">
+                              {new Date(variante.createdAtUtc).toLocaleString('de-DE')}
+                            </p>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            <button
+                              type="button"
+                              className="rounded border border-amber-500/35 bg-amber-500/10 px-2 py-1 text-xs font-medium text-amber-100 hover:bg-amber-500/20"
+                              onClick={() =>
+                                void restoreSnapshotToWorkingCopy(variante.id).then(ok => {
+                                  if (ok) notify('Arbeitsstand wurde wiederhergestellt.')
+                                })}
+                            >
+                              Wiederherstellen
+                            </button>
+                            <button
+                              type="button"
+                              className="rounded border border-white/15 px-2 py-1 text-xs text-stone-200 hover:bg-white/5"
+                              onClick={() => void loadVariantIntoEditor(variante.id)}
+                            >
+                              Übernehmen (Auto-Save)
+                            </button>
+                            <button
+                              type="button"
+                              className="rounded bg-primary/90 px-2 py-1 text-xs text-white"
+                              onClick={() =>
+                                void exportPdf(
+                                  variante.id,
+                                  buildCvExportStem(resume, versions, {
+                                    pinnedVersionNumber: variante.versionNumber,
+                                  }),
+                                )}
+                            >
+                              PDF
+                            </button>
+                            <button
+                              type="button"
+                              className="rounded border border-white/20 px-2 py-1 text-xs text-stone-200"
+                              onClick={() =>
+                                void exportDocx(
+                                  variante.id,
+                                  buildCvExportStem(resume, versions, {
+                                    pinnedVersionNumber: variante.versionNumber,
+                                  }),
+                                )}
+                            >
+                              DOCX
+                            </button>
+                          </div>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                )}
+
+                <div className="border-t border-white/10 pt-3">
+                  <button
+                    type="button"
+                    className="text-xs text-rose-300 hover:text-rose-200"
+                    onClick={() => {
+                      if (!window.confirm('Alle Arbeitsversionen und Varianten löschen?')) return
+                      void resetAll().then(() => navigate('/cv-studio'))
+                    }}
+                  >
+                    Alles zurücksetzen (Fresh Start)
+                  </button>
+                </div>
+              </div>
+            ) : null}
           </div>
         </section>
 
+        <CvVersionsSidebar
+          open={versionsSidebarOpen}
+          onToggle={() => setVersionsSidebarOpen(o => !o)}
+          versions={versions}
+          activeVariant={activeVariant}
+          busy={busy}
+          onRestore={id =>
+            void restoreSnapshotToWorkingCopy(id).then(ok => {
+              if (ok) notify('Arbeitsstand wurde wiederhergestellt.')
+            })}
+          onLoadForEdit={id => void loadVariantIntoEditor(id)}
+          onExportPdf={id =>
+            void exportPdf(
+              id,
+              buildCvExportStem(resume, versions, {
+                pinnedVersionNumber: versions.find(v => v.id === id)?.versionNumber,
+              }),
+            )}
+          onExportDocx={id =>
+            void exportDocx(
+              id,
+              buildCvExportStem(resume, versions, {
+                pinnedVersionNumber: versions.find(v => v.id === id)?.versionNumber,
+              }),
+            )}
+          onNewVersion={() => setShowSaveModal(true)}
+        />
+        </div>
+
+        {/* ── Live preview ──────────────────────────────────────────────── */}
         {!previewCollapsed ? (
           <>
             <div
@@ -857,55 +1263,28 @@ export default function CvStudioEditorPage() {
         ) : null}
       </div>
 
-      <section className="mt-8 rounded-xl border border-white/10 bg-white/[0.03] p-4">
-        <h2 className="mb-2 text-sm font-semibold text-white">Gespeicherte Varianten</h2>
-        {versions.length === 0 ? (
-          <p className="text-xs text-stone-500">Noch keine Variante.</p>
-        ) : (
-          <ul className="divide-y divide-white/10">
-            {versions.map((variante: ResumeVersionDto) => (
-              <li key={variante.id} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <span className={`mr-2 inline-flex rounded px-1.5 py-0.5 text-[10px] font-bold ${versionBadgeClass(variante.versionNumber)}`}>
-                    v
-                    {variante.versionNumber}
-                  </span>
-                  <strong className="text-sm text-white">{formatVariantenName(variante)}</strong>
-                  <p className="text-xs text-stone-500">{new Date(variante.createdAtUtc).toLocaleString('de-DE')}</p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    className="rounded border border-white/15 px-2 py-1 text-xs text-stone-200 hover:bg-white/5"
-                    onClick={() => void loadVariantIntoEditor(variante.id)}
-                  >
-                    Als Arbeitsversion laden
-                  </button>
-                  <button type="button" className="rounded bg-primary/90 px-2 py-1 text-xs text-white" onClick={() => void exportPdf(variante.id)}>
-                    PDF
-                  </button>
-                  <button type="button" className="rounded border border-white/20 px-2 py-1 text-xs text-stone-200" onClick={() => void exportDocx(variante.id)}>
-                    DOCX
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      {/* ── Modals ──────────────────────────────────────────────────────── */}
+      {showSaveModal && (
+        <CvSaveVersionModal
+          busy={busy}
+          onSave={handleSaveVersion}
+          onSaveAndPdf={handleSaveAndPdf}
+          onClose={() => setShowSaveModal(false)}
+        />
+      )}
 
-      <div className="mt-8 flex flex-wrap gap-2 border-t border-white/10 pt-4">
-        <button
-          type="button"
-          className="text-xs text-rose-300 hover:text-rose-200"
-          onClick={() => {
-            if (!window.confirm('Alle Arbeitsversionen und Varianten löschen?')) return
-            void resetAll().then(() => navigate('/cv-studio'))
-          }}
-        >
-          Alles zurücksetzen (Fresh Start)
-        </button>
-      </div>
+      {showLinkModal && (
+        <CvLinkApplicationModal
+          currentAppId={resume.linkedJobApplicationId ?? null}
+          currentCompany={resume.targetCompany ?? null}
+          currentRole={resume.targetRole ?? null}
+          jobApplications={jobApplications}
+          loadingApps={loadingApps}
+          busy={busy}
+          onLink={handleLink}
+          onClose={() => setShowLinkModal(false)}
+        />
+      )}
     </div>
   )
 }
