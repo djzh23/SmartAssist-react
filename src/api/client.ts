@@ -13,6 +13,7 @@ import type {
 import type {
   CreateResumeRequest,
   CreateVersionRequest,
+  LinkJobApplicationRequest,
   ResumeDto,
   ResumeTemplateDto,
   ResumeVersionDto,
@@ -913,6 +914,46 @@ export async function deleteCvStudioVersion(token: string, resumeId: string, ver
     throw new Error('Bitte anmelden.')
   if (!res.ok)
     throw new Error(await readApiError(res, `CV.Studio: Variante löschen (${res.status})`))
+}
+
+export async function restoreCvStudioVersion(token: string, resumeId: string, versionId: string): Promise<ResumeVersionDto> {
+  const res = await fetch(
+    `${BASE}/api/cv-studio/resumes/${encodeURIComponent(resumeId)}/versions/${encodeURIComponent(versionId)}/restore`,
+    { method: 'POST', headers: { Authorization: `Bearer ${token}` } },
+  )
+  if (res.status === 401)
+    throw new Error('Bitte anmelden.')
+  if (!res.ok)
+    throw new Error(await readApiError(res, `CV.Studio: Version wiederherstellen (${res.status})`))
+  return parseCvStudioJson<ResumeVersionDto>(res, 'CV.Studio: Version wiederherstellen')
+}
+
+export async function linkCvStudioJobApplication(
+  token: string,
+  resumeId: string,
+  body: LinkJobApplicationRequest,
+): Promise<ResumeDto> {
+  const res = await fetch(
+    `${BASE}/api/cv-studio/resumes/${encodeURIComponent(resumeId)}/link-application`,
+    { method: 'PATCH', headers: { ...authHeaders(token), 'Content-Type': 'application/json' }, body: JSON.stringify(body) },
+  )
+  if (res.status === 401)
+    throw new Error('Bitte anmelden.')
+  if (!res.ok)
+    throw new Error(await readApiError(res, `CV.Studio: Bewerbung verknüpfen (${res.status})`))
+  return parseCvStudioJson<ResumeDto>(res, 'CV.Studio: Bewerbung verknüpfen')
+}
+
+export async function patchCvStudioNotes(token: string, resumeId: string, notes: string | null): Promise<ResumeDto> {
+  const res = await fetch(
+    `${BASE}/api/cv-studio/resumes/${encodeURIComponent(resumeId)}/notes`,
+    { method: 'PATCH', headers: { ...authHeaders(token), 'Content-Type': 'application/json' }, body: JSON.stringify({ notes }) },
+  )
+  if (res.status === 401)
+    throw new Error('Bitte anmelden.')
+  if (!res.ok)
+    throw new Error(await readApiError(res, `CV.Studio: Notizen speichern (${res.status})`))
+  return parseCvStudioJson<ResumeDto>(res, 'CV.Studio: Notizen speichern')
 }
 
 export async function downloadCvStudioPdf(

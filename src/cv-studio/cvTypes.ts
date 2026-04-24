@@ -91,6 +91,10 @@ export interface ResumeDto {
   templateKey?: string | null
   resumeData: ResumeData
   updatedAtUtc: string
+  linkedJobApplicationId?: string | null
+  targetCompany?: string | null
+  targetRole?: string | null
+  notes?: string | null
 }
 
 export interface ResumeSummaryDto {
@@ -98,6 +102,20 @@ export interface ResumeSummaryDto {
   title: string
   templateKey?: string | null
   updatedAtUtc: string
+  linkedJobApplicationId?: string | null
+  targetCompany?: string | null
+  targetRole?: string | null
+  notes?: string | null
+}
+
+export interface LinkJobApplicationRequest {
+  jobApplicationId?: string | null
+  targetCompany?: string | null
+  targetRole?: string | null
+}
+
+export interface PatchResumeNotesRequest {
+  notes?: string | null
 }
 
 export interface ResumeVersionDto {

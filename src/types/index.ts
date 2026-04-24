@@ -181,6 +181,10 @@ export interface CvStudioResumeSummary {
   title: string
   templateKey: string | null
   updatedAtUtc: string
+  linkedJobApplicationId: string | null
+  targetCompany: string | null
+  targetRole: string | null
+  notes: string | null
 }
 
 /** /api/cv-studio/pdf-exports — getrackte PDF-Downloads (Kontingent) */
@@ -192,6 +196,8 @@ export interface CvStudioPdfExportRow {
   fileLabel: string
   createdAtUtc: string
   hasStoredFile: boolean
+  targetCompany: string | null
+  targetRole: string | null
 }
 
 /** /api/learning/insights */
