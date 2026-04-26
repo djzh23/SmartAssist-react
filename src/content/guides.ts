@@ -58,7 +58,8 @@ export const GUIDE_CATEGORY_META: Record<GuideCategory, GuideCategoryMeta> = {
   },
   bewerbung: {
     label: 'Bewerbung',
-    description: 'Stellen erfassen, Pipeline nutzen, Anschreiben und Unterlagen — strukturiert pro Firma.',
+    description:
+      'Stellen erfassen, Pipeline nutzen, CV.Studio mit Vorlagen — Anschreiben und Unterlagen strukturiert pro Firma.',
     chipClass: 'bg-teal-100/95 text-teal-950 ring-1 ring-inset ring-teal-600/25',
     indexPanelClass:
       'rounded-2xl border border-teal-700/22 bg-gradient-to-br from-teal-50/95 via-app-parchment to-app-parchmentDeep p-4 shadow-landing sm:p-5',
@@ -180,6 +181,45 @@ export const GUIDE_ARTICLES: GuideArticle[] = [
       {
         label: 'Typischer Fehler',
         body: 'Skills aus, aber „Warum fehlen React-Keywords?“ fragen — dann weiß die KI deinen Stack nicht. Entweder Skills aktivieren oder im Satz kurz nennen.',
+      },
+    ],
+  },
+  {
+    slug: 'cv-studio-vorlagen-dummy',
+    title: 'CV.Studio: Vorlagen mit Beispieldaten',
+    subtitle: 'Anonyme Startvorlagen — deine echten Daten bleiben privat',
+    category: 'bewerbung',
+    readingMinutes: 4,
+    intro:
+      'Die drei Lebenslauf-Typen in CV.Studio starten mit serverseitigen Vorlagen: nur synthetische Namen, Firmen und Kontaktdaten. Niemand anderer sieht deine Inhalte, bis du sie selbst speicherst.',
+    highlights: [
+      'Vorlage wählen → es entsteht deine eigene Kopie zum Bearbeiten',
+      'Platzhalter durch deine Stationen ersetzen, dann speichern oder Version anlegen',
+      'Pro Arbeitsbereich (z. B. Bewerbung) eigene CV-Variante verknüpfen',
+    ],
+    steps: [
+      {
+        title: 'Erster Einstieg',
+        items: [
+          'CV.Studio öffnen und „Neu“ bzw. Vorlage wählen (klassisch, kompakt, fokussiert — je nach Typ).',
+          'Im Editor alle Musterfelder durch deine echten Daten ersetzen; keine fremden Namen in der finalen Bewerbung lassen.',
+          'Speichern — die Datei gehört nur deinem Konto.',
+        ],
+      },
+      {
+        title: 'Als eigene Vorlage weiterverwenden',
+        items: [
+          'Wenn du ein gutes Grundgerüst hast: als Version oder Kopie behalten und für die nächste Stelle anpassen.',
+          'Optional Bewerbung verknüpfen, damit Anschreiben und CV am gleichen Ort bleiben.',
+        ],
+      },
+    ],
+    sections: [
+      {
+        heading: 'Datenschutz auf einen Satz',
+        paragraphs: [
+          'Die mitgelieferten Texte sind absichtlich generisch; sie dienen nur Layout und Struktur. Persönliche Daten trägst du selbst ein — und nur die landen in deinen Exporten.',
+        ],
       },
     ],
   },

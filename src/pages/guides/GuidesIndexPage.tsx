@@ -137,6 +137,23 @@ export default function GuidesIndexPage() {
                   </div>
                 </div>
 
+                {category === 'bewerbung' && (
+                  <div className="mt-4 rounded-xl border border-teal-600/35 bg-gradient-to-r from-teal-50/98 to-white/95 px-4 py-3.5 shadow-sm sm:px-5">
+                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-teal-800">Hinweis CV.Studio</p>
+                    <p className="mt-1.5 text-sm leading-relaxed text-teal-950/90">
+                      Vorlagen enthalten nur synthetische Beispieldaten. Du startest mit einer Kopie, füllst deine echten
+                      Stationen ein und speicherst — so bleiben fremde Daten aus der App fern.
+                    </p>
+                    <Link
+                      to="/guides/cv-studio-vorlagen-dummy"
+                      className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-teal-800 hover:text-primary"
+                    >
+                      Zum Artikel „Vorlagen mit Beispieldaten“
+                      <ChevronRight className="h-4 w-4" aria-hidden />
+                    </Link>
+                  </div>
+                )}
+
                 <ul className="mt-3 space-y-2.5 sm:mt-4">
                   {articles.map(article => (
                     <li key={article.slug}>

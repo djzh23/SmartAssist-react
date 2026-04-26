@@ -99,11 +99,23 @@ function UserAvatarMenu({
             className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-stone-200 hover:bg-white/6"
             onClick={() => {
               setUserMenuOpen(false)
+              navigate('/overview')
+            }}
+          >
+            <LayoutDashboard size={16} className="text-stone-400" aria-hidden />
+            Übersicht
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-stone-200 hover:bg-white/6"
+            onClick={() => {
+              setUserMenuOpen(false)
               navigate('/profile')
             }}
           >
             <User size={16} className="text-stone-400" aria-hidden />
-            Startseite
+            Konto & Plan
           </button>
           <button
             type="button"
@@ -166,7 +178,7 @@ export default function TopNavBar({ onMenuClick, menuOpen }: Props) {
           {isChatRoute ? (
             <button
               type="button"
-              onClick={() => navigate('/profile')}
+              onClick={() => navigate('/overview')}
               className="flex h-11 w-11 min-h-[44px] min-w-[44px] flex-shrink-0 items-center justify-center rounded-lg text-white/90 hover:bg-sidebar-hover"
               aria-label="Zurück"
             >
@@ -207,7 +219,7 @@ export default function TopNavBar({ onMenuClick, menuOpen }: Props) {
     >
       <div className="flex min-w-0 items-center justify-start gap-2">
         <Link
-          to="/profile"
+          to="/overview"
           className="flex min-w-0 flex-shrink-0 items-center gap-2 rounded-lg py-1 pr-2 no-underline hover:opacity-90"
         >
           <img src="/favicon.png" alt="" className="h-8 w-8 rounded-lg" width={32} height={32} />
@@ -216,10 +228,16 @@ export default function TopNavBar({ onMenuClick, menuOpen }: Props) {
       </div>
 
       <nav className="hidden shrink-0 items-center justify-center gap-0.5 min-[769px]:flex desktop:gap-1">
-        <NavLink to="/profile" end className={({ isActive }) => navClass(isActive)}>
+        <NavLink to="/overview" end className={({ isActive }) => navClass(isActive)}>
           <span className="inline-flex items-center gap-1.5">
             <LayoutDashboard size={15} className="shrink-0 opacity-80" aria-hidden />
-            Startseite
+            Übersicht
+          </span>
+        </NavLink>
+        <NavLink to="/profile" end className={({ isActive }) => navClass(isActive)}>
+          <span className="inline-flex items-center gap-1.5">
+            <User size={15} className="shrink-0 opacity-80" aria-hidden />
+            Profil
           </span>
         </NavLink>
         <NavLink to="/tools" end className={({ isActive }) => navClass(isActive)}>

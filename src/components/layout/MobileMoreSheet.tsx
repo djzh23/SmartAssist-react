@@ -5,6 +5,7 @@ import {
   BookOpen,
   FileText,
   FolderOpen,
+  LayoutDashboard,
   NotebookPen,
   ShieldCheck,
   Tag,
@@ -63,6 +64,14 @@ export default function MobileMoreSheet() {
           <button
             type="button"
             className="flex min-h-[44px] w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm hover:bg-sidebar-hover"
+            onClick={() => go('/overview')}
+          >
+            <LayoutDashboard size={18} className="text-slate-400" aria-hidden />
+            Übersicht
+          </button>
+          <button
+            type="button"
+            className="flex min-h-[44px] w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm hover:bg-sidebar-hover"
             onClick={() => go('/applications')}
           >
             <FolderOpen size={18} className="text-slate-400" aria-hidden />
@@ -106,7 +115,7 @@ export default function MobileMoreSheet() {
             onClick={() => go('/profile')}
           >
             <User size={18} className="text-slate-400" aria-hidden />
-            Mein Profil
+            Konto & Plan
           </button>
           {isAdmin && (
             <button

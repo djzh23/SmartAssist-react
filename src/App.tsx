@@ -10,6 +10,7 @@ import ToolsPage from './pages/ToolsPage'
 import ProfilePage from './pages/ProfilePage'
 import OnboardingPage from './pages/OnboardingPage'
 
+const OverviewPage = lazy(() => import('./pages/OverviewPage'))
 const PricingPage = lazy(() => import('./pages/PricingPage'))
 const CareerProfilePage = lazy(() => import('./pages/CareerProfilePage'))
 const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage'))
@@ -83,6 +84,14 @@ function AppRoutes() {
       <Route element={<ProtectedApp />}>
         <Route path="/chat" element={<ChatPage />} />
         <Route path="/tools" element={<ToolsPage />} />
+        <Route
+          path="/overview"
+          element={(
+            <Suspense fallback={<RouteFallback />}>
+              <OverviewPage />
+            </Suspense>
+          )}
+        />
         <Route path="/profile" element={<ProfilePage />} />
         <Route
           path="/career-profile"

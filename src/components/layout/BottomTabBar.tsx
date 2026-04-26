@@ -26,11 +26,11 @@ export default function BottomTabBar() {
       aria-label="Hauptnavigation"
     >
       <div className="flex h-14 w-full items-stretch border-t border-white/10 bg-sidebar px-1 pt-0.5">
-        <NavLink to="/profile" className={({ isActive }) => tabClass(isActive)} end>
+        <NavLink to="/overview" className={({ isActive }) => tabClass(isActive)} end>
           {({ isActive }) => (
             <>
               <Home size={20} strokeWidth={isActive ? 2.5 : 2} aria-hidden />
-              <span>Start</span>
+              <span>Übersicht</span>
             </>
           )}
         </NavLink>
@@ -39,7 +39,7 @@ export default function BottomTabBar() {
           {({ isActive }) => (
             <>
               <UserCircle size={20} strokeWidth={isActive ? 2.5 : 2} aria-hidden />
-              <span>Profil</span>
+              <span>Karriere</span>
             </>
           )}
         </NavLink>

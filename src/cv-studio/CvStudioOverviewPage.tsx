@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@clerk/clerk-react'
 import { Loader2, Plus, Sparkles } from 'lucide-react'
 import {
@@ -215,6 +215,17 @@ export default function CvStudioOverviewPage() {
               <span className="font-medium text-stone-300"> Jetzt speichern </span>
               und Auto-Save.
             </p>
+            <div className="mt-4 max-w-2xl rounded-xl border border-teal-500/35 bg-teal-950/35 px-4 py-3 text-sm leading-relaxed text-teal-50/95">
+              <span className="font-semibold text-teal-100">Vorlagen:</span>{' '}
+              Neue Lebensläufe aus Vorlagen starten mit anonymen Beispieldaten (keine fremden echten Profile).
+              Nach dem ersten Speichern gehört der Inhalt nur dir — ersetze Platzhalter durch deine Daten und lege bei Bedarf eine eigene Vorlagen-Version an.{' '}
+              <Link
+                to="/guides/cv-studio-vorlagen-dummy"
+                className="font-semibold text-teal-200 underline decoration-teal-500/50 underline-offset-2 hover:text-white"
+              >
+                Ratgeber lesen
+              </Link>
+            </div>
           </div>
           <div className="flex flex-col items-end gap-2">
             <button

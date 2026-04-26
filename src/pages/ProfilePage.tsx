@@ -1,48 +1,27 @@
 import { useEffect, useState } from 'react'
-import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@clerk/clerk-react'
 import {
   ArrowRight,
   BarChart2,
-  BookOpen,
   Calendar,
-  ClipboardList,
   Crown,
-  FileText,
-  FolderOpen,
-  LayoutDashboard,
   Loader2,
-  MessageCircle,
-  NotebookPen,
   Sparkles,
   Star,
-  Wrench,
+  User,
   Zap,
 } from 'lucide-react'
-import type { LucideIcon } from 'lucide-react'
 import { IconHubIcon } from '../components/ui/IconHubIcon'
 import InfoExplainerButton from '../components/ui/InfoExplainerButton'
 import { useUserPlan, getPlanColors, getPlanLabel } from '../hooks/useUserPlan'
 import { confirmPlanFromSession, createPortalSession, syncPlanFromStripe } from '../services/StripeService'
 
 const ANCHOR_IDS = {
-  ueberblick: 'profil-ueberblick',
   konto: 'profil-konto',
   nutzung: 'profil-nutzung',
   plan: 'profil-plan',
-  verlauf: 'profil-verlauf',
-  workspace: 'profil-workspace',
 } as const
-
-const WORKSPACE_LINKS: { to: string; label: string; hint: string; icon: LucideIcon }[] = [
-  { to: '/chat', label: 'Chat', hint: 'Sessions, Tools und Kontext-Schalter', icon: MessageCircle },
-  { to: '/tools', label: 'Tools', hint: 'Stellenanalyse, Interview, Code & mehr', icon: Wrench },
-  { to: '/career-profile', label: 'Karriereprofil', hint: 'Daten für alle Chats und Bewerbungen', icon: ClipboardList },
-  { to: '/applications', label: 'Bewerbungen', hint: 'Pipeline, Status und Texte pro Stelle', icon: FolderOpen },
-  { to: '/cv-studio', label: 'CV.Studio', hint: 'Lebensläufe und Varianten', icon: FileText },
-  { to: '/guides', label: 'Ratgeber', hint: 'Schritt-für-Schritt durch die App', icon: BookOpen },
-  { to: '/notes', label: 'Notizen', hint: 'Gespeicherte Chat-Antworten', icon: NotebookPen },
-]
 
 function UsageBar({ used, limit }: { used: number; limit: number }) {
   const pct = Math.min(100, limit > 0 && limit !== Infinity ? (used / limit) * 100 : 0)
@@ -72,7 +51,6 @@ function UsageBar({ used, limit }: { used: number; limit: number }) {
 }
 
 export default function ProfilePage() {
-  const navigate = useNavigate()
   const location = useLocation()
   const { getToken } = useAuth()
   const [searchParams] = useSearchParams()
@@ -90,10 +68,6 @@ export default function ProfilePage() {
   const justUpgraded = (searchParams.get('upgraded') ?? '').toLowerCase() === 'true'
   const checkoutSessionId = searchParams.get('session_id') ?? null
   const PlanIcon = user.plan === 'pro' ? Crown : user.plan === 'premium' ? Sparkles : Zap
-
-  const weekHistory = user.weekHistory
-  const maxCount = Math.max(...weekHistory.map(d => d.count), 1)
-  const todayDate = new Date().toISOString().split('T')[0]
 
   useEffect(() => {
     const raw = location.hash.replace(/^#/, '')
@@ -283,48 +257,43 @@ export default function ProfilePage() {
       </div>
 
       <div className="relative z-10 mx-auto max-w-3xl space-y-5 px-4 py-6 sm:px-6 sm:py-8">
-        {/* Übersicht / Anker */}
-        <header
-          id={ANCHOR_IDS.ueberblick}
-          className="scroll-mt-24 rounded-2xl border border-stone-400/40 bg-app-parchment/95 p-5 shadow-landing sm:p-6"
-        >
+        <header className="scroll-mt-24 rounded-2xl border border-stone-400/40 bg-app-parchment/95 p-5 shadow-landing sm:p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex min-w-0 flex-1 gap-3">
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/15 text-primary shadow-sm">
-                <LayoutDashboard className="h-6 w-6" aria-hidden />
+                <User className="h-6 w-6" aria-hidden />
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div>
-                    <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-stone-500">Startseite</p>
-                    <h1 className="mt-1 text-2xl font-bold tracking-tight text-stone-900 sm:text-3xl">
-                      Profil & Übersicht
-                    </h1>
+                    <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-stone-500">Konto</p>
+                    <h1 className="mt-1 text-2xl font-bold tracking-tight text-stone-900 sm:text-3xl">Profil</h1>
                   </div>
                   <InfoExplainerButton
                     variant="onLight"
                     modalTitle="Was du hier siehst"
-                    ariaLabel="Erklärung zur Profil-Startseite"
+                    ariaLabel="Erklärung zur Profil-Seite"
                     className="text-stone-500 hover:bg-stone-200/90 hover:text-stone-900"
                   >
                     <p>
-                      Diese Seite bündelt dein Konto: wer du angemeldet bist, wie viele KI-Antworten du heute noch hast,
-                      welcher Plan aktiv ist, und wie aktiv du in den letzten Tagen warst.
-                    </p>
-                    <p className="mt-3">
-                      Darunter findest du direkte Einstiege in Chat, Tools, Karriereprofil, Bewerbungen, CV.Studio,
-                      Ratgeber und Notizen — jeweils mit Kurzbeschreibung.
+                      Auf dieser Seite stehen nur Angaben zu deinem Konto, deiner heutigen KI-Nutzung und deinem Plan.
+                      Zahlen zu Bewerbungen, Lebensläufen und Schnellzugriffen findest du unter Übersicht.
                     </p>
                     <p className="mt-3 text-stone-600">
-                      Buchmarke oder teile z. B. <span className="font-mono text-stone-800">/profile#profil-nutzung</span>
-                      , um direkt zur Nutzungsbox zu springen.
+                      Direktsprung: <span className="font-mono text-stone-800">/profile#profil-nutzung</span>
                     </p>
                   </InfoExplainerButton>
                 </div>
                 <p className="mt-2 text-sm leading-relaxed text-stone-700">
-                  Hier erkennst du auf einen Blick, was in deinem App-Profil passiert: Limits, Plan und Verlauf — plus
-                  schnelle Wege zu allen Hauptbereichen.
+                  Limits, Plan und Abo — getrennt von der Arbeitsübersicht.
                 </p>
+                <Link
+                  to="/overview"
+                  className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline"
+                >
+                  Zur Übersicht (Bewerbungen, CVs, Graph)
+                  <ArrowRight size={14} aria-hidden />
+                </Link>
               </div>
             </div>
           </div>
@@ -340,8 +309,6 @@ export default function ProfilePage() {
                   ['profil-konto', 'Konto'],
                   ['profil-nutzung', 'Nutzung'],
                   ['profil-plan', 'Plan'],
-                  ['profil-verlauf', '7 Tage'],
-                  ['profil-workspace', 'Features'],
                 ] as const
               ).map(([id, label]) => (
                 <a
@@ -595,107 +562,6 @@ export default function ProfilePage() {
               <p className="text-xs text-rose-700">{syncPlanError}</p>
             )}
           </div>
-        </section>
-
-        {/* Verlauf */}
-        <section
-          id={ANCHOR_IDS.verlauf}
-          className="scroll-mt-24 rounded-2xl border border-stone-400/40 bg-app-parchment/95 p-5 shadow-landing sm:p-6"
-        >
-          <div className="mb-4 flex items-start justify-between gap-2">
-            <h2 className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">Aktivität — letzte 7 Tage</h2>
-            <InfoExplainerButton
-              variant="onLight"
-              modalTitle="7-Tage-Verlauf"
-              ariaLabel="Erklärung zum Balkendiagramm"
-              className="text-stone-500 hover:bg-stone-200/90 hover:text-stone-900"
-            >
-              <p>
-                Die Balken zeigen, an welchen Wochentagen du (auf diesem Gerät) besonders viele Chat-Antworten hattest.
-                Heute ist farblich hervorgehoben.
-              </p>
-              <p className="mt-3 text-stone-600">
-                Ohne Nutzung bleiben die Balken flach — starte im Chat oder über Tools, um Bewegung zu sehen.
-              </p>
-            </InfoExplainerButton>
-          </div>
-          <div className="rounded-xl border border-stone-400/35 bg-white/95 p-4 shadow-card sm:p-5">
-            {weekHistory.every(d => d.count === 0) ? (
-              <div className="py-6 text-center">
-                <p className="text-sm font-medium text-stone-700">Noch keine Aktivität in den letzten 7 Tagen.</p>
-                <button
-                  type="button"
-                  onClick={() => navigate('/chat')}
-                  className="mt-3 text-sm font-semibold text-primary hover:underline"
-                >
-                  Zum Chat
-                </button>
-              </div>
-            ) : (
-              <div className="flex h-28 items-end gap-2">
-                {weekHistory.map(day => {
-                  const heightPct = Math.max(4, (day.count / maxCount) * 100)
-                  const isToday = day.date === todayDate
-                  return (
-                    <div key={day.date} className="flex flex-1 flex-col items-center gap-1.5">
-                      <span className="min-h-[12px] text-[10px] font-bold tabular-nums text-stone-600">
-                        {day.count > 0 ? day.count : ''}
-                      </span>
-                      <div className="flex h-[72px] w-full flex-col justify-end overflow-hidden rounded-t-lg bg-stone-200/90">
-                        <div
-                          className={`w-full rounded-t-lg transition-all duration-500 ${isToday ? 'bg-primary' : 'bg-stone-500/85'}`}
-                          style={{ height: `${heightPct}%` }}
-                        />
-                      </div>
-                      <span className={`text-[10px] font-semibold ${isToday ? 'text-primary' : 'text-stone-500'}`}>
-                        {day.day}
-                      </span>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </div>
-        </section>
-
-        {/* Workspace */}
-        <section
-          id={ANCHOR_IDS.workspace}
-          className="scroll-mt-24 rounded-2xl border border-stone-400/40 bg-app-parchment/95 p-5 shadow-landing sm:p-6"
-        >
-          <div className="mb-4 flex items-start justify-between gap-2">
-            <h2 className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">Weiter in der App</h2>
-            <InfoExplainerButton
-              variant="onLight"
-              modalTitle="Weiter in der App"
-              ariaLabel="Erklärung zu den Feature-Links"
-              className="text-stone-500 hover:bg-stone-200/90 hover:text-stone-900"
-            >
-              <p>
-                Diese Karten sind die empfohlenen Einstiege: vom Chat über strukturierte Tools bis zu Bewerbungen und
-                CV.Studio. So bleibt Kontext und Datenfluss nachvollziehbar.
-              </p>
-            </InfoExplainerButton>
-          </div>
-          <ul className="grid gap-2.5 sm:grid-cols-2">
-            {WORKSPACE_LINKS.map(({ to, label, hint, icon: Icon }) => (
-              <li key={to}>
-                <Link
-                  to={to}
-                  className="group flex min-h-[4.5rem] items-center gap-3 rounded-xl border border-stone-400/40 bg-white/95 px-4 py-3 shadow-card transition hover:border-primary/40 hover:shadow-landing-md"
-                >
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/12 text-primary">
-                    <Icon size={18} strokeWidth={2.1} aria-hidden />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block font-semibold text-stone-900 group-hover:text-primary">{label}</span>
-                    <span className="mt-0.5 block text-xs leading-snug text-stone-600">{hint}</span>
-                  </span>
-                  <ArrowRight className="h-4 w-4 shrink-0 text-stone-400 transition group-hover:translate-x-0.5 group-hover:text-primary" aria-hidden />
-                </Link>
-              </li>
-            ))}
-          </ul>
         </section>
       </div>
     </div>
