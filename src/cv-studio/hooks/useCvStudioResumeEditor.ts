@@ -14,6 +14,7 @@ import {
   patchCvStudioNotes,
   restoreCvStudioVersion,
   updateCvStudioResume,
+  updateCvStudioVersion,
 } from '../../api/client'
 import type { LinkJobApplicationRequest } from '../cvTypes'
 import { clearLastResumeId, setLastResumeId } from '../lib/cvStudio'
@@ -388,6 +389,26 @@ export function useCvStudioResumeEditor(
     [assignResume, getToken, refreshSummaries, requestConfirm, runBusy, versions],
   )
 
+  const renameSnapshotVersion = useCallback(
+    async (versionId: string, label: string | null) => {
+      const r = resumeRef.current
+      if (!r) return false
+      const token = await getToken()
+      if (!token) {
+        setError('Bitte anmelden.')
+        return false
+      }
+      const dto = await runBusy(async () =>
+        updateCvStudioVersion(token, r.id, versionId, { label: label?.trim() ? label.trim() : null }),
+      )
+      if (!dto) return false
+      setVersions(prev => prev.map(v => (v.id === versionId ? dto : v)))
+      setActiveVariant(cur => (cur?.id === versionId ? dto : cur))
+      return true
+    },
+    [getToken, runBusy],
+  )
+
   const deleteAllSnapshotVersions = useCallback(async (): Promise<boolean> => {
     const r = resumeRef.current
     if (!r || versions.length === 0) return false
@@ -500,6 +521,7 @@ export function useCvStudioResumeEditor(
     loadVariantIntoEditor,
     restoreSnapshotToWorkingCopy,
     deleteSnapshotVersion,
+    renameSnapshotVersion,
     deleteAllSnapshotVersions,
     linkApplication,
     patchNotes,

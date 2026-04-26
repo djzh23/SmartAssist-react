@@ -8,6 +8,7 @@ import {
   PencilLine,
   RotateCcw,
   Star,
+  Tag,
   Trash2,
 } from 'lucide-react'
 import type { ResumeVersionDto } from '../../cvTypes'
@@ -24,6 +25,7 @@ interface CvVersionsSidebarProps {
   onExportPdf: (versionId: string) => void | Promise<void>
   onExportDocx: (versionId: string) => void | Promise<void>
   onDelete: (versionId: string) => void | Promise<void>
+  onRenameLabel?: (versionId: string) => void | Promise<void>
   onDeleteAllSnapshots: () => void | Promise<void>
   onFreshStart: () => void | Promise<void>
 }
@@ -42,6 +44,7 @@ export default function CvVersionsSidebar({
   onExportPdf,
   onExportDocx,
   onDelete,
+  onRenameLabel,
   onDeleteAllSnapshots,
   onFreshStart,
 }: CvVersionsSidebarProps) {
@@ -82,7 +85,11 @@ export default function CvVersionsSidebar({
       </div>
       <div className="max-h-[min(70vh,32rem)] flex-1 overflow-y-auto p-2">
         <p className="mb-2 rounded-lg border border-white/10 bg-black/30 px-2 py-2 text-[10px] leading-relaxed text-stone-500">
-          Neuen Snapshot anlegen: oben auf{' '}
+          Snapshots sind{' '}
+          <span className="font-medium text-stone-400">zeitgestempelte Kopien</span>
+          {' '}
+          deiner Arbeitsversion — du behältst eine übersichtliche Historie in der App statt vieler lokaler Dateien.
+          Neu anlegen: oben auf{' '}
           <span className="font-medium text-stone-400">„Snapshot speichern“</span>.
         </p>
         {sorted.length === 0 ? (
@@ -130,6 +137,15 @@ export default function CvVersionsSidebar({
                       title="Arbeitsversion auf diesen Stand setzen (Server)"
                     >
                       <RotateCcw size={15} aria-hidden />
+                    </button>
+                    <button
+                      type="button"
+                      disabled={busy || !onRenameLabel}
+                      onClick={() => void onRenameLabel?.(v.id)}
+                      className={iconBtn}
+                      title="Bezeichnung dieses Snapshots bearbeiten"
+                    >
+                      <Tag size={15} aria-hidden />
                     </button>
                     <button
                       type="button"

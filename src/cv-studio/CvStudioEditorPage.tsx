@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@clerk/clerk-react'
 import {
-  ArrowLeft,
   Briefcase,
   Check,
   ChevronDown,
@@ -36,6 +35,7 @@ import {
 } from '../api/client'
 import { useAppUi } from '../context/AppUiContext'
 import { LivePreview } from './components/LivePreview'
+import CvRenameSnapshotModal from './components/editor/CvRenameSnapshotModal'
 import CvSaveVersionModal from './components/editor/CvSaveVersionModal'
 import CvExportUnsavedModal from './components/editor/CvExportUnsavedModal'
 import CvLinkApplicationModal from './components/editor/CvLinkApplicationModal'
@@ -118,6 +118,7 @@ export default function CvStudioEditorPage() {
     loadVariantIntoEditor,
     restoreSnapshotToWorkingCopy,
     deleteSnapshotVersion,
+    renameSnapshotVersion,
     deleteAllSnapshotVersions,
     linkApplication,
     patchNotes,
@@ -141,6 +142,9 @@ export default function CvStudioEditorPage() {
   const [loadingApps, setLoadingApps] = useState(false)
   const [exportUnsavedModal, setExportUnsavedModal] = useState<
     null | { kind: 'pdf' | 'docx'; vId?: string | null; fileStem?: string | null }
+  >(null)
+  const [renameSnapshotTarget, setRenameSnapshotTarget] = useState<
+    null | { id: string; versionNumber: number; label: string }
   >(null)
 
   const [versionsSidebarOpen, setVersionsSidebarOpen] = useState(() => {
@@ -220,12 +224,12 @@ export default function CvStudioEditorPage() {
 
   const versionStandHint = useMemo(() => {
     if (activeVariant) {
-      return `Du bearbeitest den Inhalt von Snapshot v${activeVariant.versionNumber}. „Übernehmen (Auto-Save)“ kopiert einen älteren Stand in die Arbeitsversion und speichert anschließend.`
+      return `Du bearbeitest eine Kopie des Inhalts von Snapshot v${activeVariant.versionNumber}. „Inhalt übernehmen“ (Stift) kopiert einen älteren Stand in die Arbeitsversion; Auto-Save sichert dort weiter.`
     }
     if (versions.length === 0) {
-      return 'Noch kein Snapshot: Änderungen leben nur in der Arbeitsversion. Mit „Snapshot speichern“ legst du eine erste gesicherte Version an.'
+      return 'Arbeitsversion = dein Original, an dem du täglich weiterdrehst. Snapshots sind feste Kopien zu Meilensteinen — kein Durcheinander mit losen Dateien auf dem Rechner. Mit „Snapshot speichern“ legst du die erste Kopie an.'
     }
-    return 'Arbeitsversion: hier liegen deine aktuellen Bearbeitungen. Gespeicherte Stände findest du in der Snapshot-Leiste rechts (zwischen Editor und Vorschau).'
+    return 'Arbeitsversion: aktueller Stand zum Bearbeiten. Rechts in der Leiste: nummerierte Snapshots (Kopien) — jederzeit wiederherstellbar oder exportierbar.'
   }, [activeVariant?.versionNumber, versions.length])
 
   const tabClass = (t: TabId) =>
@@ -400,19 +404,22 @@ export default function CvStudioEditorPage() {
     <div className="pb-12">
       {/* ── Editor header ───────────────────────────────────────────────── */}
       <header className="mb-4 border-b border-white/10 pb-4">
-        <Link
-          to="/cv-studio"
-          className="mb-3 inline-flex items-center gap-1 text-xs text-stone-500 hover:text-stone-300"
-        >
-          <ArrowLeft size={13} aria-hidden />
-          CV.Studio
-        </Link>
-
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0 space-y-2">
             <h1 className="text-xl font-semibold leading-snug text-white sm:text-2xl">
               {contextLabel || resume.title}
             </h1>
+            <p className="text-xs text-stone-500">
+              Interner Dokumentname:{' '}
+              <span className="font-medium text-stone-400">{resume.title || '—'}</span>
+              <button
+                type="button"
+                onClick={() => setActiveTab('profil')}
+                className="ml-2 text-primary-light underline-offset-2 hover:underline"
+              >
+                Im Tab „Profil“ bearbeiten
+              </button>
+            </p>
             <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-stone-400">
               <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/35 bg-amber-500/10 px-2 py-0.5 font-medium text-amber-100">
                 {activeVariant ? (
@@ -513,13 +520,6 @@ export default function CvStudioEditorPage() {
                 <span className="ml-0.5 h-1.5 w-1.5 rounded-full bg-amber-400" aria-label="Hat Notizen" />
               )}
             </button>
-            <Link
-              to="/cv-studio"
-              className="inline-flex items-center justify-center gap-1 rounded-lg border border-white/10 px-3 py-2 text-center text-xs text-stone-400 hover:bg-white/5 hover:text-stone-200 sm:text-sm"
-            >
-              <ArrowLeft size={14} aria-hidden />
-              Übersicht
-            </Link>
           </div>
         </div>
 
@@ -1043,6 +1043,15 @@ export default function CvStudioEditorPage() {
           versions={versions}
           activeVariant={activeVariant}
           busy={busy}
+          onRenameLabel={id => {
+            const v = versions.find(x => x.id === id)
+            if (!v) return
+            setRenameSnapshotTarget({
+              id: v.id,
+              versionNumber: v.versionNumber,
+              label: v.label ?? '',
+            })
+          }}
           onRestore={id =>
             void restoreSnapshotToWorkingCopy(id).then(ok => {
               if (ok) notify('Arbeitsstand wurde wiederhergestellt.', 'success')
@@ -1150,6 +1159,22 @@ export default function CvStudioEditorPage() {
           onSave={handleSaveVersion}
           onSaveAndPdf={handleSaveAndPdf}
           onClose={() => setShowSaveModal(false)}
+        />
+      )}
+
+      {renameSnapshotTarget && (
+        <CvRenameSnapshotModal
+          busy={busy}
+          versionNumber={renameSnapshotTarget.versionNumber}
+          initialLabel={renameSnapshotTarget.label}
+          onClose={() => setRenameSnapshotTarget(null)}
+          onSave={async label => {
+            const ok = await renameSnapshotVersion(renameSnapshotTarget.id, label)
+            if (ok) {
+              setRenameSnapshotTarget(null)
+              notify('Snapshot-Bezeichnung gespeichert.', 'success')
+            }
+          }}
         />
       )}
 

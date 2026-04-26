@@ -18,6 +18,7 @@ import type {
   ResumeTemplateDto,
   ResumeVersionDto,
   UpdateResumeRequest,
+  UpdateVersionRequest,
 } from '../cv-studio/cvTypes'
 
 const BASE = import.meta.env.VITE_API_BASE_URL
@@ -945,6 +946,23 @@ export async function createCvStudioVersion(token: string, resumeId: string, bod
     body: JSON.stringify(body),
   })
   return parseCvStudioJson<ResumeVersionDto>(res, 'CV.Studio: Variante speichern')
+}
+
+export async function updateCvStudioVersion(
+  token: string,
+  resumeId: string,
+  versionId: string,
+  body: UpdateVersionRequest,
+): Promise<ResumeVersionDto> {
+  const res = await fetch(
+    `${BASE}/api/cv-studio/resumes/${encodeURIComponent(resumeId)}/versions/${encodeURIComponent(versionId)}`,
+    {
+      method: 'PUT',
+      headers: { ...authHeaders(token), 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    },
+  )
+  return parseCvStudioJson<ResumeVersionDto>(res, 'CV.Studio: Snapshot umbenennen')
 }
 
 export async function deleteCvStudioVersion(token: string, resumeId: string, versionId: string): Promise<void> {

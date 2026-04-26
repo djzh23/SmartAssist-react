@@ -4,17 +4,21 @@ import { useAuth } from '@clerk/clerk-react'
 import {
   Briefcase,
   Building2,
+  CheckCircle2,
   ChevronRight,
   LayoutGrid,
   Loader2,
   Plus,
+  XCircle,
 } from 'lucide-react'
 import { ServerSyncControl } from '../components/ui/ServerSyncControl'
 import {
   type ApplicationStatusApi,
   type JobApplicationApi,
   fetchJobApplications,
+  listCvStudioResumes,
 } from '../api/client'
+import type { CvStudioResumeSummary } from '../types'
 import { useCareerProfile } from '../hooks/useCareerProfile'
 import { getProfileCompleteness, getProfileCompletenessGapHint } from '../utils/profileCompleteness'
 
@@ -72,10 +76,77 @@ function isActiveStatus(s: ApplicationStatusApi): boolean {
   return !TERMINAL.includes(s)
 }
 
+function hasCoverLetter(app: JobApplicationApi): boolean {
+  return (app.coverLetterText?.trim().length ?? 0) > 0
+}
+
+function hasLinkedCv(appId: string, summaries: CvStudioResumeSummary[]): boolean {
+  return summaries.some(s => s.linkedJobApplicationId === appId)
+}
+
+/** True once the application left the pure „Entwurf“ column (pipeline started / submitted). */
+function hasLeftDraft(app: JobApplicationApi): boolean {
+  return app.status !== 'draft'
+}
+
+function nextApplicationStep(app: JobApplicationApi, summaries: CvStudioResumeSummary[]): string {
+  if (!hasLinkedCv(app.id, summaries))
+    return 'Nächster Schritt: In CV.Studio einen Lebenslauf anlegen und mit dieser Bewerbung verknüpfen.'
+  if (!hasCoverLetter(app))
+    return 'Nächster Schritt: Anschreiben in den Bewerbungsdetails schreiben.'
+  if (!hasLeftDraft(app))
+    return 'Nächster Schritt: Nach dem Absenden den Status von „Entwurf“ auf „Beworben“ (oder weiter) setzen.'
+  return 'Kernunterlagen sind angelegt — in den Details weiterarbeiten oder Status anpassen.'
+}
+
+function ReadinessStrip({
+  cvOk,
+  letterOk,
+  pipelineOk,
+  nextStep,
+}: {
+  cvOk: boolean
+  letterOk: boolean
+  pipelineOk: boolean
+  nextStep: string
+}) {
+  const cell = (ok: boolean, short: string, title: string) => (
+    <span
+      className={`inline-flex items-center gap-0.5 font-semibold ${ok ? 'text-emerald-700' : 'text-rose-700'}`}
+      title={title}
+    >
+      {ok ? <CheckCircle2 size={12} strokeWidth={2.5} aria-hidden /> : <XCircle size={12} strokeWidth={2.5} aria-hidden />}
+      <span className="tracking-tight">{short}</span>
+    </span>
+  )
+
+  return (
+    <div className="mt-2 space-y-1 border-t border-stone-200/80 pt-2">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] uppercase tracking-wide text-stone-600">
+        {cell(cvOk, 'CV', cvOk ? 'Lebenslauf mit Bewerbung verknüpft' : 'Kein verknüpfter Lebenslauf in CV.Studio')}
+        <span className="text-stone-300" aria-hidden>
+          ·
+        </span>
+        {cell(letterOk, 'Anschr.', letterOk ? 'Anschreiben vorhanden' : 'Anschreiben fehlt')}
+        <span className="text-stone-300" aria-hidden>
+          ·
+        </span>
+        {cell(
+          pipelineOk,
+          'Status',
+          pipelineOk ? 'Pipeline gestartet (nicht mehr nur Entwurf)' : 'Noch im Entwurf — nach Bewerbung Status setzen',
+        )}
+      </div>
+      <p className="line-clamp-3 text-[10px] font-medium leading-snug text-stone-600">{nextStep}</p>
+    </div>
+  )
+}
+
 export default function ApplicationsPage() {
   const { getToken } = useAuth()
   const { profile: careerProfile, loading: careerProfileLoading } = useCareerProfile()
   const [apps, setApps] = useState<JobApplicationApi[]>([])
+  const [cvSummaries, setCvSummaries] = useState<CvStudioResumeSummary[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null)
@@ -90,8 +161,12 @@ export default function ApplicationsPage() {
         setApps([])
         return
       }
-      const list = await fetchJobApplications(token)
+      const [list, cvs] = await Promise.all([
+        fetchJobApplications(token),
+        listCvStudioResumes(token).catch(() => [] as CvStudioResumeSummary[]),
+      ])
       setApps(list)
+      setCvSummaries(cvs)
       setLastSyncedAt(new Date().toISOString())
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Laden fehlgeschlagen')
@@ -144,7 +219,8 @@ export default function ApplicationsPage() {
                 Pipeline von Entwurf bis Angebot — darunter findest du immer den Bereich{' '}
                 <span className="font-semibold text-stone-300">Abgesagt, Zurückgezogen und Angenommen</span>
                 {' '}
-                im Archiv. Jede Karte öffnet die Detailansicht.
+                im Archiv. Auf jeder Karte siehst du auf einen Blick, ob Lebenslauf (CV.Studio), Anschreiben und Status
+                passen — und was als Nächstes sinnvoll ist.
               </p>
               <p className="mt-2 text-sm font-medium text-stone-200">
                 <span className="tabular-nums text-primary">{activeCount}</span>
@@ -268,6 +344,12 @@ export default function ApplicationsPage() {
                               <p className="mt-2 text-[10px] font-medium uppercase tracking-wide text-stone-500">
                                 {formatRelative(app.updatedAt)}
                               </p>
+                              <ReadinessStrip
+                                cvOk={hasLinkedCv(app.id, cvSummaries)}
+                                letterOk={hasCoverLetter(app)}
+                                pipelineOk={hasLeftDraft(app)}
+                                nextStep={nextApplicationStep(app, cvSummaries)}
+                              />
                             </Link>
                           ))
                         )}
@@ -341,6 +423,12 @@ export default function ApplicationsPage() {
                               <p className="mt-1.5 text-[10px] font-medium uppercase tracking-wide text-stone-500">
                                 {formatRelative(app.updatedAt)}
                               </p>
+                              <ReadinessStrip
+                                cvOk={hasLinkedCv(app.id, cvSummaries)}
+                                letterOk={hasCoverLetter(app)}
+                                pipelineOk={hasLeftDraft(app)}
+                                nextStep={nextApplicationStep(app, cvSummaries)}
+                              />
                             </Link>
                           ))
                         )}

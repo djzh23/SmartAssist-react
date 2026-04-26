@@ -211,7 +211,7 @@ export default function CvStudioOverviewPage() {
               Lebensläufe
             </h1>
             <p className="mt-1 max-w-2xl text-sm leading-relaxed text-stone-400">
-              Verwalte und erstelle CVs — nach Bewerbung oder Zweck gruppiert.
+              Pro Stelle oder Bewerbung eine Arbeitsversion: du passt den Lebenslauf gezielt an, verknüpfst optional eine Bewerbung aus der Pipeline und sicherst Zwischenstände als Snapshots (Kopien) — ohne mehrere Word-Dateien manuell zu verwalten.
             </p>
           </div>
           <div className="flex flex-col items-end gap-2">
