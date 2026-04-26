@@ -13,6 +13,7 @@ import {
   Trash2,
   X,
 } from 'lucide-react'
+import InfoExplainerButton from '../components/ui/InfoExplainerButton'
 import { RenderedMarkdown } from '../components/chat/RenderedMarkdown'
 import { ServerSyncControl } from '../components/ui/ServerSyncControl'
 import { useAppUi } from '../context/AppUiContext'
@@ -162,12 +163,22 @@ export default function NotesPage() {
 
   const emptyHint = useMemo(
     () => (
-      <div className="rounded-2xl border border-dashed border-stone-500/35 bg-app-parchment/60 px-6 py-12 text-center text-stone-900">
+      <div className="relative rounded-2xl border border-dashed border-stone-500/35 bg-app-parchment/60 px-6 py-12 text-center text-stone-900">
+        <div className="absolute right-3 top-3">
+          <InfoExplainerButton
+            variant="onLight"
+            modalTitle="Notizen aus dem Chat"
+            ariaLabel="Erklärung, wie Notizen aus dem Chat gespeichert werden"
+          >
+            <p>
+              Speichere Assistant-Antworten im Chat über das Lesezeichen-Symbol unter der Nachricht. Gespeicherte
+              Notizen erscheinen hier und lassen sich mit dem Server synchronisieren.
+            </p>
+          </InfoExplainerButton>
+        </div>
         <NotebookPen className="mx-auto mb-3 h-10 w-10 text-stone-500" aria-hidden />
         <p className="text-sm font-medium text-stone-900">Noch keine Notizen</p>
-        <p className="mx-auto mt-2 max-w-md text-sm text-stone-700">
-          Speichere Assistant-Antworten im Chat über das Lesezeichen-Symbol unter der Nachricht.
-        </p>
+        <p className="mx-auto mt-2 max-w-md text-sm text-stone-600">Im Chat speichern — Details über das Info-Symbol.</p>
         <Link
           to="/chat"
           className="mt-4 inline-block text-sm font-medium text-primary hover:underline"
@@ -197,11 +208,22 @@ export default function NotesPage() {
           <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-primary-light text-primary">
             <NotebookPen className="h-5 w-5" aria-hidden />
           </div>
-          <div>
-            <h1 className="text-2xl font-bold text-stone-50">Notizen</h1>
-            <p className="mt-1 max-w-xl text-sm text-stone-400">
-              Gespeicherte Antworten aus dem Chat — mit dem Server synchron, auf allen Geräten verfügbar.
-            </p>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-start justify-between gap-2">
+              <h1 className="text-2xl font-bold text-stone-50">Notizen</h1>
+              <InfoExplainerButton
+                variant="onDark"
+                modalTitle="Notizen"
+                ariaLabel="Erklärung zu gespeicherten Chat-Notizen"
+                className="shrink-0"
+              >
+                <p>
+                  Gespeicherte Antworten aus dem Chat — mit dem Server synchronisiert und auf allen Geräten verfügbar,
+                  sobald du angemeldet bist.
+                </p>
+              </InfoExplainerButton>
+            </div>
+            <p className="mt-1 max-w-xl text-sm text-stone-400">Aus dem Chat — Details über das Info-Symbol.</p>
           </div>
         </div>
         <ServerSyncControl

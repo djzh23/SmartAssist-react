@@ -30,35 +30,67 @@ export interface GuideArticle {
 
 export const GUIDE_CATEGORY_ORDER: GuideCategory[] = ['grundlagen', 'bewerbung', 'chat', 'interview']
 
-export const GUIDE_CATEGORY_META: Record<
-  GuideCategory,
-  { label: string; description: string; accentClass: string; chipClass: string }
-> = {
+/** Visual system for /guides index + article chrome — warm parchment, per-topic accents */
+export interface GuideCategoryMeta {
+  label: string
+  description: string
+  chipClass: string
+  /** Outer panel for a category block on the index */
+  indexPanelClass: string
+  /** Top accent on the category header card */
+  headerTopClass: string
+  /** Left accent on article link cards */
+  cardLeftClass: string
+  /** Article page: top metadata strip */
+  articleMetaClass: string
+}
+
+export const GUIDE_CATEGORY_META: Record<GuideCategory, GuideCategoryMeta> = {
   grundlagen: {
     label: 'Grundlagen',
-    description: 'Profil, Kontext und sinnvolle Abläufe',
-    accentClass: 'border-l-4 border-primary',
-    chipClass: 'bg-primary-light text-primary',
+    description: 'Profil anlegen, Kontext verstehen und die App sinnvoll einrichten — Basis für alles Weitere.',
+    chipClass: 'bg-primary/12 text-stone-900 ring-1 ring-inset ring-primary/25',
+    indexPanelClass:
+      'rounded-2xl border border-amber-700/20 bg-gradient-to-br from-primary-light/95 via-app-parchment to-app-parchmentDeep p-4 shadow-landing sm:p-5',
+    headerTopClass: 'border-t-[3px] border-t-primary',
+    cardLeftClass: 'border-l-[3px] border-l-primary',
+    articleMetaClass: 'border-l-[3px] border-l-primary',
   },
   bewerbung: {
     label: 'Bewerbung',
-    description: 'Organisation, Texte, PDF und ATS',
-    accentClass: 'border-l-4 border-teal-500',
-    chipClass: 'bg-teal-50 text-teal-800',
+    description: 'Stellen erfassen, Pipeline nutzen, Anschreiben und Unterlagen — strukturiert pro Firma.',
+    chipClass: 'bg-teal-100/95 text-teal-950 ring-1 ring-inset ring-teal-600/25',
+    indexPanelClass:
+      'rounded-2xl border border-teal-700/22 bg-gradient-to-br from-teal-50/95 via-app-parchment to-app-parchmentDeep p-4 shadow-landing sm:p-5',
+    headerTopClass: 'border-t-[3px] border-t-teal-600',
+    cardLeftClass: 'border-l-[3px] border-l-teal-600',
+    articleMetaClass: 'border-l-[3px] border-l-teal-600',
   },
   chat: {
     label: 'Coaching & Chat',
-    description: 'Tools, Prompts und Stellenanalyse',
-    accentClass: 'border-l-4 border-amber-500',
-    chipClass: 'bg-amber-50 text-amber-900',
+    description: 'Tools wählen, klare Prompts formulieren und Stellenanalysen mit echtem Kontext fahren.',
+    chipClass: 'bg-orange-50 text-orange-950 ring-1 ring-inset ring-orange-500/35',
+    indexPanelClass:
+      'rounded-2xl border border-orange-600/22 bg-gradient-to-br from-orange-50/90 via-app-parchment to-app-parchmentDeep p-4 shadow-landing sm:p-5',
+    headerTopClass: 'border-t-[3px] border-t-orange-500',
+    cardLeftClass: 'border-l-[3px] border-l-orange-500',
+    articleMetaClass: 'border-l-[3px] border-l-orange-500',
   },
   interview: {
     label: 'Interview',
-    description: 'Vorbereitung und Übung',
-    accentClass: 'border-l-4 border-sky-500',
-    chipClass: 'bg-sky-50 text-sky-900',
+    description: 'Stories vorbereiten, im Chat üben und Learnings zurück in die Bewerbung schreiben.',
+    chipClass: 'bg-sky-100/95 text-sky-950 ring-1 ring-inset ring-sky-600/25',
+    indexPanelClass:
+      'rounded-2xl border border-sky-700/22 bg-gradient-to-br from-sky-50/92 via-app-parchment to-app-parchmentDeep p-4 shadow-landing sm:p-5',
+    headerTopClass: 'border-t-[3px] border-t-sky-600',
+    cardLeftClass: 'border-l-[3px] border-l-sky-600',
+    articleMetaClass: 'border-l-[3px] border-l-sky-600',
   },
 }
+
+/** Kurzer Lernpfad-Hinweis für die Ratgeber-Startseite */
+export const GUIDE_INDEX_PATH_HINT =
+  'Empfohlene Reihenfolge: Grundlagen → Bewerbung → Chat-Tools → Interview. So hast du überall denselben Kontext (Profil, Stelle, CV) und weniger Rückfragen.'
 
 export const GUIDE_ARTICLES: GuideArticle[] = [
   {

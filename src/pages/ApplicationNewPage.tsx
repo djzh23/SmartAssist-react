@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@clerk/clerk-react'
 import { ArrowLeft, Loader2 } from 'lucide-react'
+import InfoExplainerButton from '../components/ui/InfoExplainerButton'
 import { createJobApplication } from '../api/client'
 
 export default function ApplicationNewPage() {
@@ -52,7 +53,27 @@ export default function ApplicationNewPage() {
           <ArrowLeft size={16} />
           Zurück zur Übersicht
         </Link>
-        <h1 className="mb-6 text-2xl font-bold text-slate-900">Neue Bewerbung</h1>
+        <div className="mb-6 flex items-start justify-between gap-2">
+          <h1 className="text-2xl font-bold text-slate-900">Neue Bewerbung</h1>
+          <InfoExplainerButton
+            variant="onLight"
+            modalTitle="Neue Bewerbung anlegen"
+            ariaLabel="Hinweise zu den Feldern beim Anlegen"
+            className="text-slate-500 hover:bg-slate-200/80 hover:text-slate-900"
+          >
+            <p>
+              <span className="font-semibold text-slate-900">Titel und Firma</span>
+              {' '}
+              sind Pflicht — sie erscheinen in der Pipeline und in den Details.
+            </p>
+            <p className="mt-3">
+              <span className="font-semibold text-slate-900">Link und Stellentext</span>
+              {' '}
+              sind optional; der Stellentext (bis 3000 Zeichen) hilft später bei Analyse und Interview direkt in der
+              Bewerbung.
+            </p>
+          </InfoExplainerButton>
+        </div>
         <form onSubmit={submit} className="space-y-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
           {error && (
             <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{error}</div>

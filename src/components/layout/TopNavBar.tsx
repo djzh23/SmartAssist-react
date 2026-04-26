@@ -7,6 +7,7 @@ import {
   ClipboardList,
   FileText,
   FolderOpen,
+  LayoutDashboard,
   Menu,
   NotebookPen,
   Settings,
@@ -102,7 +103,7 @@ function UserAvatarMenu({
             }}
           >
             <User size={16} className="text-stone-400" aria-hidden />
-            Mein Profil
+            Startseite
           </button>
           <button
             type="button"
@@ -165,7 +166,7 @@ export default function TopNavBar({ onMenuClick, menuOpen }: Props) {
           {isChatRoute ? (
             <button
               type="button"
-              onClick={() => navigate('/tools')}
+              onClick={() => navigate('/profile')}
               className="flex h-11 w-11 min-h-[44px] min-w-[44px] flex-shrink-0 items-center justify-center rounded-lg text-white/90 hover:bg-sidebar-hover"
               aria-label="Zurück"
             >
@@ -206,7 +207,7 @@ export default function TopNavBar({ onMenuClick, menuOpen }: Props) {
     >
       <div className="flex min-w-0 items-center justify-start gap-2">
         <Link
-          to="/tools"
+          to="/profile"
           className="flex min-w-0 flex-shrink-0 items-center gap-2 rounded-lg py-1 pr-2 no-underline hover:opacity-90"
         >
           <img src="/favicon.png" alt="" className="h-8 w-8 rounded-lg" width={32} height={32} />
@@ -215,10 +216,16 @@ export default function TopNavBar({ onMenuClick, menuOpen }: Props) {
       </div>
 
       <nav className="hidden shrink-0 items-center justify-center gap-0.5 min-[769px]:flex desktop:gap-1">
+        <NavLink to="/profile" end className={({ isActive }) => navClass(isActive)}>
+          <span className="inline-flex items-center gap-1.5">
+            <LayoutDashboard size={15} className="shrink-0 opacity-80" aria-hidden />
+            Startseite
+          </span>
+        </NavLink>
         <NavLink to="/tools" end className={({ isActive }) => navClass(isActive)}>
           <span className="inline-flex items-center gap-1.5">
             <Wrench size={15} className="shrink-0 opacity-80" aria-hidden />
-            Startseite
+            Tools
           </span>
         </NavLink>
         <NavLink to="/career-profile" className={({ isActive }) => navClass(isActive)}>

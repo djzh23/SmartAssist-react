@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '@clerk/clerk-react'
 import { ArrowLeft, Briefcase, CheckCircle2, FileText, Loader2, Sparkles } from 'lucide-react'
+import InfoExplainerButton from '../components/ui/InfoExplainerButton'
 import {
   createCvStudioResume,
   createCvStudioResumeFromTemplate,
@@ -153,18 +154,26 @@ export default function CvStudioApplicationBasisPage() {
 
       <div className="mb-8 border-b border-white/10 pb-6">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary-light">CV.Studio</p>
-        <h1 className="mt-2 text-2xl font-semibold text-white sm:text-3xl">Welchen CV als Basis?</h1>
+        <div className="mt-2 flex items-start justify-between gap-3">
+          <h1 className="text-2xl font-semibold text-white sm:text-3xl">Welchen CV als Basis?</h1>
+          <InfoExplainerButton
+            variant="onDark"
+            modalTitle="CV-Basis für diese Bewerbung"
+            ariaLabel="Erklärung zur Auswahl des Lebenslaufs"
+            className="shrink-0"
+          >
+            <p>
+              Ist schon ein CV mit dieser Bewerbung verknüpft, öffnest du ihn direkt in der Liste unten. Optional kannst
+              du einen anderen Lebenslauf als Kopie übernehmen (neue Arbeitsversion + Verknüpfung) oder neu aus einer
+              Vorlage starten.
+            </p>
+          </InfoExplainerButton>
+        </div>
         <p className="mt-2 flex items-center gap-2 text-sm text-stone-400">
           <Briefcase size={16} className="shrink-0 text-amber-400/90" aria-hidden />
           {appLabel}
         </p>
-        <p className="mt-2 max-w-2xl text-sm text-stone-500">
-          Ist schon ein CV mit dieser Bewerbung verknüpft, öffnest du ihn direkt oben. Optional kannst du einen
-          <span className="text-stone-400"> anderen </span>
-          Lebenslauf als
-          <span className="text-stone-400"> Kopie </span>
-          übernehmen (neue Arbeitsversion + Verknüpfung) oder neu aus einer Vorlage starten.
-        </p>
+        <p className="mt-2 max-w-2xl text-sm text-stone-500">Verknüpft, kopieren oder neu — Details über das Info-Symbol.</p>
       </div>
 
       {error ? (
@@ -182,9 +191,20 @@ export default function CvStudioApplicationBasisPage() {
         <>
           {linkedForApp.length > 0 ? (
             <section className="mb-10 rounded-xl border border-emerald-500/35 bg-emerald-950/25 p-5">
-              <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-emerald-100">
+              <h2 className="mb-3 flex flex-wrap items-center gap-2 text-sm font-semibold text-emerald-100">
                 <CheckCircle2 size={18} className="shrink-0 text-emerald-400" aria-hidden />
                 Verknüpfter Lebenslauf für diese Bewerbung
+                <InfoExplainerButton
+                  variant="onDark"
+                  modalTitle="Verknüpfter Lebenslauf"
+                  ariaLabel="Erklärung zum verknüpften Lebenslauf"
+                  className="text-emerald-200/90 hover:bg-emerald-950/60 hover:text-emerald-50"
+                >
+                  <p>
+                    Dieser Eintrag ist mit dieser Stelle verknüpft — hier weiterbearbeiten, statt einen neuen Ableger
+                    anzulegen.
+                  </p>
+                </InfoExplainerButton>
               </h2>
               <ul className="space-y-4">
                 {linkedForApp.map(r => (
@@ -194,10 +214,7 @@ export default function CvStudioApplicationBasisPage() {
                   >
                     <div className="min-w-0">
                       <p className="font-medium text-white">{r.title}</p>
-                      <p className="mt-1 text-xs text-stone-400">
-                        Dieser Eintrag ist mit dieser Stelle verknüpft — hier weiterbearbeiten, statt einen neuen
-                        Ableger anzulegen.
-                      </p>
+                      <p className="mt-1 text-xs text-stone-500">Mit dieser Bewerbung verknüpft.</p>
                     </div>
                     <button
                       type="button"
@@ -214,16 +231,31 @@ export default function CvStudioApplicationBasisPage() {
           ) : null}
 
           <section className="mb-10">
-            <h2 className="mb-3 text-sm font-semibold text-white">
-              {linkedForApp.length > 0
-                ? 'Weitere Lebensläufe — als Kopie übernehmen'
-                : 'Bestehende Lebensläufe'}
-            </h2>
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+              <h2 className="text-sm font-semibold text-white">
+                {linkedForApp.length > 0
+                  ? 'Weitere Lebensläufe — als Kopie übernehmen'
+                  : 'Bestehende Lebensläufe'}
+              </h2>
+              <InfoExplainerButton
+                variant="onDark"
+                modalTitle="Weitere oder erste Lebensläufe"
+                ariaLabel="Erklärung zu Kopie, Vorlage und leerer Liste"
+                className="shrink-0"
+              >
+                <p>
+                  Wenn bereits ein CV mit dieser Bewerbung verknüpft ist, kannst du hier einen anderen Lebenslauf als
+                  Kopie übernehmen (neue Version + Verknüpfung) oder unten neu aus einer Vorlage starten.
+                </p>
+                <p className="mt-3">
+                  Ohne jeglichen CV im Konto: wähle unten eine Vorlage — der neue Lebenslauf wird mit dieser Bewerbung
+                  verknüpft.
+                </p>
+              </InfoExplainerButton>
+            </div>
             {otherResumes.length === 0 ? (
               <p className="text-sm text-stone-500">
-                {linkedForApp.length > 0
-                  ? 'Keine weiteren CVs im Konto — unten kannst du bei Bedarf neu aus einer Vorlage starten.'
-                  : 'Noch keine CVs — nutze unten eine Vorlage.'}
+                {linkedForApp.length > 0 ? 'Keine weiteren CVs.' : 'Noch keine CVs.'}
               </p>
             ) : (
               <ul className="grid gap-3 sm:grid-cols-2">
