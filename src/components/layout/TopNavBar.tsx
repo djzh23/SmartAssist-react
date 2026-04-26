@@ -105,17 +105,21 @@ function UserAvatarMenu({
             <LayoutDashboard size={16} className="text-stone-400" aria-hidden />
             Übersicht
           </button>
+          <div className="my-1.5 border-t border-stone-600/40" role="presentation" />
+          <p className="px-3 pb-1 pt-0.5 text-[10px] font-bold uppercase tracking-wide text-stone-500">
+            Konto & Plan
+          </p>
           <button
             type="button"
             role="menuitem"
-            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-stone-200 hover:bg-white/6"
+            className="flex w-full items-center gap-2 px-3 py-2 pl-5 text-left text-sm text-stone-200 hover:bg-white/6"
             onClick={() => {
               setUserMenuOpen(false)
               navigate('/profile')
             }}
           >
             <User size={16} className="text-stone-400" aria-hidden />
-            Konto & Plan
+            Profil
           </button>
           <button
             type="button"
@@ -232,12 +236,6 @@ export default function TopNavBar({ onMenuClick, menuOpen }: Props) {
           <span className="inline-flex items-center gap-1.5">
             <LayoutDashboard size={15} className="shrink-0 opacity-80" aria-hidden />
             Übersicht
-          </span>
-        </NavLink>
-        <NavLink to="/profile" end className={({ isActive }) => navClass(isActive)}>
-          <span className="inline-flex items-center gap-1.5">
-            <User size={15} className="shrink-0 opacity-80" aria-hidden />
-            Profil
           </span>
         </NavLink>
         <NavLink to="/tools" end className={({ isActive }) => navClass(isActive)}>

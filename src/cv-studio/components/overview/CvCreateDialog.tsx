@@ -159,6 +159,12 @@ export default function CvCreateDialog({
           {/* ── Step 1: Purpose ─────────────────────────────────────────── */}
           {step === 1 && (
             <div className="space-y-2">
+              <p className="mb-3 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-xs leading-relaxed text-stone-400">
+                <span className="font-semibold text-stone-300">Kurzentscheidung: </span>
+                Nutze „Für eine Bewerbung“, wenn du eine konkrete Stelle in der Pipeline führst. „Allgemein“ nur für
+                Master-CV oder Übung — sonst entstehen leicht lose Duplikate. „Ableiten“ kopiert einen vorhandenen Stand
+                sinnvoll für eine Variante.
+              </p>
               <PurposeButton
                 icon={<Briefcase size={18} />}
                 label="Für eine Bewerbung"

@@ -109,13 +109,16 @@ export default function MobileMoreSheet() {
             <Tag size={18} className="text-slate-400" aria-hidden />
             Preise
           </button>
+          <p className="px-3 pb-1 pt-2 text-[10px] font-bold uppercase tracking-wide text-slate-500">
+            Konto & Plan
+          </p>
           <button
             type="button"
-            className="flex min-h-[44px] w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm hover:bg-sidebar-hover"
+            className="flex min-h-[44px] w-full items-center gap-3 rounded-lg py-2.5 pl-6 pr-3 text-left text-sm hover:bg-sidebar-hover"
             onClick={() => go('/profile')}
           >
             <User size={18} className="text-slate-400" aria-hidden />
-            Konto & Plan
+            Profil
           </button>
           {isAdmin && (
             <button

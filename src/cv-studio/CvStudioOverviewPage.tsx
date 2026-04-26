@@ -21,15 +21,16 @@ import type { CvStudioPdfExportRow, CvStudioResumeSummary } from '../types'
 import type { ResumeTemplateDto } from './cvTypes'
 import { filterGroups, groupResumes, type CvResumeGroup } from './lib/cvStudioGroups'
 import CvApplicationGroup, { type CvGroupVisualVariant } from './components/overview/CvApplicationGroup'
+import CvCreateDialog, { type CreateParams } from './components/overview/CvCreateDialog'
+import CvExportHistory from './components/overview/CvExportHistory'
+import CvQuotaBadge from './components/overview/CvQuotaBadge'
+import InfoExplainerButton from '../components/ui/InfoExplainerButton'
 
 function groupVariantForCvGroup(g: CvResumeGroup): CvGroupVisualVariant {
   if (g.isUnlinked) return 'general'
   if (g.applicationId) return 'linked'
   return 'context'
 }
-import CvCreateDialog, { type CreateParams } from './components/overview/CvCreateDialog'
-import CvExportHistory from './components/overview/CvExportHistory'
-import CvQuotaBadge from './components/overview/CvQuotaBadge'
 
 export default function CvStudioOverviewPage() {
   const navigate = useNavigate()
@@ -194,6 +195,20 @@ export default function CvStudioOverviewPage() {
     setShowDialog(true)
   }
 
+  async function confirmThenOpenCreateForGroup(group: CvResumeGroup) {
+    if (group.resumes.length >= 2) {
+      const ok = await requestConfirm({
+        title: 'Weitere CV-Version?',
+        message:
+          'In dieser Gruppe liegen schon mehrere Lebensläufe. Ein weiterer lohnt sich meist für eine klar andere Variante (andere Zielstelle, kürzeres Layout, zweisprachig). Ohne konkreten Zweck entstehen leicht Dubletten. Trotzdem anlegen?',
+        confirmLabel: 'Ja, anlegen',
+        cancelLabel: 'Abbrechen',
+      })
+      if (!ok) return
+    }
+    openDialog(group)
+  }
+
   // ── Derived ───────────────────────────────────────────────────────────────
   const groups = resumes ? groupResumes(resumes) : []
   const filteredGroups = filterGroups(groups, searchQuery)
@@ -214,26 +229,41 @@ export default function CvStudioOverviewPage() {
           CV.Studio
         </p>
         <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
-              Lebensläufe
-            </h1>
-            <p className="mt-1 max-w-2xl text-sm leading-relaxed text-stone-400">
-              Pro Stelle oder Bewerbung eine Arbeitsversion: du passt den Lebenslauf gezielt an, verknüpfst optional eine Bewerbung aus der Pipeline und sicherst Zwischenstände als Snapshots (Kopien) — ohne mehrere Word-Dateien manuell zu verwalten. Die Verknüpfung ist dieselbe ID wie unter „Meine Bewerbungen“; dort siehst du in der Pipeline auf einen Blick, ob dieser CV schon angebunden ist. Im Editor: oben rechts
-              <span className="font-medium text-stone-300"> Jetzt speichern </span>
-              und Auto-Save.
-            </p>
-            <div className="mt-4 max-w-2xl rounded-xl border border-teal-500/35 bg-teal-950/35 px-4 py-3 text-sm leading-relaxed text-teal-50/95">
-              <span className="font-semibold text-teal-100">Vorlagen:</span>{' '}
-              Neue Lebensläufe aus Vorlagen starten mit anonymen Beispieldaten (keine fremden echten Profile).
-              Nach dem ersten Speichern gehört der Inhalt nur dir — ersetze Platzhalter durch deine Daten und lege bei Bedarf eine eigene Vorlagen-Version an.{' '}
-              <Link
-                to="/guides/cv-studio-vorlagen-dummy"
-                className="font-semibold text-teal-200 underline decoration-teal-500/50 underline-offset-2 hover:text-white"
+          <div className="min-w-0 max-w-2xl">
+            <div className="flex flex-wrap items-start gap-2">
+              <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+                Lebensläufe
+              </h1>
+              <InfoExplainerButton
+                variant="onDark"
+                trigger="hint"
+                modalTitle="So funktioniert CV.Studio"
+                ariaLabel="Hinweis: Ablauf CV.Studio"
+                className="border-white/20 text-stone-200 hover:bg-white/12"
               >
-                Ratgeber lesen
-              </Link>
+                <p>
+                  Pro Bewerbung oder Kontext eine <strong>Arbeitsversion</strong>: du bearbeitest im Editor, speicherst
+                  Zwischenstände als Versionen und kannst optional dieselbe Bewerbungs-ID wie unter „Meine
+                  Bewerbungen“ nutzen.
+                </p>
+                <p className="mt-3">
+                  <strong>Speichern:</strong> im Editor oben rechts „Jetzt speichern“ — dazu läuft Auto-Save im
+                  Hintergrund.
+                </p>
+                <p className="mt-3">
+                  <strong>Vorlagen</strong> starten mit anonymen Beispieldaten. Nach dem ersten Speichern gehört der
+                  Inhalt nur dir — Platzhalter durch echte Daten ersetzen. Mehr dazu im{' '}
+                  <Link to="/guides/cv-studio-vorlagen-dummy" className="font-semibold text-primary hover:underline">
+                    Ratgeber
+                  </Link>
+                  .
+                </p>
+              </InfoExplainerButton>
             </div>
+            <p className="mt-2 text-sm leading-relaxed text-stone-400">
+              Eine Kachel = eine Bewerbung oder ein freier Bereich. Darin liegen deine CV-Versionen — weniger
+              Datei-Chaos, klarer Bezug zur Stelle.
+            </p>
           </div>
           <div className="flex flex-col items-end gap-2">
             <button
@@ -286,17 +316,29 @@ export default function CvStudioOverviewPage() {
             <div className="mb-8 space-y-10">
               {linkedCvGroups.length > 0 && (
                 <section className="scroll-mt-4" aria-labelledby="cv-studio-section-pipeline">
-                  <div className="mb-3.5 flex flex-col gap-1.5 border-b border-teal-500/30 pb-3">
+                  <div className="mb-3 flex flex-wrap items-end justify-between gap-2 border-b border-white/10 pb-2">
                     <h2
                       id="cv-studio-section-pipeline"
-                      className="text-[11px] font-bold uppercase tracking-[0.2em] text-teal-200/95"
+                      className="text-[11px] font-bold uppercase tracking-[0.2em] text-stone-300"
                     >
                       Mit Bewerbung verknüpft
                     </h2>
-                    <p className="max-w-2xl text-xs leading-relaxed text-stone-500">
-                      Eine Kachel entspricht einer Bewerbung aus deiner Pipeline; darin liegen alle CV-Versionen für
-                      genau diese Stelle (türkisfarbene Umrandung).
-                    </p>
+                    <InfoExplainerButton
+                      variant="onDark"
+                      trigger="hint"
+                      modalTitle="Mit Bewerbung verknüpft"
+                      ariaLabel="Hinweis: CVs mit Bewerbung"
+                      className="border-white/15 text-stone-200 hover:bg-white/10"
+                    >
+                      <p>
+                        Jede Kachel gehört zu genau einer Zeile in „Meine Bewerbungen“. Alle CVs darin sind Versionen
+                        für dieselbe Stelle — ideal, um Anschreiben und Lebenslauf konsistent zu halten.
+                      </p>
+                      <p className="mt-3">
+                        Nutze <strong>„Weiteren CV …“</strong> nur, wenn du wirklich eine zweite Variante brauchst
+                        (z. B. Kurzfassung oder andere Struktur).
+                      </p>
+                    </InfoExplainerButton>
                   </div>
                   <div className="space-y-2.5">
                     {linkedCvGroups.map((group, idx) => (
@@ -305,7 +347,7 @@ export default function CvStudioOverviewPage() {
                         group={group}
                         variant="linked"
                         defaultOpen={idx < defaultOpenCount}
-                        onCreateResume={openDialog}
+                        onCreateResume={confirmThenOpenCreateForGroup}
                         onDeleteResume={handleDeleteResume}
                       />
                     ))}
@@ -315,17 +357,29 @@ export default function CvStudioOverviewPage() {
 
               {otherCvGroups.length > 0 && (
                 <section className="scroll-mt-4" aria-labelledby="cv-studio-section-standalone">
-                  <div className="mb-3.5 flex flex-col gap-1.5 border-b border-primary/30 pb-3">
+                  <div className="mb-3 flex flex-wrap items-end justify-between gap-2 border-b border-white/10 pb-2">
                     <h2
                       id="cv-studio-section-standalone"
-                      className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary-light/95"
+                      className="text-[11px] font-bold uppercase tracking-[0.2em] text-stone-300"
                     >
                       Allgemein & ohne Pipeline-ID
                     </h2>
-                    <p className="max-w-2xl text-xs leading-relaxed text-stone-500">
-                      Freistehende Lebensläufe und Vorlagen (violette Umrandung) oder nur Firmen- und Rollenname ohne
-                      Bewerbungs-ID (Bernstein) — jeweils ohne Eintrag in „Meine Bewerbungen“.
-                    </p>
+                    <InfoExplainerButton
+                      variant="onDark"
+                      trigger="hint"
+                      modalTitle="Allgemeine CVs und Kontext"
+                      ariaLabel="Hinweis: CVs ohne Bewerbung"
+                      className="border-white/15 text-stone-200 hover:bg-white/10"
+                    >
+                      <p>
+                        Hier liegen Vorlagen, freie Varianten oder CVs, denen nur ein Firmen-/Rollenname mitgegeben
+                        wurde — <strong>ohne</strong> feste ID aus der Bewerbungs-Pipeline.
+                      </p>
+                      <p className="mt-3">
+                        Wenn du eine echte Bewerbung tracken willst, lege sie unter „Meine Bewerbungen“ an und verknüpfe
+                        den CV dort — dann erscheint er oben unter „Mit Bewerbung verknüpft“.
+                      </p>
+                    </InfoExplainerButton>
                   </div>
                   <div className="space-y-2.5">
                     {otherCvGroups.map((group, idx) => (
@@ -334,7 +388,7 @@ export default function CvStudioOverviewPage() {
                         group={group}
                         variant={groupVariantForCvGroup(group)}
                         defaultOpen={idx < 2}
-                        onCreateResume={openDialog}
+                        onCreateResume={confirmThenOpenCreateForGroup}
                         onDeleteResume={handleDeleteResume}
                       />
                     ))}

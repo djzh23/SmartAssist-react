@@ -120,12 +120,9 @@ export default function OverviewPage() {
                   Deine App auf einen Blick
                 </h1>
                 <p className="mt-2 text-sm leading-relaxed text-stone-700">
-                  Kennzahlen zu Bewerbungen und Lebensläufen, eine grafische Verteilung der Bewerbungs-Status, Chat-Aktivität
-                  der letzten Woche und Schnellzugriffe — Konto und Plan findest du unter{' '}
-                  <Link to="/profile" className="font-semibold text-primary hover:underline">
-                    Profil
-                  </Link>
-                  .
+                  Kennzahlen zu Bewerbungen und Lebensläufen, Flussdiagramm der Bewerbungs-Status, Chat-Aktivität der
+                  letzten Woche und Schnellzugriffe — Konto, Plan und Profil erreichst du im Benutzermenü unter{' '}
+                  <span className="font-semibold text-stone-800">Konto & Plan → Profil</span>.
                 </p>
               </div>
             </div>
@@ -143,8 +140,8 @@ export default function OverviewPage() {
               <p className="mt-3">
                 <strong>Profil</strong>
                 {' '}
-                (Menü „Profil“) enthält Anmeldung, Tarif, tägliches KI-Limit und Abo-Verwaltung — also alles, was dein
-                Konto betrifft, nicht einzelne Bewerbungen.
+                (Avatar-Menü → Konto & Plan → Profil) enthält Anmeldung, Tarif, tägliches KI-Limit und
+                Abo-Verwaltung — alles rund ums Konto, nicht einzelne Bewerbungen.
               </p>
             </InfoExplainerButton>
           </div>

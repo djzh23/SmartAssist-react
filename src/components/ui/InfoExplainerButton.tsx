@@ -9,6 +9,8 @@ export interface InfoExplainerButtonProps {
   children: ReactNode
   /** Trigger colors: dark headers vs. parchment/light surfaces */
   variant?: 'onLight' | 'onDark'
+  /** Icon only, or pill with “Hinweis” + icon (better on dense UIs) */
+  trigger?: 'icon' | 'hint'
   /** Extra classes on the trigger button */
   className?: string
 }
@@ -21,6 +23,7 @@ export default function InfoExplainerButton({
   ariaLabel,
   children,
   variant = 'onLight',
+  trigger = 'icon',
   className = '',
 }: InfoExplainerButtonProps) {
   const [open, setOpen] = useState(false)
@@ -39,19 +42,33 @@ export default function InfoExplainerButton({
       ? 'text-stone-400 hover:bg-white/10 hover:text-stone-100'
       : 'text-stone-500 hover:bg-stone-200/70 hover:text-stone-900'
 
+  const hintTriggerExtra =
+    variant === 'onDark'
+      ? 'rounded-full border border-white/15 bg-white/[0.04] px-2.5 py-1 text-[11px] font-semibold tracking-wide text-stone-200 hover:border-white/25 hover:bg-white/[0.07]'
+      : 'rounded-full border border-stone-400/45 bg-white/90 px-2.5 py-1 text-[11px] font-semibold tracking-wide text-stone-700 hover:border-primary/35 hover:bg-primary-light/40'
+
   return (
     <>
       <button
         type="button"
         onClick={() => setOpen(true)}
         className={[
-          'inline-flex shrink-0 items-center justify-center rounded-full p-1 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-transparent',
-          triggerBase,
+          trigger === 'hint'
+            ? `inline-flex shrink-0 items-center gap-1 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${hintTriggerExtra}`
+            : 'inline-flex shrink-0 items-center justify-center rounded-full p-1 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-transparent',
+          trigger === 'hint' ? '' : triggerBase,
           className,
         ].join(' ')}
         aria-label={ariaLabel}
       >
-        <Info size={18} strokeWidth={2.25} aria-hidden />
+        {trigger === 'hint' ? (
+          <>
+            <span>Hinweis</span>
+            <Info size={14} strokeWidth={2.25} className="opacity-80" aria-hidden />
+          </>
+        ) : (
+          <Info size={18} strokeWidth={2.25} aria-hidden />
+        )}
       </button>
 
       {open ? (
