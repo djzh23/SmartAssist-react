@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '@clerk/clerk-react'
-import { ArrowLeft, Briefcase, FileText, Loader2, Sparkles } from 'lucide-react'
+import { ArrowLeft, Briefcase, CheckCircle2, FileText, Loader2, Sparkles } from 'lucide-react'
 import {
   createCvStudioResume,
   createCvStudioResumeFromTemplate,
@@ -56,6 +56,17 @@ export default function CvStudioApplicationBasisPage() {
   useEffect(() => {
     void load()
   }, [load])
+
+  const { linkedForApp, otherResumes } = useMemo(() => {
+    if (!applicationId)
+      return { linkedForApp: [] as CvStudioResumeSummary[], otherResumes: [] as CvStudioResumeSummary[] }
+    const linked = resumes.filter(r => r.linkedJobApplicationId === applicationId)
+    const linkedIds = new Set(linked.map(r => r.id))
+    return {
+      linkedForApp: linked,
+      otherResumes: resumes.filter(r => !linkedIds.has(r.id)),
+    }
+  }, [resumes, applicationId])
 
   async function runCreate(params: CreateParams) {
     const token = await getToken()
@@ -148,8 +159,11 @@ export default function CvStudioApplicationBasisPage() {
           {appLabel}
         </p>
         <p className="mt-2 max-w-2xl text-sm text-stone-500">
-          Wähle einen bestehenden Lebenslauf zum Ableiten oder lege einen neuen aus einer Vorlage an. Der CV wird mit
-          dieser Bewerbung verknüpft; der Anzeigename setzt sich aus Firma und Rolle.
+          Ist schon ein CV mit dieser Bewerbung verknüpft, öffnest du ihn direkt oben. Optional kannst du einen
+          <span className="text-stone-400"> anderen </span>
+          Lebenslauf als
+          <span className="text-stone-400"> Kopie </span>
+          übernehmen (neue Arbeitsversion + Verknüpfung) oder neu aus einer Vorlage starten.
         </p>
       </div>
 
@@ -166,13 +180,54 @@ export default function CvStudioApplicationBasisPage() {
         </div>
       ) : (
         <>
+          {linkedForApp.length > 0 ? (
+            <section className="mb-10 rounded-xl border border-emerald-500/35 bg-emerald-950/25 p-5">
+              <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-emerald-100">
+                <CheckCircle2 size={18} className="shrink-0 text-emerald-400" aria-hidden />
+                Verknüpfter Lebenslauf für diese Bewerbung
+              </h2>
+              <ul className="space-y-4">
+                {linkedForApp.map(r => (
+                  <li
+                    key={r.id}
+                    className="flex flex-col gap-3 rounded-lg border border-emerald-500/20 bg-black/20 p-4 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div className="min-w-0">
+                      <p className="font-medium text-white">{r.title}</p>
+                      <p className="mt-1 text-xs text-stone-400">
+                        Dieser Eintrag ist mit dieser Stelle verknüpft — hier weiterbearbeiten, statt einen neuen
+                        Ableger anzulegen.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={creating}
+                      onClick={() => navigate(`/cv-studio/edit/${encodeURIComponent(r.id)}`, { replace: true })}
+                      className="shrink-0 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-hover disabled:opacity-50"
+                    >
+                      CV öffnen
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
           <section className="mb-10">
-            <h2 className="mb-3 text-sm font-semibold text-white">Bestehende Lebensläufe</h2>
-            {resumes.length === 0 ? (
-              <p className="text-sm text-stone-500">Noch keine anderen CVs — nutze unten eine Vorlage.</p>
+            <h2 className="mb-3 text-sm font-semibold text-white">
+              {linkedForApp.length > 0
+                ? 'Weitere Lebensläufe — als Kopie übernehmen'
+                : 'Bestehende Lebensläufe'}
+            </h2>
+            {otherResumes.length === 0 ? (
+              <p className="text-sm text-stone-500">
+                {linkedForApp.length > 0
+                  ? 'Keine weiteren CVs im Konto — unten kannst du bei Bedarf neu aus einer Vorlage starten.'
+                  : 'Noch keine CVs — nutze unten eine Vorlage.'}
+              </p>
             ) : (
               <ul className="grid gap-3 sm:grid-cols-2">
-                {resumes.map(r => (
+                {otherResumes.map(r => (
                   <li
                     key={r.id}
                     className="rounded-xl border border-white/10 bg-black/20 p-4 transition-colors hover:border-primary/40 hover:bg-white/[0.04]"

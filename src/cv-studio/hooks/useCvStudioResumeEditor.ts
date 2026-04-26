@@ -128,14 +128,14 @@ export function useCvStudioResumeEditor(
     }
   }, [])
 
-  const saveNow = useCallback(async () => {
+  const saveNow = useCallback(async (): Promise<'skipped' | 'saved' | 'failed' | 'no_token'> => {
     const r = resumeRef.current
     if (!r || !hasUnsavedRef.current)
-      return
+      return 'skipped'
     const token = await getToken()
     if (!token) {
       setError('Bitte anmelden.')
-      return
+      return 'no_token'
     }
     setAutoSaving(true)
     setError(null)
@@ -154,9 +154,11 @@ export function useCvStudioResumeEditor(
       setResumeState(patched)
       await refreshSummaries()
       setLastResumeId(patched.id)
+      return 'saved'
     }
     catch (e) {
       setError(e instanceof Error ? e.message : String(e))
+      return 'failed'
     }
     finally {
       setAutoSaving(false)
@@ -171,12 +173,12 @@ export function useCvStudioResumeEditor(
     }, 1000)
   }, [saveNow])
 
-  const flushAutoSave = useCallback(async () => {
+  const flushAutoSave = useCallback(async (): Promise<'skipped' | 'saved' | 'failed' | 'no_token'> => {
     if (saveTimerRef.current) {
       clearTimeout(saveTimerRef.current)
       saveTimerRef.current = null
     }
-    await saveNow()
+    return saveNow()
   }, [saveNow])
 
   const updateResume = useCallback(
