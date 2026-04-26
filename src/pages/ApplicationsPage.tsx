@@ -80,8 +80,23 @@ function hasCoverLetter(app: JobApplicationApi): boolean {
   return (app.coverLetterText?.trim().length ?? 0) > 0
 }
 
+function applicationIdKey(appId: string): string {
+  return appId.trim()
+}
+
 function hasLinkedCv(appId: string, summaries: CvStudioResumeSummary[]): boolean {
-  return summaries.some(s => s.linkedJobApplicationId === appId)
+  const key = applicationIdKey(appId)
+  if (!key) return false
+  return summaries.some(s => applicationIdKey(s.linkedJobApplicationId ?? '') === key)
+}
+
+function getLinkedCvForApplication(
+  appId: string,
+  summaries: CvStudioResumeSummary[],
+): CvStudioResumeSummary | null {
+  const key = applicationIdKey(appId)
+  if (!key) return null
+  return summaries.find(s => applicationIdKey(s.linkedJobApplicationId ?? '') === key) ?? null
 }
 
 /** True once the application left the pure „Entwurf“ column (pipeline started / submitted). */
@@ -90,54 +105,68 @@ function hasLeftDraft(app: JobApplicationApi): boolean {
 }
 
 function nextApplicationStep(app: JobApplicationApi, summaries: CvStudioResumeSummary[]): string {
-  if (!hasLinkedCv(app.id, summaries))
-    return 'Nächster Schritt: In CV.Studio einen Lebenslauf anlegen und mit dieser Bewerbung verknüpfen.'
+  const linked = getLinkedCvForApplication(app.id, summaries)
+  if (!linked)
+    return 'Nächster Schritt: Unter CV.Studio einen Lebenslauf anlegen und in den Details (oder Basis-Assistent) mit dieser Bewerbung verknüpfen — dann erscheint er hier als erledigt.'
   if (!hasCoverLetter(app))
-    return 'Nächster Schritt: Anschreiben in den Bewerbungsdetails schreiben.'
+    return 'Nächster Schritt: Anschreiben in den Bewerbungsdetails ergänzen (dieselbe Karte öffnen).'
   if (!hasLeftDraft(app))
     return 'Nächster Schritt: Nach dem Absenden den Status von „Entwurf“ auf „Beworben“ (oder weiter) setzen.'
-  return 'Kernunterlagen sind angelegt — in den Details weiterarbeiten oder Status anpassen.'
+  return 'CV.Studio und Bewerbung sind verknüpft — in den Details weiterarbeiten oder Status anpassen.'
 }
 
 function ReadinessStrip({
   cvOk,
   letterOk,
   pipelineOk,
+  linkedCvTitle,
   nextStep,
 }: {
   cvOk: boolean
   letterOk: boolean
   pipelineOk: boolean
+  linkedCvTitle: string | null
   nextStep: string
 }) {
   const cell = (ok: boolean, short: string, title: string) => (
     <span
-      className={`inline-flex items-center gap-0.5 font-semibold ${ok ? 'text-emerald-700' : 'text-rose-700'}`}
+      className={`inline-flex shrink-0 items-center gap-0.5 font-semibold ${ok ? 'text-emerald-700' : 'text-rose-700'}`}
       title={title}
     >
-      {ok ? <CheckCircle2 size={12} strokeWidth={2.5} aria-hidden /> : <XCircle size={12} strokeWidth={2.5} aria-hidden />}
-      <span className="tracking-tight">{short}</span>
+      {ok ? <CheckCircle2 size={11} strokeWidth={2.5} aria-hidden /> : <XCircle size={11} strokeWidth={2.5} aria-hidden />}
+      <span className="max-w-[4.5rem] truncate tracking-tight">{short}</span>
     </span>
   )
 
   return (
-    <div className="mt-2 space-y-1 border-t border-stone-200/80 pt-2">
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] uppercase tracking-wide text-stone-600">
-        {cell(cvOk, 'CV', cvOk ? 'Lebenslauf mit Bewerbung verknüpft' : 'Kein verknüpfter Lebenslauf in CV.Studio')}
-        <span className="text-stone-300" aria-hidden>
+    <div className="mt-1.5 space-y-1 border-t border-stone-200/70 pt-1.5">
+      <div className="flex flex-nowrap items-center gap-x-1.5 overflow-x-auto text-[9px] uppercase tracking-wide text-stone-600 [scrollbar-width:thin]">
+        {cell(
+          cvOk,
+          'CV.St.',
+          cvOk
+            ? `Diese Bewerbung ist in CV.Studio mit einem Lebenslauf verknüpft${linkedCvTitle ? `: „${linkedCvTitle}“` : ''}.`
+            : 'Noch kein Lebenslauf in CV.Studio mit dieser Bewerbungs-ID verknüpft.',
+        )}
+        <span className="shrink-0 text-stone-300" aria-hidden>
           ·
         </span>
-        {cell(letterOk, 'Anschr.', letterOk ? 'Anschreiben vorhanden' : 'Anschreiben fehlt')}
-        <span className="text-stone-300" aria-hidden>
+        {cell(letterOk, 'Brief', letterOk ? 'Anschreiben in den Bewerbungsdetails vorhanden' : 'Anschreiben in den Details noch leer')}
+        <span className="shrink-0 text-stone-300" aria-hidden>
           ·
         </span>
         {cell(
           pipelineOk,
-          'Status',
-          pipelineOk ? 'Pipeline gestartet (nicht mehr nur Entwurf)' : 'Noch im Entwurf — nach Bewerbung Status setzen',
+          'Pipe.',
+          pipelineOk ? 'Status nicht mehr „Entwurf“ — Pipeline läuft' : 'Noch „Entwurf“ — nach Bewerbung Status anheben',
         )}
       </div>
-      <p className="line-clamp-3 text-[10px] font-medium leading-snug text-stone-600">{nextStep}</p>
+      {cvOk && linkedCvTitle ? (
+        <p className="truncate text-[9px] font-medium text-stone-500" title={linkedCvTitle}>
+          CV.Studio: <span className="text-stone-700">{linkedCvTitle}</span>
+        </p>
+      ) : null}
+      <p className="text-[9px] font-medium leading-snug text-stone-600">{nextStep}</p>
     </div>
   )
 }
@@ -216,11 +245,11 @@ export default function ApplicationsPage() {
                 Meine Bewerbungen
               </h1>
               <p className="mt-1 max-w-xl text-sm leading-relaxed text-stone-400">
-                Pipeline von Entwurf bis Angebot — darunter findest du immer den Bereich{' '}
+                Pipeline von Entwurf bis Angebot — darunter Archiv für{' '}
                 <span className="font-semibold text-stone-300">Abgesagt, Zurückgezogen und Angenommen</span>
-                {' '}
-                im Archiv. Auf jeder Karte siehst du auf einen Blick, ob Lebenslauf (CV.Studio), Anschreiben und Status
-                passen — und was als Nächstes sinnvoll ist.
+                . Pro Karte: drei Ampeln (CV.Studio-Verknüpfung, Anschreiben, Status) und der nächste Schritt. CV.Studio
+                speichert die technische Verknüpfung über die Bewerbungs-ID; die Karte zeigt den Lebenslauf-Titel, sobald
+                die Verknüpfung steht.
               </p>
               <p className="mt-2 text-sm font-medium text-stone-200">
                 <span className="tabular-nums text-primary">{activeCount}</span>
@@ -300,58 +329,64 @@ export default function ApplicationsPage() {
                   return (
                     <div
                       key={status}
-                      className="flex w-[min(100%,18rem)] shrink-0 snap-start flex-col rounded-2xl border border-stone-400/45 bg-app-parchment/95 shadow-card backdrop-blur-sm sm:min-h-[min(22rem,50vh)] sm:w-auto"
+                      className="flex min-h-0 max-h-[min(70vh,28rem)] w-[min(100%,16rem)] shrink-0 snap-start flex-col rounded-2xl border border-stone-400/45 bg-app-parchment/95 shadow-card backdrop-blur-sm sm:max-h-[min(72vh,32rem)] sm:w-auto"
                     >
-                      <div className="flex items-center justify-between gap-2 border-b border-stone-400/35 px-3 py-3 sm:px-4">
-                        <h3 className="text-[11px] font-bold uppercase tracking-wider text-stone-600">
+                      <div className="flex shrink-0 items-center justify-between gap-2 border-b border-stone-400/35 px-2.5 py-2 sm:px-3">
+                        <h3 className="text-[10px] font-bold uppercase tracking-wider text-stone-600">
                           {STATUS_LABEL[status]}
                         </h3>
-                        <span className="rounded-full bg-stone-200/80 px-2 py-0.5 text-xs font-bold tabular-nums text-stone-900">
+                        <span className="rounded-full bg-stone-200/80 px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-stone-900">
                           {list.length}
                         </span>
                       </div>
-                      <div className="flex min-h-[7rem] flex-1 flex-col gap-2 p-2 sm:p-3">
+                      <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain p-1.5 sm:p-2">
                         {list.length === 0 ? (
-                          <p className="rounded-lg border border-dashed border-stone-400/45 bg-app-parchmentDeep/80 px-2 py-6 text-center text-xs leading-relaxed text-stone-700">
+                          <p className="rounded-lg border border-dashed border-stone-400/45 bg-app-parchmentDeep/80 px-2 py-5 text-center text-[11px] leading-relaxed text-stone-700">
                             Leer — neue Bewerbung anlegen oder hierher ziehen (manuell per Status in den Details).
                           </p>
                         ) : (
-                          list.map(app => (
+                          <div className="flex flex-col gap-1.5">
+                            {list.map(app => {
+                              const linkedCv = getLinkedCvForApplication(app.id, cvSummaries)
+                              return (
                             <Link
                               key={app.id}
                               to={`/applications/${app.id}`}
                               className={[
-                                'group flex flex-col rounded-xl border border-stone-400/35 bg-white/95 p-3 text-left shadow-sm transition',
+                                'group flex max-h-[9.5rem] min-h-0 flex-col overflow-y-auto overflow-x-hidden overscroll-y-contain rounded-lg border border-stone-400/35 bg-white/95 p-2 text-left shadow-sm transition [scrollbar-width:thin]',
                                 'border-l-4 hover:border-stone-400/55 hover:shadow-md',
                                 COLUMN_ACCENT[status],
                               ].join(' ')}
                             >
-                              <div className="flex items-start justify-between gap-2">
-                                <Briefcase size={16} className="mt-0.5 shrink-0 text-primary/90" aria-hidden />
+                              <div className="flex shrink-0 items-start justify-between gap-1">
+                                <Briefcase size={13} className="mt-0.5 shrink-0 text-primary/90" aria-hidden />
                                 <ChevronRight
-                                  size={16}
+                                  size={14}
                                   className="shrink-0 text-stone-500 transition group-hover:translate-x-0.5 group-hover:text-primary"
                                   aria-hidden
                                 />
                               </div>
-                              <p className="mt-2 line-clamp-2 text-sm font-semibold leading-snug text-stone-900 group-hover:text-primary">
+                              <p className="mt-1 line-clamp-2 text-xs font-semibold leading-tight text-stone-900 group-hover:text-primary">
                                 {app.jobTitle || 'Ohne Titel'}
                               </p>
-                              <p className="mt-0.5 flex items-center gap-1 text-xs text-stone-700">
-                                <Building2 size={12} className="shrink-0 opacity-70" aria-hidden />
+                              <p className="mt-0.5 flex min-w-0 items-center gap-1 text-[10px] text-stone-700">
+                                <Building2 size={10} className="shrink-0 opacity-70" aria-hidden />
                                 <span className="truncate">{app.company || '—'}</span>
                               </p>
-                              <p className="mt-2 text-[10px] font-medium uppercase tracking-wide text-stone-500">
+                              <p className="mt-0.5 shrink-0 text-[9px] font-medium uppercase tracking-wide text-stone-500">
                                 {formatRelative(app.updatedAt)}
                               </p>
                               <ReadinessStrip
                                 cvOk={hasLinkedCv(app.id, cvSummaries)}
                                 letterOk={hasCoverLetter(app)}
                                 pipelineOk={hasLeftDraft(app)}
+                                linkedCvTitle={linkedCv?.title ?? null}
                                 nextStep={nextApplicationStep(app, cvSummaries)}
                               />
                             </Link>
-                          ))
+                              )
+                            })}
+                          </div>
                         )}
                       </div>
                     </div>
@@ -379,19 +414,19 @@ export default function ApplicationsPage() {
                   return (
                     <div
                       key={status}
-                      className="flex min-h-[10rem] flex-col rounded-xl border border-stone-400/40 bg-app-parchmentDeep/80 p-3 shadow-sm"
+                      className="flex max-h-[min(52vh,22rem)] min-h-[10rem] flex-col rounded-xl border border-stone-400/40 bg-app-parchmentDeep/80 p-2.5 shadow-sm"
                     >
-                      <div className="mb-2 flex items-center justify-between gap-2 border-b border-stone-400/35 pb-2">
-                        <h3 className="text-[11px] font-bold uppercase tracking-wider text-stone-600">
+                      <div className="mb-1.5 flex shrink-0 items-center justify-between gap-2 border-b border-stone-400/35 pb-1.5">
+                        <h3 className="text-[10px] font-bold uppercase tracking-wider text-stone-600">
                           {STATUS_LABEL[status]}
                         </h3>
-                        <span className="rounded-full bg-stone-200/80 px-2 py-0.5 text-xs font-bold tabular-nums text-stone-900">
+                        <span className="rounded-full bg-stone-200/80 px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-stone-900">
                           {list.length}
                         </span>
                       </div>
-                      <div className="flex flex-1 flex-col gap-2">
+                      <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
                         {list.length === 0 ? (
-                          <p className="flex flex-1 items-center justify-center rounded-lg border border-dashed border-stone-400/45 bg-white/60 px-2 py-6 text-center text-xs leading-relaxed text-stone-700">
+                          <p className="flex min-h-[6rem] items-center justify-center rounded-lg border border-dashed border-stone-400/45 bg-white/60 px-2 py-4 text-center text-[11px] leading-relaxed text-stone-700">
                             {status === 'rejected'
                               ? 'Noch keine abgesagte Bewerbung — Status „Abgesagt“ in den Details wählen.'
                               : status === 'withdrawn'
@@ -399,38 +434,44 @@ export default function ApplicationsPage() {
                                 : 'Noch keine Zusage — Status „Angenommen“ setzen, sobald du unterschrieben hast.'}
                           </p>
                         ) : (
-                          list.map(app => (
+                          <div className="flex flex-col gap-1.5 pr-0.5">
+                            {list.map(app => {
+                              const linkedCv = getLinkedCvForApplication(app.id, cvSummaries)
+                              return (
                             <Link
                               key={app.id}
                               to={`/applications/${app.id}`}
                               className={[
-                                'group flex flex-col rounded-lg border border-stone-400/35 bg-white/95 p-2.5 text-left shadow-sm transition',
+                                'group flex max-h-[9.5rem] min-h-0 flex-col overflow-y-auto overflow-x-hidden overscroll-y-contain rounded-lg border border-stone-400/35 bg-white/95 p-2 text-left shadow-sm transition [scrollbar-width:thin]',
                                 'border-l-4 hover:border-stone-400/55 hover:shadow-md',
                                 COLUMN_ACCENT[status],
                               ].join(' ')}
                             >
-                              <div className="flex items-start justify-between gap-1">
-                                <p className="line-clamp-2 min-w-0 text-sm font-semibold text-stone-900 group-hover:text-primary">
+                              <div className="flex shrink-0 items-start justify-between gap-1">
+                                <p className="line-clamp-2 min-w-0 text-xs font-semibold text-stone-900 group-hover:text-primary">
                                   {app.jobTitle || 'Ohne Titel'}
                                 </p>
                                 <ChevronRight
-                                  size={14}
+                                  size={13}
                                   className="shrink-0 text-stone-500 transition group-hover:translate-x-0.5 group-hover:text-primary"
                                   aria-hidden
                                 />
                               </div>
-                              <p className="mt-0.5 truncate text-xs text-stone-700">{app.company || '—'}</p>
-                              <p className="mt-1.5 text-[10px] font-medium uppercase tracking-wide text-stone-500">
+                              <p className="mt-0.5 truncate text-[10px] text-stone-700">{app.company || '—'}</p>
+                              <p className="mt-0.5 shrink-0 text-[9px] font-medium uppercase tracking-wide text-stone-500">
                                 {formatRelative(app.updatedAt)}
                               </p>
                               <ReadinessStrip
                                 cvOk={hasLinkedCv(app.id, cvSummaries)}
                                 letterOk={hasCoverLetter(app)}
                                 pipelineOk={hasLeftDraft(app)}
+                                linkedCvTitle={linkedCv?.title ?? null}
                                 nextStep={nextApplicationStep(app, cvSummaries)}
                               />
                             </Link>
-                          ))
+                              )
+                            })}
+                          </div>
                         )}
                       </div>
                     </div>
