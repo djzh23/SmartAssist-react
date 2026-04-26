@@ -20,7 +20,13 @@ import { useAppUi } from '../context/AppUiContext'
 import type { CvStudioPdfExportRow, CvStudioResumeSummary } from '../types'
 import type { ResumeTemplateDto } from './cvTypes'
 import { filterGroups, groupResumes, type CvResumeGroup } from './lib/cvStudioGroups'
-import CvApplicationGroup from './components/overview/CvApplicationGroup'
+import CvApplicationGroup, { type CvGroupVisualVariant } from './components/overview/CvApplicationGroup'
+
+function groupVariantForCvGroup(g: CvResumeGroup): CvGroupVisualVariant {
+  if (g.isUnlinked) return 'general'
+  if (g.applicationId) return 'linked'
+  return 'context'
+}
 import CvCreateDialog, { type CreateParams } from './components/overview/CvCreateDialog'
 import CvExportHistory from './components/overview/CvExportHistory'
 import CvQuotaBadge from './components/overview/CvQuotaBadge'
@@ -191,6 +197,8 @@ export default function CvStudioOverviewPage() {
   // ── Derived ───────────────────────────────────────────────────────────────
   const groups = resumes ? groupResumes(resumes) : []
   const filteredGroups = filterGroups(groups, searchQuery)
+  const linkedCvGroups = filteredGroups.filter(g => g.applicationId && !g.isUnlinked)
+  const otherCvGroups = filteredGroups.filter(g => !g.applicationId || g.isUnlinked)
 
   const defaultOpenCount = 3
   const hasResumes = (resumes?.length ?? 0) > 0
@@ -275,16 +283,64 @@ export default function CvStudioOverviewPage() {
           )}
 
           {filteredGroups.length > 0 ? (
-            <div className="mb-8 space-y-3">
-              {filteredGroups.map((group, idx) => (
-                <CvApplicationGroup
-                  key={group.key}
-                  group={group}
-                  defaultOpen={idx < defaultOpenCount}
-                  onCreateResume={openDialog}
-                  onDeleteResume={handleDeleteResume}
-                />
-              ))}
+            <div className="mb-8 space-y-10">
+              {linkedCvGroups.length > 0 && (
+                <section className="scroll-mt-4" aria-labelledby="cv-studio-section-pipeline">
+                  <div className="mb-3.5 flex flex-col gap-1.5 border-b border-teal-500/30 pb-3">
+                    <h2
+                      id="cv-studio-section-pipeline"
+                      className="text-[11px] font-bold uppercase tracking-[0.2em] text-teal-200/95"
+                    >
+                      Mit Bewerbung verknüpft
+                    </h2>
+                    <p className="max-w-2xl text-xs leading-relaxed text-stone-500">
+                      Eine Kachel entspricht einer Bewerbung aus deiner Pipeline; darin liegen alle CV-Versionen für
+                      genau diese Stelle (türkisfarbene Umrandung).
+                    </p>
+                  </div>
+                  <div className="space-y-2.5">
+                    {linkedCvGroups.map((group, idx) => (
+                      <CvApplicationGroup
+                        key={group.key}
+                        group={group}
+                        variant="linked"
+                        defaultOpen={idx < defaultOpenCount}
+                        onCreateResume={openDialog}
+                        onDeleteResume={handleDeleteResume}
+                      />
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {otherCvGroups.length > 0 && (
+                <section className="scroll-mt-4" aria-labelledby="cv-studio-section-standalone">
+                  <div className="mb-3.5 flex flex-col gap-1.5 border-b border-primary/30 pb-3">
+                    <h2
+                      id="cv-studio-section-standalone"
+                      className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary-light/95"
+                    >
+                      Allgemein & ohne Pipeline-ID
+                    </h2>
+                    <p className="max-w-2xl text-xs leading-relaxed text-stone-500">
+                      Freistehende Lebensläufe und Vorlagen (violette Umrandung) oder nur Firmen- und Rollenname ohne
+                      Bewerbungs-ID (Bernstein) — jeweils ohne Eintrag in „Meine Bewerbungen“.
+                    </p>
+                  </div>
+                  <div className="space-y-2.5">
+                    {otherCvGroups.map((group, idx) => (
+                      <CvApplicationGroup
+                        key={group.key}
+                        group={group}
+                        variant={groupVariantForCvGroup(group)}
+                        defaultOpen={idx < 2}
+                        onCreateResume={openDialog}
+                        onDeleteResume={handleDeleteResume}
+                      />
+                    ))}
+                  </div>
+                </section>
+              )}
             </div>
           ) : hasResumes ? (
             <p className="mb-8 text-sm text-stone-500">
