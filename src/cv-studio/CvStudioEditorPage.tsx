@@ -8,7 +8,6 @@ import {
   Code2,
   Download,
   ExternalLink,
-  FileCheck2,
   FileText,
   GraduationCap,
   GripVertical,
@@ -519,28 +518,6 @@ export default function CvStudioEditorPage() {
           </div>
 
           <div className="flex flex-shrink-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
-            <button
-              type="button"
-              disabled={busy || autoSaving}
-              title="Speichert die Arbeitsversion sofort auf dem Server (zusätzlich zum Auto-Save)."
-              onClick={() => {
-                void (async () => {
-                  const outcome = await flushAutoSave()
-                  if (outcome === 'saved')
-                    notify('Arbeitsversion gespeichert.', 'success')
-                  else if (outcome === 'skipped')
-                    notify('Keine offenen Änderungen — alles war schon gespeichert.', 'info')
-                  else if (outcome === 'no_token')
-                    notify('Bitte anmelden.', 'error')
-                  else if (outcome === 'failed')
-                    notify('Speichern fehlgeschlagen — siehe Fehlermeldung oben.', 'error')
-                })()
-              }}
-              className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/15 px-3 py-2 text-xs font-semibold text-emerald-100 hover:bg-emerald-500/25 disabled:opacity-50 sm:text-sm"
-            >
-              <FileCheck2 size={14} aria-hidden />
-              Jetzt speichern
-            </button>
             <button
               type="button"
               disabled={busy}
