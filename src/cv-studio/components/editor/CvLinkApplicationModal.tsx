@@ -199,31 +199,31 @@ export default function CvLinkApplicationModal({
                 </span>
               </label>
               {saveToApplicationList && (
-                <>
-                  <label className="block text-xs font-medium text-stone-400">
-                    Stellen-URL (optional)
-                    <input
-                      type="url"
-                      value={jobUrl}
-                      onChange={e => setJobUrl(e.target.value)}
-                      placeholder="https://…"
-                      className="mt-1.5 w-full rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm text-white placeholder:text-stone-600 focus:border-primary/60 focus:outline-none"
-                    />
-                  </label>
-                  <label className="flex cursor-pointer items-start gap-2 rounded-lg border border-white/10 bg-black/20 px-3 py-2.5">
-                    <input
-                      type="checkbox"
-                      className="mt-0.5 rounded border-white/30 bg-black/40 text-primary focus:ring-primary"
-                      checked={createNewResume}
-                      onChange={e => setCreateNewResume(e.target.checked)}
-                    />
-                    <span className="text-xs text-stone-300">
-                      <span className="font-medium text-stone-200">Neuen Lebenslauf anlegen</span>
-                      {' — '}
-                      kopiert den aktuellen CV als Basis für diese Bewerbung.
-                    </span>
-                  </label>
-                </>
+                <label className="flex cursor-pointer items-start gap-2 rounded-lg border border-white/10 bg-black/20 px-3 py-2.5">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5 rounded border-white/30 bg-black/40 text-primary focus:ring-primary"
+                    checked={createNewResume}
+                    onChange={e => setCreateNewResume(e.target.checked)}
+                  />
+                  <span className="text-xs text-stone-300">
+                    <span className="font-medium text-stone-200">Neuen Lebenslauf anlegen</span>
+                    {' — '}
+                    kopiert den aktuellen CV als Basis für diese Bewerbung.
+                  </span>
+                </label>
+              )}
+              {saveToApplicationList && (
+                <label className="block text-xs font-medium text-stone-400">
+                  Stellen-URL (optional)
+                  <input
+                    type="url"
+                    value={jobUrl}
+                    onChange={e => setJobUrl(e.target.value)}
+                    placeholder="https://…"
+                    className="mt-1.5 w-full rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm text-white placeholder:text-stone-600 focus:border-primary/60 focus:outline-none"
+                  />
+                </label>
               )}
             </div>
           )}
