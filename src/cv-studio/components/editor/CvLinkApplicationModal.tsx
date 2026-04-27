@@ -2,6 +2,15 @@ import { useEffect, useState } from 'react'
 import { Loader2, X } from 'lucide-react'
 import type { JobApplicationApi } from '../../../api/client'
 
+export interface LinkModalResult {
+  appId: string | null
+  company: string | null
+  role: string | null
+  createApplicationEntry?: boolean
+  createNewResume?: boolean
+  jobUrl?: string
+}
+
 interface CvLinkApplicationModalProps {
   currentAppId: string | null
   currentCompany: string | null
@@ -9,13 +18,7 @@ interface CvLinkApplicationModalProps {
   jobApplications: JobApplicationApi[]
   loadingApps: boolean
   busy: boolean
-  onLink: (
-    appId: string | null,
-    company: string | null,
-    role: string | null,
-    createApplicationEntry?: boolean,
-    jobUrl?: string,
-  ) => Promise<void>
+  onLink: (result: LinkModalResult) => Promise<void>
   onClose: () => void
 }
 
@@ -33,33 +36,58 @@ export default function CvLinkApplicationModal({
   const [selectedAppId, setSelectedAppId] = useState(currentAppId ?? '')
   const [manualCompany, setManualCompany] = useState(currentCompany ?? '')
   const [manualRole, setManualRole] = useState(currentRole ?? '')
-  const [saveToApplicationList, setSaveToApplicationList] = useState(false)
+  const [saveToApplicationList, setSaveToApplicationList] = useState(true)
+  const [createNewResume, setCreateNewResume] = useState(true)
   const [jobUrl, setJobUrl] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (jobApplications.length > 0 && !currentAppId) setMode('app')
   }, [jobApplications.length, currentAppId])
 
   async function handleConfirm() {
-    if (mode === 'app') {
-      const app = jobApplications.find(a => a.id === selectedAppId)
-      await onLink(
-        selectedAppId || null,
-        app?.company ?? null,
-        app?.jobTitle ?? null,
-      )
-    } else {
-      const co = manualCompany || null
-      const ro = manualRole || null
-      const shouldCreate = saveToApplicationList && !!manualCompany.trim() && !!manualRole.trim()
-      await onLink(null, co, ro, shouldCreate, jobUrl.trim() || undefined)
+    setSubmitting(true)
+    setError(null)
+    try {
+      if (mode === 'app') {
+        const app = jobApplications.find(a => a.id === selectedAppId)
+        await onLink({
+          appId: selectedAppId || null,
+          company: app?.company ?? null,
+          role: app?.jobTitle ?? null,
+        })
+      } else {
+        const co = manualCompany || null
+        const ro = manualRole || null
+        const shouldCreate = saveToApplicationList && !!manualCompany.trim() && !!manualRole.trim()
+        await onLink({
+          appId: null,
+          company: co,
+          role: ro,
+          createApplicationEntry: shouldCreate,
+          createNewResume: shouldCreate && createNewResume,
+          jobUrl: jobUrl.trim() || undefined,
+        })
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Verknüpfung fehlgeschlagen.')
+      setSubmitting(false)
     }
   }
 
   async function handleUnlink() {
-    await onLink(null, null, null)
+    setSubmitting(true)
+    setError(null)
+    try {
+      await onLink({ appId: null, company: null, role: null })
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Verknüpfung aufheben fehlgeschlagen.')
+      setSubmitting(false)
+    }
   }
 
+  const isBusy = busy || submitting
   const hasLink = !!(currentAppId || currentCompany || currentRole)
 
   return (
@@ -85,6 +113,12 @@ export default function CvLinkApplicationModal({
             Kontext
           </p>
           <h2 className="mb-4 text-lg font-semibold text-white">Bewerbung verknüpfen</h2>
+
+          {error && (
+            <div className="mb-4 rounded-lg border border-rose-500/40 bg-rose-950/30 px-3 py-2 text-xs text-rose-200">
+              {error}
+            </div>
+          )}
 
           {/* Mode selector */}
           <div className="mb-4 flex rounded-lg border border-white/10 bg-black/20 p-0.5">
@@ -165,16 +199,31 @@ export default function CvLinkApplicationModal({
                 </span>
               </label>
               {saveToApplicationList && (
-                <label className="block text-xs font-medium text-stone-400">
-                  Stellen-URL (optional)
-                  <input
-                    type="url"
-                    value={jobUrl}
-                    onChange={e => setJobUrl(e.target.value)}
-                    placeholder="https://…"
-                    className="mt-1.5 w-full rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm text-white placeholder:text-stone-600 focus:border-primary/60 focus:outline-none"
-                  />
-                </label>
+                <>
+                  <label className="block text-xs font-medium text-stone-400">
+                    Stellen-URL (optional)
+                    <input
+                      type="url"
+                      value={jobUrl}
+                      onChange={e => setJobUrl(e.target.value)}
+                      placeholder="https://…"
+                      className="mt-1.5 w-full rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm text-white placeholder:text-stone-600 focus:border-primary/60 focus:outline-none"
+                    />
+                  </label>
+                  <label className="flex cursor-pointer items-start gap-2 rounded-lg border border-white/10 bg-black/20 px-3 py-2.5">
+                    <input
+                      type="checkbox"
+                      className="mt-0.5 rounded border-white/30 bg-black/40 text-primary focus:ring-primary"
+                      checked={createNewResume}
+                      onChange={e => setCreateNewResume(e.target.checked)}
+                    />
+                    <span className="text-xs text-stone-300">
+                      <span className="font-medium text-stone-200">Neuen Lebenslauf anlegen</span>
+                      {' — '}
+                      kopiert den aktuellen CV als Basis für diese Bewerbung.
+                    </span>
+                  </label>
+                </>
               )}
             </div>
           )}
@@ -183,7 +232,7 @@ export default function CvLinkApplicationModal({
             {hasLink && (
               <button
                 type="button"
-                disabled={busy}
+                disabled={isBusy}
                 onClick={() => void handleUnlink()}
                 className="text-xs text-rose-300 hover:text-rose-200 disabled:opacity-40"
               >
@@ -192,11 +241,11 @@ export default function CvLinkApplicationModal({
             )}
             <button
               type="button"
-              disabled={busy}
+              disabled={isBusy}
               onClick={() => void handleConfirm()}
               className="ml-auto flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover disabled:opacity-40"
             >
-              {busy && <Loader2 size={15} className="animate-spin" aria-hidden />}
+              {isBusy && <Loader2 size={15} className="animate-spin" aria-hidden />}
               Speichern
             </button>
           </div>

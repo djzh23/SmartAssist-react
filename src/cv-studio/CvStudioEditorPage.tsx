@@ -29,18 +29,20 @@ import {
   Wrench,
 } from 'lucide-react'
 import {
+  createCvStudioResume,
   createJobApplication,
   downloadCvStudioDocx,
   downloadCvStudioPdf,
   fetchJobApplications,
   type JobApplicationApi,
+  linkCvStudioJobApplication,
 } from '../api/client'
 import { useAppUi } from '../context/AppUiContext'
 import { LivePreview } from './components/LivePreview'
 import CvRenameSnapshotModal from './components/editor/CvRenameSnapshotModal'
 import CvSaveVersionModal from './components/editor/CvSaveVersionModal'
 import CvExportUnsavedModal from './components/editor/CvExportUnsavedModal'
-import CvLinkApplicationModal from './components/editor/CvLinkApplicationModal'
+import CvLinkApplicationModal, { type LinkModalResult } from './components/editor/CvLinkApplicationModal'
 import CvVersionsSidebar from './components/editor/CvVersionsSidebar'
 import { useCvStudioResumeEditor } from './hooks/useCvStudioResumeEditor'
 import { downloadBlob, notify } from './lib/cvStudio'
@@ -351,24 +353,43 @@ export default function CvStudioEditorPage() {
     }
   }
 
-  const handleLink = async (
-    appId: string | null,
-    company: string | null,
-    role: string | null,
-    createApplicationEntry?: boolean,
-    jobUrl?: string,
-  ) => {
+  const handleLink = async (result: LinkModalResult) => {
+    const { appId, company, role, createApplicationEntry, createNewResume, jobUrl } = result
+    const token = await getToken()
+    if (!token) throw new Error('Bitte anmelden.')
+
     let linkedAppId = appId
+
+    // 1) Create the Bewerbung entry if requested
     if (createApplicationEntry && company?.trim() && role?.trim()) {
-      const token = await getToken()
-      if (!token) { notify('Bitte anmelden.', 'error'); return }
       const app = await createJobApplication(token, {
         company: company.trim(),
         jobTitle: role.trim(),
         jobUrl: jobUrl || undefined,
       })
+      if (!app.id) throw new Error('Bewerbung wurde nicht korrekt angelegt (keine ID).')
       linkedAppId = app.id
     }
+
+    // 2) Clone current resume + link to application + navigate to clone
+    if (createNewResume && resume) {
+      const linkPayload = {
+        jobApplicationId: linkedAppId ?? null,
+        targetCompany: company?.trim() || null,
+        targetRole: role?.trim() || null,
+      }
+      const clone = await createCvStudioResume(token, {
+        title: `${resume.title} — ${company?.trim() ?? 'Bewerbung'}`,
+        templateKey: resume.templateKey ?? undefined,
+        resumeData: resume.resumeData,
+      })
+      await linkCvStudioJobApplication(token, clone.id, linkPayload)
+      setShowLinkModal(false)
+      navigate(`/cv-studio/edit/${clone.id}`)
+      return
+    }
+
+    // 3) Just link the current resume (no new CV)
     await linkApplication({ jobApplicationId: linkedAppId, targetCompany: company, targetRole: role })
     setShowLinkModal(false)
   }
