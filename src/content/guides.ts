@@ -82,7 +82,7 @@ export const GUIDE_CATEGORY_META: Record<GuideCategory, GuideCategoryMeta> = {
     description: 'Stories vorbereiten, im Chat üben und Learnings zurück in die Bewerbung schreiben.',
     chipClass: 'bg-sky-100/95 text-sky-950 ring-1 ring-inset ring-sky-600/25',
     indexPanelClass:
-      'rounded-2xl border border-sky-700/22 bg-gradient-to-br from-sky-50/92 via-app-parchment to-app-parchmentDeep p-4 shadow-landing sm:p-5',
+      'rounded-2xl border border-sky-700/22 bg-gradient-to-br from-sky-50 via-app-parchment to-app-parchmentDeep p-4 shadow-landing sm:p-5',
     headerTopClass: 'border-t-[3px] border-t-sky-600',
     cardLeftClass: 'border-l-[3px] border-l-sky-600',
     articleMetaClass: 'border-l-[3px] border-l-sky-600',
