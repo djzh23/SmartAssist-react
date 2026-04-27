@@ -486,14 +486,14 @@ export default function NotesPage() {
             <input
               value={editTitle}
               onChange={e => setEditTitle(e.target.value)}
-              className="mb-3 w-full rounded-lg border border-stone-400/45 px-3 py-2 text-sm outline-none focus:border-primary"
+              className="mb-3 w-full rounded-lg border border-stone-400/45 bg-white px-3 py-2 text-sm text-stone-900 placeholder:text-stone-400 outline-none focus:border-primary"
             />
             <label className="mb-1 block text-xs font-semibold uppercase text-stone-600">Inhalt</label>
             <textarea
               value={editBody}
               onChange={e => setEditBody(e.target.value)}
               rows={12}
-              className="mb-3 w-full resize-y rounded-lg border border-stone-400/45 px-3 py-2 text-sm outline-none focus:border-primary"
+              className="mb-3 w-full resize-y rounded-lg border border-stone-400/45 bg-white px-3 py-2 text-sm text-stone-900 placeholder:text-stone-400 outline-none focus:border-primary"
             />
             <label className="mb-1 block text-xs font-semibold uppercase text-stone-600">Tags</label>
             <div className="mb-2 flex flex-wrap gap-1.5">
@@ -520,7 +520,7 @@ export default function NotesPage() {
                     addEditTag()
                   }
                 }}
-                className="min-w-0 flex-1 rounded-lg border border-stone-400/45 px-3 py-2 text-sm outline-none focus:border-primary"
+                className="min-w-0 flex-1 rounded-lg border border-stone-400/45 bg-white px-3 py-2 text-sm text-stone-900 placeholder:text-stone-400 outline-none focus:border-primary"
                 placeholder="Tag, Enter"
               />
               <button type="button" onClick={addEditTag} className="rounded-lg border border-stone-400/45 px-3 py-2 text-sm hover:bg-stone-100">
