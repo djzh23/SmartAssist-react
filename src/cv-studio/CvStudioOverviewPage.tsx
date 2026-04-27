@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@clerk/clerk-react'
-import { Loader2, Plus, Sparkles } from 'lucide-react'
+import { Briefcase, Layers, Loader2, Plus, Sparkles } from 'lucide-react'
 import {
   createCvStudioResume,
   createCvStudioResumeFromTemplate,
@@ -19,18 +19,15 @@ import {
 import { useAppUi } from '../context/AppUiContext'
 import type { CvStudioPdfExportRow, CvStudioResumeSummary } from '../types'
 import type { ResumeTemplateDto } from './cvTypes'
+import { useCvResumeCategories } from '../hooks/useCvResumeCategories'
 import { filterGroups, groupResumes, type CvResumeGroup } from './lib/cvStudioGroups'
-import CvApplicationGroup, { type CvGroupVisualVariant } from './components/overview/CvApplicationGroup'
+import { resumesFromOtherGroups } from './lib/cvStudioCategoryStorage'
 import CvCreateDialog, { type CreateParams } from './components/overview/CvCreateDialog'
 import CvExportHistory from './components/overview/CvExportHistory'
+import CvLinkedApplicationsBoard from './components/overview/CvLinkedApplicationsBoard'
+import CvMasterCategoriesBoard from './components/overview/CvMasterCategoriesBoard'
 import CvQuotaBadge from './components/overview/CvQuotaBadge'
 import InfoExplainerButton from '../components/ui/InfoExplainerButton'
-
-function groupVariantForCvGroup(g: CvResumeGroup): CvGroupVisualVariant {
-  if (g.isUnlinked) return 'general'
-  if (g.applicationId) return 'linked'
-  return 'context'
-}
 
 export default function CvStudioOverviewPage() {
   const navigate = useNavigate()
@@ -214,6 +211,16 @@ export default function CvStudioOverviewPage() {
   const filteredGroups = filterGroups(groups, searchQuery)
   const linkedCvGroups = filteredGroups.filter(g => g.applicationId && !g.isUnlinked)
   const otherCvGroups = filteredGroups.filter(g => !g.applicationId || g.isUnlinked)
+  const masterResumes = useMemo(() => resumesFromOtherGroups(otherCvGroups), [otherCvGroups])
+
+  const [studioTab, setStudioTab] = useState<'applications' | 'masters'>('applications')
+  const {
+    categories,
+    assignResume,
+    addCategory,
+    removeCategory,
+    getCategoryIdForResume,
+  } = useCvResumeCategories(resumes)
 
   const defaultOpenCount = 3
   const hasResumes = (resumes?.length ?? 0) > 0
@@ -258,11 +265,16 @@ export default function CvStudioOverviewPage() {
                   </Link>
                   .
                 </p>
+                <p className="mt-3">
+                  Nutze die Tabs <strong>Bewerbungen</strong> und <strong>Master & Kategorien</strong>, um schnell
+                  zwischen Stellen-CVs und freien Master-Vorlagen zu wechseln.
+                </p>
               </InfoExplainerButton>
             </div>
             <p className="mt-2 text-sm leading-relaxed text-stone-400">
-              Eine Kachel = eine Bewerbung oder ein freier Bereich. Darin liegen deine CV-Versionen — weniger
-              Datei-Chaos, klarer Bezug zur Stelle.
+              <strong className="text-stone-300">Bewerbungen:</strong> CVs je Zeile aus „Meine Bewerbungen“ — horizontal
+              als Karten. <strong className="text-stone-300">Master & Kategorien:</strong> freie Lebensläufe nach
+              eigenen Schwerpunkten sortieren (z. B. Frontend, SAP, Logistik).
             </p>
           </div>
           <div className="flex flex-col items-end gap-2">
@@ -313,86 +325,147 @@ export default function CvStudioOverviewPage() {
           )}
 
           {filteredGroups.length > 0 ? (
-            <div className="mb-8 space-y-10">
-              {linkedCvGroups.length > 0 && (
-                <section className="scroll-mt-4" aria-labelledby="cv-studio-section-pipeline">
+            <div className="mb-8 space-y-6">
+              <div
+                className="flex flex-wrap gap-2 rounded-2xl border border-white/10 bg-black/35 p-1.5"
+                role="tablist"
+                aria-label="Lebenslauf-Bereiche"
+              >
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={studioTab === 'applications'}
+                  onClick={() => setStudioTab('applications')}
+                  className={[
+                    'inline-flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold transition sm:flex-none sm:px-4',
+                    studioTab === 'applications'
+                      ? 'bg-white/12 text-white shadow-sm'
+                      : 'text-stone-400 hover:bg-white/[0.06] hover:text-stone-200',
+                  ].join(' ')}
+                >
+                  <Briefcase size={16} aria-hidden />
+                  Bewerbungen
+                  <span className="rounded-md bg-black/30 px-1.5 py-0.5 text-[11px] tabular-nums text-stone-300">
+                    {linkedCvGroups.length}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={studioTab === 'masters'}
+                  onClick={() => setStudioTab('masters')}
+                  className={[
+                    'inline-flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold transition sm:flex-none sm:px-4',
+                    studioTab === 'masters'
+                      ? 'bg-white/12 text-white shadow-sm'
+                      : 'text-stone-400 hover:bg-white/[0.06] hover:text-stone-200',
+                  ].join(' ')}
+                >
+                  <Layers size={16} aria-hidden />
+                  Master & Kategorien
+                  <span className="rounded-md bg-black/30 px-1.5 py-0.5 text-[11px] tabular-nums text-stone-300">
+                    {masterResumes.length}
+                  </span>
+                </button>
+              </div>
+
+              {studioTab === 'applications' && (
+                <section className="scroll-mt-4" aria-labelledby="cv-tab-bewerbungen">
                   <div className="mb-3 flex flex-wrap items-end justify-between gap-2 border-b border-white/10 pb-2">
                     <h2
-                      id="cv-studio-section-pipeline"
+                      id="cv-tab-bewerbungen"
                       className="text-[11px] font-bold uppercase tracking-[0.2em] text-stone-300"
                     >
-                      Mit Bewerbung verknüpft
+                      CVs zu Meine Bewerbungen
                     </h2>
                     <InfoExplainerButton
                       variant="onDark"
                       trigger="hint"
-                      modalTitle="Mit Bewerbung verknüpft"
-                      ariaLabel="Hinweis: CVs mit Bewerbung"
+                      modalTitle="CVs zu „Meine Bewerbungen“"
+                      ariaLabel="Hinweis: CVs je Bewerbung"
                       className="border-white/15 text-stone-200 hover:bg-white/10"
                     >
                       <p>
-                        Jede Kachel gehört zu genau einer Zeile in „Meine Bewerbungen“. Alle CVs darin sind Versionen
-                        für dieselbe Stelle — ideal, um Anschreiben und Lebenslauf konsistent zu halten.
+                        Hier siehst du nur Lebensläufe, die mit einer konkreten Zeile unter{' '}
+                        <strong>Meine Bewerbungen</strong> verknüpft sind — nichts mit „Pipeline-ID“: einfach dieselbe
+                        Bewerbung in der App.
                       </p>
                       <p className="mt-3">
-                        Nutze <strong>„Weiteren CV …“</strong> nur, wenn du wirklich eine zweite Variante brauchst
-                        (z. B. Kurzfassung oder andere Struktur).
+                        Pro Stelle kannst du mehrere Versionen halten (z. B. kurz/lang). Die Karten sind waagerecht
+                        sortiert; die kleine Seiten-Vorschau ist nur Orientierung, kein echtes PDF.
                       </p>
                     </InfoExplainerButton>
                   </div>
-                  <div className="space-y-2.5">
-                    {linkedCvGroups.map((group, idx) => (
-                      <CvApplicationGroup
-                        key={group.key}
-                        group={group}
-                        variant="linked"
-                        defaultOpen={idx < defaultOpenCount}
-                        onCreateResume={confirmThenOpenCreateForGroup}
-                        onDeleteResume={handleDeleteResume}
-                      />
-                    ))}
-                  </div>
+                  {linkedCvGroups.length > 0 ? (
+                    <CvLinkedApplicationsBoard
+                      groups={linkedCvGroups}
+                      defaultOpenCount={defaultOpenCount}
+                      onCreateResume={confirmThenOpenCreateForGroup}
+                      onDeleteResume={handleDeleteResume}
+                    />
+                  ) : (
+                    <p className="rounded-xl border border-dashed border-white/12 bg-white/[0.02] px-4 py-8 text-center text-sm text-stone-500">
+                      Keine Lebensläufe mit Verknüpfung zu „Meine Bewerbungen“. Wechsle zu{' '}
+                      <button
+                        type="button"
+                        className="font-semibold text-primary-light hover:underline"
+                        onClick={() => setStudioTab('masters')}
+                      >
+                        Master & Kategorien
+                      </button>
+                      , oder lege eine Bewerbung an und verknüpfe den CV dort.
+                    </p>
+                  )}
                 </section>
               )}
 
-              {otherCvGroups.length > 0 && (
-                <section className="scroll-mt-4" aria-labelledby="cv-studio-section-standalone">
+              {studioTab === 'masters' && (
+                <section className="scroll-mt-4" aria-labelledby="cv-tab-master">
                   <div className="mb-3 flex flex-wrap items-end justify-between gap-2 border-b border-white/10 pb-2">
-                    <h2
-                      id="cv-studio-section-standalone"
-                      className="text-[11px] font-bold uppercase tracking-[0.2em] text-stone-300"
-                    >
-                      Allgemein & ohne Pipeline-ID
+                    <h2 id="cv-tab-master" className="text-[11px] font-bold uppercase tracking-[0.2em] text-stone-300">
+                      Master-CVs & eigene Kategorien
                     </h2>
                     <InfoExplainerButton
                       variant="onDark"
                       trigger="hint"
-                      modalTitle="Allgemeine CVs und Kontext"
-                      ariaLabel="Hinweis: CVs ohne Bewerbung"
+                      modalTitle="Master & Kategorien"
+                      ariaLabel="Hinweis: Master und Kategorien"
                       className="border-white/15 text-stone-200 hover:bg-white/10"
                     >
                       <p>
-                        Hier liegen Vorlagen, freie Varianten oder CVs, denen nur ein Firmen-/Rollenname mitgegeben
-                        wurde — <strong>ohne</strong> feste ID aus der Bewerbungs-Pipeline.
+                        Alles hier hängt <strong>nicht</strong> an einer Zeile in „Meine Bewerbungen“: Vorlagen,
+                        universelle CVs oder nur ein Firmen-/Rollenname ohne Bewerbung in der App.
                       </p>
                       <p className="mt-3">
-                        Wenn du eine echte Bewerbung tracken willst, lege sie unter „Meine Bewerbungen“ an und verknüpfe
-                        den CV dort — dann erscheint er oben unter „Mit Bewerbung verknüpft“.
+                        <strong>Kategorien</strong> (z. B. Frontend, Backend, SAP, Logistik) helfen dir, Master-Vorlagen
+                        zu sortieren. Wenn du dich bewirbst, wählst du die passende Kategorie, öffnest den CV, speicherst
+                        eine Kopie für die Stelle und lädst sie herunter — unter Bewerbungen trackst du den Rest.
                       </p>
                     </InfoExplainerButton>
                   </div>
-                  <div className="space-y-2.5">
-                    {otherCvGroups.map((group, idx) => (
-                      <CvApplicationGroup
-                        key={group.key}
-                        group={group}
-                        variant={groupVariantForCvGroup(group)}
-                        defaultOpen={idx < 2}
-                        onCreateResume={confirmThenOpenCreateForGroup}
-                        onDeleteResume={handleDeleteResume}
-                      />
-                    ))}
-                  </div>
+                  {masterResumes.length > 0 || categories.length > 0 ? (
+                    <CvMasterCategoriesBoard
+                      resumes={masterResumes}
+                      categories={categories}
+                      getCategoryIdForResume={getCategoryIdForResume}
+                      assignResume={assignResume}
+                      addCategory={addCategory}
+                      removeCategory={removeCategory}
+                    />
+                  ) : (
+                    <p className="rounded-xl border border-dashed border-white/12 bg-white/[0.02] px-4 py-8 text-center text-sm text-stone-500">
+                      Noch keine freien Master-CVs. Lege einen Lebenslauf ohne Bewerbungs-Verknüpfung an — oder wechsle
+                      zu{' '}
+                      <button
+                        type="button"
+                        className="font-semibold text-primary-light hover:underline"
+                        onClick={() => setStudioTab('applications')}
+                      >
+                        Bewerbungen
+                      </button>
+                      .
+                    </p>
+                  )}
                 </section>
               )}
             </div>
