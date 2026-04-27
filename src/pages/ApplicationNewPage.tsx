@@ -81,7 +81,7 @@ export default function ApplicationNewPage() {
           <div>
             <label className="mb-1 block text-xs font-semibold uppercase text-slate-500">Stellentitel</label>
             <input
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none ring-primary focus:ring-2"
+              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 outline-none ring-primary focus:ring-2"
               value={jobTitle}
               onChange={e => setJobTitle(e.target.value)}
               placeholder="z. B. Senior React Developer"
@@ -90,7 +90,7 @@ export default function ApplicationNewPage() {
           <div>
             <label className="mb-1 block text-xs font-semibold uppercase text-slate-500">Firma</label>
             <input
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none ring-primary focus:ring-2"
+              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 outline-none ring-primary focus:ring-2"
               value={company}
               onChange={e => setCompany(e.target.value)}
               placeholder="z. B. SAP"
@@ -99,7 +99,7 @@ export default function ApplicationNewPage() {
           <div>
             <label className="mb-1 block text-xs font-semibold uppercase text-slate-500">Link zur Anzeige (optional)</label>
             <input
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none ring-primary focus:ring-2"
+              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 outline-none ring-primary focus:ring-2"
               value={jobUrl}
               onChange={e => setJobUrl(e.target.value)}
               placeholder="https://…"
@@ -108,7 +108,7 @@ export default function ApplicationNewPage() {
           <div>
             <label className="mb-1 block text-xs font-semibold uppercase text-slate-500">Stellentext (optional, max. 3000 Zeichen)</label>
             <textarea
-              className="min-h-[120px] w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none ring-primary focus:ring-2"
+              className="min-h-[120px] w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 outline-none ring-primary focus:ring-2"
               value={jobDescription}
               onChange={e => setJobDescription(e.target.value.slice(0, 3000))}
               placeholder="Relevante Ausschnitte aus der Stellenanzeige…"
