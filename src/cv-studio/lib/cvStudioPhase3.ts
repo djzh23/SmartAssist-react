@@ -1,4 +1,4 @@
-import type { ResumeDto, ResumeVersionDto } from '../cvTypes'
+import type { ResumeDto, ResumeVersionSummaryDto } from '../cvTypes'
 
 function sanitizeSegment(s: string | null | undefined, max = 36): string {
   const t = (s ?? '').trim()
@@ -28,14 +28,14 @@ export function formatRelativeTimeDe(iso: string | undefined | null, now = new D
   return d.toLocaleDateString('de-DE', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
-function maxVersionNumber(versions: ResumeVersionDto[]): number {
+function maxVersionNumber(versions: ResumeVersionSummaryDto[]): number {
   return versions.reduce((m, v) => Math.max(m, v.versionNumber), 0)
 }
 
 /** Vorschlag für PDF/DOCX-Stamm: `CV_{Nachname}_{Firma}_{Rolle}_v{N}` (Arbeitsversion: N = höchste Snapshot-Nummer + 1). */
 export function buildCvExportStem(
   resume: ResumeDto,
-  versions: ResumeVersionDto[],
+  versions: ResumeVersionSummaryDto[],
   opts?: { pinnedVersionNumber?: number | null },
 ): string {
   const last = sanitizeSegment(resume.resumeData.profile.lastName) || 'CV'

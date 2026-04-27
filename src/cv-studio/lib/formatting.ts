@@ -1,6 +1,6 @@
-import type { ResumeVersionDto } from '../cvTypes'
+import type { ResumeVersionSummaryDto } from '../cvTypes'
 
-export function formatVariantenName(v: ResumeVersionDto): string {
+export function formatVariantenName(v: ResumeVersionSummaryDto): string {
   const basis = v.label?.trim() ? v.label.trim() : 'Ohne Namen'
   return `${basis} v${v.versionNumber}`
 }

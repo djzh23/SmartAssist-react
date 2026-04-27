@@ -11,14 +11,14 @@ import {
   Tag,
   Trash2,
 } from 'lucide-react'
-import type { ResumeVersionDto } from '../../cvTypes'
+import type { ResumeVersionSummaryDto } from '../../cvTypes'
 import { formatVariantenName, versionBadgeClass } from '../../lib/formatting'
 
 interface CvVersionsSidebarProps {
   open: boolean
   onToggle: () => void
-  versions: ResumeVersionDto[]
-  activeVariant: ResumeVersionDto | null
+  versions: ResumeVersionSummaryDto[]
+  activeVariant: ResumeVersionSummaryDto | null
   busy: boolean
   onRestore: (versionId: string) => void | Promise<void>
   onLoadForEdit: (versionId: string) => void | Promise<void>

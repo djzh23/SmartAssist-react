@@ -1,41 +1,15 @@
-import { FileText, MessageSquare, Trash2 } from 'lucide-react'
+import { Pencil, Trash2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import type { CvStudioResumeSummary } from '../../../types'
-import type { CvGroupVisualVariant } from './CvApplicationGroup'
+import CvMiniDocPreview from './CvMiniDocPreview'
 
 interface CvResumeCardProps {
   resume: CvStudioResumeSummary
   onDelete: () => void | Promise<void>
-  nestStyle?: CvGroupVisualVariant
+  categoryName?: string | null
 }
 
-function railClass(nestStyle: CvGroupVisualVariant | undefined): string {
-  switch (nestStyle) {
-    case 'linked':
-      return 'border-l-stone-400/35'
-    case 'context':
-      return 'border-l-amber-400/25'
-    case 'general':
-      return 'border-l-primary/30'
-    default:
-      return 'border-l-white/10'
-  }
-}
-
-function iconWrap(nestStyle: CvGroupVisualVariant | undefined): string {
-  switch (nestStyle) {
-    case 'linked':
-      return 'bg-white/[0.06] text-stone-200'
-    case 'context':
-      return 'bg-white/[0.06] text-amber-100/85'
-    case 'general':
-      return 'bg-white/[0.06] text-primary-light/90'
-    default:
-      return 'bg-white/[0.06] text-stone-200'
-  }
-}
-
-export default function CvResumeCard({ resume, onDelete, nestStyle }: CvResumeCardProps) {
+export default function CvResumeCard({ resume, onDelete, categoryName }: CvResumeCardProps) {
   const updated = new Date(resume.updatedAtUtc).toLocaleDateString('de-DE', {
     day: '2-digit',
     month: '2-digit',
@@ -43,56 +17,60 @@ export default function CvResumeCard({ resume, onDelete, nestStyle }: CvResumeCa
   })
 
   return (
-    <div
-      className={`group flex items-stretch gap-0 overflow-hidden rounded-lg border border-white/[0.07] border-l-[2px] bg-white/[0.02] transition-colors hover:border-white/12 hover:bg-white/[0.04] ${railClass(nestStyle)}`}
-    >
+    <div className="group flex flex-col overflow-hidden rounded-2xl border border-white/[0.09] bg-white/[0.025] transition-colors hover:border-white/[0.15] hover:bg-white/[0.04]">
+      {/* Document preview */}
       <Link
         to={`/cv-studio/edit/${resume.id}`}
-        className="flex min-w-0 flex-1 items-center justify-between gap-3 px-3 py-2 sm:py-2.5"
+        className="flex items-start justify-center bg-black/20 px-4 pt-4 pb-2"
+        tabIndex={-1}
+        aria-hidden
       >
-        <div className="flex min-w-0 items-center gap-2.5">
-          <span
-            className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md ${iconWrap(nestStyle)}`}
-          >
-            <FileText size={16} aria-hidden />
+        <CvMiniDocPreview resume={resume} />
+      </Link>
+
+      {/* Info section */}
+      <div className="flex min-w-0 flex-1 flex-col p-3">
+        <Link
+          to={`/cv-studio/edit/${resume.id}`}
+          className="min-w-0 flex-1 text-sm font-semibold leading-snug text-white line-clamp-2 hover:text-primary-light"
+        >
+          {resume.title}
+        </Link>
+
+        {(resume.targetCompany || resume.targetRole) && (
+          <p className="mt-0.5 truncate text-[11px] text-stone-400">
+            {[resume.targetCompany, resume.targetRole].filter(Boolean).join(' · ')}
+          </p>
+        )}
+
+        {categoryName && (
+          <span className="mt-1 inline-block self-start rounded-md bg-primary/15 px-1.5 py-0.5 text-[10px] font-medium text-primary-light">
+            {categoryName}
           </span>
-          <div className="min-w-0">
-            <p className="truncate text-sm font-medium text-stone-100">{resume.title}</p>
-            <p className="flex items-center gap-1.5 truncate text-xs text-stone-500">
-              <span>{updated}</span>
-              {resume.notes && (
-                <>
-                  <span aria-hidden>·</span>
-                  <MessageSquare size={11} aria-hidden />
-                  <span className="sr-only">Notiz vorhanden</span>
-                </>
-              )}
-              {resume.templateKey && (
-                <>
-                  <span aria-hidden>·</span>
-                  <span className="capitalize">{resume.templateKey.replace(/-/g, ' ')}</span>
-                </>
-              )}
-            </p>
+        )}
+
+        <div className="mt-2 flex items-center justify-between gap-2">
+          <span className="text-[11px] text-stone-500">{updated}</span>
+          <div className="flex gap-1">
+            <Link
+              to={`/cv-studio/edit/${resume.id}`}
+              className="rounded-lg border border-white/10 p-1.5 text-stone-400 transition-colors hover:border-primary/30 hover:bg-primary/10 hover:text-primary-light"
+              title="Bearbeiten"
+              aria-label={`${resume.title} bearbeiten`}
+            >
+              <Pencil size={13} aria-hidden />
+            </Link>
+            <button
+              type="button"
+              onClick={e => { e.preventDefault(); void onDelete() }}
+              className="rounded-lg border border-white/10 p-1.5 text-stone-500 transition-colors hover:border-rose-500/30 hover:bg-rose-950/40 hover:text-rose-300"
+              title="Lebenslauf löschen"
+              aria-label={`Lebenslauf „${resume.title}" löschen`}
+            >
+              <Trash2 size={13} aria-hidden />
+            </button>
           </div>
         </div>
-        <span className="hidden flex-shrink-0 text-xs text-stone-400 opacity-0 transition-opacity sm:inline group-hover:opacity-100">
-          Bearbeiten →
-        </span>
-      </Link>
-      <div className="flex w-10 flex-shrink-0 border-l border-white/[0.06] bg-black/15 sm:w-11">
-        <button
-          type="button"
-          onClick={e => {
-            e.preventDefault()
-            void onDelete()
-          }}
-          className="flex w-full items-center justify-center text-stone-500 transition-colors hover:bg-rose-950/40 hover:text-rose-200"
-          title="Lebenslauf löschen"
-          aria-label={`Lebenslauf „${resume.title}“ löschen`}
-        >
-          <Trash2 size={15} aria-hidden />
-        </button>
       </div>
     </div>
   )

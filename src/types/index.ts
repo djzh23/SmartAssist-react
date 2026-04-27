@@ -185,6 +185,26 @@ export interface CvStudioResumeSummary {
   targetCompany: string | null
   targetRole: string | null
   notes: string | null
+  profilePreview?: {
+    firstName: string
+    lastName: string
+    headline: string
+    email: string
+    location: string
+  } | null
+}
+
+/** /api/cv-studio/categories — DB-gespeicherte Kategorien */
+export interface CvUserCategoryDto {
+  id: string
+  name: string
+  sortOrder: number
+}
+
+export interface CvCategoriesResponse {
+  categories: CvUserCategoryDto[]
+  /** resumeId → categoryId */
+  assignments: Record<string, string>
 }
 
 /** /api/cv-studio/pdf-exports — getrackte PDF-Downloads (Kontingent) */

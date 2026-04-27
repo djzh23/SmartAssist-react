@@ -118,13 +118,18 @@ export interface PatchResumeNotesRequest {
   notes?: string | null
 }
 
-export interface ResumeVersionDto {
+/** Metadata-only — returned by the list endpoint (no resumeData, avoids large payload). */
+export interface ResumeVersionSummaryDto {
   id: string
   resumeId: string
   versionNumber: number
   label?: string | null
-  resumeData: ResumeData
   createdAtUtc: string
+}
+
+/** Full version including resume content — returned by GET single version endpoint. */
+export interface ResumeVersionDto extends ResumeVersionSummaryDto {
+  resumeData: ResumeData
 }
 
 export interface ResumeTemplateDto {

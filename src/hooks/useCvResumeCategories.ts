@@ -1,107 +1,125 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import type { CvStudioResumeSummary } from '../types'
+import { useAuth } from '@clerk/clerk-react'
 import {
-  loadCvCategoryStore,
-  makeCategoryId,
-  pruneResumeAssignments,
-  saveCvCategoryStore,
-  type CvCategoryStore,
-} from '../cv-studio/lib/cvStudioCategoryStorage'
+  assignCvStudioCategory,
+  createCvStudioCategory,
+  deleteCvStudioCategory,
+  getCvStudioCategories,
+} from '../api/client'
+import type { CvUserCategoryDto } from '../types'
+
+interface CategoryStore {
+  categories: CvUserCategoryDto[]
+  /** resumeId → categoryId */
+  assignments: Record<string, string>
+}
 
 /**
- * Lokale CV-Kategorien (Master-Typen) — Zuordnung pro Lebenslauf-ID.
- * Nur in diesem Browser, bis das Backend ein Kategorie-Feld liefert.
+ * CV-Kategorien — serverseitig gespeichert (api/cv-studio/categories).
+ * Optimistische lokale Updates; Fehler werden in `categoryError` gemeldet.
  */
-export function useCvResumeCategories(resumes: CvStudioResumeSummary[] | null) {
-  const [store, setStore] = useState<CvCategoryStore>(() => loadCvCategoryStore())
+export function useCvResumeCategories(resumeIds: string[] | null) {
+  const { getToken } = useAuth()
+  const [store, setStore] = useState<CategoryStore>({ categories: [], assignments: {} })
+  const [loaded, setLoaded] = useState(false)
+  const [categoryError, setCategoryError] = useState<string | null>(null)
 
-  const validIds = useMemo(() => new Set((resumes ?? []).map(r => r.id)), [resumes])
-
+  // ── Fetch from server ──────────────────────────────────────────────────────
   useEffect(() => {
-    if (!resumes) return
-    setStore(s => {
-      const pruned = pruneResumeAssignments(s, validIds)
-      if (pruned.resumeToCategory === s.resumeToCategory) return s
-      saveCvCategoryStore(pruned)
-      return pruned
+    let cancelled = false
+    void (async () => {
+      const token = await getToken()
+      if (!token || cancelled) return
+      try {
+        const data = await getCvStudioCategories(token)
+        if (!cancelled) {
+          setStore({ categories: data.categories, assignments: data.assignments })
+          setLoaded(true)
+        }
+      } catch {
+        if (!cancelled) setCategoryError('Kategorien konnten nicht geladen werden.')
+      }
+    })()
+    return () => { cancelled = true }
+  }, [getToken])
+
+  // ── Prune stale assignments when resume list changes ───────────────────────
+  useEffect(() => {
+    if (!resumeIds) return
+    const validSet = new Set(resumeIds)
+    setStore(prev => {
+      const pruned: Record<string, string> = {}
+      for (const [rid, cid] of Object.entries(prev.assignments)) {
+        if (validSet.has(rid)) pruned[rid] = cid
+      }
+      if (Object.keys(pruned).length === Object.keys(prev.assignments).length) return prev
+      return { ...prev, assignments: pruned }
     })
-  }, [resumes, validIds])
+  }, [resumeIds])
 
-  const commit = useCallback(
-    (updater: (prev: CvCategoryStore) => CvCategoryStore) => {
-      setStore(prev => {
-        const next = pruneResumeAssignments(updater(prev), validIds)
-        saveCvCategoryStore(next)
-        return next
-      })
-    },
-    [validIds],
-  )
+  // ── Mutations ──────────────────────────────────────────────────────────────
 
-  const addCategory = useCallback(
-    (name: string) => {
-      const trimmed = name.trim()
-      if (!trimmed) return
-      commit(prev => ({
+  const addCategory = useCallback(async (name: string) => {
+    const trimmed = name.trim()
+    if (!trimmed) return
+    const token = await getToken()
+    if (!token) return
+    // Optimistic
+    const tempId = `temp-${Date.now()}`
+    const tempCat: CvUserCategoryDto = { id: tempId, name: trimmed, sortOrder: 999 }
+    setStore(prev => ({ ...prev, categories: [...prev.categories, tempCat] }))
+    try {
+      const created = await createCvStudioCategory(token, trimmed)
+      setStore(prev => ({
         ...prev,
-        categories: [
-          ...prev.categories,
-          {
-            id: makeCategoryId(),
-            name: trimmed.slice(0, 80),
-            sortOrder: prev.categories.length,
-          },
-        ],
+        categories: prev.categories.map(c => c.id === tempId ? created : c),
       }))
-    },
-    [commit],
-  )
+    } catch {
+      setStore(prev => ({ ...prev, categories: prev.categories.filter(c => c.id !== tempId) }))
+      setCategoryError('Kategorie konnte nicht angelegt werden.')
+    }
+  }, [getToken])
 
-  const renameCategory = useCallback(
-    (id: string, name: string) => {
-      const trimmed = name.trim()
-      if (!trimmed) return
-      commit(prev => ({
-        ...prev,
-        categories: prev.categories.map(c =>
-          c.id === id ? { ...c, name: trimmed.slice(0, 80) } : c,
-        ),
-      }))
-    },
-    [commit],
-  )
+  const removeCategory = useCallback(async (id: string) => {
+    const token = await getToken()
+    if (!token) return
+    // Optimistic
+    setStore(prev => ({
+      categories: prev.categories.filter(c => c.id !== id),
+      assignments: Object.fromEntries(
+        Object.entries(prev.assignments).filter(([, cid]) => cid !== id),
+      ),
+    }))
+    try {
+      await deleteCvStudioCategory(token, id)
+    } catch {
+      setCategoryError('Kategorie konnte nicht gelöscht werden.')
+      // Reload to restore consistent state
+      const data = await getCvStudioCategories(token).catch(() => null)
+      if (data) setStore({ categories: data.categories, assignments: data.assignments })
+    }
+  }, [getToken])
 
-  const removeCategory = useCallback(
-    (id: string) => {
-      commit(prev => {
-        const resumeToCategory = { ...prev.resumeToCategory }
-        for (const [rid, cid] of Object.entries(resumeToCategory)) {
-          if (cid === id) delete resumeToCategory[rid]
-        }
-        return {
-          categories: prev.categories.filter(c => c.id !== id),
-          resumeToCategory,
-        }
-      })
-    },
-    [commit],
-  )
-
-  const assignResume = useCallback(
-    (resumeId: string, categoryId: string | null) => {
-      commit(prev => {
-        const resumeToCategory = { ...prev.resumeToCategory }
-        if (categoryId == null) delete resumeToCategory[resumeId]
-        else resumeToCategory[resumeId] = categoryId
-        return { ...prev, resumeToCategory }
-      })
-    },
-    [commit],
-  )
+  const assignResume = useCallback(async (resumeId: string, categoryId: string | null) => {
+    const token = await getToken()
+    if (!token) return
+    // Optimistic
+    setStore(prev => {
+      const next = { ...prev.assignments }
+      if (categoryId == null) delete next[resumeId]
+      else next[resumeId] = categoryId
+      return { ...prev, assignments: next }
+    })
+    try {
+      await assignCvStudioCategory(token, resumeId, categoryId)
+    } catch {
+      setCategoryError('Zuordnung konnte nicht gespeichert werden.')
+    }
+  }, [getToken])
 
   const getCategoryIdForResume = useCallback(
-    (resumeId: string) => store.resumeToCategory[resumeId] ?? null,
-    [store.resumeToCategory],
+    (resumeId: string) => store.assignments[resumeId] ?? null,
+    [store.assignments],
   )
 
   const sortedCategories = useMemo(
@@ -111,9 +129,11 @@ export function useCvResumeCategories(resumes: CvStudioResumeSummary[] | null) {
 
   return {
     categories: sortedCategories,
+    loaded,
+    categoryError,
+    clearCategoryError: () => setCategoryError(null),
     assignResume,
     addCategory,
-    renameCategory,
     removeCategory,
     getCategoryIdForResume,
   }

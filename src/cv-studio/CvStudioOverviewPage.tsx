@@ -214,15 +214,17 @@ export default function CvStudioOverviewPage() {
   const masterResumes = useMemo(() => resumesFromOtherGroups(otherCvGroups), [otherCvGroups])
 
   const [studioTab, setStudioTab] = useState<'applications' | 'masters'>('applications')
+  const resumeIds = useMemo(() => (resumes ?? []).map(r => r.id), [resumes])
   const {
     categories,
+    loaded: categoriesLoaded,
+    categoryError,
     assignResume,
     addCategory,
     removeCategory,
     getCategoryIdForResume,
-  } = useCvResumeCategories(resumes)
+  } = useCvResumeCategories(resumeIds)
 
-  const defaultOpenCount = 3
   const hasResumes = (resumes?.length ?? 0) > 0
 
   const existingResumes = (resumes ?? []).map(r => ({ id: r.id, title: r.title }))
@@ -399,7 +401,6 @@ export default function CvStudioOverviewPage() {
                   {linkedCvGroups.length > 0 ? (
                     <CvLinkedApplicationsBoard
                       groups={linkedCvGroups}
-                      defaultOpenCount={defaultOpenCount}
                       onCreateResume={confirmThenOpenCreateForGroup}
                       onDeleteResume={handleDeleteResume}
                     />
@@ -443,14 +444,17 @@ export default function CvStudioOverviewPage() {
                       </p>
                     </InfoExplainerButton>
                   </div>
-                  {masterResumes.length > 0 || categories.length > 0 ? (
+                  {masterResumes.length > 0 || categories.length > 0 || !categoriesLoaded ? (
                     <CvMasterCategoriesBoard
                       resumes={masterResumes}
                       categories={categories}
+                      loaded={categoriesLoaded}
+                      categoryError={categoryError}
                       getCategoryIdForResume={getCategoryIdForResume}
                       assignResume={assignResume}
                       addCategory={addCategory}
                       removeCategory={removeCategory}
+                      onDeleteResume={handleDeleteResume}
                     />
                   ) : (
                     <p className="rounded-xl border border-dashed border-white/12 bg-white/[0.02] px-4 py-8 text-center text-sm text-stone-500">

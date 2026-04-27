@@ -4,6 +4,7 @@ import type {
   ChatMessage,
   ChatSavedNote,
   ChatSavedNoteSource,
+  CvCategoriesResponse,
   CvStudioPdfExportRow,
   CvStudioResumeSummary,
   LearningInsight,
@@ -17,6 +18,7 @@ import type {
   ResumeDto,
   ResumeTemplateDto,
   ResumeVersionDto,
+  ResumeVersionSummaryDto,
   UpdateResumeRequest,
   UpdateVersionRequest,
 } from '../cv-studio/cvTypes'
@@ -924,7 +926,7 @@ export async function deleteCvStudioResume(token: string, id: string): Promise<v
     throw new Error(await readApiError(res, `CV.Studio: Lebenslauf löschen (${res.status})`))
 }
 
-export async function listCvStudioVersions(token: string, resumeId: string): Promise<ResumeVersionDto[]> {
+export async function listCvStudioVersions(token: string, resumeId: string): Promise<ResumeVersionSummaryDto[]> {
   const res = await fetch(`${BASE}/api/cv-studio/resumes/${encodeURIComponent(resumeId)}/versions`, {
     headers: authHeaders(token),
   })
@@ -1085,4 +1087,41 @@ export async function deleteCvStudioPdfExport(token: string, exportId: string): 
     throw new Error('Bitte anmelden.')
   if (!res.ok && res.status !== 404)
     throw new Error(await readApiError(res, `CV.Studio: PDF-Eintrag löschen (${res.status})`))
+}
+
+// ── CV.Studio Categories ──────────────────────────────────────────────────────
+
+export async function getCvStudioCategories(token: string): Promise<CvCategoriesResponse> {
+  const res = await fetch(`${BASE}/api/cv-studio/categories`, { headers: authHeaders(token) })
+  return parseCvStudioJson<CvCategoriesResponse>(res, 'CV.Studio: Kategorien laden')
+}
+
+export async function createCvStudioCategory(token: string, name: string): Promise<{ id: string; name: string; sortOrder: number }> {
+  const res = await fetch(`${BASE}/api/cv-studio/categories`, {
+    method: 'POST',
+    headers: { ...authHeaders(token), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name }),
+  })
+  return parseCvStudioJson<{ id: string; name: string; sortOrder: number }>(res, 'CV.Studio: Kategorie anlegen')
+}
+
+export async function deleteCvStudioCategory(token: string, categoryId: string): Promise<void> {
+  const res = await fetch(`${BASE}/api/cv-studio/categories/${encodeURIComponent(categoryId)}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (res.status === 401) throw new Error('Bitte anmelden.')
+  if (!res.ok && res.status !== 404)
+    throw new Error(await readApiError(res, `CV.Studio: Kategorie löschen (${res.status})`))
+}
+
+export async function assignCvStudioCategory(token: string, resumeId: string, categoryId: string | null): Promise<void> {
+  const res = await fetch(`${BASE}/api/cv-studio/categories/assignments/${encodeURIComponent(resumeId)}`, {
+    method: 'PUT',
+    headers: { ...authHeaders(token), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ categoryId }),
+  })
+  if (res.status === 401) throw new Error('Bitte anmelden.')
+  if (!res.ok)
+    throw new Error(await readApiError(res, `CV.Studio: Kategorie zuweisen (${res.status})`))
 }

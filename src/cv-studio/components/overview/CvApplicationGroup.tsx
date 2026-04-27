@@ -110,7 +110,6 @@ export default function CvApplicationGroup({
               <li key={r.id}>
                 <CvResumeCard
                   resume={r}
-                  nestStyle={variant}
                   onDelete={() => void onDeleteResume(r)}
                 />
               </li>

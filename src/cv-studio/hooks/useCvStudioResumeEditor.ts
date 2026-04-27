@@ -23,7 +23,7 @@ import { coerceResumeData, normalizeResumeDto } from '../lib/resumeData'
 import { ensureSectionTitles } from '../lib/sectionTitles'
 import type { AppConfirmOptions } from '../../context/appUiBridge'
 import type { CvStudioResumeSummary } from '../../types'
-import type { PdfDesign, ResumeDto, ResumeTemplateDto, ResumeVersionDto } from '../cvTypes'
+import type { PdfDesign, ResumeDto, ResumeTemplateDto, ResumeVersionSummaryDto } from '../cvTypes'
 
 export type CvStudioRequestConfirm = (opts: AppConfirmOptions) => Promise<boolean>
 
@@ -40,9 +40,9 @@ export function useCvStudioResumeEditor(
   const [templates, setTemplates] = useState<ResumeTemplateDto[]>([])
   const [summaries, setSummaries] = useState<CvStudioResumeSummary[]>([])
   const [resume, setResumeState] = useState<ResumeDto | null>(null)
-  const [versions, setVersions] = useState<ResumeVersionDto[]>([])
-  const [activeVariant, setActiveVariant] = useState<ResumeVersionDto | null>(null)
-  const activeVariantRef = useRef<ResumeVersionDto | null>(null)
+  const [versions, setVersions] = useState<ResumeVersionSummaryDto[]>([])
+  const [activeVariant, setActiveVariant] = useState<ResumeVersionSummaryDto | null>(null)
+  const activeVariantRef = useRef<ResumeVersionSummaryDto | null>(null)
   const [selectedTemplateKey, setSelectedTemplateKey] = useState('')
   const [pdfDesign, setPdfDesign] = useState<PdfDesign>('A')
   const [busy, setBusy] = useState(false)
@@ -89,7 +89,7 @@ export function useCvStudioResumeEditor(
   const assignResume = useCallback(
     (
       r: ResumeDto | null,
-      opts?: { keepDirty?: boolean; activeVar?: ResumeVersionDto | null | undefined },
+      opts?: { keepDirty?: boolean; activeVar?: ResumeVersionSummaryDto | null | undefined },
     ) => {
       const patched = r ? patchResume(r) : null
       resumeRef.current = patched
