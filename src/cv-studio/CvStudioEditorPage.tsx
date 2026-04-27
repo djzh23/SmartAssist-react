@@ -29,6 +29,7 @@ import {
   Wrench,
 } from 'lucide-react'
 import {
+  createJobApplication,
   downloadCvStudioDocx,
   downloadCvStudioPdf,
   fetchJobApplications,
@@ -354,8 +355,21 @@ export default function CvStudioEditorPage() {
     appId: string | null,
     company: string | null,
     role: string | null,
+    createApplicationEntry?: boolean,
+    jobUrl?: string,
   ) => {
-    await linkApplication({ jobApplicationId: appId, targetCompany: company, targetRole: role })
+    let linkedAppId = appId
+    if (createApplicationEntry && company?.trim() && role?.trim()) {
+      const token = await getToken()
+      if (!token) { notify('Bitte anmelden.', 'error'); return }
+      const app = await createJobApplication(token, {
+        company: company.trim(),
+        jobTitle: role.trim(),
+        jobUrl: jobUrl || undefined,
+      })
+      linkedAppId = app.id
+    }
+    await linkApplication({ jobApplicationId: linkedAppId, targetCompany: company, targetRole: role })
     setShowLinkModal(false)
   }
 

@@ -9,7 +9,13 @@ interface CvLinkApplicationModalProps {
   jobApplications: JobApplicationApi[]
   loadingApps: boolean
   busy: boolean
-  onLink: (appId: string | null, company: string | null, role: string | null) => Promise<void>
+  onLink: (
+    appId: string | null,
+    company: string | null,
+    role: string | null,
+    createApplicationEntry?: boolean,
+    jobUrl?: string,
+  ) => Promise<void>
   onClose: () => void
 }
 
@@ -27,6 +33,8 @@ export default function CvLinkApplicationModal({
   const [selectedAppId, setSelectedAppId] = useState(currentAppId ?? '')
   const [manualCompany, setManualCompany] = useState(currentCompany ?? '')
   const [manualRole, setManualRole] = useState(currentRole ?? '')
+  const [saveToApplicationList, setSaveToApplicationList] = useState(false)
+  const [jobUrl, setJobUrl] = useState('')
 
   useEffect(() => {
     if (jobApplications.length > 0 && !currentAppId) setMode('app')
@@ -41,7 +49,10 @@ export default function CvLinkApplicationModal({
         app?.jobTitle ?? null,
       )
     } else {
-      await onLink(null, manualCompany || null, manualRole || null)
+      const co = manualCompany || null
+      const ro = manualRole || null
+      const shouldCreate = saveToApplicationList && !!manualCompany.trim() && !!manualRole.trim()
+      await onLink(null, co, ro, shouldCreate, jobUrl.trim() || undefined)
     }
   }
 
@@ -140,6 +151,31 @@ export default function CvLinkApplicationModal({
                   className="mt-1.5 w-full rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm text-white placeholder:text-stone-600 focus:border-primary/60 focus:outline-none"
                 />
               </label>
+              <label className="flex cursor-pointer items-start gap-2 rounded-lg border border-white/10 bg-black/20 px-3 py-2.5">
+                <input
+                  type="checkbox"
+                  className="mt-0.5 rounded border-white/30 bg-black/40 text-primary focus:ring-primary"
+                  checked={saveToApplicationList}
+                  onChange={e => setSaveToApplicationList(e.target.checked)}
+                />
+                <span className="text-xs text-stone-300">
+                  <span className="font-medium text-stone-200">In Bewerbungsliste speichern</span>
+                  {' — '}
+                  legt unter „Bewerbungen" einen neuen Eintrag an und verknüpft diesen CV.
+                </span>
+              </label>
+              {saveToApplicationList && (
+                <label className="block text-xs font-medium text-stone-400">
+                  Stellen-URL (optional)
+                  <input
+                    type="url"
+                    value={jobUrl}
+                    onChange={e => setJobUrl(e.target.value)}
+                    placeholder="https://…"
+                    className="mt-1.5 w-full rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm text-white placeholder:text-stone-600 focus:border-primary/60 focus:outline-none"
+                  />
+                </label>
+              )}
             </div>
           )}
 
