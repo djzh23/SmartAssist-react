@@ -265,7 +265,7 @@ export default function CreateResumeInCategoryModal({
                       id="crim-app"
                       value={selectedAppId}
                       onChange={e => setSelectedAppId(e.target.value)}
-                      className="w-full rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm text-white focus:border-primary/60 focus:outline-none"
+                      className="w-full rounded-lg border border-stone-600/60 bg-stone-700 px-3 py-2 text-sm text-stone-100 focus:border-violet-500/60 focus:outline-none"
                     >
                       <option value="">— Keine Bewerbung verknüpfen —</option>
                       {jobApplications.map(a => (
