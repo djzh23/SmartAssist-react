@@ -223,9 +223,21 @@ export default function CvStudioOverviewPage() {
           }
         : null
 
-    const created = await createCvStudioResumeFromTemplate(token, params.templateKey, linkPayload)
+    let created
+    if (params.cloneFromId) {
+      // Clone: copy resumeData from the source, then apply any link context
+      const source = await getCvStudioResume(token, params.cloneFromId)
+      created = await createCvStudioResume(token, {
+        title: `Kopie von ${source.title}`,
+        templateKey: source.templateKey ?? params.templateKey,
+        resumeData: source.resumeData,
+      })
+      if (linkPayload) await linkCvStudioJobApplication(token, created.id, linkPayload)
+    } else {
+      created = await createCvStudioResumeFromTemplate(token, params.templateKey, linkPayload)
+    }
 
-    // Assign to the category immediately (fire-and-forget is fine; optimistic update in hook)
+    // Assign to the category
     await assignCvStudioCategory(token, created.id, params.categoryId)
 
     navigate(`/cv-studio/edit/${created.id}`)
@@ -477,6 +489,11 @@ export default function CvStudioOverviewPage() {
           category={selectedCategoryForResume}
           templates={templates}
           jobApplications={jobApplications}
+          allResumes={resumes ?? []}
+          getCategoryName={id => {
+            const catId = getCategoryIdForResume(id)
+            return catId ? (categories.find(c => c.id === catId)?.name ?? null) : null
+          }}
           onConfirm={handleCreateResumeInCategory}
           onClose={() => {
             setShowCreateResumeModal(false)

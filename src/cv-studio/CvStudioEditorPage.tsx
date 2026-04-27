@@ -225,12 +225,12 @@ export default function CvStudioEditorPage() {
 
   const versionStandHint = useMemo(() => {
     if (activeVariant) {
-      return `Du bearbeitest eine Kopie des Inhalts von Snapshot v${activeVariant.versionNumber}. „Inhalt übernehmen“ (Stift) kopiert einen älteren Stand in die Arbeitsversion; Auto-Save sichert dort weiter.`
+      return `Du siehst den Inhalt von Version ${activeVariant.versionNumber}. Klicke „Inhalt übernehmen” (Stift-Symbol rechts), um diesen Stand in deine Arbeitsversion zu übertragen.`
     }
     if (versions.length === 0) {
-      return 'Arbeitsversion = dein Original, an dem du täglich weiterdrehst. Snapshots sind feste Kopien zu Meilensteinen — kein Durcheinander mit losen Dateien auf dem Rechner. Mit „Snapshot speichern“ legst du die erste Kopie an.'
+      return 'Deine Änderungen werden automatisch gespeichert. Mit „Version speichern” legst du einen manuellen Sicherungspunkt an — z. B. bevor du größere Änderungen vornimmst.'
     }
-    return 'Arbeitsversion: aktueller Stand zum Bearbeiten. Rechts in der Leiste: nummerierte Snapshots (Kopien) — jederzeit wiederherstellbar oder exportierbar.'
+    return 'Du bearbeitest deine Arbeitsversion — der aktuelle Stand. Rechts siehst du gespeicherte Versionen, die du jederzeit wiederherstellen oder exportieren kannst.'
   }, [activeVariant?.versionNumber, versions.length])
 
   const tabClass = (t: TabId) =>
@@ -509,12 +509,12 @@ export default function CvStudioEditorPage() {
             <button
               type="button"
               disabled={busy}
-              title="Sichert den aktuellen Stand als nummerierten Snapshot (optional mit Kurznotiz)."
+              title="Speichert den aktuellen Stand als nummerierte Version — ein manueller Sicherungspunkt, jederzeit wiederherstellbar."
               onClick={() => setShowSaveModal(true)}
               className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white hover:bg-primary-hover disabled:opacity-50 sm:text-sm"
             >
               <Save size={14} aria-hidden />
-              Snapshot speichern
+              Version speichern
             </button>
             <button
               type="button"
