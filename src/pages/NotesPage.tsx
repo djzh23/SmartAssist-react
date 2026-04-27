@@ -470,39 +470,39 @@ export default function NotesPage() {
           }}
         >
           <div
-            className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-stone-400/45 bg-white p-5 shadow-xl"
+            className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-white/15 bg-[#1a1510] p-5 shadow-2xl"
             onClick={e => e.stopPropagation()}
           >
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-stone-900">Notiz bearbeiten</h2>
-              <button type="button" onClick={closeEdit} className="rounded-lg p-1 text-stone-500 hover:bg-stone-100" aria-label="Schließen">
+              <h2 className="text-lg font-bold text-white">Notiz bearbeiten</h2>
+              <button type="button" onClick={closeEdit} className="rounded-lg p-1 text-stone-500 hover:bg-white/10 hover:text-stone-300" aria-label="Schließen">
                 <X className="h-5 w-5" />
               </button>
             </div>
             {editError ? (
-              <p className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900">{editError}</p>
+              <p className="mb-3 rounded-lg border border-rose-500/40 bg-rose-950/30 px-3 py-2 text-sm text-rose-200">{editError}</p>
             ) : null}
-            <label className="mb-1 block text-xs font-semibold uppercase text-stone-600">Titel</label>
+            <label className="mb-1 block text-xs font-semibold uppercase text-stone-400">Titel</label>
             <input
               value={editTitle}
               onChange={e => setEditTitle(e.target.value)}
-              className="mb-3 w-full rounded-lg border border-stone-400/45 bg-white px-3 py-2 text-sm text-stone-900 placeholder:text-stone-400 outline-none focus:border-primary"
+              className="mb-3 w-full rounded-lg border border-white/15 bg-black/25 px-3 py-2 text-sm text-stone-100 placeholder:text-stone-600 outline-none focus:border-primary"
             />
-            <label className="mb-1 block text-xs font-semibold uppercase text-stone-600">Inhalt</label>
+            <label className="mb-1 block text-xs font-semibold uppercase text-stone-400">Inhalt</label>
             <textarea
               value={editBody}
               onChange={e => setEditBody(e.target.value)}
               rows={12}
-              className="mb-3 w-full resize-y rounded-lg border border-stone-400/45 bg-white px-3 py-2 text-sm text-stone-900 placeholder:text-stone-400 outline-none focus:border-primary"
+              className="mb-3 w-full resize-y rounded-lg border border-white/15 bg-black/25 px-3 py-2 text-sm text-stone-100 placeholder:text-stone-600 outline-none focus:border-primary"
             />
-            <label className="mb-1 block text-xs font-semibold uppercase text-stone-600">Tags</label>
+            <label className="mb-1 block text-xs font-semibold uppercase text-stone-400">Tags</label>
             <div className="mb-2 flex flex-wrap gap-1.5">
               {editTags.map(t => (
                 <button
                   key={t}
                   type="button"
                   onClick={() => setEditTags(prev => prev.filter(x => x !== t))}
-                  className="rounded-full border border-stone-400/45 bg-stone-100/90 px-2 py-0.5 text-xs text-stone-800 hover:border-red-200 hover:bg-red-50"
+                  className="rounded-full border border-stone-600/50 bg-stone-800/50 px-2 py-0.5 text-xs text-stone-300 hover:border-rose-500/40 hover:bg-rose-950/30 hover:text-rose-300"
                 >
                   {t}
                   {' '}
@@ -510,7 +510,7 @@ export default function NotesPage() {
                 </button>
               ))}
             </div>
-            <div className="mb-4 flex gap-2">
+            <div className="mb-5 flex gap-2">
               <input
                 value={editTagInput}
                 onChange={e => setEditTagInput(e.target.value)}
@@ -520,22 +520,22 @@ export default function NotesPage() {
                     addEditTag()
                   }
                 }}
-                className="min-w-0 flex-1 rounded-lg border border-stone-400/45 bg-white px-3 py-2 text-sm text-stone-900 placeholder:text-stone-400 outline-none focus:border-primary"
+                className="min-w-0 flex-1 rounded-lg border border-white/15 bg-black/25 px-3 py-2 text-sm text-stone-100 placeholder:text-stone-600 outline-none focus:border-primary"
                 placeholder="Tag, Enter"
               />
-              <button type="button" onClick={addEditTag} className="rounded-lg border border-stone-400/45 px-3 py-2 text-sm hover:bg-stone-100">
+              <button type="button" onClick={addEditTag} className="rounded-lg border border-stone-600/60 bg-stone-700 px-3 py-2 text-sm font-medium text-stone-100 transition-colors hover:bg-stone-600">
                 Hinzufügen
               </button>
             </div>
-            <div className="flex justify-end gap-2">
-              <button type="button" onClick={closeEdit} className="rounded-lg border border-stone-400/45 px-4 py-2 text-sm hover:bg-stone-100">
+            <div className="flex justify-end gap-2 border-t border-white/10 pt-4">
+              <button type="button" onClick={closeEdit} className="rounded-lg px-4 py-2 text-sm text-stone-400 transition-colors hover:bg-white/5 hover:text-stone-200">
                 Abbrechen
               </button>
               <button
                 type="button"
                 onClick={() => void saveEdit()}
                 disabled={!editTitle.trim() || !editBody.trim() || savingEdit}
-                className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover disabled:opacity-50"
+                className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-hover disabled:opacity-50"
               >
                 {savingEdit ? 'Speichern …' : 'Speichern'}
               </button>
