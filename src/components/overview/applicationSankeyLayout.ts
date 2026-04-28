@@ -16,15 +16,26 @@ export const SANKEY_PIPELINE_FILL: Record<ApplicationStatusApi, string> = {
 export interface SankeyRect {
   id: string
   label: string
+  status?: ApplicationStatusApi
   sub?: string
+  count: number
+  pct: number
   x: number
   y: number
   w: number
   h: number
   fill: string
+  stroke: string
+  muted?: boolean
 }
 
 export interface SankeyBand {
+  id: string
+  fromId: string
+  toId: string
+  label: string
+  count: number
+  pct: number
   x0: number
   y0: number
   x1: number
@@ -32,6 +43,7 @@ export interface SankeyBand {
   stroke: string
   strokeWidth: number
   opacity: number
+  muted?: boolean
 }
 
 export interface SankeyLayout {
@@ -45,9 +57,9 @@ export function curvePath(x0: number, y0: number, x1: number, y1: number): strin
 }
 
 function strokeForValue(v: number, maxV: number): number {
-  if (maxV <= 0 || v <= 0) return 2
+  if (maxV <= 0 || v <= 0) return 1.5
   const t = Math.sqrt(v / maxV)
-  return Math.max(2, Math.min(22, 4 + t * 18))
+  return Math.max(1.5, Math.min(20, 3 + t * 17))
 }
 
 /**
@@ -63,10 +75,10 @@ export function buildApplicationSankeyLayout(
   const bands: SankeyBand[] = []
   const { total, activeInPipeline, inArchive, pipeline, archive } = overview
 
-  const padL = 10
-  const padR = 8
-  const padT = 16
-  const padB = 22
+  const padL = 12
+  const padR = 12
+  const padT = 14
+  const padB = 18
   const innerW = width - padL - padR
   const innerH = height - padT - padB
 
@@ -74,36 +86,42 @@ export function buildApplicationSankeyLayout(
     return { rects, bands }
   }
 
-  const w0 = Math.min(86, innerW * 0.14)
+  const w0 = Math.min(108, innerW * 0.18)
   const gap = innerW * 0.04
-  const w1 = Math.min(100, innerW * 0.16)
+  const w1 = Math.min(120, innerW * 0.19)
   const x0 = padL
   const x1 = x0 + w0 + gap
   const x2 = x1 + w1 + gap
-  const w2 = Math.max(120, innerW - (x2 - padL) - 4)
+  const w2 = Math.max(150, innerW - (x2 - padL) - 4)
 
-  const hAll = Math.max(48, innerH * 0.88)
+  const hAll = Math.max(50, innerH * 0.68)
   const yAll = padT + (innerH - hAll) / 2
+  const baseNodeFill = 'rgb(238, 233, 226)'
+  const baseNodeStroke = 'rgba(120, 113, 108, 0.45)'
 
   rects.push({
     id: 'all',
     label: 'Alle Bewerbungen',
     sub: String(total),
+    count: total,
+    pct: 1,
     x: x0,
     y: yAll,
     w: w0,
     h: hAll,
-    fill: '#0d9488',
+    fill: baseNodeFill,
+    stroke: baseNodeStroke,
   })
 
-  const hPipeRaw = activeInPipeline > 0 ? Math.max(12, innerH * (activeInPipeline / total)) : 0
-  const hArchRaw = inArchive > 0 ? Math.max(12, innerH * (inArchive / total)) : 0
+  const hPipeRaw = activeInPipeline > 0 ? Math.max(14, innerH * (activeInPipeline / total) * 0.9) : 14
+  const hArchRaw = inArchive > 0 ? Math.max(14, innerH * (inArchive / total) * 0.75) : 14
   const hSum = hPipeRaw + hArchRaw
   const scale = hSum > innerH ? innerH / hSum : 1
   const hPipeS = hPipeRaw * scale
   const hArchS = hArchRaw * scale
-  const yPipe = padT + (innerH - hPipeS - hArchS) / 2
-  const yArch = yPipe + hPipeS
+  const centerY = padT + innerH / 2
+  const yPipe = Math.max(padT + 4, centerY - hPipeS - 12)
+  const yArch = Math.min(padT + innerH - hArchS - 4, centerY + 12)
 
   const maxV = Math.max(
     total,
@@ -115,120 +133,170 @@ export function buildApplicationSankeyLayout(
   )
 
   const xExitAll = x0 + w0
-  const yExitPipe =
-    activeInPipeline > 0 && inArchive > 0 ? yAll + hAll * 0.28 : yAll + hAll / 2
-  const yExitArch =
-    activeInPipeline > 0 && inArchive > 0 ? yAll + hAll * 0.72 : yAll + hAll / 2
+  const yExitPipe = yAll + hAll * 0.34
+  const yExitArch = yAll + hAll * 0.68
 
-  if (activeInPipeline > 0 && hPipeS > 0) {
-    rects.push({
-      id: 'pipe',
-      label: 'Aktive Pipeline',
-      sub: String(activeInPipeline),
-      x: x1,
-      y: yPipe,
-      w: w1,
-      h: hPipeS,
-      fill: '#0369a1',
-    })
-    bands.push({
-      x0: xExitAll,
-      y0: activeInPipeline > 0 && inArchive > 0 ? yExitPipe : yAll + hAll / 2,
-      x1: x1,
-      y1: yPipe + hPipeS / 2,
-      stroke: '#2dd4bf',
-      strokeWidth: strokeForValue(activeInPipeline, maxV),
-      opacity: 0.42,
-    })
-  }
+  rects.push({
+    id: 'pipe',
+    label: 'Aktive Pipeline',
+    sub: String(activeInPipeline),
+    count: activeInPipeline,
+    pct: total > 0 ? activeInPipeline / total : 0,
+    x: x1,
+    y: yPipe,
+    w: w1,
+    h: hPipeS,
+    fill: baseNodeFill,
+    stroke: baseNodeStroke,
+    muted: activeInPipeline === 0,
+  })
+  bands.push({
+    id: 'band-all-pipe',
+    fromId: 'all',
+    toId: 'pipe',
+    label: 'Alle → Aktive Pipeline',
+    count: activeInPipeline,
+    pct: total > 0 ? activeInPipeline / total : 0,
+    x0: xExitAll,
+    y0: yExitPipe,
+    x1: x1,
+    y1: yPipe + hPipeS / 2,
+    stroke: '#0ea5a5',
+    strokeWidth: strokeForValue(activeInPipeline, maxV),
+    opacity: activeInPipeline > 0 ? 0.35 : 0.08,
+    muted: activeInPipeline === 0,
+  })
 
-  if (inArchive > 0 && hArchS > 0) {
-    rects.push({
-      id: 'arch',
-      label: 'Archiv',
-      sub: String(inArchive),
-      x: x1,
-      y: yArch,
-      w: w1,
-      h: hArchS,
-      fill: '#57534e',
-    })
-    bands.push({
-      x0: xExitAll,
-      y0: activeInPipeline > 0 && inArchive > 0 ? yExitArch : yAll + hAll / 2,
-      x1: x1,
-      y1: yArch + hArchS / 2,
-      stroke: '#a8a29e',
-      strokeWidth: strokeForValue(inArchive, maxV),
-      opacity: 0.38,
-    })
-  }
+  rects.push({
+    id: 'arch',
+    label: 'Archiv / Geschlossen',
+    sub: String(inArchive),
+    count: inArchive,
+    pct: total > 0 ? inArchive / total : 0,
+    x: x1,
+    y: yArch,
+    w: w1,
+    h: hArchS,
+    fill: baseNodeFill,
+    stroke: baseNodeStroke,
+    muted: inArchive === 0,
+  })
+  bands.push({
+    id: 'band-all-arch',
+    fromId: 'all',
+    toId: 'arch',
+    label: 'Alle → Archiv / Geschlossen',
+    count: inArchive,
+    pct: total > 0 ? inArchive / total : 0,
+    x0: xExitAll,
+    y0: yExitArch,
+    x1: x1,
+    y1: yArch + hArchS / 2,
+    stroke: '#94a3b8',
+    strokeWidth: strokeForValue(inArchive, maxV),
+    opacity: inArchive > 0 ? 0.33 : 0.08,
+    muted: inArchive === 0,
+  })
 
-  const pipeLeaves = pipeline.filter(p => p.count > 0)
-  const archLeaves = archive.filter(p => p.count > 0)
-  const sumP = pipeLeaves.reduce((s, p) => s + p.count, 0) || 1
-  const sumA = archLeaves.reduce((s, p) => s + p.count, 0) || 1
-
+  const pipeLeaves = pipeline
+  const archLeaves = archive
   const xMidOut = x1 + w1
 
+  const pipeGap = Math.max(3, Math.floor((innerH * 0.008)))
+  const archGap = pipeGap
+  const pipeWeights = pipeLeaves.map(p => (p.count > 0 ? p.count : 0.45))
+  const archWeights = archLeaves.map(p => (p.count > 0 ? p.count : 0.45))
+  const pipeWeightSum = pipeWeights.reduce((s, n) => s + n, 0) || 1
+  const archWeightSum = archWeights.reduce((s, n) => s + n, 0) || 1
+  const pipeBodyH = Math.max(14, hPipeS - pipeGap * (pipeLeaves.length - 1))
+  const archBodyH = Math.max(14, hArchS - archGap * (archLeaves.length - 1))
+
   let accP = 0
-  for (const p of pipeLeaves) {
-    const h = hPipeS > 0 ? Math.max(10, (hPipeS * p.count) / sumP) : 0
-    const yTop = yPipe + accP
+  for (let i = 0; i < pipeLeaves.length; i += 1) {
+    const p = pipeLeaves[i]
+    const weight = pipeWeights[i]
+    const h = Math.max(8, (pipeBodyH * weight) / pipeWeightSum)
+    const stagger = (i % 2 === 0 ? -1 : 1) * Math.min(6, i)
+    const yTop = yPipe + accP + stagger
+    const muted = p.count === 0
     rects.push({
       id: `p-${p.status}`,
       label: p.label,
       sub: String(p.count),
+      status: p.status,
+      count: p.count,
+      pct: total > 0 ? p.count / total : 0,
       x: x2,
       y: yTop,
       w: w2,
       h,
-      fill: SANKEY_PIPELINE_FILL[p.status] ?? '#64748b',
+      fill: baseNodeFill,
+      stroke: muted ? 'rgba(148,163,184,0.5)' : 'rgba(15,23,42,0.2)',
+      muted,
     })
-    if (activeInPipeline > 0 && hPipeS > 0) {
-      const sy = yPipe + accP + h / 2
-      const ty = yTop + h / 2
-      bands.push({
-        x0: xMidOut,
-        y0: sy,
-        x1: x2,
-        y1: ty,
-        stroke: SANKEY_PIPELINE_FILL[p.status] ?? '#94a3b8',
-        strokeWidth: strokeForValue(p.count, maxV),
-        opacity: 0.34,
-      })
-    }
-    accP += h
+    const sy = yPipe + accP + h / 2
+    const ty = yTop + h / 2
+    bands.push({
+      id: `band-pipe-${p.status}`,
+      fromId: 'pipe',
+      toId: `p-${p.status}`,
+      label: `Aktive Pipeline → ${p.label}`,
+      count: p.count,
+      pct: total > 0 ? p.count / total : 0,
+      x0: xMidOut,
+      y0: sy,
+      x1: x2,
+      y1: ty,
+      stroke: SANKEY_PIPELINE_FILL[p.status] ?? '#94a3b8',
+      strokeWidth: strokeForValue(p.count, maxV),
+      opacity: muted ? 0.08 : 0.3,
+      muted,
+    })
+    accP += h + pipeGap
   }
 
   let accA = 0
-  for (const p of archLeaves) {
-    const h = hArchS > 0 ? Math.max(10, (hArchS * p.count) / sumA) : 0
-    const yTop = yArch + accA
+  for (let i = 0; i < archLeaves.length; i += 1) {
+    const p = archLeaves[i]
+    const weight = archWeights[i]
+    const h = Math.max(8, (archBodyH * weight) / archWeightSum)
+    const stagger = (i % 2 === 0 ? 1 : -1) * Math.min(6, i)
+    const yTop = yArch + accA + stagger
+    const muted = p.count === 0
     rects.push({
       id: `a-${p.status}`,
       label: p.label,
       sub: String(p.count),
+      status: p.status,
+      count: p.count,
+      pct: total > 0 ? p.count / total : 0,
       x: x2,
       y: yTop,
       w: w2,
       h,
-      fill: SANKEY_PIPELINE_FILL[p.status] ?? '#78716c',
+      fill: baseNodeFill,
+      stroke: muted ? 'rgba(148,163,184,0.5)' : 'rgba(15,23,42,0.2)',
+      muted,
     })
-    if (inArchive > 0 && hArchS > 0) {
-      const sy = yArch + accA + h / 2
-      const ty = yTop + h / 2
-      bands.push({
-        x0: xMidOut,
-        y0: sy,
-        x1: x2,
-        y1: ty,
-        stroke: SANKEY_PIPELINE_FILL[p.status] ?? '#a8a29e',
-        strokeWidth: strokeForValue(p.count, maxV),
-        opacity: 0.3,
-      })
-    }
-    accA += h
+    const sy = yArch + accA + h / 2
+    const ty = yTop + h / 2
+    bands.push({
+      id: `band-arch-${p.status}`,
+      fromId: 'arch',
+      toId: `a-${p.status}`,
+      label: `Archiv / Geschlossen → ${p.label}`,
+      count: p.count,
+      pct: total > 0 ? p.count / total : 0,
+      x0: xMidOut,
+      y0: sy,
+      x1: x2,
+      y1: ty,
+      stroke: SANKEY_PIPELINE_FILL[p.status] ?? '#a8a29e',
+      strokeWidth: strokeForValue(p.count, maxV),
+      opacity: muted ? 0.08 : 0.28,
+      muted,
+    })
+    accA += h + archGap
   }
 
   return { rects, bands }

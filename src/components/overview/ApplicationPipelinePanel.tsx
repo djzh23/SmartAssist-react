@@ -18,7 +18,10 @@ export default function ApplicationPipelinePanel({ overview, hint }: Props) {
   const { total, pipeline, archive } = overview
 
   return (
-    <div className="rounded-xl border border-stone-400/35 bg-white/95 p-4 shadow-card sm:p-5">
+    <div
+      className="rounded-xl border border-stone-400/35 p-4 shadow-card sm:p-5"
+      style={{ backgroundColor: 'rgb(238, 233, 226)' }}
+    >
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">
           Bewerbungen — Fluss nach Status
