@@ -1125,3 +1125,30 @@ export async function assignCvStudioCategory(token: string, resumeId: string, ca
   if (!res.ok)
     throw new Error(await readApiError(res, `CV.Studio: Kategorie zuweisen (${res.status})`))
 }
+
+export async function renameCvStudioCategory(
+  token: string,
+  categoryId: string,
+  name: string,
+): Promise<{ id: string; name: string; sortOrder: number }> {
+  const res = await fetch(`${BASE}/api/cv-studio/categories/${encodeURIComponent(categoryId)}`, {
+    method: 'PATCH',
+    headers: { ...authHeaders(token), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name }),
+  })
+  return parseCvStudioJson<{ id: string; name: string; sortOrder: number }>(res, 'CV.Studio: Kategorie umbenennen')
+}
+
+export async function reorderCvStudioCategories(
+  token: string,
+  orders: { id: string; sortOrder: number }[],
+): Promise<void> {
+  const res = await fetch(`${BASE}/api/cv-studio/categories/order`, {
+    method: 'PUT',
+    headers: { ...authHeaders(token), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ orders }),
+  })
+  if (res.status === 401) throw new Error('Bitte anmelden.')
+  if (!res.ok)
+    throw new Error(await readApiError(res, `CV.Studio: Kategoriereihenfolge (${res.status})`))
+}

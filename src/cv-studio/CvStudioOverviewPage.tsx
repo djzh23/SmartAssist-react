@@ -124,6 +124,8 @@ export default function CvStudioOverviewPage() {
     assignResume,
     addCategory,
     removeCategory,
+    renameCategory,
+    reorderCategories,
     getCategoryIdForResume,
   } = useCvResumeCategories(resumeIds)
 
@@ -439,6 +441,8 @@ export default function CvStudioOverviewPage() {
                 categoryError={categoryError}
                 getCategoryIdForResume={getCategoryIdForResume}
                 assignResume={assignResume}
+                renameCategory={renameCategory}
+                reorderCategories={reorderCategories}
                 onDeleteCategory={handleDeleteCategory}
                 onDeleteResume={handleDeleteResume}
                 onCreateCategory={() => setShowCreateCategoryModal(true)}

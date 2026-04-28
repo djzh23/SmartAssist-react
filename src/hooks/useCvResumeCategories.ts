@@ -5,6 +5,8 @@ import {
   createCvStudioCategory,
   deleteCvStudioCategory,
   getCvStudioCategories,
+  renameCvStudioCategory,
+  reorderCvStudioCategories,
 } from '../api/client'
 import type { CvUserCategoryDto } from '../types'
 
@@ -117,6 +119,49 @@ export function useCvResumeCategories(resumeIds: string[] | null) {
     }
   }, [getToken])
 
+  const renameCategory = useCallback(async (id: string, name: string) => {
+    const trimmed = name.trim()
+    if (!trimmed) return
+    const token = await getToken()
+    if (!token) return
+    let oldName: string | undefined
+    setStore(s => {
+      oldName = s.categories.find(c => c.id === id)?.name
+      return { ...s, categories: s.categories.map(c => c.id === id ? { ...c, name: trimmed } : c) }
+    })
+    try {
+      const updated = await renameCvStudioCategory(token, id, trimmed)
+      setStore(s => ({ ...s, categories: s.categories.map(c => c.id === id ? { ...c, ...updated } : c) }))
+    } catch {
+      if (oldName !== undefined)
+        setStore(s => ({ ...s, categories: s.categories.map(c => c.id === id ? { ...c, name: oldName! } : c) }))
+      setCategoryError('Kategorie konnte nicht umbenannt werden.')
+    }
+  }, [getToken])
+
+  const reorderCategories = useCallback(async (orderedIds: string[]) => {
+    const token = await getToken()
+    if (!token) return
+    const orders = orderedIds.map((id, i) => ({ id, sortOrder: i }))
+    setStore(s => ({
+      ...s,
+      categories: s.categories.map(c => {
+        const idx = orderedIds.indexOf(c.id)
+        return idx >= 0 ? { ...c, sortOrder: idx } : c
+      }),
+    }))
+    try {
+      await reorderCvStudioCategories(token, orders)
+    } catch {
+      setCategoryError('Reihenfolge konnte nicht gespeichert werden.')
+      const t2 = await getToken()
+      if (t2) {
+        const data = await getCvStudioCategories(t2).catch(() => null)
+        if (data) setStore({ categories: data.categories, assignments: data.assignments })
+      }
+    }
+  }, [getToken])
+
   const getCategoryIdForResume = useCallback(
     (resumeId: string) => store.assignments[resumeId] ?? null,
     [store.assignments],
@@ -135,6 +180,8 @@ export function useCvResumeCategories(resumeIds: string[] | null) {
     assignResume,
     addCategory,
     removeCategory,
+    renameCategory,
+    reorderCategories,
     getCategoryIdForResume,
   }
 }
