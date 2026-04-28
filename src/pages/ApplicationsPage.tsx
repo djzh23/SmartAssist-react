@@ -15,6 +15,7 @@ import {
   type JobApplicationApi,
   fetchJobApplications,
   listCvStudioResumes,
+  updateJobApplicationStatus,
 } from '../api/client'
 import ApplicationInfoModal from '../components/applications/ApplicationInfoModal'
 import InfoExplainerButton from '../components/ui/InfoExplainerButton'
@@ -85,6 +86,8 @@ export default function ApplicationsPage() {
   const [error, setError] = useState<string | null>(null)
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null)
   const [infoApp, setInfoApp] = useState<JobApplicationApi | null>(null)
+  const [draggingAppId, setDraggingAppId] = useState<string | null>(null)
+  const [dropStatus, setDropStatus] = useState<ApplicationStatusApi | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -136,6 +139,61 @@ export default function ApplicationsPage() {
     () => ARCHIVE.reduce((n, s) => n + (grouped.get(s)?.length ?? 0), 0),
     [grouped],
   )
+
+  async function moveApplicationToStatus(appId: string, targetStatus: ApplicationStatusApi) {
+    const current = apps.find(a => a.id === appId)
+    if (!current || current.status === targetStatus) return
+
+    const token = await getToken()
+    if (!token) {
+      setError('Bitte anmelden.')
+      return
+    }
+
+    const previousApps = apps
+    const nowIso = new Date().toISOString()
+    setApps(prev => prev.map(a => (
+      a.id === appId
+        ? { ...a, status: targetStatus, statusUpdatedAt: nowIso, updatedAt: nowIso }
+        : a
+    )))
+
+    try {
+      await updateJobApplicationStatus(token, appId, { status: targetStatus })
+      setLastSyncedAt(new Date().toISOString())
+    } catch (e) {
+      setApps(previousApps)
+      setError(e instanceof Error ? e.message : 'Status konnte nicht gespeichert werden.')
+    }
+  }
+
+  function handleDragStart(e: React.DragEvent<HTMLDivElement>, appId: string) {
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/application-id', appId)
+    setDraggingAppId(appId)
+  }
+
+  function handleDragEnd() {
+    setDraggingAppId(null)
+    setDropStatus(null)
+  }
+
+  function handleColumnDragOver(e: React.DragEvent<HTMLDivElement>, status: ApplicationStatusApi) {
+    if (!draggingAppId) return
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    setDropStatus(status)
+  }
+
+  function handleColumnDrop(e: React.DragEvent<HTMLDivElement>, status: ApplicationStatusApi) {
+    e.preventDefault()
+    const appId = e.dataTransfer.getData('text/application-id')
+    if (appId) {
+      void moveApplicationToStatus(appId, status)
+    }
+    setDropStatus(null)
+    setDraggingAppId(null)
+  }
 
   return (
     <div className="min-h-0 flex-1 overflow-y-auto bg-transparent">
@@ -271,7 +329,15 @@ export default function ApplicationsPage() {
                           {list.length}
                         </span>
                       </div>
-                      <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain p-1 sm:p-1.5 [scrollbar-width:thin]">
+                      <div
+                        className={[
+                          'min-h-0 flex-1 overflow-y-auto overscroll-y-contain p-1 transition-all sm:p-1.5 [scrollbar-width:thin]',
+                          dropStatus === status ? 'rounded-b-2xl ring-2 ring-inset ring-primary/40 bg-primary/5' : '',
+                        ].join(' ')}
+                        onDragOver={e => handleColumnDragOver(e, status)}
+                        onDrop={e => handleColumnDrop(e, status)}
+                        onDragLeave={() => { if (dropStatus === status) setDropStatus(null) }}
+                      >
                         {list.length === 0 ? (
                           <p className="rounded-lg border border-dashed border-stone-400/45 bg-app-parchmentDeep/80 px-2 py-4 text-center text-[10px] font-medium text-stone-600">
                             Keine Einträge
@@ -284,8 +350,13 @@ export default function ApplicationsPage() {
                                 className={[
                                   'relative rounded-md border border-stone-400/35 bg-white/95 shadow-sm transition',
                                   'border-l-[3px] hover:border-stone-400/55 hover:shadow-md',
+                                  'cursor-grab active:cursor-grabbing',
+                                  draggingAppId === app.id ? 'opacity-40' : '',
                                   COLUMN_ACCENT[status],
                                 ].join(' ')}
+                                draggable
+                                onDragStart={e => handleDragStart(e, app.id)}
+                                onDragEnd={handleDragEnd}
                               >
                                 <Link
                                   to={`/applications/${app.id}`}
@@ -370,7 +441,15 @@ export default function ApplicationsPage() {
                           {list.length}
                         </span>
                       </div>
-                      <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
+                      <div
+                        className={[
+                          'min-h-0 flex-1 overflow-y-auto overscroll-y-contain transition-all',
+                          dropStatus === status ? 'rounded-b-lg ring-2 ring-inset ring-primary/40 bg-primary/5' : '',
+                        ].join(' ')}
+                        onDragOver={e => handleColumnDragOver(e, status)}
+                        onDrop={e => handleColumnDrop(e, status)}
+                        onDragLeave={() => { if (dropStatus === status) setDropStatus(null) }}
+                      >
                         {list.length === 0 ? (
                           <p className="flex min-h-[6rem] items-center justify-center rounded-lg border border-dashed border-stone-400/45 bg-white/60 px-2 py-4 text-center text-[11px] font-medium text-stone-600">
                             Keine Einträge
@@ -383,8 +462,13 @@ export default function ApplicationsPage() {
                                 className={[
                                   'relative rounded-md border border-stone-400/35 bg-white/95 shadow-sm transition',
                                   'border-l-[3px] hover:border-stone-400/55 hover:shadow-md',
+                                  'cursor-grab active:cursor-grabbing',
+                                  draggingAppId === app.id ? 'opacity-40' : '',
                                   COLUMN_ACCENT[status],
                                 ].join(' ')}
+                                draggable
+                                onDragStart={e => handleDragStart(e, app.id)}
+                                onDragEnd={handleDragEnd}
                               >
                                 <Link
                                   to={`/applications/${app.id}`}
