@@ -58,7 +58,7 @@ export default function GuidesIndexPage() {
                     </p>
                     <p className="mt-3">{GUIDE_INDEX_PATH_HINT}</p>
                     <p className="mt-3 text-stone-600">
-                      Nutze die Sprungmarken zu den Themenbereichen, wenn du schon weißt, wonach du suchst — oder lies
+                      Nutze die Sprungmarken zu den Themenbereichen, wenn du schon weißt, wonach du suchst - oder lies
                       die Grundlagen zuerst, wenn du neu einsteigst.
                     </p>
                   </InfoExplainerButton>
@@ -142,7 +142,7 @@ export default function GuidesIndexPage() {
                     <p className="text-xs font-bold uppercase tracking-[0.14em] text-teal-800">Hinweis CV.Studio</p>
                     <p className="mt-1.5 text-sm leading-relaxed text-teal-950/90">
                       Vorlagen enthalten nur synthetische Beispieldaten. Du startest mit einer Kopie, füllst deine echten
-                      Stationen ein und speicherst — so bleiben fremde Daten aus der App fern.
+                      Stationen ein und speicherst - so bleiben fremde Daten aus der App fern.
                     </p>
                     <Link
                       to="/guides/cv-studio-vorlagen-dummy"

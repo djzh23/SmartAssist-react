@@ -261,7 +261,7 @@ export default function ApplicationDetailPage() {
           <div className="mb-5 rounded-xl border border-teal-200 bg-teal-50/90 px-4 py-3 text-sm text-teal-900">
             <span className="font-semibold">Profil {getProfileCompleteness(careerProfile)}%</span>
             {getProfileCompletenessGapHint(careerProfile)
-              ? <> — {getProfileCompletenessGapHint(careerProfile)}</>
+              ? <> - {getProfileCompletenessGapHint(careerProfile)}</>
               : null}
             {' '}
             <Link to="/career-profile" className="font-semibold text-primary hover:underline">
@@ -363,21 +363,21 @@ export default function ApplicationDetailPage() {
             >
               <p>
                 Hier bearbeitest du eine einzelne Bewerbung. Der Lebenslauf liegt in CV.Studio und wird über dieselbe
-                Bewerbungs-ID verknüpft — die Pipeline auf „Meine Bewerbungen“ liest genau diese Verknüpfung aus.
+                Bewerbungs-ID verknüpft - die Pipeline auf „Meine Bewerbungen“ liest genau diese Verknüpfung aus.
               </p>
               <div className="mt-4 border-t border-stone-200 pt-4">
                 <p className="font-semibold text-stone-900">Lebenslauf (CV.Studio)</p>
                 <p className="mt-1">
                   {linkedCv
                     ? `Mit „${linkedCv.title}“ verknüpft. Zum Bearbeiten den Button „${cvStudioLabel}“ oben nutzen.`
-                    : 'Noch kein CV verknüpft. Über den Button oben in CV.Studio einen Lebenslauf wählen oder anlegen — die Verknüpfung erfolgt automatisch mit dieser Bewerbung.'}
+                    : 'Noch kein CV verknüpft. Über den Button oben in CV.Studio einen Lebenslauf wählen oder anlegen - die Verknüpfung erfolgt automatisch mit dieser Bewerbung.'}
                 </p>
               </div>
               <div className="mt-4 border-t border-stone-200 pt-4">
                 <p className="font-semibold text-stone-900">Anschreiben</p>
                 <p className="mt-1">
                   {hasCoverLetter(app)
-                    ? 'Text ist gespeichert — unten bei Bedarf weiter bearbeiten.'
+                    ? 'Text ist gespeichert - unten bei Bedarf weiter bearbeiten.'
                     : 'Unten im Abschnitt „Anschreiben“ Text einfügen und speichern.'}
                 </p>
               </div>
@@ -386,8 +386,8 @@ export default function ApplicationDetailPage() {
                 <p className="mt-1">
                   Aktuell: <span className="font-medium text-stone-900">{statusLabelFor(app.status)}</span>
                   {!hasLeftDraft(app)
-                    ? ' — nach dem Bewerben Status anheben, damit die Kanban-Spalte auf „Meine Bewerbungen“ stimmt.'
-                    : ' — passt zur Spalte auf der Übersichtsseite.'}
+                    ? ' - nach dem Bewerben Status anheben, damit die Kanban-Spalte auf „Meine Bewerbungen“ stimmt.'
+                    : ' - passt zur Spalte auf der Übersichtsseite.'}
                 </p>
               </div>
             </InfoExplainerButton>
@@ -461,7 +461,7 @@ export default function ApplicationDetailPage() {
               className="translate-y-px"
             >
               <p>
-                Du kannst den Text hier bearbeiten oder extern (z. B. mit der KI im Chat) vorbereiten und einfügen —
+                Du kannst den Text hier bearbeiten oder extern (z. B. mit der KI im Chat) vorbereiten und einfügen -
                 anschließend auf dieser Seite speichern.
               </p>
               <p className="mt-3">
@@ -505,7 +505,7 @@ export default function ApplicationDetailPage() {
               className="translate-y-px"
             >
               <p>
-                Hier können später stellenbezogene Hinweise zur CV-Anpassung stehen — oder du erarbeitest sie per KI
+                Hier können später stellenbezogene Hinweise zur CV-Anpassung stehen - oder du erarbeitest sie per KI
                 im Chat und überträgst die Kernaussagen.
               </p>
             </InfoExplainerButton>

@@ -64,7 +64,7 @@ export default function ApplicationNewPage() {
             <p>
               <span className="font-semibold text-slate-900">Titel und Firma</span>
               {' '}
-              sind Pflicht — sie erscheinen in der Pipeline und in den Details.
+              sind Pflicht - sie erscheinen in der Pipeline und in den Details.
             </p>
             <p className="mt-3">
               <span className="font-semibold text-slate-900">Link und Stellentext</span>

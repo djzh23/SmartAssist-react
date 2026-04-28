@@ -7,7 +7,7 @@ interface Props {
 }
 
 /**
- * Miniatur-Dokumentvorschau — zeigt die Oberkante des Lebenslaufs.
+ * Miniatur-Dokumentvorschau - zeigt die Oberkante des Lebenslaufs.
  * Wenn `resume` übergeben wird und profilePreview vorhanden ist, werden echte Daten angezeigt.
  */
 export default function CvMiniDocPreview({ resume, compact }: Props) {

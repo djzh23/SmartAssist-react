@@ -64,7 +64,7 @@ export default function CreateCategoryModal({ onConfirm, onClose }: Props) {
           </div>
 
           <p className="mb-5 text-xs leading-relaxed text-stone-400">
-            Kategorien sind Ordner für deine Bewerbungen — z. B. nach Branche, Rolle oder Zielunternehmen. Innerhalb
+            Kategorien sind Ordner für deine Bewerbungen - z. B. nach Branche, Rolle oder Zielunternehmen. Innerhalb
             jeder Kategorie erstellst du passende Lebensläufe.
           </p>
 

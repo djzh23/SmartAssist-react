@@ -96,7 +96,7 @@ export default function CvMasterCategoriesBoard({
           </div>
           <p className="text-sm font-semibold text-stone-900">Noch keine Kategorien</p>
           <p className="mt-1 text-xs text-stone-600">
-            Lege deine erste Kategorie an — z. B. „Frontend", „SAP" oder „Google".
+            Lege deine erste Kategorie an - z. B. „Frontend", „SAP" oder „Google".
           </p>
           <button
             type="button"

@@ -158,7 +158,7 @@ export default function ApplicationsPage() {
                   className="shrink-0"
                 >
                   <p>
-                    Pipeline von Entwurf bis Angebot — darunter Archiv für{' '}
+                    Pipeline von Entwurf bis Angebot - darunter Archiv für{' '}
                     <span className="font-semibold text-stone-900">Abgesagt, Zurückgezogen und Angenommen</span>
                     .
                   </p>
@@ -171,7 +171,7 @@ export default function ApplicationsPage() {
                     <p className="font-semibold text-stone-900">Leere Spalten</p>
                     <p className="mt-1">
                       Wenn eine Phase noch leer ist, lege eine neue Bewerbung an oder ändere den Status in den
-                      Bewerbungsdetails — die Karte wandert dann in die passende Spalte.
+                      Bewerbungsdetails - die Karte wandert dann in die passende Spalte.
                     </p>
                     <p className="mt-2">
                       Im Archiv: abgeschlossene Bewerbungen erscheinen automatisch, sobald du den Status in den Details
@@ -181,7 +181,7 @@ export default function ApplicationsPage() {
                 </InfoExplainerButton>
               </div>
               <p className="mt-1 max-w-xl text-sm text-stone-400">
-                Pipeline und Archiv — Details über das Info-Symbol.
+                Pipeline und Archiv - Details über das Info-Symbol.
               </p>
               <p className="mt-2 text-sm font-medium text-stone-200">
                 <span className="tabular-nums text-primary">{activeCount}</span>
@@ -228,7 +228,7 @@ export default function ApplicationsPage() {
               ? (
                   <>
                     {' '}
-                    — fehlt u. a.: {getProfileCompletenessGapHint(careerProfile)}
+                    - fehlt u. a.: {getProfileCompletenessGapHint(careerProfile)}
                   </>
                 )
               : null}
@@ -248,7 +248,7 @@ export default function ApplicationsPage() {
           </div>
         ) : (
           <>
-            {/* Horizontal Kanban — scroll on small screens */}
+            {/* Horizontal Kanban - scroll on small screens */}
             <section aria-label="Bewerbungspipeline" className="mb-10">
               <h2 className="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-stone-600">
                 Pipeline
@@ -304,7 +304,7 @@ export default function ApplicationsPage() {
                                   </div>
                                   <div className="flex min-w-0 items-center gap-0.5 pl-[1.125rem] text-[10px] text-stone-600">
                                     <Building2 size={9} className="shrink-0 opacity-70" aria-hidden />
-                                    <span className="truncate">{app.company || '—'}</span>
+                                    <span className="truncate">{app.company || '-'}</span>
                                   </div>
                                   <p className="pl-[1.125rem] text-[9px] font-medium uppercase tracking-wide text-stone-500">
                                     {formatRelative(app.updatedAt)}
@@ -333,10 +333,10 @@ export default function ApplicationsPage() {
               </div>
             </section>
 
-            {/* Archiv: Absagen & erledigt — immer sichtbar (nicht nur bei Einträgen) */}
+            {/* Archiv: Absagen & erledigt - immer sichtbar (nicht nur bei Einträgen) */}
             <section aria-label="Archiv: abgeschlossene Bewerbungen" className="rounded-2xl border border-stone-400/40 bg-app-parchment/90 p-5 shadow-landing sm:p-6">
               <h2 className="mb-4 flex flex-wrap items-center gap-2 text-sm font-bold text-stone-900">
-                Archiv — Absagen und erledigt
+                Archiv - Absagen und erledigt
                 <span className="rounded-full bg-white px-2 py-0.5 text-xs font-bold tabular-nums text-stone-700 shadow-sm">
                   {archiveTotal}
                 </span>
@@ -403,7 +403,7 @@ export default function ApplicationsPage() {
                                   </div>
                                   <div className="flex min-w-0 items-center gap-0.5 pl-[1.125rem] text-[10px] text-stone-600">
                                     <Building2 size={9} className="shrink-0 opacity-70" aria-hidden />
-                                    <span className="truncate">{app.company || '—'}</span>
+                                    <span className="truncate">{app.company || '-'}</span>
                                   </div>
                                   <p className="pl-[1.125rem] text-[9px] font-medium uppercase tracking-wide text-stone-500">
                                     {formatRelative(app.updatedAt)}
@@ -449,7 +449,7 @@ export default function ApplicationsPage() {
                     ariaLabel="Erklärung zum Anlegen der ersten Bewerbung"
                   >
                     <p>
-                      Lege deine erste Stelle mit Titel und Firma an — optional mit Link zur Anzeige und Stellentext.
+                      Lege deine erste Stelle mit Titel und Firma an - optional mit Link zur Anzeige und Stellentext.
                       Alles bleibt mit deinem Konto synchron.
                     </p>
                   </InfoExplainerButton>

@@ -121,7 +121,7 @@ export default function OverviewPage() {
                 </h1>
                 <p className="mt-2 text-sm leading-relaxed text-stone-700">
                   Kennzahlen zu Bewerbungen und Lebensläufen, Flussdiagramm der Bewerbungs-Status, Chat-Aktivität der
-                  letzten Woche und Schnellzugriffe — Konto, Plan und Profil erreichst du im Benutzermenü unter{' '}
+                  letzten Woche und Schnellzugriffe, Konto, Plan und Profil erreichst du im Benutzermenü unter{' '}
                   <span className="font-semibold text-stone-800">Konto & Plan → Profil</span>.
                 </p>
               </div>
@@ -141,7 +141,7 @@ export default function OverviewPage() {
                 <strong>Profil</strong>
                 {' '}
                 (Avatar-Menü → Konto & Plan → Profil) enthält Anmeldung, Tarif, tägliches KI-Limit und
-                Abo-Verwaltung — alles rund ums Konto, nicht einzelne Bewerbungen.
+                Abo-Verwaltung, alles rund ums Konto, nicht einzelne Bewerbungen.
               </p>
             </InfoExplainerButton>
           </div>
@@ -194,8 +194,8 @@ export default function OverviewPage() {
               {[
                 { label: 'Bewerbungen', value: overview.total, sub: 'alle Status', icon: FolderOpen },
                 { label: 'In Pipeline', value: overview.activeInPipeline, sub: 'aktiv', icon: Sparkles },
-                { label: 'Lebensläufe', value: cvCount ?? '—', sub: 'CV.Studio', icon: FileText },
-                { label: 'Notizen', value: notesCount ?? '—', sub: 'Chat', icon: NotebookPen },
+                { label: 'Lebensläufe', value: cvCount ?? '-', sub: 'CV.Studio', icon: FileText },
+                { label: 'Notizen', value: notesCount ?? '-', sub: 'Chat', icon: NotebookPen },
               ].map(row => {
                 const Icon = row.icon
                 return (
@@ -230,7 +230,7 @@ export default function OverviewPage() {
               </div>
               <div className="hidden rounded-lg border border-stone-400/30 bg-white/80 px-3 py-2 sm:block">
                 <p className="text-[10px] font-bold uppercase text-stone-500">Lieblingstool</p>
-                <p className="truncate text-sm font-semibold text-stone-900">{user.favoriteTool ?? '—'}</p>
+                <p className="truncate text-sm font-semibold text-stone-900">{user.favoriteTool ?? '-'}</p>
               </div>
             </div>
           ) : null}
@@ -242,7 +242,7 @@ export default function OverviewPage() {
           className="scroll-mt-24 rounded-2xl border border-stone-400/40 bg-app-parchment/95 p-5 shadow-landing sm:p-6"
         >
           <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
-            <h2 className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">Bewerbungen — Stand</h2>
+            <h2 className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">Bewerbungen, Stand</h2>
             <Link
               to="/applications"
               className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
@@ -260,14 +260,14 @@ export default function OverviewPage() {
           className="scroll-mt-24 rounded-2xl border border-stone-400/40 bg-app-parchment/95 p-5 shadow-landing sm:p-6"
         >
           <div className="mb-4 flex items-start justify-between gap-2">
-            <h2 className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">Chat — letzte 7 Tage</h2>
+            <h2 className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">Chat, letzte 7 Tage</h2>
             <InfoExplainerButton
               variant="onLight"
               modalTitle="Chat-Aktivität"
               ariaLabel="Erklärung zum Chat-Verlauf"
               className="text-stone-500 hover:bg-stone-200/90 hover:text-stone-900"
             >
-              <p>Zähler pro Kalendertag auf diesem Gerät — gleiche Logik wie im Profil, hier in der Übersicht für den Kontext neben Bewerbungen.</p>
+              <p>Zähler pro Kalendertag auf diesem Gerät, gleiche Logik wie im Profil, hier in der Übersicht für den Kontext neben Bewerbungen.</p>
             </InfoExplainerButton>
           </div>
           <div className="rounded-xl border border-stone-400/35 bg-white/95 p-4 shadow-card sm:p-5">

@@ -263,14 +263,14 @@ export default function OnboardingPage() {
         <h1 className="mb-2 text-xl font-semibold text-slate-900">Willkommen bei PrivatePrep</h1>
         <p className="mb-6 text-sm text-slate-600">
           Das sind dieselben Daten wie unter <strong className="font-medium text-slate-800">Karriereprofil</strong> in der
-          Navigation — hier nur geführt in drei Schritten. Überspringen oder später ergänzen ist in Ordnung.
+          Navigation - hier nur geführt in drei Schritten. Überspringen oder später ergänzen ist in Ordnung.
         </p>
         <p className="mb-6 text-sm text-slate-600">
           <Link to="/guides" className="font-medium text-primary hover:underline">
             Ratgeber lesen
           </Link>
           {' '}
-          — App-Workflow, Bewerbungen und Prompting.
+          - App-Workflow, Bewerbungen und Prompting.
         </p>
 
         {formError && (
@@ -391,7 +391,7 @@ export default function OnboardingPage() {
             {cvStepChoice === 'pick' && (
               <>
                 <p className="text-sm text-slate-600">
-                  Optional: Lebenslauf hinterlegen — PDF mit automatischer Erkennung, Text manuell, oder überspringen.
+                  Optional: Lebenslauf hinterlegen - PDF mit automatischer Erkennung, Text manuell, oder überspringen.
                 </p>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                   <button
@@ -484,7 +484,7 @@ export default function OnboardingPage() {
                     disabled={busy}
                     className="py-2 text-sm text-slate-500 hover:text-slate-700"
                   >
-                    Kein CV — zum Chat
+                    Kein CV - zum Chat
                   </button>
                   <button
                     type="button"

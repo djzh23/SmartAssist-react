@@ -67,7 +67,7 @@ export default function ChatContextBar({
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1">
           <p className="min-w-0 text-[11px] leading-snug text-stone-400">
             <span className="font-medium text-stone-200">Kontext</span>
-            {' — '}
+            {' - '}
             Teile ein- oder ausblenden; Profil bearbeiten unter{' '}
             <Link to="/career-profile" className="font-medium text-primary hover:underline">
               Karriereprofil

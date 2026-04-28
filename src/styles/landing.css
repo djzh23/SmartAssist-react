@@ -57,7 +57,7 @@
 
 /*
  * Decorative geometry (Final CTA): sub-pixel “hairline” rings.
- * CSS borders are always ≥1px — these read lighter and more premium.
+ * CSS borders are always ≥1px - these read lighter and more premium.
  */
 .landing-geo-hairline {
   border: none;
@@ -75,7 +75,7 @@
   border: none;
   box-shadow: 0 0 0 0.45px rgb(253 230 168 / 0.08);
 }
-/* Large ring behind CTA headline — extra fine */
+/* Large ring behind CTA headline - extra fine */
 .landing-geo-hairline-cta-ring {
   border: none;
   box-shadow: 0 0 0 0.35px rgb(255 248 237 / 0.05);

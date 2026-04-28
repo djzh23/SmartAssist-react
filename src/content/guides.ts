@@ -30,7 +30,7 @@ export interface GuideArticle {
 
 export const GUIDE_CATEGORY_ORDER: GuideCategory[] = ['grundlagen', 'bewerbung', 'chat', 'interview']
 
-/** Visual system for /guides index + article chrome — warm parchment, per-topic accents */
+/** Visual system for /guides index + article chrome - warm parchment, per-topic accents */
 export interface GuideCategoryMeta {
   label: string
   description: string
@@ -48,7 +48,7 @@ export interface GuideCategoryMeta {
 export const GUIDE_CATEGORY_META: Record<GuideCategory, GuideCategoryMeta> = {
   grundlagen: {
     label: 'Grundlagen',
-    description: 'Profil anlegen, Kontext verstehen und die App sinnvoll einrichten — Basis für alles Weitere.',
+    description: 'Profil anlegen, Kontext verstehen und die App sinnvoll einrichten - Basis für alles Weitere.',
     chipClass: 'bg-primary/12 text-stone-900 ring-1 ring-inset ring-primary/25',
     indexPanelClass:
       'rounded-2xl border border-amber-700/20 bg-gradient-to-br from-primary-light/95 via-app-parchment to-app-parchmentDeep p-4 shadow-landing sm:p-5',
@@ -59,7 +59,7 @@ export const GUIDE_CATEGORY_META: Record<GuideCategory, GuideCategoryMeta> = {
   bewerbung: {
     label: 'Bewerbung',
     description:
-      'Stellen erfassen, Pipeline nutzen, CV.Studio mit Vorlagen — Anschreiben und Unterlagen strukturiert pro Firma.',
+      'Stellen erfassen, Pipeline nutzen, CV.Studio mit Vorlagen - Anschreiben und Unterlagen strukturiert pro Firma.',
     chipClass: 'bg-teal-100/95 text-teal-950 ring-1 ring-inset ring-teal-600/25',
     indexPanelClass:
       'rounded-2xl border border-teal-700/22 bg-gradient-to-br from-teal-50/95 via-app-parchment to-app-parchmentDeep p-4 shadow-landing sm:p-5',
@@ -103,27 +103,27 @@ export const GUIDE_ARTICLES: GuideArticle[] = [
     intro:
       'Mit Karriereprofil und Bewerbungen arbeitest du fokussiert: ein Profil liefert Kontext für alle Chats, Bewerbungen bündeln alles pro Stelle.',
     highlights: [
-      'Profil einmal pflegen — in allen Chats nutzbar',
-      'Pro Stelle eine Bewerbung — weniger Chaos',
-      'Tool aus der Bewerbung starten — Kontext bleibt zusammen',
+      'Profil einmal pflegen - in allen Chats nutzbar',
+      'Pro Stelle eine Bewerbung - weniger Chaos',
+      'Tool aus der Bewerbung starten - Kontext bleibt zusammen',
     ],
     steps: [
       {
-        title: 'Schritt 1 — Karriereprofil',
+        title: 'Schritt 1 - Karriereprofil',
         items: [
           'Feld, Level, Ziele, Skills, Erfahrung und optional CV-Text ausfüllen.',
           'Zielstellen anlegen, wenn du dich auf konkrete Rollen bewirbst.',
         ],
       },
       {
-        title: 'Schritt 2 — Bewerbung anlegen',
+        title: 'Schritt 2 - Bewerbung anlegen',
         items: [
           'Stellentext und Status speichern; später Anschreiben-Entwurf und Interview-Notizen.',
           'Von hier aus „Analyse“ oder „Interview“ starten, damit die Session verknüpft ist.',
         ],
       },
       {
-        title: 'Schritt 3 — Chat wählen',
+        title: 'Schritt 3 - Chat wählen',
         items: [
           'Sidebar: passendes Tool (Stellenanalyse, Interview, Sprache, Code, Karriere-Chat).',
           'Getrennte Sessions für Analyse vs. Interview vermeiden lange, unübersichtliche Threads.',
@@ -148,14 +148,14 @@ export const GUIDE_ARTICLES: GuideArticle[] = [
   {
     slug: 'kontext-karriereprofil',
     title: 'Kontext-Schalter und Karriereprofil',
-    subtitle: 'Was landet im System-Prompt — und wo du es steuerst',
+    subtitle: 'Was landet im System-Prompt - und wo du es steuerst',
     category: 'grundlagen',
     readingMinutes: 4,
     intro:
       'Über dem Eingabefeld im Chat siehst du, welche Profilteile aktiv in die KI einfließen. Dauerhafte Daten pflegst du im Karriereprofil.',
     highlights: [
       'Farbig = aktiv: diese Blöcke nutzt der Server im System-Prompt',
-      'Pro Chat umschalten — ohne Karriereprofil neu einzutippen',
+      'Pro Chat umschalten - ohne Karriereprofil neu einzutippen',
       'Zielstelle wählen, wenn du dich auf eine konkrete Anzeige beziehst',
     ],
     steps: [
@@ -172,7 +172,7 @@ export const GUIDE_ARTICLES: GuideArticle[] = [
       {
         heading: 'Stellenanalyse und Interview',
         paragraphs: [
-          'Zusätzlich zum Profil-Kontext kann Text aus dem Setup-Modal (Stelle, Lebenslauf-Auszug) in der Nachricht stecken — das siehst du am Kontext-Badge bzw. Setup.',
+          'Zusätzlich zum Profil-Kontext kann Text aus dem Setup-Modal (Stelle, Lebenslauf-Auszug) in der Nachricht stecken - das siehst du am Kontext-Badge bzw. Setup.',
           'Nach Profil-Änderungen ggf. Seite neu laden, damit der Stand stimmt.',
         ],
       },
@@ -180,14 +180,14 @@ export const GUIDE_ARTICLES: GuideArticle[] = [
     examples: [
       {
         label: 'Typischer Fehler',
-        body: 'Skills aus, aber „Warum fehlen React-Keywords?“ fragen — dann weiß die KI deinen Stack nicht. Entweder Skills aktivieren oder im Satz kurz nennen.',
+        body: 'Skills aus, aber „Warum fehlen React-Keywords?“ fragen - dann weiß die KI deinen Stack nicht. Entweder Skills aktivieren oder im Satz kurz nennen.',
       },
     ],
   },
   {
     slug: 'cv-studio-vorlagen-dummy',
     title: 'CV.Studio: Vorlagen mit Beispieldaten',
-    subtitle: 'Anonyme Startvorlagen — deine echten Daten bleiben privat',
+    subtitle: 'Anonyme Startvorlagen - deine echten Daten bleiben privat',
     category: 'bewerbung',
     readingMinutes: 4,
     intro:
@@ -201,9 +201,9 @@ export const GUIDE_ARTICLES: GuideArticle[] = [
       {
         title: 'Erster Einstieg',
         items: [
-          'CV.Studio öffnen und „Neu“ bzw. Vorlage wählen (klassisch, kompakt, fokussiert — je nach Typ).',
+          'CV.Studio öffnen und „Neu“ bzw. Vorlage wählen (klassisch, kompakt, fokussiert - je nach Typ).',
           'Im Editor alle Musterfelder durch deine echten Daten ersetzen; keine fremden Namen in der finalen Bewerbung lassen.',
-          'Speichern — die Datei gehört nur deinem Konto.',
+          'Speichern - die Datei gehört nur deinem Konto.',
         ],
       },
       {
@@ -218,7 +218,7 @@ export const GUIDE_ARTICLES: GuideArticle[] = [
       {
         heading: 'Datenschutz auf einen Satz',
         paragraphs: [
-          'Die mitgelieferten Texte sind absichtlich generisch; sie dienen nur Layout und Struktur. Persönliche Daten trägst du selbst ein — und nur die landen in deinen Exporten.',
+          'Die mitgelieferten Texte sind absichtlich generisch; sie dienen nur Layout und Struktur. Persönliche Daten trägst du selbst ein - und nur die landen in deinen Exporten.',
         ],
       },
     ],
@@ -232,7 +232,7 @@ export const GUIDE_ARTICLES: GuideArticle[] = [
     intro: 'Die Bewerbungs-Pipeline hilft dir, den Überblick über Entwurf, Versand und Nachfassen zu behalten.',
     highlights: [
       'Status-Spalten spiegeln den realen Bewerbungsverlauf',
-      'Chat aus der Bewerbung starten — weniger Copy-Paste',
+      'Chat aus der Bewerbung starten - weniger Copy-Paste',
     ],
     steps: [
       {
@@ -271,14 +271,14 @@ export const GUIDE_ARTICLES: GuideArticle[] = [
         items: [
           'Einleitung: Rolle + warum genau diese Firma/Rolle.',
           'Kern: zwei bis drei Anforderungen aus der Anzeige mit deinen messbaren Ergebnissen verknüpfen.',
-          'Schluss: klare nächste Schritte, höflicher Abschluss — oft eine Seite.',
+          'Schluss: klare nächste Schritte, höflicher Abschluss - oft eine Seite.',
         ],
       },
       {
         title: 'Lebenslauf',
         items: [
           'Umgekehrt chronologisch, messbare Ergebnisse, Skills zur Stelle sortiert.',
-          'Begriffe aus der Anzeige natürlich verwenden — ohne zur Lüge zu werden.',
+          'Begriffe aus der Anzeige natürlich verwenden - ohne zur Lüge zu werden.',
         ],
       },
     ],
@@ -286,7 +286,7 @@ export const GUIDE_ARTICLES: GuideArticle[] = [
     examples: [
       {
         label: 'Beispiel-Satz für den Kern',
-        body: 'In meiner Rolle als … habe ich [Metrik] um X % verbessert, indem ich [Technik/Prozess] eingeführt habe — vergleichbar mit Ihrer Anforderung „…“.',
+        body: 'In meiner Rolle als … habe ich [Metrik] um X % verbessert, indem ich [Technik/Prozess] eingeführt habe - vergleichbar mit Ihrer Anforderung „…“.',
       },
     ],
   },
@@ -296,7 +296,7 @@ export const GUIDE_ARTICLES: GuideArticle[] = [
     subtitle: 'Lesbarkeit schlägt Spielerei',
     category: 'bewerbung',
     readingMinutes: 5,
-    intro: 'Viele Arbeitgeber parsen PDFs automatisch — Lesbarkeit und Struktur zählen mehr als Design-Spielereien.',
+    intro: 'Viele Arbeitgeber parsen PDFs automatisch - Lesbarkeit und Struktur zählen mehr als Design-Spielereien.',
     highlights: [
       'Auswählbarer Text, klare Überschriften, eingebettete Schriftarten',
       'Keine exotischen Mehrspalt-Layouts für Parser',
@@ -311,7 +311,7 @@ export const GUIDE_ARTICLES: GuideArticle[] = [
       {
         heading: 'ATS-freundlich',
         paragraphs: [
-          '„ATS-frei“ im Sinne von garantiertem Parser-Erfolg gibt es nicht — konsistente Struktur und echte Passung zur Stelle sind der beste Hebel.',
+          '„ATS-frei“ im Sinne von garantiertem Parser-Erfolg gibt es nicht - konsistente Struktur und echte Passung zur Stelle sind der beste Hebel.',
         ],
       },
     ],
@@ -335,7 +335,7 @@ export const GUIDE_ARTICLES: GuideArticle[] = [
     intro: 'Je klarer Kontext und Ziel, desto weniger Halluzinationen und Wiederholungen.',
     highlights: [
       'Format vorgeben (Bulletpoints, max. Wörter, Sprache)',
-      'Tool passend wählen — der System-Kontext ist anders als im Freitext',
+      'Tool passend wählen - der System-Kontext ist anders als im Freitext',
     ],
     sections: [
       {
@@ -373,9 +373,9 @@ export const GUIDE_ARTICLES: GuideArticle[] = [
     intro:
       'Im Tool „Stellenanalyse“ bekommst du strukturierte Abschnitte (Match, Lücken, Keywords …). Am besten arbeitest du mit echtem Stellentext und klarer nächster Frage.',
     highlights: [
-      'Stellentext im Setup oder aus der Bewerbung — einmal sauber, dann Folgefragen',
+      'Stellentext im Setup oder aus der Bewerbung - einmal sauber, dann Folgefragen',
       'Tabellen (z. B. Keywords) im Chat als echte Tabelle lesbar',
-      'Lücken ehrlich benennen lassen — dann gezielt nachbessern',
+      'Lücken ehrlich benennen lassen - dann gezielt nachbessern',
     ],
     steps: [
       {
@@ -394,7 +394,7 @@ export const GUIDE_ARTICLES: GuideArticle[] = [
         heading: 'Folgefragen stellen',
         paragraphs: [
           'Kurze, konkrete Nachfragen liefern bessere Antworten als „noch mehr“ ohne Fokus.',
-          'Wenn du nur einen Ausschnitt der Stelle hast, sag das dazu — sonst rät das Modell.',
+          'Wenn du nur einen Ausschnitt der Stelle hast, sag das dazu - sonst rät das Modell.',
         ],
       },
     ],
@@ -462,7 +462,7 @@ export const GUIDE_ARTICLES: GuideArticle[] = [
       {
         heading: 'Sprache',
         paragraphs: [
-          'Du kannst die Interview-Sprache im Setup wählen — halte Antworten in derselben Sprache, damit Feedback konsistent bleibt.',
+          'Du kannst die Interview-Sprache im Setup wählen - halte Antworten in derselben Sprache, damit Feedback konsistent bleibt.',
         ],
       },
     ],

@@ -351,7 +351,7 @@ function isMarkdownTableSeparatorRow(cells: string[]): boolean {
 
 function statusCellMarkup(raw: string): string | null {
   const t = normalizeBrokenText(raw).trim()
-  if (t === '' || t === '—' || t === '-') return '<span class="job-cell-status job-cell-status-empty">—</span>'
+  if (t === '' || t === '-' || t === '-') return '<span class="job-cell-status job-cell-status-empty">-</span>'
   if (/^[✓✔\u2713\u2714]$/.test(t)) return '<span class="job-cell-status job-cell-status-yes" title="vorhanden">✓</span>'
   if (/^[✗✘xX]$/.test(t)) return '<span class="job-cell-status job-cell-status-no" title="fehlt">✗</span>'
   return null

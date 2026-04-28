@@ -17,7 +17,7 @@ interface CategoryStore {
 }
 
 /**
- * CV-Kategorien — serverseitig gespeichert (api/cv-studio/categories).
+ * CV-Kategorien - serverseitig gespeichert (api/cv-studio/categories).
  * Optimistische lokale Updates; Fehler werden in `categoryError` gemeldet.
  */
 export function useCvResumeCategories(resumeIds: string[] | null) {

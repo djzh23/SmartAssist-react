@@ -111,7 +111,7 @@ export async function askAgentStream(
         else if (chunk.type === 'done')             toolUsed = chunk.toolUsed ?? ''
         else if (chunk.type === 'error')            throw new Error(chunk.message ?? 'Stream error')
       } catch (e) {
-        if (e instanceof SyntaxError) continue // incomplete JSON line — skip
+        if (e instanceof SyntaxError) continue // incomplete JSON line - skip
         throw e
       }
     }
@@ -195,7 +195,7 @@ export async function askAgent(
   }
 }
 
-// ── Usage sync — fetches real usage from backend on load ───────────────────
+// ── Usage sync - fetches real usage from backend on load ───────────────────
 export interface UsageStatus {
   usageToday: number
   dailyLimit: number
@@ -321,7 +321,7 @@ export async function createLearningInsight(
 
 /**
  * Fetch synthesized speech from the backend (/api/speech/tts).
- * Requires an auth token. Returns null on any failure — callers should fall
+ * Requires an auth token. Returns null on any failure - callers should fall
  * back to browser TTS rather than showing an error.
  */
 export async function fetchTtsAudio(
@@ -347,7 +347,7 @@ export async function fetchTtsAudio(
 }
 
 /**
- * Public demo TTS — calls /api/speech/demo-tts (no auth required).
+ * Public demo TTS - calls /api/speech/demo-tts (no auth required).
  * Limited to 8 calls per IP per day. Used by the landing-page live demo.
  * Returns null if the limit is exceeded or on any error.
  */
@@ -369,7 +369,7 @@ export async function fetchDemoTtsAudio(
 }
 
 /**
- * Public demo agent — calls /api/agent/demo (no auth required).
+ * Public demo agent - calls /api/agent/demo (no auth required).
  * Limited to 5 calls per IP per day. Used by the landing-page live demo.
  * Throws UsageLimitError on 429, generic Error on other failures.
  */
@@ -841,7 +841,7 @@ function normalizeResumeDto(dto: ResumeDto): ResumeDto {
   const rawId = dto.id ?? loose.Id
   const id = typeof rawId === 'string' ? rawId.trim() : ''
   if (!/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/i.test(id)) {
-    throw new Error('CV.Studio: Antwort ohne gültige Lebenslauf-ID — bitte API aktualisieren oder Support kontaktieren.')
+    throw new Error('CV.Studio: Antwort ohne gültige Lebenslauf-ID - bitte API aktualisieren oder Support kontaktieren.')
   }
   return { ...dto, id }
 }

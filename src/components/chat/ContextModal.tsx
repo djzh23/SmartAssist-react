@@ -27,7 +27,7 @@ interface Props {
   toolType: ContextModalToolType
   sessionId: string
   initialData?: InitialModalData
-  /** Roh-Text aus Karriereprofil — wird nur mit Einverständnis in Setup gemischt, nicht als Textfeld editiert. */
+  /** Roh-Text aus Karriereprofil - wird nur mit Einverständnis in Setup gemischt, nicht als Textfeld editiert. */
   profileCvFromCareer?: string
   onClose: () => void
   onContextSet: (payload: ContextPayload) => void
@@ -231,7 +231,7 @@ export default function ContextModal({
       if (!res.success) {
         setPreviewError(
           res.error
-            ?? 'URL konnte nicht geladen werden — bitte wechsle zu „Text einfügen“ oder kopiere die komplette Anzeige.',
+            ?? 'URL konnte nicht geladen werden - bitte wechsle zu „Text einfügen“ oder kopiere die komplette Anzeige.',
         )
         return
       }
@@ -351,14 +351,14 @@ export default function ContextModal({
           />
           <span>
             Lebenslauf-Inhalt aus dem <strong>Karriereprofil</strong> einbeziehen (empfohlen). Ausgeschaltet nutzt der Chat
-            nur die Schalter unter dem Chat plus die Zusatzfelder hier — <strong>session-lokal</strong> für diesen Chat.
+            nur die Schalter unter dem Chat plus die Zusatzfelder hier - <strong>session-lokal</strong> für diesen Chat.
           </span>
         </label>
       )}
 
       {!profileAvailable && (
         <p className="modal-hint text-slate-600">
-          Kein Lebenslauf im Karriereprofil — ergänze Zusatzinfos hier oder im Profil.
+          Kein Lebenslauf im Karriereprofil - ergänze Zusatzinfos hier oder im Profil.
         </p>
       )}
 
@@ -405,21 +405,21 @@ export default function ContextModal({
           <li>
             Stelle:
             {' '}
-            <span className="font-medium">{trimmedJobTitle || '—'}</span>
-            {trimmedCompanyName ? ` — ${trimmedCompanyName}` : ''}
+            <span className="font-medium">{trimmedJobTitle || '-'}</span>
+            {trimmedCompanyName ? ` - ${trimmedCompanyName}` : ''}
           </li>
         )}
         {effectiveToolType === 'jobanalyzer' && (trimmedJobTitle || trimmedCompanyName) && (
           <li>
             Titel / Firma (optional):
             {' '}
-            <span className="font-medium">{[trimmedJobTitle, trimmedCompanyName].filter(Boolean).join(' — ') || '—'}</span>
+            <span className="font-medium">{[trimmedJobTitle, trimmedCompanyName].filter(Boolean).join(' - ') || '-'}</span>
           </li>
         )}
         <li>
           Stellenkontext:
           {' '}
-          {trimmedJobText ? `${trimmedJobText.slice(0, 160)}${trimmedJobText.length > 160 ? '…' : ''}` : '—'}
+          {trimmedJobText ? `${trimmedJobText.slice(0, 160)}${trimmedJobText.length > 160 ? '…' : ''}` : '-'}
         </li>
         <li>{includeProfileCvInSetup && profileAvailable ? 'Karriereprofil-CV: ein' : 'Karriereprofil-CV: aus oder nicht verfügbar'}</li>
         {(trimmedExtraSkills || trimmedExtraProjects || trimmedExtraExp) && (
@@ -454,7 +454,7 @@ export default function ContextModal({
 
       <p className="modal-subtitle mt-1">
         <strong>Link zur Stelle</strong>
-        {' — lädt die Seite und füllt die Vorschau. Oder '
+        {' - lädt die Seite und füllt die Vorschau. Oder '
         }
         <strong>Stellen-Text einfügen</strong>
         {' ohne Netzaufruf.'}
@@ -552,11 +552,11 @@ export default function ContextModal({
         <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-950">
           <p className="font-semibold text-emerald-900">Vorschau</p>
           <p>
-            <span className="font-medium">{previewMeta.jobTitle || '—'}</span>
+            <span className="font-medium">{previewMeta.jobTitle || '-'}</span>
             {(previewMeta.companyName || previewMeta.location) && (
               <span className="text-emerald-800">
                 {' '}
-                — {previewMeta.companyName || ''}{previewMeta.location ? ` (${previewMeta.location})` : ''}
+                - {previewMeta.companyName || ''}{previewMeta.location ? ` (${previewMeta.location})` : ''}
               </span>
             )}
           </p>
@@ -649,7 +649,7 @@ export default function ContextModal({
               </p>
             )}
             {wizardStep === 2 && (
-              <p className="modal-subtitle">Skills, Projekte und kurze Erfahrung — nur für diesen Chat, nicht global.</p>
+              <p className="modal-subtitle">Skills, Projekte und kurze Erfahrung - nur für diesen Chat, nicht global.</p>
             )}
             {wizardStep === 3 && (
               <p className="modal-subtitle">Prüfe die Angaben, dann starten oder allgemeines Coaching wählen.</p>
@@ -709,7 +709,7 @@ export default function ContextModal({
               </p>
             )}
             {wizardStep === 2 && (
-              <p className="modal-subtitle">Zusatzinfos nur für diese Analyse — session-lokal.</p>
+              <p className="modal-subtitle">Zusatzinfos nur für diese Analyse - session-lokal.</p>
             )}
             {wizardStep === 3 && <p className="modal-subtitle">Kurz prüfen, dann starten oder allgemeines Coaching.</p>}
 

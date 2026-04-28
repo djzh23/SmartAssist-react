@@ -43,7 +43,7 @@ function ClerkProviderWithRouter({ children }: { children: React.ReactNode }) {
   )
 }
 
-// Requires authentication — redirects to landing if not signed in
+// Requires authentication - redirects to landing if not signed in
 function ProtectedApp() {
   const { isSignedIn, isLoaded } = useUser()
 
@@ -52,7 +52,7 @@ function ProtectedApp() {
   return <MainLayout />
 }
 
-/** Signed-in only, no MainLayout — /admin (sidebar shows link only for admins). */
+/** Signed-in only, no MainLayout - /admin (sidebar shows link only for admins). */
 function RequireSignedIn({ children }: { children: React.ReactNode }) {
   const { isSignedIn, isLoaded } = useUser()
 
@@ -82,7 +82,7 @@ function AppRoutes() {
         }
       />
 
-      {/* Protected app — requires sign in, renders MainLayout with sidebar */}
+      {/* Protected app - requires sign in, renders MainLayout with sidebar */}
       <Route element={<ProtectedApp />}>
         <Route
           path="/chat"

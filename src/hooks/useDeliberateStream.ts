@@ -10,7 +10,7 @@ export interface DeliberateStreamOptions {
 
 /**
  * Puffert den vollständigen API-Stream und zeigt ihn erst gedrosselt an (nach Thinking-Phase).
- * Kein Blockieren des Netzwerk-Threads — nur setInterval für die Anzeige.
+ * Kein Blockieren des Netzwerk-Threads - nur setInterval für die Anzeige.
  */
 export function useDeliberateStream(options: DeliberateStreamOptions) {
   const { charsPerSecond = 80, initialDelayMs = 200, onDisplayUpdate, onRevealComplete } = options

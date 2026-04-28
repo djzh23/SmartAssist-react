@@ -36,7 +36,7 @@ const LANG_DISPLAY: Record<string, string> = {
   pt: 'Portugiesisch',
 }
 
-/** English names sent to the backend — Claude responds more reliably to English language names */
+/** English names sent to the backend - Claude responds more reliably to English language names */
 const LANG_API: Record<string, string> = {
   de: 'German',
   en: 'English',
@@ -478,14 +478,14 @@ function buildJobAnalyzerPrompt(
   const isFollowUp = priorUserMessageCount > 0
 
   const toneAndGrounding = [
-    'Ton: menschlich, sachlich, moderat — weder Marketing-Sprech noch übertriebene Begeisterung.',
-    'Nur Aussagen, die sich aus STELLENKONTEXT und BEWERBERPROFIL begründen lassen; fehlende Infos ehrlich als Lücke benennen — nichts erfinden oder raten.',
+    'Ton: menschlich, sachlich, moderat - weder Marketing-Sprech noch übertriebene Begeisterung.',
+    'Nur Aussagen, die sich aus STELLENKONTEXT und BEWERBERPROFIL begründen lassen; fehlende Infos ehrlich als Lücke benennen - nichts erfinden oder raten.',
   ].join('\n')
 
   const baseInstructionInitial = [
     '[SYSTEM - JOB ANALYZER] Antworte nur auf Deutsch.',
     toneAndGrounding,
-    'Erste Analyse in dieser Unterhaltung — nutze eine klare Struktur mit genau diesen Sektionen:',
+    'Erste Analyse in dieser Unterhaltung - nutze eine klare Struktur mit genau diesen Sektionen:',
     '## Match Score',
     '## Stärken des Profils',
     '## Lücken / Risiken',
@@ -503,9 +503,9 @@ function buildJobAnalyzerPrompt(
     toneAndGrounding,
     `Kontext: Die aktuelle Eingabe ist User-Nachricht #${priorUserMessageCount + 1} in dieser Session (Folgefrage).`,
     'Du führst ein **laufendes** Gespräch zur Stellenanalyse; es gibt bereits frühere Nachrichten in dieser Session.',
-    'Priorität: Beantworte **zuerst** die konkrete Frage oder den Wunsch in der letzten User-Nachricht — nicht mit einer Standard-Gesamt-Analyse „von vorn“, es sei denn, der User verlangt ausdrücklich eine komplette Neu-Analyse.',
+    'Priorität: Beantworte **zuerst** die konkrete Frage oder den Wunsch in der letzten User-Nachricht - nicht mit einer Standard-Gesamt-Analyse „von vorn“, es sei denn, der User verlangt ausdrücklich eine komplette Neu-Analyse.',
     'Struktur: 2–5 kurze Abschnitte mit ##-Überschriften, **passend zur Frage**. Du musst **nicht** erneut alle fünf Standard-Sektionen (Match Score, Stärken, Lücken, Keywords, Schritte) füllen.',
-    'Anti-Wiederholung: Nutze den bisherigen Chat. Wiederhole **keine** Sätze oder Stichpunkte wörtlich aus deiner letzten Antwort; formuliere neu, vertiefe oder fokussiere schmaler — je nachdem, was der User will.',
+    'Anti-Wiederholung: Nutze den bisherigen Chat. Wiederhole **keine** Sätze oder Stichpunkte wörtlich aus deiner letzten Antwort; formuliere neu, vertiefe oder fokussiere schmaler - je nachdem, was der User will.',
     'Wenn der User nur einen Aspekt will (z. B. Erfahrung, eine Sektion kürzer, Risiken vertiefen), liefere genau das.',
   ].join('\n')
 
@@ -795,7 +795,7 @@ export default function ChatPage() {
       // Re-fetch plan from server so isAtLimit updates immediately.
       // Retries handle Stripe webhook lag (plan may not be in Redis yet).
       void refreshUsage({ retries: 4, retryDelayMs: 1500 }).catch(() => {
-        console.warn('[ChatPage] Plan refresh after upgrade failed — will retry on next send')
+        console.warn('[ChatPage] Plan refresh after upgrade failed - will retry on next send')
       })
     }
 
@@ -972,7 +972,7 @@ export default function ChatPage() {
 
     if (activeContextTool === 'interview' && normalized.generalCoaching) {
       void handleSend(
-        'Please start general interview coaching without a specific job posting — use my CV/profile; ask targeted questions if needed.',
+        'Please start general interview coaching without a specific job posting - use my CV/profile; ask targeted questions if needed.',
         { contextOverride: normalized },
       )
       return
@@ -1066,7 +1066,7 @@ export default function ChatPage() {
       return
     }
     if (store.sessionsRemoteLoading) {
-      setError('Chats werden noch geladen — bitte kurz warten.')
+      setError('Chats werden noch geladen - bitte kurz warten.')
       return
     }
     if (!store.activeSessionId) {
@@ -1238,18 +1238,18 @@ export default function ChatPage() {
         try {
           const latestPlan = await refreshUsage({ retries: 1, retryDelayMs: 1000 })
           if (latestPlan === 'premium' || latestPlan === 'pro') {
-            return // timing artifact — plan now confirmed, don't block
+            return // timing artifact - plan now confirmed, don't block
           }
-          // Usage endpoint still returns free — query Stripe directly to repair Redis
+          // Usage endpoint still returns free - query Stripe directly to repair Redis
           const token = await getToken()
           if (token) {
             const syncResult = await syncPlanFromStripe(token, email)
             if (syncResult.plan === 'premium' || syncResult.plan === 'pro') {
               await refreshUsage({ retries: 1, retryDelayMs: 500 })
-              return // Redis repaired — let user retry
+              return // Redis repaired - let user retry
             }
           }
-        } catch { /* ignore — fall through to show modal */ }
+        } catch { /* ignore - fall through to show modal */ }
         setShowLimitModal(true)
       } else {
         setError(sendError instanceof Error ? sendError.message : 'Etwas ist schiefgelaufen. Bitte versuche es erneut.')
@@ -1426,7 +1426,7 @@ export default function ChatPage() {
 
         {/* Mobile (≤768px): compact unified session + status bar */}
         <div className="flex min-[769px]:hidden flex-shrink-0 items-center gap-1 border-b border-stone-600/35 bg-app-muted/90 px-1.5 py-0.5 backdrop-blur-sm">
-          {/* Session toggle — tap to open sessions panel */}
+          {/* Session toggle - tap to open sessions panel */}
           <button
             onClick={() => setSidebarOpen(true)}
             className="flex min-w-0 flex-1 items-center gap-1.5 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-white/5 active:bg-white/10"

@@ -207,7 +207,7 @@ function HelpModal({ open, onClose }: { open: boolean; onClose: () => void }) {
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
       <div className="relative w-full max-w-lg rounded-2xl border border-stone-300/40 bg-white shadow-2xl">
         <div className="flex items-center justify-between border-b border-stone-200 px-5 py-4">
-          <h2 className="text-base font-semibold text-stone-900">Karriereprofil — Hilfe</h2>
+          <h2 className="text-base font-semibold text-stone-900">Karriereprofil - Hilfe</h2>
           <button
             type="button"
             onClick={onClose}
@@ -269,7 +269,7 @@ function HelpModal({ open, onClose }: { open: boolean; onClose: () => void }) {
             <div className="space-y-3">
               <p>
                 Die <strong className="text-stone-900">KI-Zusammenfassung</strong> fasst dein Profil
-                anonymisiert und strukturiert zusammen — kein Name, keine persönlichen Daten, nur
+                anonymisiert und strukturiert zusammen - kein Name, keine persönlichen Daten, nur
                 berufliche Stärken und Erfahrung.
               </p>
               <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 space-y-2">
@@ -291,7 +291,7 @@ function HelpModal({ open, onClose }: { open: boolean; onClose: () => void }) {
                 </ul>
               </div>
               <p>
-                DE und EN sind <strong className="text-stone-900">unabhängig</strong> — die Erstellung
+                DE und EN sind <strong className="text-stone-900">unabhängig</strong> - die Erstellung
                 einer Sprache löst die andere nicht automatisch aus. Du entscheidest, welche Sprache du
                 brauchst.
               </p>
@@ -308,7 +308,7 @@ function HelpModal({ open, onClose }: { open: boolean; onClose: () => void }) {
                   <p className="font-semibold text-amber-900">Wunschstellen sind entscheidend</p>
                   <p className="mt-1 text-sm">
                     Die Stellenanalyse im Chat vergleicht eine Jobanzeige direkt mit deinen
-                    Wunschstellen — so bekommst du eine präzise Passgenauigkeit statt einer
+                    Wunschstellen - so bekommst du eine präzise Passgenauigkeit statt einer
                     generischen Einschätzung.
                   </p>
                 </div>
@@ -316,7 +316,7 @@ function HelpModal({ open, onClose }: { open: boolean; onClose: () => void }) {
               <ul className="space-y-2 text-sm">
                 {[
                   'Bis zu 3 Wunschstellen speichern',
-                  'Stellentitel ist Pflicht — Unternehmen und Beschreibung optional',
+                  'Stellentitel ist Pflicht - Unternehmen und Beschreibung optional',
                   'Die Beschreibung fließt direkt in die Jobanalyse ein',
                   'Du kannst im Chat eine Wunschstelle als aktive Referenz wählen',
                 ].map(item => (
@@ -340,7 +340,7 @@ function HelpModal({ open, onClose }: { open: boolean; onClose: () => void }) {
               <p>
                 Dein hochgeladener <strong className="text-stone-900">CV-Rohtext</strong> wird sicher
                 auf dem Server gespeichert und nur für die Zusammenfassungs-Generierung und die
-                PDF-Erkennung verwendet — er erscheint nicht direkt im Chat.
+                PDF-Erkennung verwendet - er erscheint nicht direkt im Chat.
               </p>
               <p>
                 Du kannst jederzeit alle Karriereprofil-Daten über den Button{' '}
@@ -387,7 +387,7 @@ function SummaryModal({
                 {langLabel}
               </span>
             </h2>
-            <p className="mt-0.5 text-xs text-stone-500">Anonym — kein Name, nur berufliche Stärken</p>
+            <p className="mt-0.5 text-xs text-stone-500">Anonym - kein Name, nur berufliche Stärken</p>
           </div>
           <button
             type="button"
@@ -615,7 +615,7 @@ function LearningInsightsPanel() {
         <h2 className="text-sm font-semibold text-stone-900">To-dos aus Chats</h2>
       </div>
       <p className="mb-4 text-sm text-stone-700">
-        Einträge aus Stellenanalyse und Interview-Coach — gebündelt pro Bewerbung.
+        Einträge aus Stellenanalyse und Interview-Coach - gebündelt pro Bewerbung.
         Bearbeite Titel oder Text; „Erledigt" entfernt den Eintrag aus dem KI-Kontext.
       </p>
       <div className="mb-4 flex flex-wrap items-center gap-2">
@@ -908,7 +908,7 @@ export default function CareerProfilePage() {
     }
   }
 
-  /** Generates summary for ONE language only — does not touch the other. */
+  /** Generates summary for ONE language only - does not touch the other. */
   const generateSummaryForLang = async (lang: AnonymousSummaryLanguage) => {
     if (!profile || !hasEnoughForAnonymousCvSummary(profile)) return
     const token = await getToken()
@@ -1111,7 +1111,7 @@ export default function CareerProfilePage() {
             <div>
               <h1 className="mb-1 text-2xl font-semibold text-stone-50">Karriereprofil</h1>
               <p className="text-sm text-stone-400">
-                Personalisiere den Assistenten — je vollständiger, desto präziser die Antworten.
+                Personalisiere den Assistenten - je vollständiger, desto präziser die Antworten.
               </p>
             </div>
             <button
@@ -1194,16 +1194,16 @@ export default function CareerProfilePage() {
             <div>
               <p className="font-semibold text-emerald-900">Profil eingerichtet</p>
               <p className="mt-1 leading-relaxed text-stone-800">
-                Im Chat aktivierst du den Kontext über die Schalter über dem Eingabefeld —{' '}
+                Im Chat aktivierst du den Kontext über die Schalter über dem Eingabefeld -{' '}
                 <strong className="font-medium">farbig = aktiv</strong>.
               </p>
             </div>
           </div>
         ) : canMarkProfileSetupComplete(profile) ? (
           <div className="mb-6 rounded-xl border border-amber-600/35 bg-app-parchment px-4 py-3 text-sm text-stone-900">
-            <p className="font-semibold text-amber-950">Daten gespeichert — Setup noch offen</p>
+            <p className="font-semibold text-amber-950">Daten gespeichert - Setup noch offen</p>
             <p className="mt-2 leading-relaxed text-stone-800">
-              Klicke unten, um das Profil als eingerichtet zu markieren — danach entfällt der
+              Klicke unten, um das Profil als eingerichtet zu markieren - danach entfällt der
               Chat-Hinweis.
             </p>
             <button
@@ -1240,7 +1240,7 @@ export default function CareerProfilePage() {
         {pendingMergedDraftHint && (
           <div className="mb-4 flex flex-col gap-3 rounded-lg border border-violet-500/35 bg-app-parchment px-4 py-3 text-sm text-stone-900 sm:flex-row sm:items-center sm:justify-between">
             <p>
-              PDF-Daten wurden ins Formular übernommen — noch nicht gespeichert. Jetzt alle
+              PDF-Daten wurden ins Formular übernommen - noch nicht gespeichert. Jetzt alle
               sichtbaren Felder auf dem Server speichern?
             </p>
             <button
@@ -1270,7 +1270,7 @@ export default function CareerProfilePage() {
                 }}
                 className="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 text-stone-900"
               >
-                <option value="">—</option>
+                <option value="">-</option>
                 {FIELDS.map(f => (
                   <option key={f.value} value={f.value}>{f.label}</option>
                 ))}
@@ -1287,7 +1287,7 @@ export default function CareerProfilePage() {
                 }}
                 className="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 text-stone-900"
               >
-                <option value="">—</option>
+                <option value="">-</option>
                 {LEVELS.map(l => (
                   <option key={l.value} value={l.value}>{l.label}</option>
                 ))}
@@ -1583,7 +1583,7 @@ export default function CareerProfilePage() {
             <div>
               <h2 className="text-sm font-semibold text-stone-900">KI-Zusammenfassung</h2>
               <p className="mt-1 text-xs text-stone-600">
-                Anonymisierter Profil-Kontext für den Assistenten — kein Name, nur berufliche Stärken.
+                Anonymisierter Profil-Kontext für den Assistenten - kein Name, nur berufliche Stärken.
                 Wird aus allen Profildaten + CV generiert.
               </p>
             </div>
@@ -1696,7 +1696,7 @@ export default function CareerProfilePage() {
             <div>
               <h2 className="text-sm font-semibold text-stone-900">Wunschstellen (max. 3)</h2>
               <p className="mt-1 text-xs text-amber-800 font-medium">
-                Wichtig für die Stellenanalyse — je mehr Details, desto präziser der Match mit
+                Wichtig für die Stellenanalyse - je mehr Details, desto präziser der Match mit
                 Jobanzeigen im Chat.
               </p>
             </div>
@@ -1742,7 +1742,7 @@ export default function CareerProfilePage() {
               <textarea
                 value={jobDesc}
                 onChange={e => setJobDesc(e.target.value)}
-                placeholder="Stellenbeschreibung — fließt direkt in die Jobanalyse ein (optional)"
+                placeholder="Stellenbeschreibung - fließt direkt in die Jobanalyse ein (optional)"
                 rows={3}
                 className="col-span-full rounded-lg border border-stone-300 px-3 py-2 text-sm"
               />

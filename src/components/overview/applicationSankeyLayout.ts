@@ -64,7 +64,7 @@ function strokeForValue(v: number, maxV: number): number {
 
 /**
  * Snapshot „Sankey“: Alle → (Pipeline | Archiv) → Status-Zähler.
- * Keine Historie — nur aktuelle Verteilung wie in der Pipeline.
+ * Keine Historie - nur aktuelle Verteilung wie in der Pipeline.
  */
 export function buildApplicationSankeyLayout(
   overview: ApplicationOverview,

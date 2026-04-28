@@ -67,7 +67,7 @@ export default function NotesPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [editError, setEditError] = useState<string | null>(null)
   const isMdUp = useMediaQuery('(min-width: 768px)')
-  /** Unter md: entweder Liste oder Lesen — volle Breite, besser bedienbar. */
+  /** Unter md: entweder Liste oder Lesen - volle Breite, besser bedienbar. */
   const [mobileStep, setMobileStep] = useState<'list' | 'reader'>('list')
 
   useEffect(() => {
@@ -178,7 +178,7 @@ export default function NotesPage() {
         </div>
         <NotebookPen className="mx-auto mb-3 h-10 w-10 text-stone-500" aria-hidden />
         <p className="text-sm font-medium text-stone-900">Noch keine Notizen</p>
-        <p className="mx-auto mt-2 max-w-md text-sm text-stone-600">Im Chat speichern — Details über das Info-Symbol.</p>
+        <p className="mx-auto mt-2 max-w-md text-sm text-stone-600">Im Chat speichern - Details über das Info-Symbol.</p>
         <Link
           to="/chat"
           className="mt-4 inline-block text-sm font-medium text-primary hover:underline"
@@ -218,12 +218,12 @@ export default function NotesPage() {
                 className="shrink-0"
               >
                 <p>
-                  Gespeicherte Antworten aus dem Chat — mit dem Server synchronisiert und auf allen Geräten verfügbar,
+                  Gespeicherte Antworten aus dem Chat - mit dem Server synchronisiert und auf allen Geräten verfügbar,
                   sobald du angemeldet bist.
                 </p>
               </InfoExplainerButton>
             </div>
-            <p className="mt-1 max-w-xl text-sm text-stone-400">Aus dem Chat — Details über das Info-Symbol.</p>
+            <p className="mt-1 max-w-xl text-sm text-stone-400">Aus dem Chat - Details über das Info-Symbol.</p>
           </div>
         </div>
         <ServerSyncControl

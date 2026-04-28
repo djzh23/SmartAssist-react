@@ -149,7 +149,7 @@ function renderOrderedBlock(key: CvMainSectionKey, d: ResumeData, p: ProfileData
                     <div className="flex flex-wrap items-baseline justify-between gap-2">
                       <strong className="font-bold text-[#1A3A5C]">{org}</strong>
                       <span className="shrink-0 text-right text-[9.2px] italic text-[#7D8A99]">
-                        {work.startDate} — {work.endDate}
+                        {work.startDate} - {work.endDate}
                       </span>
                     </div>
                     {(loc || work.role?.trim()) ? (
@@ -176,9 +176,9 @@ function renderOrderedBlock(key: CvMainSectionKey, d: ResumeData, p: ProfileData
               }
               return (
                 <article key={idx} className="mb-3 break-inside-avoid border-b border-stone-200/70 pb-2 last:border-0">
-                  <strong className="text-inherit">{work.role} — {work.company}</strong>
+                  <strong className="text-inherit">{work.role} - {work.company}</strong>
                   <div className="text-xs opacity-70">
-                    {work.startDate} — {work.endDate}
+                    {work.startDate} - {work.endDate}
                   </div>
                   {work.description?.trim() ? <p className="mt-1">{work.description}</p> : null}
                   {work.bullets.length > 0 ? (
@@ -207,7 +207,7 @@ function renderOrderedBlock(key: CvMainSectionKey, d: ResumeData, p: ProfileData
                 <strong>{edu.degree}</strong>
                 <div>{edu.school}</div>
                 <div className="text-xs opacity-70">
-                  {edu.startDate} — {edu.endDate}
+                  {edu.startDate} - {edu.endDate}
                 </div>
                 {edu.description?.trim() ? (
                   <p className="mt-1 whitespace-pre-wrap">{edu.description}</p>

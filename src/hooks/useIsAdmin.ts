@@ -3,7 +3,7 @@ import { useAuth, useUser } from '@clerk/clerk-react'
 
 /**
  * Prüft ob der aktuelle User Admin ist (GET /api/admin/dashboard).
- * Ergebnis wird pro Clerk userId gecacht — bei Userwechsel wird neu geprüft.
+ * Ergebnis wird pro Clerk userId gecacht - bei Userwechsel wird neu geprüft.
  */
 let cachedResult: { userId: string; isAdmin: boolean } | null = null
 

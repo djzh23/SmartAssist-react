@@ -112,28 +112,17 @@ export default function ApplicationFlowSankey({ overview }: Props) {
             />
             <text
               x={r.x + r.w / 2}
-              y={r.y + r.h / 2 - (r.sub ? 5 : 0)}
+              y={r.y + r.h / 2}
               textAnchor="middle"
               dominantBaseline="middle"
               fill={r.muted ? 'rgba(68,64,60,0.72)' : 'rgb(41,37,36)'}
               style={{ fontSize: r.w < 70 ? 9 : 11 }}
               className="font-bold"
             >
-              {r.label.length > 18 ? `${r.label.slice(0, 16)}…` : r.label}
+              {`${r.label} (${r.count})`.length > 26
+                ? `${`${r.label} (${r.count})`.slice(0, 24)}…`
+                : `${r.label} (${r.count})`}
             </text>
-            {r.sub ? (
-              <text
-                x={r.x + r.w / 2}
-                y={r.y + r.h / 2 + 10}
-                textAnchor="middle"
-                dominantBaseline="middle"
-                fill={r.muted ? 'rgba(87,83,78,0.8)' : 'rgba(41,37,36,0.9)'}
-                style={{ fontSize: 10 }}
-                className="font-semibold tabular-nums"
-              >
-                {r.sub}
-              </text>
-            ) : null}
           </g>
         ))}
       </svg>
@@ -148,7 +137,7 @@ export default function ApplicationFlowSankey({ overview }: Props) {
         </div>
       )}
       <p className="px-1 pb-1 pt-1 text-center text-[10px] text-stone-500">
-        Linienstärke grob nach Anteil — Momentaufnahme deiner Status, kein chronologischer Ablauf.
+        Linienstärke grob nach Anteil, Momentaufnahme deiner Status, kein chronologischer Ablauf.
       </p>
     </div>
   )

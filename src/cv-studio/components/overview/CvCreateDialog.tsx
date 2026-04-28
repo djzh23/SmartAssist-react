@@ -90,7 +90,7 @@ export default function CvCreateDialog({
         !selectedAppId &&
         (!manualCompany.trim() || !manualRole.trim())
       ) {
-        setError('Für „In Bewerbungsliste speichern“ bitte Unternehmen und Stelle ausfüllen — oder das Häkchen entfernen.')
+        setError('Für „In Bewerbungsliste speichern“ bitte Unternehmen und Stelle ausfüllen - oder das Häkchen entfernen.')
         setBusy(false)
         return
       }
@@ -162,19 +162,19 @@ export default function CvCreateDialog({
               <p className="mb-3 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-xs leading-relaxed text-stone-400">
                 <span className="font-semibold text-stone-300">Kurzentscheidung: </span>
                 Nutze „Für eine Bewerbung“, wenn du eine konkrete Stelle in der Pipeline führst. „Allgemein“ nur für
-                Master-CV oder Übung — sonst entstehen leicht lose Duplikate. „Ableiten“ kopiert einen vorhandenen Stand
+                Master-CV oder Übung - sonst entstehen leicht lose Duplikate. „Ableiten“ kopiert einen vorhandenen Stand
                 sinnvoll für eine Variante.
               </p>
               <PurposeButton
                 icon={<Briefcase size={18} />}
                 label="Für eine Bewerbung"
-                description="Mit bestehender oder neuer Bewerbung verknüpfen — optional gleich in der Bewerbungsliste anlegen"
+                description="Mit bestehender oder neuer Bewerbung verknüpfen - optional gleich in der Bewerbungsliste anlegen"
                 onClick={() => handlePurpose('application')}
               />
               <PurposeButton
                 icon={<FileText size={18} />}
                 label="Allgemeiner Lebenslauf"
-                description="Kein Stellenbezug — universell einsetzbar"
+                description="Kein Stellenbezug - universell einsetzbar"
                 onClick={() => handlePurpose('general')}
               />
               {existingResumes.length > 0 && (
@@ -201,10 +201,10 @@ export default function CvCreateDialog({
                     onChange={e => setSelectedAppId(e.target.value)}
                     className="w-full rounded-lg border border-stone-600/60 bg-stone-700 px-3 py-2 text-sm text-stone-100 focus:border-violet-500/60 focus:outline-none"
                   >
-                    <option value="">— Keine Bewerbung verknüpfen —</option>
+                    <option value="">- Keine Bewerbung verknüpfen -</option>
                     {jobApplications.map(a => (
                       <option key={a.id} value={a.id}>
-                        {a.company} — {a.jobTitle}
+                        {a.company} - {a.jobTitle}
                       </option>
                     ))}
                   </select>
@@ -246,7 +246,7 @@ export default function CvCreateDialog({
                     />
                     <span className="text-xs text-stone-300">
                       <span className="font-medium text-stone-200">In Bewerbungsliste speichern</span>
-                      {' — '}
+                      {' - '}
                       legt unter „Bewerbungen“ einen neuen Eintrag an und verknüpft diesen CV. Zum Bearbeiten nur
                       Kontext: Häkchen entfernen.
                     </span>
@@ -299,7 +299,7 @@ export default function CvCreateDialog({
                   onChange={e => setCloneFromId(e.target.value)}
                   className="w-full rounded-lg border border-stone-600/60 bg-stone-700 px-3 py-2 text-sm text-stone-100 focus:border-violet-500/60 focus:outline-none"
                 >
-                  <option value="">— Bitte wählen —</option>
+                  <option value="">- Bitte wählen -</option>
                   {existingResumes.map(r => (
                     <option key={r.id} value={r.id}>{r.title}</option>
                   ))}

@@ -24,7 +24,7 @@ export default function ApplicationPipelinePanel({ overview, hint }: Props) {
     >
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">
-          Bewerbungen — Fluss nach Status
+          Bewerbungen, Fluss nach Status
         </h3>
         <InfoExplainerButton
           variant="onLight"
@@ -34,12 +34,12 @@ export default function ApplicationPipelinePanel({ overview, hint }: Props) {
         >
           <p>
             Das Diagramm zeigt nur den <strong>aktuellen Stand</strong>: wie viele Bewerbungen in welchem Status
-            liegen. Breite der Verbindungen ist näherungsweise nach Anteil skaliert — nicht nach Zeit oder
+            liegen. Breite der Verbindungen ist näherungsweise nach Anteil skaliert, nicht nach Zeit oder
             Reihenfolge der Bewerbung.
           </p>
           <p className="mt-3">
             Zuerst siehst du die Gesamtzahl, dann die Aufteilung in <strong>aktive Pipeline</strong> und{' '}
-            <strong>Archiv</strong>, danach die einzelnen Status — wie auf der Seite „Meine Bewerbungen“.
+            <strong>Archiv</strong>, danach die einzelnen Status, wie auf der Seite „Meine Bewerbungen“.
           </p>
           <p className="mt-3 rounded-lg border border-stone-200 bg-app-parchment/60 px-3 py-2 text-stone-800">
             <span className="font-semibold text-stone-900">Tipp: </span>
@@ -50,7 +50,7 @@ export default function ApplicationPipelinePanel({ overview, hint }: Props) {
 
       {total === 0 ? (
         <p className="rounded-lg border border-dashed border-stone-400/50 bg-app-parchment/60 py-8 text-center text-sm text-stone-600">
-          Noch keine Daten —{' '}
+          Noch keine Daten,{' '}
           <Link to="/applications/new" className="font-semibold text-primary hover:underline">
             erste Bewerbung anlegen
           </Link>

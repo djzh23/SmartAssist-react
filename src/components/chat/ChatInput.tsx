@@ -13,7 +13,7 @@ const PLACEHOLDERS: Record<ToolType, string> = {
 interface Props {
   toolType: ToolType
   isLoading: boolean
-  /** Kein aktiver Chat — Eingabe gesperrt (z. B. nach Tool-Wechsel ohne neue Session). */
+  /** Kein aktiver Chat - Eingabe gesperrt (z. B. nach Tool-Wechsel ohne neue Session). */
   noActiveSession?: boolean
   onSend: (text: string) => void
 }

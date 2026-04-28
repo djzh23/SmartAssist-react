@@ -285,7 +285,7 @@ export default function ProfilePage() {
                   </InfoExplainerButton>
                 </div>
                 <p className="mt-2 text-sm leading-relaxed text-stone-700">
-                  Limits, Plan und Abo — getrennt von der Arbeitsübersicht.
+                  Limits, Plan und Abo - getrennt von der Arbeitsübersicht.
                 </p>
                 <Link
                   to="/overview"
@@ -426,7 +426,7 @@ export default function ProfilePage() {
                 lebt im Browser und wird mit dem Server abgeglichen, sobald Antworten zurückkommen.
               </p>
               <p className="mt-3">
-                „Antworten gesamt“ und „Aktive Tage“ werden aus deiner lokalen Nutzungshistorie zusammengerechnet — gut
+                „Antworten gesamt“ und „Aktive Tage“ werden aus deiner lokalen Nutzungshistorie zusammengerechnet - gut
                 als Motivation, nicht als offizielle Abrechnung.
               </p>
               <p className="mt-3 text-stone-600">
@@ -460,7 +460,7 @@ export default function ProfilePage() {
                 {
                   icon: <Star size={15} className="text-amber-600" aria-hidden />,
                   label: 'Lieblingstool',
-                  value: user.favoriteTool ?? '—',
+                  value: user.favoriteTool ?? '-',
                   sub: 'häufigstes Tool',
                 },
               ].map(stat => (
@@ -499,7 +499,7 @@ export default function ProfilePage() {
               </p>
               <p className="mt-3">
                 Wenn du gerade bezahlt hast, der Badge aber noch nicht stimmt: „Plan synchronisieren“ holt den Stand
-                direkt bei Stripe — ohne die Seite endlos neu zu laden.
+                direkt bei Stripe - ohne die Seite endlos neu zu laden.
               </p>
             </InfoExplainerButton>
           </div>

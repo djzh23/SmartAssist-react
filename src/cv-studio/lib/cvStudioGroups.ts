@@ -30,7 +30,7 @@ export function groupResumes(resumes: CvStudioResumeSummary[]): CvResumeGroup[] 
     }
 
     if (company && role) {
-      label = `${company} — ${role}`
+      label = `${company} - ${role}`
     } else if (company) {
       label = company
     } else if (role) {

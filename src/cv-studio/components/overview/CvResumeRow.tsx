@@ -59,7 +59,7 @@ export default function CvResumeRow({ resume, onDelete, isDragging, onDragStart 
       {/* Date */}
       <span className="shrink-0 text-[11px] tabular-nums text-stone-500">{updated}</span>
 
-      {/* Actions — visible on hover */}
+      {/* Actions - visible on hover */}
       <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
         <Link
           to={`/cv-studio/edit/${resume.id}`}

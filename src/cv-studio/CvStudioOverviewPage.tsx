@@ -332,7 +332,7 @@ export default function CvStudioOverviewPage() {
                 className="border-white/20 text-stone-200 hover:bg-white/12"
               >
                 <p>
-                  Organisiere deine Lebensläufe in <strong>Kategorien</strong> — z. B. „Frontend", „SAP" oder nach
+                  Organisiere deine Lebensläufe in <strong>Kategorien</strong>, z. B. „Frontend", „SAP" oder nach
                   Zielunternehmen. Innerhalb jeder Kategorie legst du einen oder mehrere Lebensläufe für konkrete
                   Bewerbungen an.
                 </p>
@@ -351,7 +351,7 @@ export default function CvStudioOverviewPage() {
               </InfoExplainerButton>
             </div>
             <p className="mt-2 text-sm leading-relaxed text-stone-400">
-              Erstelle Kategorien für deine Bewerbungsfelder und lege darin passende Lebensläufe an —
+              Erstelle Kategorien für deine Bewerbungsfelder und lege darin passende Lebensläufe an,
               alles übersichtlich an einem Ort.
             </p>
           </div>

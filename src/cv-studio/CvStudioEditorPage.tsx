@@ -230,9 +230,9 @@ export default function CvStudioEditorPage() {
       return `Du siehst den Inhalt von Version ${activeVariant.versionNumber}. Klicke „Inhalt übernehmen” (Stift-Symbol rechts), um diesen Stand in deine Arbeitsversion zu übertragen.`
     }
     if (versions.length === 0) {
-      return 'Deine Änderungen werden automatisch gespeichert. Mit „Version speichern” legst du einen manuellen Sicherungspunkt an — z. B. bevor du größere Änderungen vornimmst.'
+      return 'Deine Änderungen werden automatisch gespeichert. Mit „Version speichern” legst du einen manuellen Sicherungspunkt an - z. B. bevor du größere Änderungen vornimmst.'
     }
-    return 'Du bearbeitest deine Arbeitsversion — der aktuelle Stand. Rechts siehst du gespeicherte Versionen, die du jederzeit wiederherstellen oder exportieren kannst.'
+    return 'Du bearbeitest deine Arbeitsversion - der aktuelle Stand. Rechts siehst du gespeicherte Versionen, die du jederzeit wiederherstellen oder exportieren kannst.'
   }, [activeVariant?.versionNumber, versions.length])
 
   const tabClass = (t: TabId) =>
@@ -318,7 +318,7 @@ export default function CvStudioEditorPage() {
     const v = await saveVariant(label)
     if (v) {
       notify(
-        `Version ${v.versionNumber} gespeichert — Du kannst jederzeit zu früheren Versionen zurückkehren.`,
+        `Version ${v.versionNumber} gespeichert - Du kannst jederzeit zu früheren Versionen zurückkehren.`,
         'success',
       )
       if (!exportNameTouched && resume) {
@@ -378,7 +378,7 @@ export default function CvStudioEditorPage() {
         targetRole: role?.trim() || null,
       }
       const clone = await createCvStudioResume(token, {
-        title: `${resume.title} — ${company?.trim() ?? 'Bewerbung'}`,
+        title: `${resume.title} - ${company?.trim() ?? 'Bewerbung'}`,
         templateKey: resume.templateKey ?? undefined,
         resumeData: resume.resumeData,
       })
@@ -433,7 +433,7 @@ export default function CvStudioEditorPage() {
 
   const d = resume.resumeData
   const st = d.sectionTitles ?? {}
-  const contextLabel = [resume.targetCompany, resume.targetRole].filter(Boolean).join(' — ')
+  const contextLabel = [resume.targetCompany, resume.targetRole].filter(Boolean).join(' - ')
 
   return (
     <div className="pb-12">
@@ -446,7 +446,7 @@ export default function CvStudioEditorPage() {
             </h1>
             <p className="text-xs text-stone-500">
               Interner Dokumentname:{' '}
-              <span className="font-medium text-stone-400">{resume.title || '—'}</span>
+              <span className="font-medium text-stone-400">{resume.title || '-'}</span>
               <button
                 type="button"
                 onClick={() => setActiveTab('profil')}
@@ -471,7 +471,7 @@ export default function CvStudioEditorPage() {
               </span>
               <span>
                 Letzte Änderung:{' '}
-                {formatRelativeTimeDe(resume.updatedAtUtc) || '—'}
+                {formatRelativeTimeDe(resume.updatedAtUtc) || '-'}
               </span>
               <span className="text-stone-600" aria-hidden>
                 ·
@@ -521,7 +521,7 @@ export default function CvStudioEditorPage() {
             <button
               type="button"
               disabled={busy}
-              title="Speichert den aktuellen Stand als nummerierte Version — ein manueller Sicherungspunkt, jederzeit wiederherstellbar."
+              title="Speichert den aktuellen Stand als nummerierte Version - ein manueller Sicherungspunkt, jederzeit wiederherstellbar."
               onClick={() => setShowSaveModal(true)}
               className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white hover:bg-primary-hover disabled:opacity-50 sm:text-sm"
             >
@@ -624,9 +624,9 @@ export default function CvStudioEditorPage() {
                 value={pdfDesign}
                 onChange={e => setPdfDesign(e.target.value as PdfDesign)}
               >
-                <option value="A">Design A — Klassisch (ATS)</option>
-                <option value="B">Design B — Modern</option>
-                <option value="C">Design C — Professional</option>
+                <option value="A">Design A - Klassisch (ATS)</option>
+                <option value="B">Design B - Modern</option>
+                <option value="C">Design C - Professional</option>
               </select>
               <label className={`${lab} min-w-[140px] max-w-[220px] flex-1`}>
                 Dateiname (ohne Endung)
@@ -1029,7 +1029,7 @@ export default function CvStudioEditorPage() {
                 <div className="space-y-4 border-t border-white/10 pt-6">
                   <h2 className="text-sm font-semibold text-white">Reihenfolge der Hauptabschnitte</h2>
                   <p className="text-xs text-stone-500">
-                    Drag-and-Drop — gilt für PDF- und DOCX-Export.
+                    Drag-and-Drop - gilt für PDF- und DOCX-Export.
                   </p>
                   <ul className="space-y-2">
                     {normalizeContentSectionOrder(d.contentSectionOrder).map(key => {

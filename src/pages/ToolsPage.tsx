@@ -248,7 +248,7 @@ export default function ToolsPage() {
 
   return (
     <div className="relative min-h-0 flex-1 overflow-y-auto bg-transparent">
-      {/* Decorative blobs — warm glow on dark canvas */}
+      {/* Decorative blobs - warm glow on dark canvas */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden" style={{ zIndex: 0 }}>
         <div className="absolute -right-28 top-0 h-80 w-80 rounded-full bg-amber-600/15 blur-3xl" />
         <div className="absolute -left-28 top-1/3 h-96 w-96 rounded-full bg-amber-500/12 blur-3xl" />
@@ -278,7 +278,7 @@ export default function ToolsPage() {
               </p>
             </InfoExplainerButton>
           </div>
-          <p className="mt-2 max-w-2xl text-sm text-stone-400">Kurzüberblick — Details über das Info-Symbol.</p>
+          <p className="mt-2 max-w-2xl text-sm text-stone-400">Kurzüberblick - Details über das Info-Symbol.</p>
         </div>
 
         <section className="mb-8 sm:mb-10">

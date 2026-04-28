@@ -54,7 +54,7 @@ export function saveCvCategoryStore(store: CvCategoryStore): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(store))
   } catch {
-    // quota or private mode — fail loud in UI if needed
+    // quota or private mode - fail loud in UI if needed
   }
 }
 

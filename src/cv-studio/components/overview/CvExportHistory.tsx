@@ -69,7 +69,7 @@ export default function CvExportHistory({ rows, used, limit, onDelete, requestCo
                 const date = new Date(row.createdAtUtc).toLocaleString('de-DE')
                 const context = [row.targetCompany, row.targetRole]
                   .filter(Boolean)
-                  .join(' — ')
+                  .join(' - ')
                 return (
                   <li key={row.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5">
                     <div className="min-w-0">

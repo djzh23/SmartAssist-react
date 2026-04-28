@@ -20,7 +20,7 @@ interface Props {
   category: CvUserCategoryDto
   templates: ResumeTemplateDto[]
   jobApplications: JobApplicationApi[]
-  /** All existing resumes — for the clone picker. */
+  /** All existing resumes - for the clone picker. */
   allResumes: CvStudioResumeSummary[]
   getCategoryName: (resumeId: string) => string | null
   onConfirm: (params: CreateResumeForCategoryParams) => Promise<void>
@@ -147,7 +147,7 @@ export default function CreateResumeInCategoryModal({
               <ChoiceCard
                 icon={<FileText size={20} />}
                 title="Neue Vorlage"
-                description="Starte mit einer leeren Vorlage — Daten werden direkt im Editor eingetragen."
+                description="Starte mit einer leeren Vorlage - Daten werden direkt im Editor eingetragen."
                 onClick={() => handleChoose('new')}
               />
 
@@ -249,7 +249,7 @@ export default function CreateResumeInCategoryModal({
                 </div>
               )}
 
-              {/* Job context — always shown */}
+              {/* Job context - always shown */}
               <div className="space-y-3">
                 <p className="text-xs font-semibold text-stone-300">
                   Bewerbungskontext{' '}
@@ -267,10 +267,10 @@ export default function CreateResumeInCategoryModal({
                       onChange={e => setSelectedAppId(e.target.value)}
                       className="w-full rounded-lg border border-stone-600/60 bg-stone-700 px-3 py-2 text-sm text-stone-100 focus:border-violet-500/60 focus:outline-none"
                     >
-                      <option value="">— Keine Bewerbung verknüpfen —</option>
+                      <option value="">- Keine Bewerbung verknüpfen -</option>
                       {jobApplications.map(a => (
                         <option key={a.id} value={a.id}>
-                          {a.company} — {a.jobTitle}
+                          {a.company} - {a.jobTitle}
                         </option>
                       ))}
                     </select>
@@ -318,7 +318,7 @@ export default function CreateResumeInCategoryModal({
                         />
                         <span className="text-xs leading-relaxed text-stone-300">
                           <span className="font-medium text-stone-200">In Bewerbungsliste anlegen</span>
-                          {' — '}
+                          {' - '}
                           erstellt einen Eintrag unter „Meine Bewerbungen" und verknüpft diesen CV.
                         </span>
                       </label>
