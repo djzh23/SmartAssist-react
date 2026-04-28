@@ -4,13 +4,13 @@ import type { ApplicationOverview } from '../../utils/applicationOverview'
 export const SANKEY_PIPELINE_FILL: Record<ApplicationStatusApi, string> = {
   draft: '#d97706',
   applied: '#2563eb',
-  phoneScreen: '#7c3aed',
+  phoneScreen: '#a855f7',
   interview: '#4f46e5',
   assessment: '#ea580c',
-  offer: '#059669',
-  accepted: '#047857',
-  rejected: '#94a3b8',
-  withdrawn: '#78716c',
+  offer: '#14b8a6',
+  accepted: '#16a34a',
+  rejected: '#64748b',
+  withdrawn: '#a16207',
 }
 
 export interface SankeyRect {
@@ -59,7 +59,7 @@ export function curvePath(x0: number, y0: number, x1: number, y1: number): strin
 function strokeForValue(v: number, maxV: number): number {
   if (maxV <= 0 || v <= 0) return 1.5
   const t = Math.sqrt(v / maxV)
-  return Math.max(1.5, Math.min(20, 3 + t * 17))
+  return Math.max(1.5, Math.min(10, 2 + t * 8))
 }
 
 /**
@@ -113,15 +113,20 @@ export function buildApplicationSankeyLayout(
     stroke: baseNodeStroke,
   })
 
-  const hPipeRaw = activeInPipeline > 0 ? Math.max(22, innerH * (activeInPipeline / total) * 0.7) : 22
-  const hArchRaw = inArchive > 0 ? Math.max(20, innerH * (inArchive / total) * 0.55) : 20
+  const hPipeRaw = activeInPipeline > 0 ? Math.max(22, innerH * (activeInPipeline / total) * 0.52) : 22
+  const hArchRaw = inArchive > 0 ? Math.max(20, innerH * (inArchive / total) * 0.45) : 20
   const hSum = hPipeRaw + hArchRaw
   const scale = hSum > innerH ? innerH / hSum : 1
   const hPipeS = hPipeRaw * scale
   const hArchS = hArchRaw * scale
-  const centerY = padT + innerH / 2
-  const yPipe = Math.max(padT + 8, centerY - hPipeS - 18)
-  const yArch = Math.min(padT + innerH - hArchS - 8, centerY + 18)
+  const branchGap = 22
+  const leafUsableH = innerH - branchGap
+  const pipeAreaH = leafUsableH * 0.56
+  const archAreaH = leafUsableH - pipeAreaH
+  const pipeAreaY = padT + 2
+  const archAreaY = pipeAreaY + pipeAreaH + branchGap
+  const yPipe = pipeAreaY + Math.max(0, (pipeAreaH - hPipeS) / 2)
+  const yArch = archAreaY + Math.max(0, (archAreaH - hArchS) / 2)
 
   const maxV = Math.max(
     total,
@@ -161,9 +166,9 @@ export function buildApplicationSankeyLayout(
     y0: yExitPipe,
     x1: x1,
     y1: yPipe + hPipeS / 2,
-    stroke: '#0ea5a5',
+    stroke: '#14b8a6',
     strokeWidth: strokeForValue(activeInPipeline, maxV),
-    opacity: activeInPipeline > 0 ? 0.35 : 0.08,
+    opacity: activeInPipeline > 0 ? 0.62 : 0.1,
     muted: activeInPipeline === 0,
   })
 
@@ -194,7 +199,7 @@ export function buildApplicationSankeyLayout(
     y1: yArch + hArchS / 2,
     stroke: '#94a3b8',
     strokeWidth: strokeForValue(inArchive, maxV),
-    opacity: inArchive > 0 ? 0.33 : 0.08,
+    opacity: inArchive > 0 ? 0.58 : 0.1,
     muted: inArchive === 0,
   })
 
@@ -202,34 +207,21 @@ export function buildApplicationSankeyLayout(
   const archLeaves = archive
   const xMidOut = x1 + w1
 
-  const pipeGap = Math.max(8, Math.floor((innerH * 0.024)))
+  const pipeGap = 8
   const archGap = pipeGap
-  const minNodeH = 18
-  const pipeBodyH = Math.max(
-    minNodeH * pipeLeaves.length + pipeGap * (pipeLeaves.length - 1),
-    hPipeS,
-  )
-  const archBodyH = Math.max(
-    minNodeH * archLeaves.length + archGap * (archLeaves.length - 1),
-    hArchS,
-  )
-  const yPipeBase = Math.max(padT + 4, yPipe - Math.max(0, (pipeBodyH - hPipeS) / 2))
-  const yArchBase = Math.min(
-    padT + innerH - archBodyH - 4,
-    yArch + Math.max(0, (hArchS - archBodyH) / 2),
-  )
-  const pipeWeights = pipeLeaves.map(p => (p.count > 0 ? p.count : 0.25))
-  const archWeights = archLeaves.map(p => (p.count > 0 ? p.count : 0.25))
-  const pipeWeightSum = pipeWeights.reduce((s, n) => s + n, 0) || 1
-  const archWeightSum = archWeights.reduce((s, n) => s + n, 0) || 1
+  const minNodeH = 22
+  const pipeSlotH = Math.max(minNodeH, (pipeAreaH - pipeGap * (pipeLeaves.length - 1)) / pipeLeaves.length)
+  const archSlotH = Math.max(minNodeH, (archAreaH - archGap * (archLeaves.length - 1)) / archLeaves.length)
+  const pipeBodyH = pipeLeaves.length * pipeSlotH + (pipeLeaves.length - 1) * pipeGap
+  const archBodyH = archLeaves.length * archSlotH + (archLeaves.length - 1) * archGap
+  const yPipeBase = pipeAreaY + Math.max(0, (pipeAreaH - pipeBodyH) / 2)
+  const yArchBase = archAreaY + Math.max(0, (archAreaH - archBodyH) / 2)
 
   let accP = 0
   for (let i = 0; i < pipeLeaves.length; i += 1) {
     const p = pipeLeaves[i]
-    const weight = pipeWeights[i]
-    const h = Math.max(minNodeH, (pipeBodyH * weight) / pipeWeightSum)
-    const stagger = (i % 2 === 0 ? -1 : 1) * Math.min(4, i)
-    const yTop = yPipeBase + accP + stagger
+    const h = pipeSlotH
+    const yTop = yPipeBase + accP
     const muted = p.count === 0
     rects.push({
       id: `p-${p.status}`,
@@ -242,8 +234,8 @@ export function buildApplicationSankeyLayout(
       y: yTop,
       w: w2,
       h,
-      fill: baseNodeFill,
-      stroke: muted ? 'rgba(148,163,184,0.5)' : 'rgba(15,23,42,0.2)',
+      fill: muted ? 'rgb(245, 243, 240)' : 'rgb(255, 255, 255)',
+      stroke: muted ? 'rgba(148,163,184,0.5)' : (SANKEY_PIPELINE_FILL[p.status] ?? 'rgba(15,23,42,0.2)'),
       muted,
     })
     const sy = yPipe + Math.min(hPipeS, accP + h / 2)
@@ -261,7 +253,7 @@ export function buildApplicationSankeyLayout(
       y1: ty,
       stroke: SANKEY_PIPELINE_FILL[p.status] ?? '#94a3b8',
       strokeWidth: strokeForValue(p.count, maxV),
-      opacity: muted ? 0.08 : 0.3,
+      opacity: muted ? 0.1 : 0.68,
       muted,
     })
     accP += h + pipeGap
@@ -270,10 +262,8 @@ export function buildApplicationSankeyLayout(
   let accA = 0
   for (let i = 0; i < archLeaves.length; i += 1) {
     const p = archLeaves[i]
-    const weight = archWeights[i]
-    const h = Math.max(minNodeH, (archBodyH * weight) / archWeightSum)
-    const stagger = (i % 2 === 0 ? 1 : -1) * Math.min(4, i)
-    const yTop = yArchBase + accA + stagger
+    const h = archSlotH
+    const yTop = yArchBase + accA
     const muted = p.count === 0
     rects.push({
       id: `a-${p.status}`,
@@ -286,8 +276,8 @@ export function buildApplicationSankeyLayout(
       y: yTop,
       w: w2,
       h,
-      fill: baseNodeFill,
-      stroke: muted ? 'rgba(148,163,184,0.5)' : 'rgba(15,23,42,0.2)',
+      fill: muted ? 'rgb(245, 243, 240)' : 'rgb(255, 255, 255)',
+      stroke: muted ? 'rgba(148,163,184,0.5)' : (SANKEY_PIPELINE_FILL[p.status] ?? 'rgba(15,23,42,0.2)'),
       muted,
     })
     const sy = yArch + Math.min(hArchS, accA + h / 2)
@@ -305,7 +295,7 @@ export function buildApplicationSankeyLayout(
       y1: ty,
       stroke: SANKEY_PIPELINE_FILL[p.status] ?? '#a8a29e',
       strokeWidth: strokeForValue(p.count, maxV),
-      opacity: muted ? 0.08 : 0.28,
+      opacity: muted ? 0.1 : 0.64,
       muted,
     })
     accA += h + archGap

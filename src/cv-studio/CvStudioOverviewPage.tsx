@@ -275,12 +275,37 @@ export default function CvStudioOverviewPage() {
   const filteredResumes = useMemo(() => {
     const q = searchQuery.trim().toLowerCase()
     if (!q || !resumes) return resumes ?? []
+    const matchingCategoryIds = new Set(
+      categories
+        .filter(cat => cat.name.toLowerCase().includes(q))
+        .map(cat => cat.id),
+    )
     return resumes.filter(r =>
       r.title.toLowerCase().includes(q) ||
       (r.targetCompany ?? '').toLowerCase().includes(q) ||
-      (r.targetRole ?? '').toLowerCase().includes(q),
+      (r.targetRole ?? '').toLowerCase().includes(q) ||
+      (() => {
+        const catId = getCategoryIdForResume(r.id)
+        return catId != null && matchingCategoryIds.has(catId)
+      })(),
     )
-  }, [resumes, searchQuery])
+  }, [categories, getCategoryIdForResume, resumes, searchQuery])
+
+  const filteredCategoryIds = useMemo(() => {
+    return new Set(
+      filteredResumes
+        .map(r => getCategoryIdForResume(r.id))
+        .filter((id): id is string => Boolean(id)),
+    )
+  }, [filteredResumes, getCategoryIdForResume])
+
+  const filteredCategories = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase()
+    if (!q) return categories
+    return categories.filter(cat =>
+      cat.name.toLowerCase().includes(q) || filteredCategoryIds.has(cat.id),
+    )
+  }, [categories, filteredCategoryIds, searchQuery])
 
   const existingResumes = (resumes ?? []).map(r => ({ id: r.id, title: r.title }))
   const hasResumes = (resumes?.length ?? 0) > 0
@@ -384,8 +409,8 @@ export default function CvStudioOverviewPage() {
                 type="search"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                placeholder="Lebensläufe durchsuchen…"
-                className="w-full max-w-sm rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm text-white placeholder:text-stone-600 focus:border-primary/60 focus:outline-none"
+                placeholder="Kategorien oder Lebensläufe durchsuchen…"
+                className="w-full max-w-md rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 placeholder:text-stone-500 shadow-sm focus:border-primary/60 focus:outline-none"
               />
               {searchQuery && (
                 <span className="text-xs text-stone-500">
@@ -425,7 +450,7 @@ export default function CvStudioOverviewPage() {
           )}
 
           {/* No search results */}
-          {hasResumes && searchQuery && filteredResumes.length === 0 && (
+          {hasResumes && searchQuery && filteredResumes.length === 0 && filteredCategories.length === 0 && (
             <p className="mb-8 text-sm text-stone-500">
               Keine Treffer für „{searchQuery}".
             </p>
@@ -436,7 +461,7 @@ export default function CvStudioOverviewPage() {
             <div className="mb-8">
               <CvMasterCategoriesBoard
                 resumes={filteredResumes}
-                categories={categories}
+                categories={filteredCategories}
                 loaded={categoriesLoaded}
                 categoryError={categoryError}
                 getCategoryIdForResume={getCategoryIdForResume}

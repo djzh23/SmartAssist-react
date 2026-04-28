@@ -5,10 +5,10 @@ import { AppErrorBoundary } from './components/AppErrorBoundary'
 import MainLayout from './components/layout/MainLayout'
 import LoadingScreen from './components/LoadingScreen'
 import LandingPage from './pages/LandingPage'
-import ChatPage from './pages/ChatPage'
-import ToolsPage from './pages/ToolsPage'
-import ProfilePage from './pages/ProfilePage'
-import OnboardingPage from './pages/OnboardingPage'
+const ChatPage = lazy(() => import('./pages/ChatPage'))
+const ToolsPage = lazy(() => import('./pages/ToolsPage'))
+const ProfilePage = lazy(() => import('./pages/ProfilePage'))
+const OnboardingPage = lazy(() => import('./pages/OnboardingPage'))
 
 const OverviewPage = lazy(() => import('./pages/OverviewPage'))
 const PricingPage = lazy(() => import('./pages/PricingPage'))
@@ -75,15 +75,31 @@ function AppRoutes() {
         path="/onboarding"
         element={
           <RequireSignedIn>
-            <OnboardingPage />
+            <Suspense fallback={<RouteFallback />}>
+              <OnboardingPage />
+            </Suspense>
           </RequireSignedIn>
         }
       />
 
       {/* Protected app — requires sign in, renders MainLayout with sidebar */}
       <Route element={<ProtectedApp />}>
-        <Route path="/chat" element={<ChatPage />} />
-        <Route path="/tools" element={<ToolsPage />} />
+        <Route
+          path="/chat"
+          element={(
+            <Suspense fallback={<RouteFallback />}>
+              <ChatPage />
+            </Suspense>
+          )}
+        />
+        <Route
+          path="/tools"
+          element={(
+            <Suspense fallback={<RouteFallback />}>
+              <ToolsPage />
+            </Suspense>
+          )}
+        />
         <Route
           path="/overview"
           element={(
@@ -92,7 +108,14 @@ function AppRoutes() {
             </Suspense>
           )}
         />
-        <Route path="/profile" element={<ProfilePage />} />
+        <Route
+          path="/profile"
+          element={(
+            <Suspense fallback={<RouteFallback />}>
+              <ProfilePage />
+            </Suspense>
+          )}
+        />
         <Route
           path="/career-profile"
           element={(
