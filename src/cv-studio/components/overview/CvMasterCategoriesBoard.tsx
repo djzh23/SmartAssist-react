@@ -74,7 +74,7 @@ export default function CvMasterCategoriesBoard({
 
   if (!loaded) {
     return (
-      <div className="flex items-center gap-2 py-10 text-sm text-stone-400">
+      <div className="flex items-center gap-2 py-10 text-sm text-stone-600">
         <Loader2 size={16} className="animate-spin" aria-hidden />
         Kategorien werden geladen…
       </div>
@@ -87,18 +87,21 @@ export default function CvMasterCategoriesBoard({
     return (
       <div className="space-y-3">
         {categoryError && <ErrorBanner message={categoryError} />}
-        <div className="rounded-2xl border border-dashed border-stone-600/40 bg-stone-900/40 px-5 py-14 text-center">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-amber-500/10 text-amber-300/70">
+        <div
+          className="rounded-2xl border border-dashed border-stone-400/50 px-5 py-14 text-center"
+          style={{ backgroundColor: 'rgb(250, 246, 238)' }}
+        >
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
             <FolderOpen size={24} aria-hidden />
           </div>
-          <p className="text-sm font-semibold text-stone-200">Noch keine Kategorien</p>
-          <p className="mt-1 text-xs text-stone-500">
+          <p className="text-sm font-semibold text-stone-900">Noch keine Kategorien</p>
+          <p className="mt-1 text-xs text-stone-600">
             Lege deine erste Kategorie an — z. B. „Frontend", „SAP" oder „Google".
           </p>
           <button
             type="button"
             onClick={onCreateCategory}
-            className="mt-4 inline-flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500"
+            className="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary/90"
           >
             <Plus size={15} aria-hidden />
             Erste Kategorie anlegen
@@ -181,7 +184,7 @@ export default function CvMasterCategoriesBoard({
 
 function ErrorBanner({ message }: { message: string }) {
   return (
-    <div className="rounded-lg border border-rose-500/30 bg-rose-950/30 px-3 py-2 text-xs text-rose-200">
+    <div className="rounded-lg border border-rose-400/50 bg-rose-50 px-3 py-2 text-xs text-rose-800">
       {message}
     </div>
   )
@@ -252,17 +255,18 @@ function CategorySection({
       onDragOver={onSectionDragOver}
       onDrop={onSectionDrop}
       className={[
-        'overflow-hidden rounded-xl border border-white/10 bg-stone-900/50 transition-all',
+        'overflow-hidden rounded-xl border border-stone-400/40 transition-all',
         isDraggedCategory ? 'opacity-40' : '',
-        isDropTarget && !isDraggedCategory ? 'ring-1 ring-inset ring-white/15' : '',
+        isDropTarget && !isDraggedCategory ? 'ring-2 ring-inset ring-primary/25' : '',
       ].join(' ')}
+      style={{ backgroundColor: 'rgb(250, 246, 238)' }}
     >
       {/* ── Header ─────────────────────────────────────────────────────── */}
-      <div className="flex items-center gap-2 bg-black/25 px-3 py-2">
+      <div className="flex items-center gap-2 border-b border-stone-300/70 bg-app-parchmentDeep/70 px-3 py-2">
         {/* Drag grip */}
         <GripVertical
           size={14}
-          className="shrink-0 cursor-grab text-stone-600 hover:text-stone-400 active:cursor-grabbing"
+          className="shrink-0 cursor-grab text-stone-400 hover:text-stone-600 active:cursor-grabbing"
           aria-hidden
         />
 
@@ -279,12 +283,12 @@ function CategorySection({
               }}
               onBlur={commitRename}
               maxLength={80}
-              className="min-w-0 flex-1 rounded border border-white/20 bg-black/30 px-2 py-0.5 text-sm font-semibold text-white focus:border-primary/60 focus:outline-none"
+              className="min-w-0 flex-1 rounded border border-stone-400/60 bg-white px-2 py-0.5 text-sm font-semibold text-stone-900 focus:border-primary/60 focus:outline-none"
             />
             <button
               type="button"
               onMouseDown={e => { e.preventDefault(); commitRename() }}
-              className="rounded p-0.5 text-emerald-400 hover:bg-emerald-900/30"
+              className="rounded p-0.5 text-emerald-700 hover:bg-emerald-100"
               title="Bestätigen"
             >
               <Check size={13} aria-hidden />
@@ -292,7 +296,7 @@ function CategorySection({
             <button
               type="button"
               onMouseDown={e => { e.preventDefault(); cancelRename() }}
-              className="rounded p-0.5 text-stone-500 hover:bg-stone-700/40"
+              className="rounded p-0.5 text-stone-500 hover:bg-stone-200/80"
               title="Abbrechen"
             >
               <X size={13} aria-hidden />
@@ -301,12 +305,12 @@ function CategorySection({
         ) : (
           <>
             {/* Category name */}
-            <span className="min-w-0 flex-1 truncate text-sm font-bold text-white">
+            <span className="min-w-0 flex-1 truncate text-sm font-bold text-stone-900">
               {category.name}
             </span>
 
             {/* Count badge */}
-            <span className="shrink-0 rounded bg-white/10 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-stone-300">
+            <span className="shrink-0 rounded bg-stone-200/80 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-stone-700">
               {resumes.length}
             </span>
 
@@ -314,7 +318,7 @@ function CategorySection({
             <button
               type="button"
               onClick={() => onCreateResume()}
-              className="flex shrink-0 items-center gap-1 rounded-md border border-primary/30 bg-primary/15 px-2 py-1 text-[11px] font-semibold text-primary-light hover:bg-primary/25"
+              className="flex shrink-0 items-center gap-1 rounded-md border border-primary/30 bg-primary/10 px-2 py-1 text-[11px] font-semibold text-primary hover:bg-primary/20"
             >
               <Plus size={11} aria-hidden />
               Lebenslauf
@@ -324,7 +328,7 @@ function CategorySection({
             <button
               type="button"
               onClick={() => setEditing(true)}
-              className="shrink-0 rounded p-1 text-stone-400 hover:bg-white/10 hover:text-stone-200"
+              className="shrink-0 rounded p-1 text-stone-500 hover:bg-stone-200/90 hover:text-stone-800"
               title="Kategorie umbenennen"
             >
               <Pencil size={13} aria-hidden />
@@ -334,7 +338,7 @@ function CategorySection({
             <button
               type="button"
               onClick={onDelete}
-              className="shrink-0 rounded p-1 text-stone-500 hover:bg-rose-950/50 hover:text-rose-300"
+              className="shrink-0 rounded p-1 text-stone-400 hover:bg-rose-100 hover:text-rose-700"
               title="Kategorie löschen"
             >
               <Trash2 size={13} aria-hidden />
@@ -346,7 +350,7 @@ function CategorySection({
         <button
           type="button"
           onClick={() => setOpen(o => !o)}
-          className="shrink-0 rounded p-0.5 text-stone-400 hover:bg-white/10 hover:text-stone-200"
+          className="shrink-0 rounded p-0.5 text-stone-500 hover:bg-stone-200/90 hover:text-stone-800"
           aria-expanded={open}
           aria-label={open ? 'Einklappen' : 'Ausklappen'}
         >
@@ -363,7 +367,7 @@ function CategorySection({
             <button
               type="button"
               onClick={onCreateResume}
-              className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-stone-700/60 py-5 text-xs text-stone-600 transition-colors hover:border-stone-600 hover:bg-stone-800/30 hover:text-stone-400"
+              className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-stone-400/50 py-5 text-xs text-stone-500 transition-colors hover:border-stone-400 hover:bg-stone-100/60 hover:text-stone-700"
             >
               <Plus size={13} aria-hidden />
               Ersten Lebenslauf anlegen
@@ -415,20 +419,21 @@ function UncategorizedSection({
       onDragOver={onDragOver}
       onDrop={onDrop}
       className={[
-        'overflow-hidden rounded-xl border border-white/10 bg-stone-900/50 transition-all',
-        isDropTarget ? 'ring-1 ring-inset ring-white/15' : '',
+        'overflow-hidden rounded-xl border border-stone-400/40 transition-all',
+        isDropTarget ? 'ring-2 ring-inset ring-primary/25' : '',
       ].join(' ')}
+      style={{ backgroundColor: 'rgb(250, 246, 238)' }}
     >
       {/* Header */}
-      <div className="flex items-center gap-2 bg-black/25 px-3 py-2">
-        <span className="min-w-0 flex-1 text-sm font-bold text-stone-400">Ohne Kategorie</span>
-        <span className="shrink-0 rounded bg-white/10 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-stone-400">
+      <div className="flex items-center gap-2 border-b border-stone-300/70 bg-app-parchmentDeep/70 px-3 py-2">
+        <span className="min-w-0 flex-1 text-sm font-bold text-stone-600">Ohne Kategorie</span>
+        <span className="shrink-0 rounded bg-stone-200/80 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-stone-600">
           {resumes.length}
         </span>
         <button
           type="button"
           onClick={() => setOpen(o => !o)}
-          className="shrink-0 rounded p-0.5 text-stone-400 hover:bg-white/10 hover:text-stone-200"
+          className="shrink-0 rounded p-0.5 text-stone-500 hover:bg-stone-200/90 hover:text-stone-800"
           aria-expanded={open}
           aria-label={open ? 'Einklappen' : 'Ausklappen'}
         >
@@ -441,7 +446,7 @@ function UncategorizedSection({
       {open && (
         <div className="px-3 pb-3 pt-2">
           {resumes.length === 0 ? (
-            <div className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-stone-700/50 py-5 text-xs text-stone-700">
+            <div className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-stone-400/50 py-5 text-xs text-stone-500">
               Lebenslauf hierher ziehen, um Kategorie zu entfernen
             </div>
           ) : (

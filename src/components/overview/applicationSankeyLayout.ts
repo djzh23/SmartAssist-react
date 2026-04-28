@@ -86,15 +86,15 @@ export function buildApplicationSankeyLayout(
     return { rects, bands }
   }
 
-  const w0 = Math.min(108, innerW * 0.18)
+  const w0 = Math.min(120, innerW * 0.18)
   const gap = innerW * 0.04
-  const w1 = Math.min(120, innerW * 0.19)
+  const w1 = Math.min(132, innerW * 0.2)
   const x0 = padL
   const x1 = x0 + w0 + gap
   const x2 = x1 + w1 + gap
   const w2 = Math.max(150, innerW - (x2 - padL) - 4)
 
-  const hAll = Math.max(50, innerH * 0.68)
+  const hAll = Math.max(58, innerH * 0.62)
   const yAll = padT + (innerH - hAll) / 2
   const baseNodeFill = 'rgb(238, 233, 226)'
   const baseNodeStroke = 'rgba(120, 113, 108, 0.45)'
@@ -113,15 +113,15 @@ export function buildApplicationSankeyLayout(
     stroke: baseNodeStroke,
   })
 
-  const hPipeRaw = activeInPipeline > 0 ? Math.max(14, innerH * (activeInPipeline / total) * 0.9) : 14
-  const hArchRaw = inArchive > 0 ? Math.max(14, innerH * (inArchive / total) * 0.75) : 14
+  const hPipeRaw = activeInPipeline > 0 ? Math.max(22, innerH * (activeInPipeline / total) * 0.7) : 22
+  const hArchRaw = inArchive > 0 ? Math.max(20, innerH * (inArchive / total) * 0.55) : 20
   const hSum = hPipeRaw + hArchRaw
   const scale = hSum > innerH ? innerH / hSum : 1
   const hPipeS = hPipeRaw * scale
   const hArchS = hArchRaw * scale
   const centerY = padT + innerH / 2
-  const yPipe = Math.max(padT + 4, centerY - hPipeS - 12)
-  const yArch = Math.min(padT + innerH - hArchS - 4, centerY + 12)
+  const yPipe = Math.max(padT + 8, centerY - hPipeS - 18)
+  const yArch = Math.min(padT + innerH - hArchS - 8, centerY + 18)
 
   const maxV = Math.max(
     total,
@@ -202,22 +202,34 @@ export function buildApplicationSankeyLayout(
   const archLeaves = archive
   const xMidOut = x1 + w1
 
-  const pipeGap = Math.max(3, Math.floor((innerH * 0.008)))
+  const pipeGap = Math.max(8, Math.floor((innerH * 0.024)))
   const archGap = pipeGap
-  const pipeWeights = pipeLeaves.map(p => (p.count > 0 ? p.count : 0.45))
-  const archWeights = archLeaves.map(p => (p.count > 0 ? p.count : 0.45))
+  const minNodeH = 18
+  const pipeBodyH = Math.max(
+    minNodeH * pipeLeaves.length + pipeGap * (pipeLeaves.length - 1),
+    hPipeS,
+  )
+  const archBodyH = Math.max(
+    minNodeH * archLeaves.length + archGap * (archLeaves.length - 1),
+    hArchS,
+  )
+  const yPipeBase = Math.max(padT + 4, yPipe - Math.max(0, (pipeBodyH - hPipeS) / 2))
+  const yArchBase = Math.min(
+    padT + innerH - archBodyH - 4,
+    yArch + Math.max(0, (hArchS - archBodyH) / 2),
+  )
+  const pipeWeights = pipeLeaves.map(p => (p.count > 0 ? p.count : 0.25))
+  const archWeights = archLeaves.map(p => (p.count > 0 ? p.count : 0.25))
   const pipeWeightSum = pipeWeights.reduce((s, n) => s + n, 0) || 1
   const archWeightSum = archWeights.reduce((s, n) => s + n, 0) || 1
-  const pipeBodyH = Math.max(14, hPipeS - pipeGap * (pipeLeaves.length - 1))
-  const archBodyH = Math.max(14, hArchS - archGap * (archLeaves.length - 1))
 
   let accP = 0
   for (let i = 0; i < pipeLeaves.length; i += 1) {
     const p = pipeLeaves[i]
     const weight = pipeWeights[i]
-    const h = Math.max(8, (pipeBodyH * weight) / pipeWeightSum)
-    const stagger = (i % 2 === 0 ? -1 : 1) * Math.min(6, i)
-    const yTop = yPipe + accP + stagger
+    const h = Math.max(minNodeH, (pipeBodyH * weight) / pipeWeightSum)
+    const stagger = (i % 2 === 0 ? -1 : 1) * Math.min(4, i)
+    const yTop = yPipeBase + accP + stagger
     const muted = p.count === 0
     rects.push({
       id: `p-${p.status}`,
@@ -234,7 +246,7 @@ export function buildApplicationSankeyLayout(
       stroke: muted ? 'rgba(148,163,184,0.5)' : 'rgba(15,23,42,0.2)',
       muted,
     })
-    const sy = yPipe + accP + h / 2
+    const sy = yPipe + Math.min(hPipeS, accP + h / 2)
     const ty = yTop + h / 2
     bands.push({
       id: `band-pipe-${p.status}`,
@@ -259,9 +271,9 @@ export function buildApplicationSankeyLayout(
   for (let i = 0; i < archLeaves.length; i += 1) {
     const p = archLeaves[i]
     const weight = archWeights[i]
-    const h = Math.max(8, (archBodyH * weight) / archWeightSum)
-    const stagger = (i % 2 === 0 ? 1 : -1) * Math.min(6, i)
-    const yTop = yArch + accA + stagger
+    const h = Math.max(minNodeH, (archBodyH * weight) / archWeightSum)
+    const stagger = (i % 2 === 0 ? 1 : -1) * Math.min(4, i)
+    const yTop = yArchBase + accA + stagger
     const muted = p.count === 0
     rects.push({
       id: `a-${p.status}`,
@@ -278,7 +290,7 @@ export function buildApplicationSankeyLayout(
       stroke: muted ? 'rgba(148,163,184,0.5)' : 'rgba(15,23,42,0.2)',
       muted,
     })
-    const sy = yArch + accA + h / 2
+    const sy = yArch + Math.min(hArchS, accA + h / 2)
     const ty = yTop + h / 2
     bands.push({
       id: `band-arch-${p.status}`,

@@ -6,7 +6,7 @@ interface Props {
   overview: ApplicationOverview
 }
 
-const VIEW_H = 240
+const VIEW_H = 360
 const DEFAULT_W = 720
 const BOX_BG = 'rgb(238, 233, 226)'
 
@@ -147,7 +147,7 @@ export default function ApplicationFlowSankey({ overview }: Props) {
           <p className="text-stone-600 tabular-nums">Anteil: {(hover.pct * 100).toFixed(1)}%</p>
         </div>
       )}
-      <p className="px-1 pb-1 text-center text-[10px] text-stone-500">
+      <p className="px-1 pb-1 pt-1 text-center text-[10px] text-stone-500">
         Linienstärke grob nach Anteil — Momentaufnahme deiner Status, kein chronologischer Ablauf.
       </p>
     </div>
