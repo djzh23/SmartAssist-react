@@ -26,13 +26,6 @@ type DragState =
   | { type: 'resume'; id: string }
   | null
 
-// 4 cycling accent palettes
-const ACCENTS = [
-  { border: 'border-violet-700/35', header: 'bg-violet-950/40', dot: 'bg-violet-400' },
-  { border: 'border-amber-700/35',  header: 'bg-amber-950/40',  dot: 'bg-amber-400'  },
-  { border: 'border-sky-700/35',    header: 'bg-sky-950/40',    dot: 'bg-sky-400'    },
-  { border: 'border-emerald-700/35',header: 'bg-emerald-950/40',dot: 'bg-emerald-400'},
-]
 
 export default function CvMasterCategoriesBoard({
   resumes,
@@ -122,12 +115,11 @@ export default function CvMasterCategoriesBoard({
       {categoryError && <ErrorBanner message={categoryError} />}
 
       {/* Category sections */}
-      {sorted.map((cat, idx) => {
+      {sorted.map(cat => {
         const inCat = resumes.filter(r => getCategoryIdForResume(r.id) === cat.id)
         return (
           <CategorySection
             key={cat.id}
-            index={idx}
             category={cat}
             resumes={inCat}
             dragState={dragState}
@@ -198,7 +190,6 @@ function ErrorBanner({ message }: { message: string }) {
 // ─── Category Section ─────────────────────────────────────────────────────────
 
 interface CategorySectionProps {
-  index: number
   category: CvUserCategoryDto
   resumes: CvStudioResumeSummary[]
   dragState: DragState
@@ -214,7 +205,6 @@ interface CategorySectionProps {
 }
 
 function CategorySection({
-  index,
   category,
   resumes,
   dragState,
@@ -233,7 +223,6 @@ function CategorySection({
   const [editName, setEditName] = useState(category.name)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  const accent = ACCENTS[index % ACCENTS.length]
   const isDraggedCategory = dragState?.type === 'category' && dragState.id === category.id
 
   // Sync editName when server updates the name
@@ -263,24 +252,19 @@ function CategorySection({
       onDragOver={onSectionDragOver}
       onDrop={onSectionDrop}
       className={[
-        'overflow-hidden rounded-xl border transition-all',
-        accent.border,
+        'overflow-hidden rounded-xl border border-white/10 bg-stone-900/50 transition-all',
         isDraggedCategory ? 'opacity-40' : '',
-        isDropTarget && !isDraggedCategory ? 'ring-1 ring-inset ring-white/20' : '',
-        'bg-stone-900/50',
+        isDropTarget && !isDraggedCategory ? 'ring-1 ring-inset ring-white/15' : '',
       ].join(' ')}
     >
       {/* ── Header ─────────────────────────────────────────────────────── */}
-      <div className={`flex items-center gap-2 px-3 py-2 ${accent.header}`}>
+      <div className="flex items-center gap-2 bg-black/25 px-3 py-2">
         {/* Drag grip */}
         <GripVertical
           size={14}
           className="shrink-0 cursor-grab text-stone-600 hover:text-stone-400 active:cursor-grabbing"
           aria-hidden
         />
-
-        {/* Accent dot */}
-        <span className={`h-2 w-2 shrink-0 rounded-full ${accent.dot}`} aria-hidden />
 
         {editing ? (
           /* Inline rename input */
@@ -330,7 +314,7 @@ function CategorySection({
             <button
               type="button"
               onClick={() => onCreateResume()}
-              className="flex shrink-0 items-center gap-1 rounded-md bg-violet-700/70 px-2 py-1 text-[11px] font-semibold text-white hover:bg-violet-600 active:bg-violet-700"
+              className="flex shrink-0 items-center gap-1 rounded-md border border-primary/30 bg-primary/15 px-2 py-1 text-[11px] font-semibold text-primary-light hover:bg-primary/25"
             >
               <Plus size={11} aria-hidden />
               Lebenslauf
@@ -340,7 +324,7 @@ function CategorySection({
             <button
               type="button"
               onClick={() => setEditing(true)}
-              className="shrink-0 rounded p-1 text-stone-600 hover:bg-stone-700/50 hover:text-stone-300"
+              className="shrink-0 rounded p-1 text-stone-400 hover:bg-white/10 hover:text-stone-200"
               title="Kategorie umbenennen"
             >
               <Pencil size={13} aria-hidden />
@@ -350,7 +334,7 @@ function CategorySection({
             <button
               type="button"
               onClick={onDelete}
-              className="shrink-0 rounded p-1 text-stone-700 hover:bg-rose-950/50 hover:text-rose-300"
+              className="shrink-0 rounded p-1 text-stone-500 hover:bg-rose-950/50 hover:text-rose-300"
               title="Kategorie löschen"
             >
               <Trash2 size={13} aria-hidden />
@@ -362,7 +346,7 @@ function CategorySection({
         <button
           type="button"
           onClick={() => setOpen(o => !o)}
-          className="shrink-0 rounded p-0.5 text-stone-600 hover:text-stone-300"
+          className="shrink-0 rounded p-0.5 text-stone-400 hover:bg-white/10 hover:text-stone-200"
           aria-expanded={open}
           aria-label={open ? 'Einklappen' : 'Ausklappen'}
         >
@@ -431,21 +415,20 @@ function UncategorizedSection({
       onDragOver={onDragOver}
       onDrop={onDrop}
       className={[
-        'overflow-hidden rounded-xl border border-stone-700/35 bg-stone-900/40 transition-all',
-        isDropTarget ? 'ring-1 ring-inset ring-white/20' : '',
+        'overflow-hidden rounded-xl border border-white/10 bg-stone-900/50 transition-all',
+        isDropTarget ? 'ring-1 ring-inset ring-white/15' : '',
       ].join(' ')}
     >
       {/* Header */}
-      <div className="flex items-center gap-2 bg-stone-800/40 px-3 py-2">
-        <span className="h-2 w-2 shrink-0 rounded-full bg-stone-600" aria-hidden />
+      <div className="flex items-center gap-2 bg-black/25 px-3 py-2">
         <span className="min-w-0 flex-1 text-sm font-bold text-stone-400">Ohne Kategorie</span>
-        <span className="shrink-0 rounded bg-white/8 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-stone-500">
+        <span className="shrink-0 rounded bg-white/10 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-stone-400">
           {resumes.length}
         </span>
         <button
           type="button"
           onClick={() => setOpen(o => !o)}
-          className="shrink-0 rounded p-0.5 text-stone-600 hover:text-stone-300"
+          className="shrink-0 rounded p-0.5 text-stone-400 hover:bg-white/10 hover:text-stone-200"
           aria-expanded={open}
           aria-label={open ? 'Einklappen' : 'Ausklappen'}
         >
