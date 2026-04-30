@@ -7,7 +7,7 @@ interface Props {
   overview: ApplicationOverview
 }
 
-const VIEW_H = 340
+const VIEW_H = 300
 const DEFAULT_W = 720
 const BOX_BG = 'rgb(238, 233, 226)'
 
@@ -53,10 +53,14 @@ function NodeRect({
         height={rect.h}
         rx={rx}
         fill={isMuted ? 'rgb(245,243,240)' : BOX_BG}
-        stroke={isMuted ? 'rgba(148,163,184,0.35)' : 'rgba(120,113,108,0.35)'}
-        strokeWidth={isHovered ? 1.5 : 1}
-        strokeDasharray={isMuted ? '5 4' : undefined}
-        style={{ transition: 'stroke-width 150ms ease' }}
+        stroke="none"
+        style={{
+          transition: 'filter 160ms ease, opacity 160ms ease',
+          filter: isHovered
+            ? 'drop-shadow(0 5px 12px rgba(24,24,27,0.16))'
+            : 'drop-shadow(0 2px 6px rgba(24,24,27,0.10))',
+          opacity: isMuted ? 0.72 : 1,
+        }}
       />
 
       {/* Left accent bar (group/all nodes only) */}
@@ -278,7 +282,7 @@ export default function ApplicationFlowSankey({ overview }: Props) {
   return (
     <div
       ref={wrapRef}
-      className="relative mb-4 w-full overflow-x-auto rounded-2xl border border-amber-200/25 px-2 py-3 shadow-inner"
+      className="relative mb-2 w-full overflow-x-auto rounded-2xl bg-white/70 px-2 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.5),0_10px_24px_-18px_rgba(15,23,42,0.5)]"
       style={{ backgroundColor: BOX_BG }}
     >
       <svg

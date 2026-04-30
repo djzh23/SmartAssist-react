@@ -17,19 +17,19 @@ export default function ApplicationPipelinePanel({ overview }: Props) {
 
   return (
     <div
-      className="rounded-2xl border border-amber-200/15 bg-[#241913]/80 p-4 shadow-landing-md sm:p-5"
+      className="rounded-2xl bg-[#241913]/80 p-4 shadow-[0_12px_34px_-22px_rgba(0,0,0,0.65)] sm:p-5"
     >
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-amber-100/65">
           Bewerbungen, Fluss nach Status
         </h3>
-        <span className="rounded-full border border-amber-200/20 bg-white/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-amber-100/65">
+        <span className="rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-amber-100/70">
           Live View
         </span>
       </div>
 
       {total === 0 ? (
-        <p className="rounded-xl border border-dashed border-amber-100/25 bg-amber-300/10 py-8 text-center text-sm text-amber-100/80">
+        <p className="rounded-xl bg-amber-300/10 py-8 text-center text-sm text-amber-100/80 shadow-[inset_0_0_0_1px_rgba(251,191,36,0.16)]">
           Noch keine Daten,{' '}
           <Link to="/applications/new" className="font-semibold text-primary hover:underline">
             erste Bewerbung anlegen
@@ -39,7 +39,7 @@ export default function ApplicationPipelinePanel({ overview }: Props) {
       ) : (
         <>
           <ApplicationFlowSankey overview={overview} />
-          <div className="flex flex-wrap gap-x-3 gap-y-1.5 border-t border-amber-100/10 pt-3 text-[10px] text-amber-100/75">
+          <div className="flex flex-wrap gap-x-3 gap-y-1.5 pt-2.5 text-[10px] text-amber-100/75">
             <span className="font-semibold text-amber-100/60">Legende:</span>
             {pipeline.map(seg => (
               <span key={seg.status} className="inline-flex items-center gap-1 tabular-nums">

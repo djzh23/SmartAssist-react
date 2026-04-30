@@ -161,16 +161,16 @@ export default function OverviewPage() {
         )}
 
         {/* One-view desktop layout */}
-        <section className="grid gap-3 xl:h-[calc(100vh-9.25rem)] xl:grid-cols-[minmax(0,2.55fr)_minmax(340px,1fr)] xl:items-stretch [@media(min-height:1080px)]:gap-4 [@media(min-height:1080px)]:xl:h-[calc(100vh-10.25rem)]">
+        <section className="grid gap-3 xl:grid-cols-[minmax(0,2.55fr)_minmax(340px,1fr)] xl:items-start [@media(min-height:1080px)]:gap-4">
           <div className="h-full xl:min-h-0">
             {!loading ? <ApplicationPipelinePanel overview={overview} /> : null}
           </div>
 
           <div className="flex flex-col gap-3 xl:min-h-0 [@media(min-height:1080px)]:gap-4">
-            <div className="rounded-2xl border border-amber-300/25 bg-[#1b120d]/78 p-3.5 [@media(min-height:1080px)]:p-4">
+            <div className="rounded-2xl bg-[#1b120d]/78 p-3.5 shadow-[0_10px_28px_-18px_rgba(0,0,0,0.62)] [@media(min-height:1080px)]:p-4">
               <div className="mb-3 flex items-center justify-between gap-2">
                 <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-amber-100/60">Key Metrics</h2>
-                <span className="rounded-full border border-amber-200/20 bg-white/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-amber-100/70">
+                <span className="rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-amber-100/70">
                   Live
                 </span>
               </div>
@@ -184,7 +184,7 @@ export default function OverviewPage() {
                   {metrics.map(row => {
                     const Icon = row.icon
                     return (
-                      <div key={row.label} className="rounded-xl border border-amber-300/28 bg-[#231811]/40 px-3 py-2.5">
+                      <div key={row.label} className="rounded-xl bg-[#231811]/45 px-3 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
                         <div className="mb-1 flex items-center justify-between gap-1">
                           <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-amber-100/60">
                             <Icon className="h-3 w-3 text-amber-300" aria-hidden />
@@ -203,7 +203,7 @@ export default function OverviewPage() {
               )}
             </div>
 
-            <div className="rounded-2xl border border-amber-300/25 bg-[#1b120d]/78 p-3.5 [@media(min-height:1080px)]:p-4">
+            <div className="rounded-2xl bg-[#1b120d]/78 p-3.5 shadow-[0_10px_28px_-18px_rgba(0,0,0,0.62)] [@media(min-height:1080px)]:p-4">
               <h3 className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-amber-100/60">
                 <Flame size={14} className="text-amber-300" />
                 Fokus heute
@@ -223,7 +223,7 @@ export default function OverviewPage() {
                 Bewerbungen öffnen
                 <ArrowRight size={12} />
               </Link>
-              <div className="mt-3 border-t border-amber-300/25 pt-3 [@media(min-height:1080px)]:mt-4 [@media(min-height:1080px)]:pt-4">
+              <div className="mt-3 pt-3 [@media(min-height:1080px)]:mt-4 [@media(min-height:1080px)]:pt-4">
                 <h4 className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-amber-100/60">Aktivität</h4>
                 <div className="space-y-2">
                   {activitySignals.map(item => {
@@ -231,7 +231,7 @@ export default function OverviewPage() {
                     return (
                       <div
                         key={item.label}
-                        className="flex items-center gap-2 rounded-xl border border-amber-300/26 bg-[#231811]/35 px-3 py-2"
+                        className="flex items-center gap-2 rounded-xl bg-[#231811]/45 px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]"
                       >
                         <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-amber-500/12 text-amber-200">
                           <Icon size={14} aria-hidden />
