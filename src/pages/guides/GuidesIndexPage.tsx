@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom'
 import {
-  BookOpen,
   Briefcase,
   ChevronRight,
   Clock,
@@ -12,6 +11,7 @@ import {
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import InfoExplainerButton from '../../components/ui/InfoExplainerButton'
+import PageHeader from '../../components/layout/PageHeader'
 import type { GuideCategory } from '../../content/guides'
 import {
   GUIDE_ARTICLES,
@@ -31,53 +31,35 @@ export default function GuidesIndexPage() {
   return (
     <div className="min-h-0 flex-1 overflow-y-auto bg-transparent">
       <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-8">
-        {/* Hero */}
-        <header className="mb-8 rounded-2xl border border-stone-400/40 bg-app-parchment/95 p-5 shadow-landing sm:p-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div className="flex min-w-0 flex-1 gap-4">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/15 text-primary shadow-sm">
-                <BookOpen className="h-6 w-6" aria-hidden />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                  <div>
-                    <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-stone-500">Lernpfad</p>
-                    <h1 className="mt-1 text-2xl font-bold tracking-tight text-stone-900 sm:text-3xl">
-                      Ratgeber
-                    </h1>
-                  </div>
-                  <InfoExplainerButton
-                    variant="onLight"
-                    modalTitle="So nutzt du die Ratgeber"
-                    ariaLabel="Ausführliche Erklärung zu den Ratgebern"
-                    className="text-stone-500 hover:bg-stone-200/90 hover:text-stone-900"
-                  >
-                    <p>
-                      Jeder Artikel ist auf konkrete Schritte in PrivatePrep ausgelegt: wo du klickst, welche Daten du
-                      pflegst und wie Profil, Bewerbungen und Chat zusammenspielen.
-                    </p>
-                    <p className="mt-3">{GUIDE_INDEX_PATH_HINT}</p>
-                    <p className="mt-3 text-stone-600">
-                      Nutze die Sprungmarken zu den Themenbereichen, wenn du schon weißt, wonach du suchst - oder lies
-                      die Grundlagen zuerst, wenn du neu einsteigst.
-                    </p>
-                  </InfoExplainerButton>
-                </div>
-                <p className="mt-3 text-sm leading-relaxed text-stone-700">
-                  Praxisnahe Anleitungen, damit du die App effizient nutzt: weniger Kontext-Chaos, klarere Chats und
-                  stimmige Bewerbungsdaten von Anfang an.
-                </p>
-                <p className="mt-2 flex items-start gap-2 text-sm font-medium text-stone-800">
-                  <Route className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
-                  <span>{GUIDE_INDEX_PATH_HINT}</span>
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Sprungmarken */}
+        <PageHeader
+          pageKey="guides"
+          subtitle="Praxisnahe Anleitungen für klare Abläufe in Profil, Bewerbungen, CV.Studio und Chat."
+          className="mb-6"
+          infoSlot={(
+            <InfoExplainerButton
+              variant="onDark"
+              modalTitle="So nutzt du die Ratgeber"
+              ariaLabel="Ausführliche Erklärung zu den Ratgebern"
+            >
+              <p>
+                Jeder Artikel ist auf konkrete Schritte in PrivatePrep ausgelegt: wo du klickst, welche Daten du
+                pflegst und wie Profil, Bewerbungen und Chat zusammenspielen.
+              </p>
+              <p className="mt-3">{GUIDE_INDEX_PATH_HINT}</p>
+              <p className="mt-3 text-stone-600">
+                Nutze die Sprungmarken zu den Themenbereichen, wenn du schon weißt, wonach du suchst - oder lies
+                die Grundlagen zuerst, wenn du neu einsteigst.
+              </p>
+            </InfoExplainerButton>
+          )}
+        />
+        <section className="mb-8 rounded-xl border border-stone-400/35 bg-app-parchment/85 px-4 py-4 shadow-card sm:px-5">
+          <p className="flex items-start gap-2 text-sm font-medium text-stone-800">
+            <Route className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
+            <span>{GUIDE_INDEX_PATH_HINT}</span>
+          </p>
           <nav
-            className="mt-6 border-t border-stone-400/35 pt-5"
+            className="mt-4"
             aria-label="Themenbereiche"
           >
             <p className="mb-2.5 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-stone-500">
@@ -99,7 +81,7 @@ export default function GuidesIndexPage() {
               })}
             </div>
           </nav>
-        </header>
+        </section>
 
         {/* Kategorien */}
         <div className="flex flex-col gap-8 sm:gap-10">

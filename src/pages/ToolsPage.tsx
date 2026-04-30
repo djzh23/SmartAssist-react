@@ -13,6 +13,7 @@ import {
 import InfoExplainerButton from '../components/ui/InfoExplainerButton'
 import type { LucideIcon } from 'lucide-react'
 import type { ToolType } from '../types'
+import PageHeader from '../components/layout/PageHeader'
 
 type ToolCategory = 'career' | 'general'
 
@@ -260,12 +261,12 @@ export default function ToolsPage() {
       </div>
 
       <div className="relative mx-auto max-w-6xl px-4 py-7 sm:px-6 sm:py-10 md:py-12" style={{ zIndex: 1 }}>
-        <div className="mb-8 rounded-2xl border border-stone-600/40 bg-app-surface/90 p-4 shadow-landing backdrop-blur sm:mb-10 sm:rounded-3xl sm:p-6">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-400">PrivatePrep Workspace</p>
-          <div className="mt-2 flex items-start justify-between gap-3">
-            <h1 className="text-xl font-bold tracking-tight text-stone-50 sm:text-2xl md:text-3xl">
-              Tools für deine Vorbereitung
-            </h1>
+        <PageHeader
+          pageKey="tools"
+          title="Tools"
+          subtitle="Wähle das passende Tool für deinen nächsten Schritt, kurz erklärt und direkt startklar."
+          className="mb-8 sm:mb-10"
+          infoSlot={(
             <InfoExplainerButton
               variant="onDark"
               modalTitle="Tools im Überblick"
@@ -277,9 +278,8 @@ export default function ToolsPage() {
                 schnelle Umsetzung ausgerichtet.
               </p>
             </InfoExplainerButton>
-          </div>
-          <p className="mt-2 max-w-2xl text-sm text-stone-400">Kurzüberblick - Details über das Info-Symbol.</p>
-        </div>
+          )}
+        />
 
         <section className="mb-8 sm:mb-10">
           <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.15em] text-stone-500">Karriere Tools</h2>

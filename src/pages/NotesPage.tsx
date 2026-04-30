@@ -16,6 +16,7 @@ import {
 import InfoExplainerButton from '../components/ui/InfoExplainerButton'
 import { RenderedMarkdown } from '../components/chat/RenderedMarkdown'
 import { ServerSyncControl } from '../components/ui/ServerSyncControl'
+import PageHeader from '../components/layout/PageHeader'
 import { useAppUi } from '../context/AppUiContext'
 import { useChatNotes } from '../hooks/useChatNotes'
 import { useMediaQuery } from '../hooks/useMediaQuery'
@@ -203,37 +204,32 @@ export default function NotesPage() {
 
   return (
     <div className="mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col gap-4 overflow-hidden px-4 py-6 md:py-8">
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex items-start gap-3">
-          <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-primary-light text-primary">
-            <NotebookPen className="h-5 w-5" aria-hidden />
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="flex items-start justify-between gap-2">
-              <h1 className="text-2xl font-bold text-stone-50">Notizen</h1>
-              <InfoExplainerButton
-                variant="onDark"
-                modalTitle="Notizen"
-                ariaLabel="Erklärung zu gespeicherten Chat-Notizen"
-                className="shrink-0"
-              >
-                <p>
-                  Gespeicherte Antworten aus dem Chat - mit dem Server synchronisiert und auf allen Geräten verfügbar,
-                  sobald du angemeldet bist.
-                </p>
-              </InfoExplainerButton>
-            </div>
-            <p className="mt-1 max-w-xl text-sm text-stone-400">Aus dem Chat - Details über das Info-Symbol.</p>
-          </div>
-        </div>
-        <ServerSyncControl
-          variant="dark"
-          className="self-start"
-          onSync={() => void reload()}
-          syncing={notesLoading}
-          lastSyncedAt={notesLastSyncedAt}
-        />
-      </header>
+      <PageHeader
+        pageKey="notes"
+        subtitle="Aus dem Chat gespeichert, über Geräte hinweg synchronisiert."
+        infoSlot={(
+          <InfoExplainerButton
+            variant="onDark"
+            modalTitle="Notizen"
+            ariaLabel="Erklärung zu gespeicherten Chat-Notizen"
+            className="shrink-0"
+          >
+            <p>
+              Gespeicherte Antworten aus dem Chat - mit dem Server synchronisiert und auf allen Geräten verfügbar,
+              sobald du angemeldet bist.
+            </p>
+          </InfoExplainerButton>
+        )}
+        actions={(
+          <ServerSyncControl
+            variant="dark"
+            className="self-start"
+            onSync={() => void reload()}
+            syncing={notesLoading}
+            lastSyncedAt={notesLastSyncedAt}
+          />
+        )}
+      />
 
       {notesError ? (
         <div

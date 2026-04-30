@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import { fetchJobApplications, listCvStudioResumes } from '../api/client'
 import type { JobApplicationApi } from '../api/client'
+import PageHeader from '../components/layout/PageHeader'
 import ApplicationPipelinePanel from '../components/overview/ApplicationPipelinePanel'
 import { useChatNotes } from '../hooks/useChatNotes'
 import { useUserPlan } from '../hooks/useUserPlan'
@@ -153,6 +154,21 @@ export default function OverviewPage() {
       </div>
 
       <div className="relative z-10 mx-auto h-full max-w-[1360px] space-y-3 px-4 py-4 sm:px-6 sm:py-5 [@media(min-height:1080px)]:py-6">
+        <PageHeader
+          pageKey="overview"
+          title="Übersicht"
+          subtitle="Alle Kernzahlen und nächste Aktionen in einer kompakten Ansicht."
+          className="mb-1"
+          actions={(
+            <Link
+              to="/applications"
+              className="inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white transition hover:bg-primary-hover"
+            >
+              Zur Pipeline
+              <ArrowRight size={12} />
+            </Link>
+          )}
+        />
 
         {error && (
           <div className="rounded-2xl border border-rose-300/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100" role="alert">

@@ -30,6 +30,7 @@ import CreateResumeInCategoryModal, {
   type CreateResumeForCategoryParams,
 } from './components/overview/CreateResumeInCategoryModal'
 import InfoExplainerButton from '../components/ui/InfoExplainerButton'
+import PageHeader from '../components/layout/PageHeader'
 
 export default function CvStudioOverviewPage() {
   const navigate = useNavigate()
@@ -313,72 +314,61 @@ export default function CvStudioOverviewPage() {
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="pb-10">
-      {/* Page header */}
-      <div className="mb-8 flex flex-col gap-2 border-b border-white/10 pb-6">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary-light">
-          CV.Studio
-        </p>
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="min-w-0 max-w-2xl">
-            <div className="flex flex-wrap items-start gap-2">
-              <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
-                Bewerbungen & Lebensläufe
-              </h1>
-              <InfoExplainerButton
-                variant="onDark"
-                trigger="hint"
-                modalTitle="So funktioniert CV.Studio"
-                ariaLabel="Hinweis: Ablauf CV.Studio"
-                className="border-white/20 text-stone-200 hover:bg-white/12"
-              >
-                <p>
-                  Organisiere deine Lebensläufe in <strong>Kategorien</strong>, z. B. „Frontend", „SAP" oder nach
-                  Zielunternehmen. Innerhalb jeder Kategorie legst du einen oder mehrere Lebensläufe für konkrete
-                  Bewerbungen an.
-                </p>
-                <p className="mt-3">
-                  Klicke auf <strong>„+ Lebenslauf"</strong> in einer Kategorie, um einen neuen CV direkt dort
-                  anzulegen. Du kannst optional eine Bewerbung aus „Meine Bewerbungen" verknüpfen oder eine neue
-                  anlegen.
-                </p>
-                <p className="mt-3">
-                  <strong>Vorlagen</strong> starten mit anonymen Beispieldaten. Mehr dazu im{' '}
-                  <Link to="/guides/cv-studio-vorlagen-dummy" className="font-semibold text-primary hover:underline">
-                    Ratgeber
-                  </Link>
-                  .
-                </p>
-              </InfoExplainerButton>
-            </div>
-            <p className="mt-2 text-sm leading-relaxed text-stone-400">
-              Erstelle Kategorien für deine Bewerbungsfelder und lege darin passende Lebensläufe an,
-              alles übersichtlich an einem Ort.
+      <PageHeader
+        pageKey="cvStudio"
+        title="CV.Studio"
+        subtitle="Kategorien verwalten, Lebensläufe erstellen und Versionen sauber organisieren."
+        className="mb-6"
+        infoSlot={(
+          <InfoExplainerButton
+            variant="onDark"
+            trigger="hint"
+            modalTitle="So funktioniert CV.Studio"
+            ariaLabel="Hinweis: Ablauf CV.Studio"
+            className="border-white/20 text-stone-200 hover:bg-white/12"
+          >
+            <p>
+              Organisiere deine Lebensläufe in <strong>Kategorien</strong>, z. B. „Frontend", „SAP" oder nach
+              Zielunternehmen. Innerhalb jeder Kategorie legst du einen oder mehrere Lebensläufe für konkrete
+              Bewerbungen an.
             </p>
-          </div>
-
-          {/* Header actions */}
-          <div className="flex flex-col items-end gap-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setShowCreateCategoryModal(true)}
-                className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/10 px-4 py-2 text-sm font-semibold text-primary-light transition-colors hover:bg-primary/20"
-              >
-                <FolderPlus size={16} aria-hidden />
-                Neue Kategorie
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowDialog(true)}
-                className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-hover"
-              >
-                <Plus size={16} aria-hidden />
-                Neuer Lebenslauf
-              </button>
-            </div>
-            <CvQuotaBadge used={pdfUsed} limit={pdfLimit} />
-          </div>
-        </div>
+            <p className="mt-3">
+              Klicke auf <strong>„+ Lebenslauf"</strong> in einer Kategorie, um einen neuen CV direkt dort
+              anzulegen. Du kannst optional eine Bewerbung aus „Meine Bewerbungen" verknüpfen oder eine neue
+              anlegen.
+            </p>
+            <p className="mt-3">
+              <strong>Vorlagen</strong> starten mit anonymen Beispieldaten. Mehr dazu im{' '}
+              <Link to="/guides/cv-studio-vorlagen-dummy" className="font-semibold text-primary hover:underline">
+                Ratgeber
+              </Link>
+              .
+            </p>
+          </InfoExplainerButton>
+        )}
+        actions={(
+          <>
+            <button
+              type="button"
+              onClick={() => setShowCreateCategoryModal(true)}
+              className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/10 px-4 py-2 text-sm font-semibold text-primary-light transition-colors hover:bg-primary/20"
+            >
+              <FolderPlus size={16} aria-hidden />
+              Neue Kategorie
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowDialog(true)}
+              className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-hover"
+            >
+              <Plus size={16} aria-hidden />
+              Neuer Lebenslauf
+            </button>
+          </>
+        )}
+      />
+      <div className="mb-8 flex justify-end">
+        <CvQuotaBadge used={pdfUsed} limit={pdfLimit} />
       </div>
 
       {/* Error banner */}

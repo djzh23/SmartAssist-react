@@ -43,6 +43,7 @@ import {
   type AnonymousSummaryLanguage,
 } from '../api/profileClient'
 import CvUploader from '../components/profile/CvUploader'
+import PageHeader from '../components/layout/PageHeader'
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -1105,33 +1106,31 @@ export default function CareerProfilePage() {
       )}
 
       <div className="mx-auto w-full max-w-3xl px-4 py-6">
-        {/* ── Header ─────────────────────────────────────────────────── */}
-        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0 flex items-start gap-2">
-            <div>
-              <h1 className="mb-1 text-2xl font-semibold text-stone-50">Karriereprofil</h1>
-              <p className="text-sm text-stone-400">
-                Personalisiere den Assistenten - je vollständiger, desto präziser die Antworten.
-              </p>
-            </div>
+        <PageHeader
+          pageKey="careerProfile"
+          subtitle="Personalisiere den Assistenten, je vollständiger dein Profil, desto präziser die Antworten."
+          className="mb-6"
+          infoSlot={(
             <button
               type="button"
               onClick={() => setHelpOpen(true)}
-              className="mt-1 shrink-0 rounded-full p-1.5 text-stone-400 hover:bg-stone-700 hover:text-stone-100 transition-colors"
+              className="mt-1 shrink-0 rounded-full p-1.5 text-stone-400 transition-colors hover:bg-stone-700 hover:text-stone-100"
               aria-label="Hilfe & Hinweise"
             >
               <HelpCircle size={18} />
             </button>
-          </div>
-          <button
-            type="button"
-            onClick={() => setDeleteConfirmOpen(true)}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-red-500/40 px-3 py-2 text-xs font-medium text-red-400 hover:border-red-400 hover:bg-red-950/30 hover:text-red-300 transition-colors"
-          >
-            <Trash2 size={14} aria-hidden />
-            Alle Daten löschen
-          </button>
-        </div>
+          )}
+          actions={(
+            <button
+              type="button"
+              onClick={() => setDeleteConfirmOpen(true)}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-red-500/40 px-3 py-2 text-xs font-medium text-red-400 transition-colors hover:border-red-400 hover:bg-red-950/30 hover:text-red-300"
+            >
+              <Trash2 size={14} aria-hidden />
+              Alle Daten löschen
+            </button>
+          )}
+        />
 
         <LearningInsightsPanel />
 

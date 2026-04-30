@@ -5,7 +5,6 @@ import {
   Briefcase,
   Building2,
   ChevronRight,
-  LayoutGrid,
   Loader2,
   Plus,
 } from 'lucide-react'
@@ -22,6 +21,7 @@ import InfoExplainerButton from '../components/ui/InfoExplainerButton'
 import type { CvStudioResumeSummary } from '../types'
 import { useCareerProfile } from '../hooks/useCareerProfile'
 import { getProfileCompleteness, getProfileCompletenessGapHint } from '../utils/profileCompleteness'
+import PageHeader from '../components/layout/PageHeader'
 
 /** Active pipeline (left → right). */
 const PIPELINE: ApplicationStatusApi[] = [
@@ -198,80 +198,71 @@ export default function ApplicationsPage() {
   return (
     <div className="min-h-0 flex-1 overflow-y-auto bg-transparent">
       <div className="mx-auto max-w-[1600px] px-4 py-6 sm:px-6 sm:py-8">
-        {/* Header */}
-        <header className="mb-8 flex flex-col gap-4 border-b border-stone-500/30 pb-8 sm:flex-row sm:items-end sm:justify-between">
-          <div className="flex gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary shadow-sm">
-              <LayoutGrid size={24} strokeWidth={2} />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-start justify-between gap-2">
-                <h1 className="text-2xl font-bold tracking-tight text-stone-50 sm:text-3xl">
-                  Meine Bewerbungen
-                </h1>
-                <InfoExplainerButton
-                  variant="onDark"
-                  modalTitle="So funktioniert die Übersicht"
-                  ariaLabel="Erklärung zur Bewerbungsübersicht, Pipeline und Archiv"
-                  className="shrink-0"
-                >
-                  <p>
-                    Pipeline von Entwurf bis Angebot - darunter Archiv für{' '}
-                    <span className="font-semibold text-stone-900">Abgesagt, Zurückgezogen und Angenommen</span>
-                    .
-                  </p>
-                  <p className="mt-3">
-                    Karten sind bewusst schmal: ein Klick öffnet die Bewerbung, der runde Button „!“ zeigt Fortschritt
-                    und nächste Schritte in einem Fenster. Nur die jeweilige Spalte scrollt, wenn viele Bewerbungen in
-                    einer Phase liegen.
-                  </p>
-                  <div className="mt-4 border-t border-stone-200 pt-4">
-                    <p className="font-semibold text-stone-900">Leere Spalten</p>
-                    <p className="mt-1">
-                      Wenn eine Phase noch leer ist, lege eine neue Bewerbung an oder ändere den Status in den
-                      Bewerbungsdetails - die Karte wandert dann in die passende Spalte.
-                    </p>
-                    <p className="mt-2">
-                      Im Archiv: abgeschlossene Bewerbungen erscheinen automatisch, sobald du den Status in den Details
-                      setzt (z. B. Abgesagt, Zurückgezogen, Angenommen).
-                    </p>
-                  </div>
-                </InfoExplainerButton>
-              </div>
-              <p className="mt-1 max-w-xl text-sm text-stone-400">
-                Pipeline und Archiv - Details über das Info-Symbol.
-              </p>
-              <p className="mt-2 text-sm font-medium text-stone-200">
-                <span className="tabular-nums text-primary">{activeCount}</span>
-                {' '}
-                {activeCount === 1 ? 'aktive Bewerbung' : 'aktive Bewerbungen'}
-                <span className="mx-2 text-stone-600">·</span>
-                <span className="tabular-nums">{apps.length}</span>
-                {' '}
-                gesamt
-                <span className="mx-2 text-stone-600">·</span>
-                <span className="tabular-nums text-stone-400">{archiveTotal}</span>
-                {' '}
-                im Archiv
-              </p>
-            </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-            <ServerSyncControl
-              variant="dark"
-              onSync={() => void load()}
-              syncing={loading}
-              lastSyncedAt={lastSyncedAt}
-            />
-            <Link
-              to="/applications/new"
-              className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-md transition hover:bg-amber-700"
+        <PageHeader
+          pageKey="applications"
+          subtitle="Pipeline und Archiv, Status per Drag-and-Drop direkt aktualisieren."
+          className="mb-5"
+          infoSlot={(
+            <InfoExplainerButton
+              variant="onDark"
+              modalTitle="So funktioniert die Übersicht"
+              ariaLabel="Erklärung zur Bewerbungsübersicht, Pipeline und Archiv"
+              className="shrink-0"
             >
-              <Plus size={18} strokeWidth={2.5} />
-              Neue Bewerbung
-            </Link>
-          </div>
-        </header>
+              <p>
+                Pipeline von Entwurf bis Angebot - darunter Archiv für{' '}
+                <span className="font-semibold text-stone-900">Abgesagt, Zurückgezogen und Angenommen</span>
+                .
+              </p>
+              <p className="mt-3">
+                Karten sind bewusst schmal: ein Klick öffnet die Bewerbung, der runde Button „!“ zeigt Fortschritt
+                und nächste Schritte in einem Fenster. Nur die jeweilige Spalte scrollt, wenn viele Bewerbungen in
+                einer Phase liegen.
+              </p>
+              <div className="mt-4 border-t border-stone-200 pt-4">
+                <p className="font-semibold text-stone-900">Leere Spalten</p>
+                <p className="mt-1">
+                  Wenn eine Phase noch leer ist, lege eine neue Bewerbung an oder ändere den Status in den
+                  Bewerbungsdetails - die Karte wandert dann in die passende Spalte.
+                </p>
+                <p className="mt-2">
+                  Im Archiv: abgeschlossene Bewerbungen erscheinen automatisch, sobald du den Status in den Details
+                  setzt (z. B. Abgesagt, Zurückgezogen, Angenommen).
+                </p>
+              </div>
+            </InfoExplainerButton>
+          )}
+          actions={(
+            <>
+              <ServerSyncControl
+                variant="dark"
+                onSync={() => void load()}
+                syncing={loading}
+                lastSyncedAt={lastSyncedAt}
+              />
+              <Link
+                to="/applications/new"
+                className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-md transition hover:bg-amber-700"
+              >
+                <Plus size={18} strokeWidth={2.5} />
+                Neue Bewerbung
+              </Link>
+            </>
+          )}
+        />
+        <p className="mb-6 text-sm font-medium text-stone-200">
+          <span className="tabular-nums text-primary">{activeCount}</span>
+          {' '}
+          {activeCount === 1 ? 'aktive Bewerbung' : 'aktive Bewerbungen'}
+          <span className="mx-2 text-stone-600">·</span>
+          <span className="tabular-nums">{apps.length}</span>
+          {' '}
+          gesamt
+          <span className="mx-2 text-stone-600">·</span>
+          <span className="tabular-nums text-stone-400">{archiveTotal}</span>
+          {' '}
+          im Archiv
+        </p>
 
         {error && (
           <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
