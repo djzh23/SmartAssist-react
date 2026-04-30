@@ -14,6 +14,7 @@ import InfoExplainerButton from '../components/ui/InfoExplainerButton'
 import type { LucideIcon } from 'lucide-react'
 import type { ToolType } from '../types'
 import PageHeader from '../components/layout/PageHeader'
+import StandardPageContainer from '../components/layout/StandardPageContainer'
 
 type ToolCategory = 'career' | 'general'
 
@@ -260,12 +261,12 @@ export default function ToolsPage() {
         <div className="absolute right-24 top-[70%] h-14 w-14 -rotate-12 rounded-xl border border-stone-600/30 bg-stone-900/25" />
       </div>
 
-      <div className="relative mx-auto max-w-6xl px-4 py-7 sm:px-6 sm:py-10 md:py-12" style={{ zIndex: 1 }}>
+      <StandardPageContainer className="relative py-7 sm:py-10 md:py-12" style={{ zIndex: 1 }}>
         <PageHeader
           pageKey="tools"
           title="Tools"
           subtitle="Wähle das passende Tool für deinen nächsten Schritt, kurz erklärt und direkt startklar."
-          className="mb-8 sm:mb-10"
+          className="mb-6"
           infoSlot={(
             <InfoExplainerButton
               variant="onDark"
@@ -281,7 +282,7 @@ export default function ToolsPage() {
           )}
         />
 
-        <section className="mb-8 sm:mb-10">
+        <section className="mb-6">
           <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.15em] text-stone-500">Karriere Tools</h2>
           {renderCards(careerTools)}
         </section>
@@ -290,7 +291,7 @@ export default function ToolsPage() {
           <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.15em] text-stone-500">Weitere Tools</h2>
           {renderCards(otherTools)}
         </section>
-      </div>
+      </StandardPageContainer>
 
       {selected && (
         <div

@@ -44,6 +44,7 @@ import {
 } from '../api/profileClient'
 import CvUploader from '../components/profile/CvUploader'
 import PageHeader from '../components/layout/PageHeader'
+import StandardPageContainer from '../components/layout/StandardPageContainer'
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -1105,7 +1106,7 @@ export default function CareerProfilePage() {
         />
       )}
 
-      <div className="mx-auto w-full max-w-3xl px-4 py-6">
+      <StandardPageContainer className="w-full py-6">
         <PageHeader
           pageKey="careerProfile"
           subtitle="Personalisiere den Assistenten, je vollständiger dein Profil, desto präziser die Antworten."
@@ -1763,7 +1764,7 @@ export default function CareerProfilePage() {
             Speichern…
           </p>
         )}
-      </div>
+      </StandardPageContainer>
     </div>
   )
 }

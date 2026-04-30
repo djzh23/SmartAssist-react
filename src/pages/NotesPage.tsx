@@ -14,6 +14,7 @@ import {
   X,
 } from 'lucide-react'
 import InfoExplainerButton from '../components/ui/InfoExplainerButton'
+import StandardPageContainer from '../components/layout/StandardPageContainer'
 import { RenderedMarkdown } from '../components/chat/RenderedMarkdown'
 import { ServerSyncControl } from '../components/ui/ServerSyncControl'
 import PageHeader from '../components/layout/PageHeader'
@@ -203,10 +204,11 @@ export default function NotesPage() {
   }
 
   return (
-    <div className="mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col gap-4 overflow-hidden px-4 py-6 md:py-8">
+    <StandardPageContainer className="flex min-h-0 w-full flex-1 flex-col gap-6 overflow-hidden py-6 md:py-8">
       <PageHeader
         pageKey="notes"
         subtitle="Aus dem Chat gespeichert, über Geräte hinweg synchronisiert."
+        className="mb-0"
         infoSlot={(
           <InfoExplainerButton
             variant="onDark"
@@ -539,6 +541,6 @@ export default function NotesPage() {
           </div>
         </div>
       ) : null}
-    </div>
+    </StandardPageContainer>
   )
 }

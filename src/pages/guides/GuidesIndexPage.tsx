@@ -12,6 +12,7 @@ import {
 import type { LucideIcon } from 'lucide-react'
 import InfoExplainerButton from '../../components/ui/InfoExplainerButton'
 import PageHeader from '../../components/layout/PageHeader'
+import StandardPageContainer from '../../components/layout/StandardPageContainer'
 import type { GuideCategory } from '../../content/guides'
 import {
   GUIDE_ARTICLES,
@@ -30,7 +31,7 @@ const CATEGORY_ICONS: Record<GuideCategory, LucideIcon> = {
 export default function GuidesIndexPage() {
   return (
     <div className="min-h-0 flex-1 overflow-y-auto bg-transparent">
-      <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-8">
+      <StandardPageContainer className="py-6 sm:py-8">
         <PageHeader
           pageKey="guides"
           subtitle="Praxisnahe Anleitungen für klare Abläufe in Profil, Bewerbungen, CV.Studio und Chat."
@@ -189,7 +190,7 @@ export default function GuidesIndexPage() {
             )
           })}
         </div>
-      </div>
+      </StandardPageContainer>
     </div>
   )
 }
