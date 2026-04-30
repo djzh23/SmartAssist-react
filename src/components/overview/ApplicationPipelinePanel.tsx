@@ -17,10 +17,10 @@ export default function ApplicationPipelinePanel({ overview }: Props) {
 
   return (
     <div
-      className="rounded-2xl bg-[#241913]/80 p-4 shadow-[0_12px_34px_-22px_rgba(0,0,0,0.65)] sm:p-5"
+      className="flex h-full min-h-0 flex-col rounded-2xl bg-[#241913]/80 p-3.5 shadow-[0_12px_34px_-22px_rgba(0,0,0,0.65)] sm:p-4"
     >
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-amber-100/65">
+      <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2">
+        <h3 className="text-[11px] font-bold uppercase tracking-[0.18em] text-amber-100/65">
           Bewerbungen, Fluss nach Status
         </h3>
         <span className="rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-amber-100/70">
@@ -38,8 +38,10 @@ export default function ApplicationPipelinePanel({ overview }: Props) {
         </p>
       ) : (
         <>
-          <ApplicationFlowSankey overview={overview} />
-          <div className="flex flex-wrap gap-x-3 gap-y-1.5 pt-2.5 text-[10px] text-amber-100/75">
+          <div className="min-h-0 flex-1">
+            <ApplicationFlowSankey overview={overview} />
+          </div>
+          <div className="flex flex-wrap gap-x-3 gap-y-1.5 pt-2 text-[10px] text-amber-100/75">
             <span className="font-semibold text-amber-100/60">Legende:</span>
             {pipeline.map(seg => (
               <span key={seg.status} className="inline-flex items-center gap-1 tabular-nums">

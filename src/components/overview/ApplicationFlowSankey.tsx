@@ -7,7 +7,6 @@ interface Props {
   overview: ApplicationOverview
 }
 
-const VIEW_H = 300
 const DEFAULT_W = 720
 const BOX_BG = 'rgb(238, 233, 226)'
 
@@ -226,6 +225,13 @@ export default function ApplicationFlowSankey({ overview }: Props) {
   const [tooltip, setTooltip] = useState<TooltipInfo | null>(null)
   const [activeBandId, setActiveBandId] = useState<string | null>(null)
 
+  const viewH = useMemo(() => {
+    if (w >= 1040) return 620
+    if (w >= 860) return 560
+    if (w >= 700) return 520
+    return 460
+  }, [w])
+
   useEffect(() => {
     const el = wrapRef.current
     if (!el || typeof ResizeObserver === 'undefined') return
@@ -238,8 +244,8 @@ export default function ApplicationFlowSankey({ overview }: Props) {
   }, [])
 
   const layout = useMemo(
-    () => buildApplicationSankeyLayout(overview, w, VIEW_H),
-    [overview, w],
+    () => buildApplicationSankeyLayout(overview, w, viewH),
+    [overview, w, viewH],
   )
 
   if (overview.total <= 0) return null
@@ -282,12 +288,13 @@ export default function ApplicationFlowSankey({ overview }: Props) {
   return (
     <div
       ref={wrapRef}
-      className="relative mb-2 w-full overflow-x-auto rounded-2xl bg-white/70 px-2 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.5),0_10px_24px_-18px_rgba(15,23,42,0.5)]"
+      className="relative h-full min-h-[460px] w-full overflow-x-auto rounded-2xl bg-white/70 px-3 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.55),0_0_0_1px_rgba(245,158,11,0.18),0_16px_30px_-20px_rgba(15,23,42,0.6)] md:min-h-[520px] xl:min-h-[560px] xl:px-4 xl:py-4"
       style={{ backgroundColor: BOX_BG }}
     >
       <svg
-        viewBox={`0 0 ${w} ${VIEW_H}`}
-        className="mx-auto h-auto w-full max-w-full"
+        viewBox={`0 0 ${w} ${viewH}`}
+        className="mx-auto block w-full max-w-full"
+        style={{ height: viewH }}
         role="img"
         aria-label="Flussdiagramm: Bewerbungen von Gesamtzahl zu Pipeline und Archiv, dann nach Status"
       >
@@ -318,7 +325,7 @@ export default function ApplicationFlowSankey({ overview }: Props) {
 
       {tooltip && <SankeyTooltip info={tooltip} />}
 
-      <p className="px-1 pb-0.5 pt-1 text-center text-[10px] text-stone-500">
+      <p className="px-1 pb-0.5 pt-2 text-center text-[10px] text-stone-500">
         Momentaufnahme · Linienstärke nach Anteil · kein chronologischer Ablauf
       </p>
     </div>

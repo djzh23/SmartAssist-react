@@ -58,9 +58,9 @@ export function curvePath(x0: number, y0: number, x1: number, y1: number): strin
   return `M ${x0} ${y0} C ${cp} ${y0}, ${cp} ${y1}, ${x1} ${y1}`
 }
 
-const NODE_H = 22
-const NODE_GAP = 6
-const GROUP_GAP = 20
+const NODE_H = 24
+const NODE_GAP = 9
+const GROUP_GAP = 28
 
 function strokeW(v: number, maxV: number): number {
   if (maxV <= 0 || v <= 0) return 1.5
@@ -88,8 +88,8 @@ export function buildApplicationSankeyLayout(
 
   const PAD_L = 14
   const PAD_R = 14
-  const PAD_T = 16
-  const PAD_B = 20
+  const PAD_T = 22
+  const PAD_B = 28
   const innerW = width - PAD_L - PAD_R
   const innerH = height - PAD_T - PAD_B
 
