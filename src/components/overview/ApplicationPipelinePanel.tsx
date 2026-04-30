@@ -1,20 +1,18 @@
 import { Link } from 'react-router-dom'
 import type { ApplicationOverview } from '../../utils/applicationOverview'
-import InfoExplainerButton from '../ui/InfoExplainerButton'
 import ApplicationFlowSankey from './ApplicationFlowSankey'
 import { SANKEY_PIPELINE_FILL } from './applicationSankeyLayout'
 import type { ApplicationStatusApi } from '../../api/client'
 
 interface Props {
   overview: ApplicationOverview
-  hint: string
 }
 
 function legendDot(status: ApplicationStatusApi): string {
   return SANKEY_PIPELINE_FILL[status] ?? '#64748b'
 }
 
-export default function ApplicationPipelinePanel({ overview, hint }: Props) {
+export default function ApplicationPipelinePanel({ overview }: Props) {
   const { total, pipeline, archive } = overview
 
   return (
@@ -25,27 +23,9 @@ export default function ApplicationPipelinePanel({ overview, hint }: Props) {
         <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-amber-100/65">
           Bewerbungen, Fluss nach Status
         </h3>
-        <InfoExplainerButton
-          variant="onDark"
-          trigger="hint"
-          modalTitle="So liest du den Fluss"
-          ariaLabel="Hinweis: Bewerbungsflussdiagramm"
-          className="border-amber-200/20 text-amber-100/75 hover:bg-white/12"
-        >
-          <p>
-            Das Diagramm zeigt nur den <strong>aktuellen Stand</strong>: wie viele Bewerbungen in welchem Status
-            liegen. Breite der Verbindungen ist näherungsweise nach Anteil skaliert, nicht nach Zeit oder
-            Reihenfolge der Bewerbung.
-          </p>
-          <p className="mt-3">
-            Zuerst siehst du die Gesamtzahl, dann die Aufteilung in <strong>aktive Pipeline</strong> und{' '}
-            <strong>Archiv</strong>, danach die einzelnen Status, wie auf der Seite „Meine Bewerbungen“.
-          </p>
-          <p className="mt-3 rounded-lg border border-amber-200/25 bg-amber-300/10 px-3 py-2 text-amber-100/85">
-            <span className="font-semibold text-amber-100">Tipp: </span>
-            {hint}
-          </p>
-        </InfoExplainerButton>
+        <span className="rounded-full border border-amber-200/20 bg-white/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-amber-100/65">
+          Live View
+        </span>
       </div>
 
       {total === 0 ? (

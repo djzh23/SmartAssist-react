@@ -1,20 +1,18 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useAuth } from '@clerk/clerk-react'
 import {
   ArrowRight,
-  BookOpen,
-  ClipboardList,
   Flame,
   FileText,
   FolderOpen,
-  GraduationCap,
   Lightbulb,
   LayoutDashboard,
   Loader2,
   MessageCircle,
   NotebookPen,
   Radar,
+  ShieldCheck,
   Target,
   TrendingUp,
   Wrench,
@@ -23,7 +21,6 @@ import type { LucideIcon } from 'lucide-react'
 import { fetchJobApplications, listCvStudioResumes } from '../api/client'
 import type { JobApplicationApi } from '../api/client'
 import ApplicationPipelinePanel from '../components/overview/ApplicationPipelinePanel'
-import InfoExplainerButton from '../components/ui/InfoExplainerButton'
 import { useChatNotes } from '../hooks/useChatNotes'
 import { useUserPlan } from '../hooks/useUserPlan'
 import { applicationOverviewHint, buildApplicationOverview } from '../utils/applicationOverview'
@@ -31,20 +28,12 @@ import { applicationOverviewHint, buildApplicationOverview } from '../utils/appl
 const WORKSPACE_LINKS: { to: string; label: string; hint: string; icon: LucideIcon }[] = [
   { to: '/chat', label: 'Chat', hint: 'Sessions, Tools und Kontext', icon: MessageCircle },
   { to: '/tools', label: 'Tools', hint: 'Stellenanalyse, Interview, Code', icon: Wrench },
-  { to: '/career-profile', label: 'Karriereprofil', hint: 'Profildaten für KI & Bewerbungen', icon: ClipboardList },
+  { to: '/career-profile', label: 'Karriereprofil', hint: 'Profildaten für KI & Bewerbungen', icon: NotebookPen },
   { to: '/applications', label: 'Bewerbungen', hint: 'Pipeline und Details', icon: FolderOpen },
   { to: '/cv-studio', label: 'CV.Studio', hint: 'Lebensläufe und PDFs', icon: FileText },
-  { to: '/guides', label: 'Ratgeber', hint: 'Anleitungen und Abläufe', icon: BookOpen },
-  { to: '/notes', label: 'Notizen', hint: 'Gespeicherte Antworten', icon: NotebookPen },
+  { to: '/guides', label: 'Ratgeber', hint: 'Anleitungen und Abläufe', icon: Target },
+  { to: '/notes', label: 'Notizen', hint: 'Gespeicherte Antworten', icon: Radar },
 ]
-
-const ANCHORS = [
-  ['ueberblick-start', 'Übersicht'],
-  ['ueberblick-zahlen', 'Zahlen'],
-  ['ueberblick-bewerbungen', 'Bewerbungen'],
-  ['ueberblick-chat', 'Chat-Aktivität'],
-  ['ueberblick-app', 'Features'],
-] as const
 
 function formatTrend(value: number): string {
   if (value > 0) return `+${value}%`
@@ -52,7 +41,6 @@ function formatTrend(value: number): string {
 }
 
 export default function OverviewPage() {
-  const location = useLocation()
   const { getToken } = useAuth()
   const user = useUserPlan()
   const { notes, isSignedIn: notesSignedIn } = useChatNotes()
@@ -91,21 +79,11 @@ export default function OverviewPage() {
     void load()
   }, [load])
 
-  useEffect(() => {
-    const raw = location.hash.replace(/^#/, '')
-    if (!raw) return
-    requestAnimationFrame(() => {
-      document.getElementById(raw)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    })
-  }, [location.hash, location.pathname])
-
   const overview = buildApplicationOverview(apps)
   const hint = applicationOverviewHint(overview)
   const notesCount = notesSignedIn ? notes.length : null
 
   const weekHistory = user.weekHistory
-  const maxCount = Math.max(...weekHistory.map(d => d.count), 1)
-  const todayDate = new Date().toISOString().split('T')[0]
   const yesterdayCount = weekHistory[weekHistory.length - 2]?.count ?? 0
   const todayCount = weekHistory[weekHistory.length - 1]?.count ?? 0
   const trendTodayVsYesterday = yesterdayCount === 0
@@ -125,6 +103,31 @@ export default function OverviewPage() {
 
   const heroCtaTo = interviewAndOfferCount > 0 ? '/applications' : '/applications/new'
   const heroCtaLabel = interviewAndOfferCount > 0 ? 'Weiterarbeiten' : 'Bewerbung starten'
+
+  const activitySignals = [
+    {
+      icon: Target,
+      label: 'Nächster Fokus',
+      value: interviewAndOfferCount > 0
+        ? `${interviewAndOfferCount} Interview-Schritte offen`
+        : `${overview.activeInPipeline} aktive Bewerbungen`,
+    },
+    {
+      icon: Flame,
+      label: 'Heute',
+      value: `${todayCount} Antworten im Chat`,
+    },
+    {
+      icon: TrendingUp,
+      label: 'Trend',
+      value: formatTrend(Math.max(-40, Math.min(40, trendTodayVsYesterday))),
+    },
+    {
+      icon: ShieldCheck,
+      label: 'Archiv',
+      value: `${overview.inArchive} dokumentiert`,
+    },
+  ] as const
 
   const metrics = [
     {
@@ -170,10 +173,7 @@ export default function OverviewPage() {
       </div>
 
       <div className="relative z-10 mx-auto max-w-[1360px] space-y-6 px-4 py-6 sm:px-6 sm:py-8">
-        <header
-          id="ueberblick-start"
-          className="scroll-mt-24 overflow-hidden rounded-3xl border border-amber-300/20 bg-gradient-to-r from-[#21140b]/95 via-[#29190d]/95 to-[#1f140c]/95 p-6 shadow-landing-lg sm:p-8"
-        >
+        <header className="overflow-hidden rounded-3xl border border-amber-300/20 bg-gradient-to-r from-[#21140b]/95 via-[#29190d]/95 to-[#1f140c]/95 p-6 shadow-landing-lg sm:p-8">
           <div className="flex flex-wrap items-start justify-between gap-5">
             <div className="flex min-w-0 flex-1 gap-4">
               <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-amber-300/25 bg-amber-500/14 text-amber-200 shadow-[0_0_24px_-8px_rgba(217,119,6,0.65)]">
@@ -182,10 +182,10 @@ export default function OverviewPage() {
               <div className="min-w-0">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-amber-200/75">Dein nächster Schritt</p>
                 <h1 className="mt-1 text-3xl font-bold tracking-tight text-amber-50 sm:text-[2.15rem]">
-                  Dein nächster sinnvoller Schritt
+                  Dein nächster Schritt
                 </h1>
-                <p className="mt-2 max-w-3xl text-sm leading-relaxed text-amber-100/80">
-                  {nextStepLabel}, alle Kernzahlen und dein Pipeline-Fluss sind hier als Control Center gebündelt.
+                <p className="mt-2 max-w-2xl text-sm text-amber-100/80">
+                  {nextStepLabel}
                 </p>
                 <p className="mt-2 inline-flex items-center gap-2 rounded-full border border-amber-300/25 bg-amber-400/10 px-3 py-1 text-xs font-medium text-amber-100/85">
                   <Lightbulb size={13} className="text-amber-200" />
@@ -210,37 +210,8 @@ export default function OverviewPage() {
                   <ArrowRight className="h-3.5 w-3.5" aria-hidden />
                 </Link>
               </div>
-              <InfoExplainerButton
-                variant="onDark"
-                modalTitle="Übersicht vs. Profil"
-                ariaLabel="Unterschied Übersicht und Profil"
-                className="shrink-0 border-amber-200/20 text-amber-100/85 hover:bg-white/12"
-              >
-                <p>
-                  <strong>Übersicht</strong>
-                  {' '}
-                  bündelt Arbeitsdaten: Bewerbungen, CVs, Kurzstatistik und Wege in die Hauptbereiche.
-                </p>
-                <p className="mt-3">
-                  <strong>Profil</strong>
-                  {' '}
-                  (Avatar-Menü → Konto & Plan → Profil) enthält Anmeldung, Tarif, tägliches KI-Limit und
-                  Abo-Verwaltung, alles rund ums Konto, nicht einzelne Bewerbungen.
-                </p>
-              </InfoExplainerButton>
             </div>
           </div>
-          <nav className="mt-6 flex flex-wrap gap-2" aria-label="Abschnitte">
-            {ANCHORS.map(([id, label]) => (
-              <a
-                key={id}
-                href={`#${id}`}
-                className="inline-flex items-center rounded-full border border-amber-200/20 bg-white/5 px-3 py-1.5 text-xs font-medium text-amber-100/80 transition hover:border-amber-200/35 hover:bg-white/10"
-              >
-                {label}
-              </a>
-            ))}
-          </nav>
         </header>
 
         {error && (
@@ -251,20 +222,13 @@ export default function OverviewPage() {
 
         {/* Metrics */}
         <section
-          id="ueberblick-zahlen"
-          className="scroll-mt-24 rounded-3xl border border-amber-200/10 bg-[#1b120d]/85 p-5 shadow-landing-md sm:p-6"
+          className="rounded-3xl border border-amber-200/10 bg-[#1b120d]/85 p-5 shadow-landing-md sm:p-6"
         >
-          <div className="mb-4 flex items-start justify-between gap-2 sm:mb-5">
+          <div className="mb-5 flex items-start justify-between gap-2">
             <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-amber-100/60">Key Metrics</h2>
-            <InfoExplainerButton
-              variant="onDark"
-              modalTitle="Zahlenquellen"
-              ariaLabel="Woher die Zahlen kommen"
-              className="border-amber-200/20 text-amber-100/75 hover:bg-white/12"
-            >
-              <p>Bewerbungen und Lebensläufe kommen vom Server. Notizen aus dem synchronisierten Chat-Speicher.</p>
-              <p className="mt-3">Die KI-Nutzung (heute / Gesamt) stammt wie im Profil aus dem lokalen Zähler.</p>
-            </InfoExplainerButton>
+            <span className="rounded-full border border-amber-200/20 bg-white/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-amber-100/70">
+              Live Status
+            </span>
           </div>
           {loading ? (
             <div className="flex items-center gap-2 py-8 text-amber-100/75">
@@ -278,7 +242,7 @@ export default function OverviewPage() {
                 return (
                   <div
                     key={row.label}
-                    className="group rounded-2xl border border-amber-200/10 bg-[#221610]/90 px-4 py-3.5 shadow-md transition duration-200 hover:border-amber-200/25 hover:shadow-xl"
+                    className="group min-h-[116px] rounded-2xl border border-amber-200/10 bg-[#221610]/90 px-4 py-3.5 shadow-md transition duration-200 hover:border-amber-200/25 hover:shadow-xl"
                   >
                     <div className="mb-1.5 flex items-center justify-between">
                       <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-100/60">
@@ -322,14 +286,11 @@ export default function OverviewPage() {
         </section>
 
         {/* Centerpiece + right rail */}
-        <section id="ueberblick-bewerbungen" className="scroll-mt-24 grid gap-4 xl:grid-cols-[minmax(0,2.2fr)_minmax(280px,1fr)]">
+        <section className="grid gap-4 xl:grid-cols-[minmax(0,2.2fr)_minmax(280px,1fr)]">
           <div className="rounded-3xl border border-amber-200/10 bg-[#1b120d]/85 p-5 shadow-landing-md sm:p-6">
             <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
               <div>
-                <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-amber-100/60">Pipeline Visual</h2>
-                <p className="mt-1 text-sm text-amber-100/70">
-                  Sankey als zentrales Produkt-Feature, klar für Statusfortschritt und Priorisierung.
-                </p>
+                <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-amber-100/60">Pipeline</h2>
               </div>
               <Link
                 to="/applications"
@@ -339,7 +300,7 @@ export default function OverviewPage() {
                 <ArrowRight className="h-3 w-3" aria-hidden />
               </Link>
             </div>
-            {!loading ? <ApplicationPipelinePanel overview={overview} hint={hint} /> : null}
+            {!loading ? <ApplicationPipelinePanel overview={overview} /> : null}
           </div>
 
           <div className="space-y-4">
@@ -348,7 +309,7 @@ export default function OverviewPage() {
                 <Flame size={14} className="text-amber-300" />
                 Fokus heute
               </h3>
-              <ul className="mt-3 space-y-2.5 text-sm text-amber-100/75">
+              <ul className="mt-3 space-y-2 text-sm text-amber-100/75">
                 <li className="rounded-xl border border-amber-100/10 bg-[#241913]/75 px-3 py-2">
                   {overview.activeInPipeline} aktive Bewerbungen priorisiert bearbeiten.
                 </li>
@@ -367,80 +328,40 @@ export default function OverviewPage() {
                 <ArrowRight size={12} />
               </Link>
             </div>
-
-            <div className="rounded-3xl border border-amber-200/10 bg-[#1b120d]/85 p-5 shadow-landing-md">
-              <h3 className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-amber-100/60">
-                <GraduationCap size={14} className="text-violet-300" />
-                Nächster Lernimpuls
-              </h3>
-              <p className="mt-3 text-sm leading-relaxed text-amber-100/75">
-                Nutze aktuelle Interviewphasen, um direkt passende Antworten und Notizen im Karriereprofil zu verfeinern.
-              </p>
-              <Link
-                to="/career-profile"
-                className="mt-4 inline-flex items-center gap-2 rounded-lg border border-violet-300/25 bg-violet-400/10 px-3 py-2 text-xs font-semibold text-violet-100 transition hover:bg-violet-400/20"
-              >
-                Karriereprofil öffnen
-                <ArrowRight size={12} />
-              </Link>
-            </div>
           </div>
         </section>
 
         {/* Secondary content */}
-        <section className="grid gap-4 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1.6fr)]">
-          <section
-            id="ueberblick-chat"
-            className="scroll-mt-24 rounded-3xl border border-amber-200/10 bg-[#1b120d]/85 p-5 shadow-landing-md sm:p-6"
-          >
+        <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.8fr)]">
+          <section className="rounded-3xl border border-amber-200/10 bg-[#1b120d]/85 p-5 shadow-landing-md sm:p-6">
             <div className="mb-4 flex items-start justify-between gap-2">
-              <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-amber-100/60">Aktivität, letzte 7 Tage</h2>
-              <InfoExplainerButton
-                variant="onDark"
-                modalTitle="Chat-Aktivität"
-                ariaLabel="Erklärung zum Chat-Verlauf"
-                className="border-amber-200/20 text-amber-100/75 hover:bg-white/12"
-              >
-                <p>Zähler pro Kalendertag auf diesem Gerät, gleiche Logik wie im Profil, hier in der Übersicht für den Kontext neben Bewerbungen.</p>
-              </InfoExplainerButton>
+              <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-amber-100/60">Aktivität</h2>
             </div>
-            <div className="rounded-2xl border border-amber-200/10 bg-[#241913]/85 p-4 shadow-card sm:p-5">
-              {weekHistory.every(d => d.count === 0) ? (
-                <p className="py-4 text-center text-sm text-amber-100/65">Noch keine Chat-Antworten in den letzten 7 Tagen.</p>
-              ) : (
-                <div className="flex h-28 items-end gap-2">
-                  {weekHistory.map(day => {
-                    const heightPct = Math.max(4, (day.count / maxCount) * 100)
-                    const isToday = day.date === todayDate
-                    return (
-                      <div key={day.date} className="flex flex-1 flex-col items-center gap-1.5">
-                        <span className="min-h-[12px] text-[10px] font-bold tabular-nums text-amber-100/75">
-                          {day.count > 0 ? day.count : ''}
-                        </span>
-                        <div className="flex h-[72px] w-full flex-col justify-end overflow-hidden rounded-t-lg bg-[#2f221b]/95">
-                          <div
-                            className={`w-full rounded-t-lg transition-all duration-500 ${isToday ? 'bg-primary' : 'bg-stone-400/70'}`}
-                            style={{ height: `${heightPct}%` }}
-                          />
-                        </div>
-                        <span className={`text-[10px] font-semibold ${isToday ? 'text-amber-200' : 'text-amber-100/55'}`}>
-                          {day.day}
-                        </span>
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
+            <div className="space-y-2">
+              {activitySignals.map(item => {
+                const Icon = item.icon
+                return (
+                  <div
+                    key={item.label}
+                    className="flex items-center gap-2 rounded-xl border border-amber-100/10 bg-[#241913]/75 px-3 py-2"
+                  >
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-amber-500/12 text-amber-200">
+                      <Icon size={14} aria-hidden />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-100/55">{item.label}</p>
+                      <p className="truncate text-sm font-medium text-amber-100/85">{item.value}</p>
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           </section>
 
-          <section
-            id="ueberblick-app"
-            className="scroll-mt-24 rounded-3xl border border-amber-200/10 bg-[#1b120d]/85 p-5 shadow-landing-md sm:p-6"
-          >
+          <section className="rounded-3xl border border-amber-200/10 bg-[#1b120d]/85 p-5 shadow-landing-md sm:p-6">
             <h2 className="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-amber-100/60">Schnellzugriff</h2>
-            <ul className="grid gap-3 sm:grid-cols-2">
-              {WORKSPACE_LINKS.map(({ to, label, hint, icon: Icon }) => (
+            <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              {WORKSPACE_LINKS.slice(0, 4).map(({ to, label, icon: Icon }) => (
                 <li key={to}>
                   <Link
                     to={to}
@@ -449,10 +370,7 @@ export default function OverviewPage() {
                     <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/14 text-amber-200">
                       <Icon size={18} strokeWidth={2.1} aria-hidden />
                     </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block font-semibold text-amber-50 group-hover:text-white">{label}</span>
-                      <span className="mt-0.5 block text-xs text-amber-100/65">{hint}</span>
-                    </span>
+                    <span className="min-w-0 flex-1 truncate text-sm font-semibold text-amber-50 group-hover:text-white">{label}</span>
                     <ArrowRight className="h-4 w-4 shrink-0 text-amber-100/50 transition group-hover:translate-x-0.5 group-hover:text-amber-100" aria-hidden />
                   </Link>
                 </li>
