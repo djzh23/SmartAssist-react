@@ -1,196 +1,233 @@
-import { useMemo, useState, useEffect, useRef, type Dispatch, type SetStateAction } from 'react'
+import { useMemo, useState, useEffect, useRef } from 'react'
 import type { ApplicationOverview } from '../../utils/applicationOverview'
-import { buildApplicationSankeyLayout, curvePath } from './applicationSankeyLayout'
+import { buildApplicationSankeyLayout, curvePath, SANKEY_PIPELINE_FILL } from './applicationSankeyLayout'
 import type { SankeyBand, SankeyRect } from './applicationSankeyLayout'
 
 interface Props {
   overview: ApplicationOverview
 }
 
-const VIEW_H = 360
+const VIEW_H = 340
 const DEFAULT_W = 720
 const BOX_BG = 'rgb(238, 233, 226)'
 
-interface HoverInfo {
-  x: number
-  y: number
-  title: string
-  count: number
-  pct: number
+// ── Node renderer ─────────────────────────────────────────────────────────────
+
+function nodeAccentColor(rect: SankeyRect): string {
+  if (rect.status) return SANKEY_PIPELINE_FILL[rect.status] ?? '#94a3b8'
+  if (rect.id === 'pipe') return '#0d9488'
+  if (rect.id === 'arch') return '#64748b'
+  return '#7c3aed'
 }
 
-function colorForNode(rect: SankeyRect): { from: string; to: string; text: string; stroke: string } {
-  if (rect.id === 'all') {
-    return { from: '#ffffff', to: '#f1f5f9', text: '#0f172a', stroke: '#94a3b8' }
-  }
-  if (rect.id === 'pipe') {
-    return { from: '#c4f1ec', to: '#8de3da', text: '#0f172a', stroke: '#0d9488' }
-  }
-  if (rect.id === 'arch') {
-    return { from: '#eef2f7', to: '#dbe4ee', text: '#111827', stroke: '#94a3b8' }
-  }
-  if (rect.status === 'draft') {
-    return { from: '#ffedd5', to: '#fed7aa', text: '#7c2d12', stroke: '#ea580c' }
-  }
-  if (rect.status === 'applied') {
-    return { from: '#dbeafe', to: '#bfdbfe', text: '#1e3a8a', stroke: '#2563eb' }
-  }
-  if (rect.status === 'interview' || rect.status === 'phoneScreen') {
-    return { from: '#ede9fe', to: '#ddd6fe', text: '#4c1d95', stroke: '#7c3aed' }
-  }
-  if (rect.status === 'offer' || rect.status === 'accepted') {
-    return { from: '#ccfbf1', to: '#99f6e4', text: '#134e4a', stroke: '#0f766e' }
-  }
-  if (rect.status === 'rejected' || rect.status === 'withdrawn') {
-    return { from: '#f3f4f6', to: '#e5e7eb', text: '#374151', stroke: '#9ca3af' }
-  }
-  return { from: '#f8fafc', to: '#e2e8f0', text: '#1f2937', stroke: '#94a3b8' }
-}
-
-function nodeLabel(rect: SankeyRect): string {
-  const label = `${rect.label} (${rect.count})`
-  return label.length > 28 ? `${label.slice(0, 26)}…` : label
-}
-
-interface CustomNodeProps {
+function NodeRect({
+  rect,
+  isHovered,
+  onEnter,
+  onLeave,
+}: {
   rect: SankeyRect
-  hover: HoverInfo | null
-  setHover: Dispatch<SetStateAction<HoverInfo | null>>
-}
-
-function CustomNode({ rect, hover, setHover }: CustomNodeProps) {
-  const palette = colorForNode(rect)
-  const gradientId = `node-grad-${rect.id}`
-  const shadowId = `node-shadow-${rect.id}`
-  const isActive = hover?.title === rect.label
+  isHovered: boolean
+  onEnter: (r: SankeyRect, e: React.MouseEvent) => void
+  onLeave: () => void
+}) {
+  const accent = nodeAccentColor(rect)
   const isMuted = Boolean(rect.muted)
-  const strokeDasharray = isMuted ? '5 4' : undefined
-  const scale = isActive ? 1.01 : 1
+  const isLeaf = Boolean(rect.status)
+  const rx = isLeaf ? 4 : 7
+
+  // Group / "All" boxes get a left accent bar
+  const accentBarW = isLeaf ? 0 : 3
+
   return (
     <g
-      style={{
-        transform: `scale(${scale})`,
-        transformOrigin: `${rect.x + rect.w / 2}px ${rect.y + rect.h / 2}px`,
-        transition: 'transform 180ms ease, filter 180ms ease',
-      }}
+      onMouseEnter={e => onEnter(rect, e)}
+      onMouseLeave={onLeave}
+      style={{ cursor: 'default' }}
     >
-      <defs>
-        <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor={palette.from} stopOpacity={isMuted ? 0.45 : 0.96} />
-          <stop offset="100%" stopColor={palette.to} stopOpacity={isMuted ? 0.35 : 0.96} />
-        </linearGradient>
-        <filter id={shadowId} x="-30%" y="-30%" width="160%" height="160%">
-          <feDropShadow
-            dx="0"
-            dy={isActive ? '2.2' : '1.4'}
-            stdDeviation={isActive ? '2.4' : '1.6'}
-            floodColor="#0f172a"
-            floodOpacity={isMuted ? '0.06' : (isActive ? '0.18' : '0.12')}
-          />
-        </filter>
-      </defs>
+      {/* Background rect */}
       <rect
         x={rect.x}
         y={rect.y}
         width={rect.w}
-        height={Math.max(rect.h, 6)}
-        rx={8}
-        fill={`url(#${gradientId})`}
-        stroke={palette.stroke}
-        strokeWidth={isActive ? 1.8 : 1.2}
-        strokeDasharray={strokeDasharray}
-        filter={`url(#${shadowId})`}
-        style={{ transition: 'all 180ms ease' }}
-        onMouseEnter={e => {
-          setHover({
-            x: e.clientX,
-            y: e.clientY,
-            title: rect.label,
-            count: rect.count,
-            pct: rect.pct,
-          })
-        }}
-        onMouseMove={e => {
-          setHover(h => (h ? { ...h, x: e.clientX, y: e.clientY } : null))
-        }}
-        onMouseLeave={() => setHover(null)}
+        height={rect.h}
+        rx={rx}
+        fill={isMuted ? 'rgb(245,243,240)' : BOX_BG}
+        stroke={isMuted ? 'rgba(148,163,184,0.35)' : 'rgba(120,113,108,0.35)'}
+        strokeWidth={isHovered ? 1.5 : 1}
+        strokeDasharray={isMuted ? '5 4' : undefined}
+        style={{ transition: 'stroke-width 150ms ease' }}
       />
-      <text
-        x={rect.x + rect.w / 2}
-        y={rect.y + rect.h / 2}
-        textAnchor="middle"
-        dominantBaseline="middle"
-        fill={palette.text}
-        style={{ fontSize: rect.w < 72 ? 10 : 12 }}
-        className="font-semibold"
-      >
-        {nodeLabel(rect)}
-      </text>
+
+      {/* Left accent bar (group/all nodes only) */}
+      {accentBarW > 0 && !isMuted && (
+        <rect
+          x={rect.x}
+          y={rect.y + rx}
+          width={accentBarW}
+          height={rect.h - rx * 2}
+          rx={1}
+          fill={accent}
+          fillOpacity={isHovered ? 0.8 : 0.55}
+          style={{ transition: 'fill-opacity 150ms ease' }}
+        />
+      )}
+
+      {/* Label */}
+      {isLeaf ? (
+        // Status node: colored dot + label + count inline
+        <>
+          <circle
+            cx={rect.x + 8}
+            cy={rect.y + rect.h / 2}
+            r={3.5}
+            fill={isMuted ? '#cbd5e1' : accent}
+            fillOpacity={isMuted ? 0.5 : 1}
+          />
+          <text
+            x={rect.x + 16}
+            y={rect.y + rect.h / 2}
+            dominantBaseline="middle"
+            fill={isMuted ? '#94a3b8' : '#292524'}
+            style={{ fontSize: 11, fontWeight: isMuted ? 400 : 500 }}
+          >
+            {rect.label}
+          </text>
+          <text
+            x={rect.x + rect.w - 6}
+            y={rect.y + rect.h / 2}
+            dominantBaseline="middle"
+            textAnchor="end"
+            fill={isMuted ? '#cbd5e1' : accent}
+            style={{ fontSize: 11, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}
+          >
+            {rect.count}
+          </text>
+        </>
+      ) : (
+        // Group / "All" box: stacked label + count
+        <>
+          <text
+            x={rect.x + (accentBarW > 0 ? accentBarW + 8 : rect.w / 2)}
+            y={rect.y + rect.h / 2 - 7}
+            textAnchor={accentBarW > 0 ? 'start' : 'middle'}
+            dominantBaseline="middle"
+            fill={isMuted ? '#94a3b8' : '#44403c'}
+            style={{ fontSize: 10, fontWeight: 500, letterSpacing: '0.01em' }}
+          >
+            {rect.label}
+          </text>
+          <text
+            x={rect.x + (accentBarW > 0 ? accentBarW + 8 : rect.w / 2)}
+            y={rect.y + rect.h / 2 + 7}
+            textAnchor={accentBarW > 0 ? 'start' : 'middle'}
+            dominantBaseline="middle"
+            fill={isMuted ? '#cbd5e1' : accent}
+            style={{ fontSize: 14, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}
+          >
+            {rect.sub ?? rect.count}
+          </text>
+        </>
+      )}
     </g>
   )
 }
 
-interface CustomLinkProps {
+// ── Band renderer ─────────────────────────────────────────────────────────────
+
+function BandPath({
+  band,
+  activeBandId,
+  onEnter,
+  onLeave,
+}: {
   band: SankeyBand
   activeBandId: string | null
-  setActiveBandId: (id: string | null) => void
-  setHover: Dispatch<SetStateAction<HoverInfo | null>>
-}
-
-function CustomLink({ band, activeBandId, setActiveBandId, setHover }: CustomLinkProps) {
-  const gradId = `band-grad-${band.id}`
+  onEnter: (b: SankeyBand, e: React.MouseEvent) => void
+  onLeave: () => void
+}) {
   const isActive = activeBandId === band.id
   const isDimmed = activeBandId != null && !isActive
-  const opacity = isDimmed ? 0.08 : (isActive ? Math.max(0.68, band.opacity + 0.16) : Math.max(0.42, band.opacity))
+  const opacity = isDimmed
+    ? 0.06
+    : isActive
+      ? Math.min(0.85, band.opacity + 0.22)
+      : band.opacity
+  const sw = isActive ? band.strokeWidth + 1.2 : band.strokeWidth
+  const d = curvePath(band.x0, band.y0, band.x1, band.y1)
+
   return (
     <g>
-      <defs>
-        <linearGradient id={gradId} gradientUnits="userSpaceOnUse" x1={band.x0} y1={band.y0} x2={band.x1} y2={band.y1}>
-          <stop offset="0%" stopColor={band.stroke} stopOpacity={0.88} />
-          <stop offset="100%" stopColor={band.stroke} stopOpacity={0.3} />
-        </linearGradient>
-      </defs>
+      {/* Invisible wide hit area */}
       <path
-        d={curvePath(band.x0, band.y0, band.x1, band.y1)}
+        d={d}
         fill="none"
-        stroke={`url(#${gradId})`}
-        strokeWidth={isActive ? band.strokeWidth + 1 : band.strokeWidth}
+        stroke="transparent"
+        strokeWidth={Math.max(12, sw + 8)}
+        onMouseEnter={e => onEnter(band, e)}
+        onMouseMove={e => onEnter(band, e)}
+        onMouseLeave={onLeave}
+        style={{ cursor: 'crosshair' }}
+      />
+      {/* Visible band */}
+      <path
+        d={d}
+        fill="none"
+        stroke={band.stroke}
+        strokeWidth={sw}
         strokeOpacity={opacity}
         strokeLinecap="round"
-        style={{ transition: 'stroke-opacity 180ms ease, stroke-width 180ms ease' }}
-        onMouseEnter={e => {
-          setActiveBandId(band.id)
-          setHover({
-            x: e.clientX,
-            y: e.clientY,
-            title: band.label,
-            count: band.count,
-            pct: band.pct,
-          })
-        }}
-        onMouseMove={e => {
-          setHover(h => (h ? { ...h, x: e.clientX, y: e.clientY } : null))
-        }}
-        onMouseLeave={() => {
-          setActiveBandId(null)
-          setHover(null)
-        }}
+        pointerEvents="none"
+        style={{ transition: 'stroke-opacity 160ms ease, stroke-width 160ms ease' }}
       />
     </g>
   )
 }
+
+// ── Tooltip ───────────────────────────────────────────────────────────────────
+
+interface TooltipInfo {
+  x: number
+  y: number
+  title: string
+  count: number
+  total: number
+  pct: number
+  isNode: boolean
+}
+
+function SankeyTooltip({ info }: { info: TooltipInfo }) {
+  const pct = (info.pct * 100).toFixed(1)
+  return (
+    <div
+      className="pointer-events-none fixed z-[220] min-w-[140px] rounded-xl border border-stone-200/80 bg-white/96 px-3 py-2.5 text-[11px] shadow-xl backdrop-blur"
+      style={{ left: info.x + 14, top: info.y + 14 }}
+    >
+      <p className="mb-1 font-semibold text-stone-900">{info.title}</p>
+      <p className="tabular-nums text-stone-700">
+        Anzahl: <span className="font-semibold">{info.count}</span>
+      </p>
+      <p className="tabular-nums text-stone-500">
+        Anteil: {pct}%
+      </p>
+    </div>
+  )
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
 
 export default function ApplicationFlowSankey({ overview }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null)
   const [w, setW] = useState(DEFAULT_W)
-  const [hover, setHover] = useState<HoverInfo | null>(null)
+  const [tooltip, setTooltip] = useState<TooltipInfo | null>(null)
   const [activeBandId, setActiveBandId] = useState<string | null>(null)
+
   useEffect(() => {
     const el = wrapRef.current
     if (!el || typeof ResizeObserver === 'undefined') return
     const ro = new ResizeObserver(entries => {
       const cr = entries[0]?.contentRect
-      if (cr && cr.width > 48) setW(Math.min(900, Math.floor(cr.width)))
+      if (cr && cr.width > 48) setW(Math.min(960, Math.floor(cr.width)))
     })
     ro.observe(el)
     return () => ro.disconnect()
@@ -201,14 +238,47 @@ export default function ApplicationFlowSankey({ overview }: Props) {
     [overview, w],
   )
 
-  if (overview.total <= 0) {
-    return null
+  if (overview.total <= 0) return null
+
+  function handleNodeEnter(rect: SankeyRect, e: React.MouseEvent) {
+    setTooltip({
+      x: e.clientX,
+      y: e.clientY,
+      title: rect.label,
+      count: rect.count,
+      total: overview.total,
+      pct: rect.pct,
+      isNode: true,
+    })
+  }
+
+  function handleBandEnter(band: SankeyBand, e: React.MouseEvent) {
+    setActiveBandId(band.id)
+    setTooltip({
+      x: e.clientX,
+      y: e.clientY,
+      title: band.label,
+      count: band.count,
+      total: band.total,
+      pct: band.pct,
+      isNode: false,
+    })
+  }
+
+  function handleLeave() {
+    setActiveBandId(null)
+    setTooltip(null)
+  }
+
+  function handleBandLeave() {
+    setActiveBandId(null)
+    setTooltip(null)
   }
 
   return (
     <div
       ref={wrapRef}
-      className="relative mb-4 w-full overflow-x-auto rounded-xl border border-stone-300/80 px-2 py-3 shadow-inner"
+      className="relative mb-4 w-full overflow-x-auto rounded-2xl border border-amber-200/25 px-2 py-3 shadow-inner"
       style={{ backgroundColor: BOX_BG }}
     >
       <svg
@@ -218,31 +288,34 @@ export default function ApplicationFlowSankey({ overview }: Props) {
         aria-label="Flussdiagramm: Bewerbungen von Gesamtzahl zu Pipeline und Archiv, dann nach Status"
       >
         <title>Bewerbungsfluss nach aktuellem Status</title>
+
+        {/* Bands drawn first (behind nodes) */}
         {layout.bands.map(b => (
-          <CustomLink
+          <BandPath
             key={b.id}
             band={b}
             activeBandId={activeBandId}
-            setActiveBandId={setActiveBandId}
-            setHover={setHover}
+            onEnter={handleBandEnter}
+            onLeave={handleBandLeave}
           />
         ))}
+
+        {/* Nodes on top */}
         {layout.rects.map(r => (
-          <CustomNode key={r.id} rect={r} hover={hover} setHover={setHover} />
+          <NodeRect
+            key={r.id}
+            rect={r}
+            isHovered={tooltip?.isNode === true && tooltip.title === r.label}
+            onEnter={handleNodeEnter}
+            onLeave={handleLeave}
+          />
         ))}
       </svg>
-      {hover && (
-        <div
-          className="pointer-events-none fixed z-[220] rounded-xl border border-slate-200 bg-white/95 px-3 py-2.5 text-[11px] shadow-2xl backdrop-blur"
-          style={{ left: hover.x + 12, top: hover.y + 12 }}
-        >
-          <p className="font-semibold text-slate-900">{hover.title}</p>
-          <p className="mt-0.5 text-slate-700 tabular-nums">Anzahl: {hover.count}</p>
-          <p className="text-slate-600 tabular-nums">Anteil: {(hover.pct * 100).toFixed(1)}%</p>
-        </div>
-      )}
-      <p className="px-1 pb-1 pt-1 text-center text-[10px] text-stone-500">
-        Linienstärke grob nach Anteil, Momentaufnahme deiner Status, kein chronologischer Ablauf.
+
+      {tooltip && <SankeyTooltip info={tooltip} />}
+
+      <p className="px-1 pb-0.5 pt-1 text-center text-[10px] text-stone-500">
+        Momentaufnahme · Linienstärke nach Anteil · kein chronologischer Ablauf
       </p>
     </div>
   )

@@ -53,13 +53,13 @@ function iconForSkill(icon: string): LucideIcon {
 function badgeColorClass(color: string): string {
   switch (color) {
     case 'orange':
-      return 'bg-orange-500/25 text-orange-200'
+      return 'bg-amber-500/18 text-amber-200'
     case 'teal':
-      return 'bg-teal-500/25 text-teal-200'
+      return 'bg-teal-500/18 text-teal-200'
     case 'blue':
-      return 'bg-blue-500/25 text-blue-200'
+      return 'bg-sky-500/18 text-sky-200'
     default:
-      return 'bg-stone-500/20 text-stone-300'
+      return 'bg-stone-500/15 text-stone-300'
   }
 }
 
@@ -90,10 +90,10 @@ function SkillSidebarRow({
       : toolFromUrl === skill.apiToolType)
 
   const base = density === 'icons'
-    ? 'mb-0.5 flex items-center justify-center rounded-lg border-l-[3px] px-2 py-2.5 text-sm font-medium no-underline transition-all duration-150'
-    : 'mb-0.5 flex items-center gap-2.5 rounded-lg border-l-[3px] px-4 py-2.5 text-sm font-medium no-underline transition-all duration-150'
-  const active = 'border-primary bg-sidebar-active text-white'
-  const inactive = 'border-transparent text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-text'
+    ? 'mb-1 flex items-center justify-center rounded-lg border border-transparent px-2 py-2.5 text-sm font-medium no-underline transition-all duration-150'
+    : 'mb-1 flex items-center gap-2.5 rounded-lg border border-transparent px-3 py-2.5 text-sm font-medium no-underline transition-all duration-150'
+  const active = 'border-amber-300/25 bg-amber-500/15 text-sidebar-text shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]'
+  const inactive = 'text-sidebar-muted hover:border-white/5 hover:bg-white/[0.035] hover:text-sidebar-text'
   const locked = !skill.isEnabled || !skill.isAccessible
 
   const Icon = iconForSkill(skill.icon)
@@ -169,7 +169,7 @@ function UsageBanner({ compact }: { compact?: boolean }) {
   return (
     <button
       onClick={() => navigate('/pricing')}
-      className="mx-2 mb-2 flex items-center justify-between gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-left transition-colors hover:bg-amber-500/20"
+      className="mx-2 mb-2 flex items-center justify-between gap-2 rounded-lg border border-amber-500/25 bg-amber-500/8 px-3 py-2 text-left transition-colors hover:bg-amber-500/14"
     >
       <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-300">
         <Sparkles size={11} />
@@ -189,12 +189,12 @@ function UsageBar() {
   const limitLabel = dailyLimit === Infinity ? 'Unbegrenzt' : String(dailyLimit)
 
   return (
-    <div className="border-t border-white/8 px-3 py-2">
-      <div className="mb-1 flex items-center justify-between text-[10px] text-slate-500">
+    <div className="border-t border-white/6 px-3 py-2">
+      <div className="mb-1 flex items-center justify-between text-[10px] text-slate-400">
         <span>Tagesverbrauch</span>
         <span>{usageToday}/{limitLabel}</span>
       </div>
-      <div className="h-[3px] overflow-hidden rounded-full bg-white/10">
+      <div className="h-[3px] overflow-hidden rounded-full bg-white/8">
         <div
           className="h-full rounded-full transition-all duration-300"
           style={{ width: `${Math.max(0, pct)}%`, backgroundColor: barColor }}
@@ -296,7 +296,7 @@ export default function SidebarNavContent({ density = 'full', onNavClick }: Prop
           type="button"
           onClick={handleNewChat}
           className={[
-            'mb-2 flex flex-shrink-0 items-center justify-center gap-2 rounded-lg bg-primary font-semibold text-white shadow-sm transition-colors hover:bg-primary-hover',
+            'mb-2 flex flex-shrink-0 items-center justify-center gap-2 rounded-lg bg-primary font-semibold text-white shadow-sm transition-all hover:brightness-110',
             iconsOnly ? 'h-11 w-11 min-h-[44px] min-w-[44px] self-center p-0' : 'px-3 py-2.5 text-sm',
           ].join(' ')}
           title="Neues Gespräch"
@@ -316,7 +316,7 @@ export default function SidebarNavContent({ density = 'full', onNavClick }: Prop
           {!skillsLoading && grouped.map(({ category, items }) => (
             <div key={category}>
               {!iconsOnly && (
-                <p className="px-3 pb-1 pt-2 text-[9px] font-semibold uppercase tracking-wider text-slate-500">
+                <p className="px-3 pb-1 pt-2 text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-500/90">
                   {groupLabel(category)}
                 </p>
               )}
@@ -333,8 +333,8 @@ export default function SidebarNavContent({ density = 'full', onNavClick }: Prop
         </div>
 
         {!iconsOnly && (
-          <div className="mt-2 flex max-h-[min(160px,22vh)] min-h-0 flex-shrink-0 flex-col border-t border-sidebar-border pt-2">
-            <p className="flex-shrink-0 px-3 pb-1 text-[10px] font-bold uppercase tracking-[1.5px] text-slate-500">
+          <div className="mt-2 flex max-h-[min(160px,22vh)] min-h-0 flex-shrink-0 flex-col border-t border-white/6 pt-2">
+            <p className="flex-shrink-0 px-3 pb-1 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500/90">
               Letzte Gespräche
             </p>
             <div className="min-h-0 flex-1 overflow-y-auto px-1 pb-0.5">
@@ -348,7 +348,7 @@ export default function SidebarNavContent({ density = 'full', onNavClick }: Prop
                         <button
                           type="button"
                           onClick={() => openRecent(s)}
-                          className="flex w-full items-center gap-2 rounded-lg px-2 py-1 text-left text-xs text-sidebar-text transition-colors hover:bg-sidebar-hover"
+                          className="flex w-full items-center gap-2 rounded-lg px-2 py-1 text-left text-xs text-sidebar-text transition-colors hover:bg-white/[0.045]"
                         >
                           <span
                             className={`h-1.5 w-1.5 flex-shrink-0 rounded-full ${toolSessionDotClass(s.toolType)}`}
@@ -370,7 +370,7 @@ export default function SidebarNavContent({ density = 'full', onNavClick }: Prop
                     <button
                       type="button"
                       onClick={() => setRecentVisible(v => v + RECENT_PAGE_SIZE)}
-                      className="mt-0.5 w-full rounded-lg px-2 py-1 text-left text-[10px] font-medium text-slate-500 transition-colors hover:bg-sidebar-hover hover:text-slate-300"
+                      className="mt-0.5 w-full rounded-lg px-2 py-1 text-left text-[10px] font-medium text-slate-500 transition-colors hover:bg-white/[0.045] hover:text-slate-300"
                     >
                       + {Math.min(RECENT_PAGE_SIZE, allRecent.length - recentVisible)} weitere laden
                     </button>

@@ -50,7 +50,7 @@ function MainLayoutShell() {
   return (
     <div className="app-main-shell relative flex h-screen flex-col overflow-hidden bg-app-canvas text-stone-100">
       <div
-        className="pointer-events-none absolute inset-0 bg-gradient-to-br from-[#120c08] via-[#1a100a] to-[#16110d]"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(1200px_520px_at_58%_-12%,rgba(217,119,6,0.18),transparent_60%),radial-gradient(900px_420px_at_24%_18%,rgba(56,189,248,0.08),transparent_58%),linear-gradient(135deg,#120c08_0%,#1a100a_45%,#17110d_100%)]"
         aria-hidden
       />
       <div className="pointer-events-none absolute inset-0 landing-dot-grid opacity-[0.42]" aria-hidden />
@@ -71,7 +71,7 @@ function MainLayoutShell() {
         {showTabletDesktopSidebar && (
           <aside
             className={[
-              'hidden flex-shrink-0 flex-col overflow-hidden border-r border-sidebar-border bg-sidebar transition-[width] duration-200 ease-out min-[769px]:flex',
+              'hidden flex-shrink-0 flex-col overflow-hidden border-r border-sidebar-border bg-sidebar/90 backdrop-blur transition-[width] duration-200 ease-out min-[769px]:flex',
               asideWidthClass,
             ].join(' ')}
           >
