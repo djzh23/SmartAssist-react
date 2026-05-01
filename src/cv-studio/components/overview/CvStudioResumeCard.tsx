@@ -26,7 +26,7 @@ export default function CvStudioResumeCard({
   return (
     <article
       onClick={onEdit}
-      className="group cursor-pointer rounded-xl border border-white/9 bg-[#22170f]/80 p-3 transition-all duration-150 hover:border-amber-400/20 hover:-translate-y-px hover:shadow-[0_6px_16px_-11px_rgba(0,0,0,0.7)]"
+      className="group cursor-pointer rounded-xl bg-[#22170f]/80 p-3 ring-1 ring-white/[0.06] transition-all duration-150 hover:-translate-y-px hover:ring-amber-400/20 hover:shadow-[0_6px_16px_-11px_rgba(0,0,0,0.7)]"
     >
       {/* Header: icon + title + meta */}
       <div className="flex items-start gap-2.5">
@@ -53,7 +53,7 @@ export default function CvStudioResumeCard({
         <button
           type="button"
           onClick={onEdit}
-          className="inline-flex items-center gap-1 rounded-md border border-white/12 px-2.5 py-1 text-[11px] font-semibold text-stone-200 transition hover:bg-white/5"
+          className="inline-flex items-center gap-1 rounded-md bg-white/[0.05] px-2.5 py-1 text-[11px] font-semibold text-stone-200 transition hover:bg-white/[0.1]"
         >
           <Pencil size={11} aria-hidden />
           Öffnen
@@ -61,7 +61,7 @@ export default function CvStudioResumeCard({
         <button
           type="button"
           onClick={onDuplicate}
-          className="inline-flex items-center gap-1 rounded-md border border-white/8 px-2.5 py-1 text-[11px] font-semibold text-stone-300 transition hover:bg-white/5"
+          className="inline-flex items-center gap-1 rounded-md bg-white/[0.035] px-2.5 py-1 text-[11px] font-semibold text-stone-300 transition hover:bg-white/[0.08]"
         >
           <Copy size={11} aria-hidden />
           Duplizieren
@@ -69,7 +69,7 @@ export default function CvStudioResumeCard({
         <button
           type="button"
           onClick={onExportPdf}
-          className="inline-flex items-center gap-1 rounded-md border border-amber-400/20 bg-amber-500/8 px-2.5 py-1 text-[11px] font-semibold text-amber-300 transition hover:bg-amber-500/15"
+          className="inline-flex items-center gap-1 rounded-md bg-amber-500/12 px-2.5 py-1 text-[11px] font-semibold text-amber-300 transition hover:bg-amber-500/20"
         >
           <Download size={11} aria-hidden />
           PDF

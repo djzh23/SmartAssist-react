@@ -527,7 +527,7 @@ export default function CvStudioOverviewPage() {
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
                   placeholder="Kategorien oder Lebensläufe suchen…"
-                  className="w-full rounded-xl border border-white/12 bg-[#17120e] px-3 py-2 text-sm text-stone-100 placeholder:text-stone-500 focus:border-amber-400/50 focus:outline-none"
+                  className="w-full rounded-xl bg-[#17120e] px-3 py-2 text-sm text-stone-100 placeholder:text-stone-500 ring-1 ring-white/[0.07] transition focus:outline-none focus:ring-amber-400/30"
                 />
 
                 {!categoriesLoaded && (
