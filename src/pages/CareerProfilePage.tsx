@@ -740,6 +740,7 @@ function LearningInsightsPanel() {
 export default function CareerProfilePage() {
   const { getToken, isLoaded } = useAuth()
   const mergedPendingCv = useRef(false)
+  const desktopContentRef = useRef<HTMLDivElement | null>(null)
 
   const [profile, setProfile] = useState<CareerProfile | null>(null)
   const [loading, setLoading] = useState(true)
@@ -1143,6 +1144,11 @@ export default function CareerProfilePage() {
   const mobileIsDetail = mobileSection !== 'overview'
   const currentSection = isDesktop ? activeSection : mobileSection
 
+  useEffect(() => {
+    if (!isDesktop || !desktopContentRef.current) return
+    desktopContentRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [activeSection, isDesktop])
+
   return (
     <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden bg-transparent">
       {helpOpen && <HelpModal open={helpOpen} onClose={() => setHelpOpen(false)} />}
@@ -1265,6 +1271,7 @@ export default function CareerProfilePage() {
           )}
         </MobileCareerProfileOverview>
 
+        {(!isDesktop || activeSection === 'overview') && (
         <div className="hidden gap-6 lg:grid lg:grid-cols-[260px_minmax(0,1fr)] lg:items-start">
           <aside className="sticky top-[68px] space-y-3 rounded-2xl bg-[#1b120d]/78 p-3.5 shadow-[0_10px_28px_-18px_rgba(0,0,0,0.62)]">
             <ProfileSectionNav items={sectionItems} activeSection={activeSection} onSelect={setActiveSection} />
@@ -1285,7 +1292,10 @@ export default function CareerProfilePage() {
           </aside>
 
           {activeSection === 'overview' ? (
-            <section className="space-y-4 rounded-2xl bg-[#1b120d]/78 p-4 shadow-[0_10px_28px_-18px_rgba(0,0,0,0.62)]">
+            <section
+              ref={desktopContentRef}
+              className="min-h-[560px] space-y-4 rounded-2xl bg-[#1b120d]/78 p-4 shadow-[0_10px_28px_-18px_rgba(0,0,0,0.62)] transition-[opacity,transform] duration-200 ease-out"
+            >
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <h2 className="text-lg font-semibold text-stone-50">Übersicht</h2>
@@ -1361,9 +1371,31 @@ export default function CareerProfilePage() {
             </section>
           ) : null}
         </div>
+        )}
 
         {currentSection !== 'overview' && (
-          <div className="lg:ml-[284px]">
+          <div className="lg:grid lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-6">
+        <aside className="hidden lg:block lg:sticky lg:top-[68px] lg:h-fit lg:space-y-3 lg:rounded-2xl lg:bg-[#1b120d]/78 lg:p-3.5 lg:shadow-[0_10px_28px_-18px_rgba(0,0,0,0.62)]">
+          <ProfileSectionNav items={sectionItems} activeSection={activeSection} onSelect={setActiveSection} />
+          <div className="rounded-xl bg-[#231811]/45 p-3 text-xs text-stone-300">
+            <p className="font-semibold text-amber-200">Warum ist das wichtig?</p>
+            <p className="mt-1">
+              Ein vollständiges Profil verbessert die Qualität der KI-Antworten und Empfehlungen.
+            </p>
+            <button
+              type="button"
+              onClick={() => setHelpOpen(true)}
+              className="mt-2 inline-flex items-center gap-1 font-semibold text-amber-300 hover:text-amber-200"
+            >
+              Mehr erfahren
+              <ChevronRight size={12} />
+            </button>
+          </div>
+        </aside>
+          <div
+            ref={isDesktop ? desktopContentRef : undefined}
+            className="min-h-[560px] transition-[opacity,transform] duration-200 ease-out"
+          >
         {currentSection === 'basis' && (
           <>
         {/* ── CV-Import ──────────────────────────────────────────────── */}
@@ -2005,6 +2037,7 @@ export default function CareerProfilePage() {
           )}
         </section>
         )}
+          </div>
           </div>
         )}
 
