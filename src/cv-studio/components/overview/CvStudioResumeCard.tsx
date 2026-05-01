@@ -16,62 +16,73 @@ export default function CvStudioResumeCard({
   onExportPdf,
   onDelete,
 }: CvStudioResumeCardProps) {
-  const updated = new Date(resume.updatedAtUtc).toLocaleString('de-DE', {
+  const updated = new Date(resume.updatedAtUtc).toLocaleDateString('de-DE', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
   })
+  const subtitle = [resume.targetCompany, resume.targetRole].filter(Boolean).join(' · ')
 
   return (
-    <article className="rounded-xl border border-white/10 bg-[#16100c]/90 p-3.5 transition-all hover:border-white/20 hover:shadow-[0_10px_28px_-18px_rgba(0,0,0,0.8)]">
-      <div className="flex items-start gap-2">
-        <span className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-sky-500/15 text-sky-300">
+    <article
+      onClick={onEdit}
+      className="group cursor-pointer rounded-xl border border-white/10 bg-[#16100c]/90 p-3 transition-all duration-150 hover:border-white/20 hover:-translate-y-px hover:shadow-[0_8px_24px_-14px_rgba(0,0,0,0.85)]"
+    >
+      {/* Header: icon + title + meta */}
+      <div className="flex items-start gap-2.5">
+        <span className="mt-0.5 shrink-0 inline-flex h-7 w-7 items-center justify-center rounded-md bg-sky-500/12 text-sky-300">
           <FileText size={14} aria-hidden />
         </span>
-        <div className="min-w-0">
-          <p className="line-clamp-2 text-sm font-semibold text-stone-100">{resume.title}</p>
-          <p className="mt-1 text-xs text-stone-400">
-            {resume.templateKey ? `Typ: ${resume.templateKey}` : 'Typ: Arbeitsversion'}
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold text-stone-100 transition-colors group-hover:text-amber-200">
+            {resume.title}
           </p>
-          <p className="mt-0.5 text-xs text-stone-500">Aktualisiert: {updated}</p>
+          {subtitle ? (
+            <p className="mt-0.5 truncate text-[11px] text-stone-500">{subtitle}</p>
+          ) : null}
+          <p className="mt-0.5 text-[11px] text-stone-500">Aktualisiert {updated}</p>
         </div>
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-2">
+      {/* Actions — stop propagation so card click doesn't fire onEdit a second time */}
+      <div
+        className="mt-2.5 flex flex-wrap items-center gap-1.5"
+        onClick={e => e.stopPropagation()}
+        onKeyDown={e => e.stopPropagation()}
+      >
         <button
           type="button"
           onClick={onEdit}
-          className="inline-flex items-center gap-1 rounded-md border border-white/15 px-2.5 py-1.5 text-xs font-semibold text-stone-100 transition hover:bg-white/5"
+          className="inline-flex items-center gap-1 rounded-md border border-white/15 px-2.5 py-1 text-[11px] font-semibold text-stone-200 transition hover:bg-white/5"
         >
-          <Pencil size={12} aria-hidden />
+          <Pencil size={11} aria-hidden />
           Öffnen
         </button>
         <button
           type="button"
           onClick={onDuplicate}
-          className="inline-flex items-center gap-1 rounded-md border border-white/15 px-2.5 py-1.5 text-xs font-semibold text-stone-200 transition hover:bg-white/5"
+          className="inline-flex items-center gap-1 rounded-md border border-white/10 px-2.5 py-1 text-[11px] font-semibold text-stone-300 transition hover:bg-white/5"
         >
-          <Copy size={12} aria-hidden />
+          <Copy size={11} aria-hidden />
           Duplizieren
         </button>
         <button
           type="button"
           onClick={onExportPdf}
-          className="inline-flex items-center gap-1 rounded-md border border-amber-400/30 bg-amber-500/10 px-2.5 py-1.5 text-xs font-semibold text-amber-300 transition hover:bg-amber-500/20"
+          className="inline-flex items-center gap-1 rounded-md border border-amber-400/25 bg-amber-500/8 px-2.5 py-1 text-[11px] font-semibold text-amber-300 transition hover:bg-amber-500/18"
         >
-          <Download size={12} aria-hidden />
+          <Download size={11} aria-hidden />
           PDF
         </button>
         <button
           type="button"
           onClick={onDelete}
-          className="inline-flex items-center gap-1 rounded-md border border-rose-400/25 bg-rose-500/5 px-2.5 py-1.5 text-xs font-semibold text-rose-300 transition hover:bg-rose-500/15"
+          className="ml-auto inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold text-stone-600 transition hover:text-rose-400"
+          title="Lebenslauf löschen"
         >
-          <Trash2 size={12} aria-hidden />
-          Löschen
+          <Trash2 size={11} aria-hidden />
         </button>
       </div>
     </article>
   )
 }
-
