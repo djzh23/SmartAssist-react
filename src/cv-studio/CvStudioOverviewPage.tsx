@@ -449,7 +449,7 @@ export default function CvStudioOverviewPage() {
             <button
               type="button"
               onClick={() => setShowCreateCategoryModal(true)}
-              className="inline-flex items-center gap-2 rounded-xl border border-amber-300/25 bg-transparent px-3.5 py-2 text-sm font-semibold text-stone-200 transition hover:border-amber-300/50 hover:bg-white/5"
+              className="inline-flex items-center gap-2 rounded-lg bg-amber-500/90 px-3.5 py-2 text-sm font-semibold text-black transition hover:bg-amber-400"
             >
               <FolderPlus size={15} aria-hidden />
               <span className="hidden sm:inline">Kategorie erstellen</span>
@@ -457,7 +457,7 @@ export default function CvStudioOverviewPage() {
             <button
               type="button"
               onClick={() => setShowDialog(true)}
-              className="inline-flex items-center gap-2 rounded-xl bg-primary px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-hover"
+              className="inline-flex items-center gap-2 rounded-lg bg-amber-500/90 px-3.5 py-2 text-sm font-semibold text-black transition hover:bg-amber-400"
             >
               <Plus size={15} aria-hidden />
               Neuer Lebenslauf
@@ -584,7 +584,7 @@ export default function CvStudioOverviewPage() {
 
                 {/* ── Selected category workspace ──────────────────────────── */}
                 {(isDesktop || mobileTab === 'resumes') ? (
-                  <section className="overflow-hidden rounded-2xl border border-amber-500/22 bg-[#1a140f] shadow-[0_0_0_1px_rgba(245,158,11,0.05),inset_0_1px_0_rgba(245,158,11,0.06)]">
+                  <section className="overflow-hidden rounded-2xl bg-[#1a140f] ring-1 ring-white/[0.08] shadow-[0_10px_26px_-18px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.03)]">
                     {/* Amber accent top stripe — visual connector to active chip above */}
                     <div className="h-[2px] w-full bg-gradient-to-r from-amber-500/60 via-amber-400/25 to-transparent" />
 
@@ -708,7 +708,7 @@ export default function CvStudioOverviewPage() {
                 <button
                   type="button"
                   onClick={() => setShowCreateCategoryModal(true)}
-                  className="inline-flex items-center gap-2 rounded-lg border border-amber-300/30 bg-amber-500/10 px-4 py-2 text-sm font-semibold text-amber-300 transition hover:bg-amber-500/20"
+                  className="inline-flex items-center gap-2 rounded-lg bg-amber-500/90 px-4 py-2 text-sm font-semibold text-black transition hover:bg-amber-400"
                 >
                   <FolderPlus size={14} />
                   Kategorie erstellen
@@ -716,7 +716,7 @@ export default function CvStudioOverviewPage() {
                 <button
                   type="button"
                   onClick={() => setShowDialog(true)}
-                  className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-hover"
+                  className="inline-flex items-center gap-2 rounded-lg bg-amber-500/90 px-4 py-2 text-sm font-semibold text-black transition hover:bg-amber-400"
                 >
                   <Plus size={14} />
                   Neuer Lebenslauf
@@ -744,7 +744,7 @@ export default function CvStudioOverviewPage() {
         <button
           type="button"
           onClick={() => setShowDialog(true)}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-primary/25"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500/90 px-4 py-3 text-sm font-semibold text-black shadow-lg shadow-black/35 transition hover:bg-amber-400"
         >
           <Plus size={16} aria-hidden />
           Neuer Lebenslauf
