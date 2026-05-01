@@ -537,9 +537,9 @@ export default function CvStudioOverviewPage() {
                   </div>
                 )}
 
-                {/* ── Category grid ─────────────────────────────────────────── */}
+                {/* ── Category chips ────────────────────────────────────────── */}
                 {(isDesktop || mobileTab === 'categories') ? (
-                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                  <div className="flex flex-wrap gap-2">
                     {sortedCategories.map(cat => {
                       const resumesInCategory = filteredResumes.filter(r => getCategoryIdForResume(r.id) === cat.id)
                       const latestTimestamp = resumesInCategory
@@ -584,9 +584,9 @@ export default function CvStudioOverviewPage() {
 
                 {/* ── Selected category workspace ──────────────────────────── */}
                 {(isDesktop || mobileTab === 'resumes') ? (
-                  <section className="overflow-hidden rounded-2xl border border-amber-400/18 bg-[#120e0b]/80 shadow-[0_0_0_1px_rgba(245,158,11,0.06),inset_0_1px_0_rgba(245,158,11,0.06)]">
-                    {/* Amber accent top stripe — visual connector to active card above */}
-                    <div className="h-[2px] w-full bg-gradient-to-r from-amber-500/65 via-amber-400/25 to-transparent" />
+                  <section className="overflow-hidden rounded-2xl border border-amber-500/30 bg-[#1e1509] shadow-[0_0_0_1px_rgba(245,158,11,0.08),inset_0_1px_0_rgba(245,158,11,0.10)]">
+                    {/* Amber accent top stripe — visual connector to active chip above */}
+                    <div className="h-[2px] w-full bg-gradient-to-r from-amber-500/80 via-amber-400/35 to-transparent" />
 
                     <div className="p-4">
                       {/* Workspace header */}
