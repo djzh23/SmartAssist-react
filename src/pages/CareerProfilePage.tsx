@@ -813,6 +813,11 @@ export default function CareerProfilePage() {
     }
   }, [profile])
 
+  useEffect(() => {
+    if (!isDesktop || !desktopContentRef.current) return
+    desktopContentRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [activeSection, isDesktop])
+
   const saveProfilePatch = async (
     patch: Partial<CareerProfile>,
     opts?: { markSummaryStale?: boolean },
@@ -1143,11 +1148,6 @@ export default function CareerProfilePage() {
     .sort((a, b) => new Date(b.updatedAtUtc).getTime() - new Date(a.updatedAtUtc).getTime())[0] ?? null
   const mobileIsDetail = mobileSection !== 'overview'
   const currentSection = isDesktop ? activeSection : mobileSection
-
-  useEffect(() => {
-    if (!isDesktop || !desktopContentRef.current) return
-    desktopContentRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }, [activeSection, isDesktop])
 
   return (
     <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden bg-transparent">
