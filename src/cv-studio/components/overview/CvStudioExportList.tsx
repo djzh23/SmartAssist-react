@@ -17,9 +17,9 @@ export default function CvStudioExportList({ rows, onDelete, onDownload, compact
   const hasMore = rows.length > 5
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-white/10 bg-[#120e0b]/80">
+    <section className="overflow-hidden rounded-2xl border border-white/8 bg-[#120e0b]/78">
       {/* Panel header */}
-      <div className="flex items-center justify-between border-b border-white/8 px-4 py-3">
+      <div className="flex items-center justify-between border-b border-white/6 px-4 py-3">
         <h3 className="text-sm font-semibold text-stone-100">Export-Verlauf</h3>
         {rows.length > 0 ? (
           <span className="rounded-full bg-white/10 px-2 py-0.5 text-[11px] font-semibold tabular-nums text-stone-400">
@@ -49,7 +49,7 @@ export default function CvStudioExportList({ rows, onDelete, onDownload, compact
               return (
                 <li
                   key={row.id}
-                  className="group flex items-center gap-2 rounded-lg border border-white/8 bg-black/15 px-3 py-2 transition-colors hover:border-white/14"
+                  className="group flex items-center gap-2 rounded-lg border border-white/7 bg-black/12 px-3 py-2 transition-colors hover:border-white/12"
                 >
                   <FileDown size={13} className="shrink-0 text-amber-400/60" aria-hidden />
                   <div className="min-w-0 flex-1">

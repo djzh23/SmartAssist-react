@@ -584,9 +584,9 @@ export default function CvStudioOverviewPage() {
 
                 {/* ── Selected category workspace ──────────────────────────── */}
                 {(isDesktop || mobileTab === 'resumes') ? (
-                  <section className="overflow-hidden rounded-2xl border border-amber-500/30 bg-[#1e1509] shadow-[0_0_0_1px_rgba(245,158,11,0.08),inset_0_1px_0_rgba(245,158,11,0.10)]">
+                  <section className="overflow-hidden rounded-2xl border border-amber-500/22 bg-[#1a140f] shadow-[0_0_0_1px_rgba(245,158,11,0.05),inset_0_1px_0_rgba(245,158,11,0.06)]">
                     {/* Amber accent top stripe — visual connector to active chip above */}
-                    <div className="h-[2px] w-full bg-gradient-to-r from-amber-500/80 via-amber-400/35 to-transparent" />
+                    <div className="h-[2px] w-full bg-gradient-to-r from-amber-500/60 via-amber-400/25 to-transparent" />
 
                     <div className="p-4">
                       {/* Workspace header */}

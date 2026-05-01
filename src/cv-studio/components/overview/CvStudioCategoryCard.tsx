@@ -29,8 +29,8 @@ export default function CvStudioCategoryCard({
       className={[
         'group inline-flex cursor-pointer select-none items-center gap-1.5 rounded-full border py-1 pl-2.5 pr-1.5 transition-all duration-150',
         active
-          ? 'border-amber-400/60 bg-amber-500/14 text-amber-200 shadow-[0_0_12px_-4px_rgba(245,158,11,0.30)]'
-          : 'border-white/12 bg-white/[0.03] text-stone-300 hover:border-amber-400/35 hover:bg-amber-500/8 hover:text-stone-100',
+          ? 'border-amber-400/55 bg-amber-500/12 text-amber-200 shadow-[0_0_10px_-5px_rgba(245,158,11,0.28)]'
+          : 'border-white/10 bg-white/[0.02] text-stone-300 hover:border-amber-400/28 hover:bg-amber-500/7 hover:text-stone-100',
       ].join(' ')}
     >
       {/* Icon */}
@@ -47,7 +47,7 @@ export default function CvStudioCategoryCard({
       <span
         className={[
           'rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums leading-none',
-          active ? 'bg-amber-500/20 text-amber-300' : 'bg-white/10 text-stone-400',
+          active ? 'bg-amber-500/18 text-amber-300' : 'bg-white/8 text-stone-400',
         ].join(' ')}
       >
         {count}
