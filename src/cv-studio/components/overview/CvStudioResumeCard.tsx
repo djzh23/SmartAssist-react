@@ -50,29 +50,34 @@ export default function CvStudioResumeCard({
         onClick={e => e.stopPropagation()}
         onKeyDown={e => e.stopPropagation()}
       >
+        {/* Tier 4 — soft neutral: utility action */}
         <button
           type="button"
           onClick={onDuplicate}
-          className="inline-flex items-center gap-1 rounded-md bg-white/[0.035] px-2.5 py-1 text-[11px] font-semibold text-stone-300 transition hover:bg-white/[0.08]"
+          className="inline-flex items-center gap-1 rounded-lg bg-white/[0.05] px-3 py-1.5 text-xs font-semibold text-stone-300 transition hover:bg-white/10 hover:text-stone-100"
         >
           <Copy size={11} aria-hidden />
           Duplizieren
         </button>
+
+        {/* Tier — amber tinted: export-specific */}
         <button
           type="button"
           onClick={onExportPdf}
-          className="inline-flex items-center gap-1 rounded-md bg-amber-500/12 px-2.5 py-1 text-[11px] font-semibold text-amber-300 transition hover:bg-amber-500/20"
+          className="inline-flex items-center gap-1 rounded-lg bg-amber-500/12 px-3 py-1.5 text-xs font-semibold text-amber-300 transition hover:bg-amber-500/22"
         >
           <Download size={11} aria-hidden />
           PDF
         </button>
+
+        {/* Tier 5 — danger ghost: destructive, minimal presence */}
         <button
           type="button"
           onClick={onDelete}
-          className="ml-auto inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold text-stone-600 transition hover:text-rose-400"
+          className="ml-auto inline-flex h-[30px] w-[30px] items-center justify-center rounded-lg text-stone-500 transition hover:bg-rose-500/10 hover:text-rose-400"
           title="Lebenslauf löschen"
         >
-          <Trash2 size={11} aria-hidden />
+          <Trash2 size={12} aria-hidden />
         </button>
       </div>
     </article>

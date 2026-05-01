@@ -61,6 +61,7 @@ export default function CvStudioExportList({ rows, onDelete, onDownload, compact
                     </p>
                   </div>
                   <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                    {/* Tier 4 — soft neutral icon: download */}
                     <button
                       type="button"
                       disabled={isDownloading}
@@ -68,11 +69,12 @@ export default function CvStudioExportList({ rows, onDelete, onDownload, compact
                         setDownloadingId(row.id)
                         try { await onDownload(row) } finally { setDownloadingId(null) }
                       }}
-                      className="inline-flex h-7 w-7 items-center justify-center rounded-md text-stone-400 transition hover:bg-white/8 hover:text-stone-100 disabled:opacity-40"
+                      className="inline-flex h-[30px] w-[30px] items-center justify-center rounded-lg text-stone-400 transition hover:bg-white/8 hover:text-stone-100 disabled:opacity-40"
                       aria-label="Herunterladen"
                     >
                       <Download size={13} aria-hidden />
                     </button>
+                    {/* Tier 5 — danger ghost icon: delete */}
                     <button
                       type="button"
                       disabled={isDeleting}
@@ -80,7 +82,7 @@ export default function CvStudioExportList({ rows, onDelete, onDownload, compact
                         setDeletingId(row.id)
                         try { await onDelete(row.id) } finally { setDeletingId(null) }
                       }}
-                      className="inline-flex h-7 w-7 items-center justify-center rounded-md text-stone-600 transition hover:bg-rose-500/10 hover:text-rose-400 disabled:opacity-40"
+                      className="inline-flex h-[30px] w-[30px] items-center justify-center rounded-lg text-stone-500 transition hover:bg-rose-500/10 hover:text-rose-400 disabled:opacity-40"
                       aria-label="Export entfernen"
                     >
                       <Trash2 size={13} aria-hidden />

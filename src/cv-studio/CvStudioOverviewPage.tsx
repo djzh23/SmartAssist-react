@@ -446,20 +446,22 @@ export default function CvStudioOverviewPage() {
         className="mb-4"
         actions={(
           <>
+            {/* Tier 3 — ghost outlined: secondary action */}
             <button
               type="button"
               onClick={() => setShowCreateCategoryModal(true)}
-              className="inline-flex items-center gap-2 rounded-lg bg-amber-500/90 px-3.5 py-2 text-sm font-semibold text-black transition hover:bg-amber-400"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 px-3 py-1.5 text-xs font-semibold text-stone-200 transition hover:border-amber-400/35 hover:bg-white/5 hover:text-stone-100"
             >
-              <FolderPlus size={15} aria-hidden />
+              <FolderPlus size={13} aria-hidden />
               <span className="hidden sm:inline">Kategorie erstellen</span>
             </button>
+            {/* Tier 1 — amber filled: primary create action */}
             <button
               type="button"
               onClick={() => setShowDialog(true)}
-              className="inline-flex items-center gap-2 rounded-lg bg-amber-500/90 px-3.5 py-2 text-sm font-semibold text-black transition hover:bg-amber-400"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500/90 px-3 py-1.5 text-xs font-semibold text-black transition hover:bg-amber-400"
             >
-              <Plus size={15} aria-hidden />
+              <Plus size={13} aria-hidden />
               Neuer Lebenslauf
             </button>
             <div className="hidden md:block">
@@ -611,7 +613,8 @@ export default function CvStudioOverviewPage() {
                           {/* Aktionen dropdown */}
                           {selectedCategory ? (
                             <details className="relative">
-                              <summary className="inline-flex list-none cursor-pointer items-center gap-1 rounded-lg bg-white/[0.04] px-2.5 py-1.5 text-xs font-semibold text-stone-300 ring-1 ring-white/[0.08] transition hover:bg-white/[0.08] [&::-webkit-details-marker]:hidden">
+                              {/* Tier 3 — ghost outlined: secondary dropdown */}
+                              <summary className="inline-flex list-none cursor-pointer items-center gap-1 rounded-lg border border-white/15 px-3 py-1.5 text-xs font-semibold text-stone-200 transition hover:border-amber-400/30 hover:bg-white/5 hover:text-stone-100 [&::-webkit-details-marker]:hidden">
                                 Aktionen
                               </summary>
                               <div className="absolute right-0 z-20 mt-1 w-42 overflow-hidden rounded-xl border border-white/10 bg-[#1b1410] p-1 shadow-xl">
@@ -639,11 +642,11 @@ export default function CvStudioOverviewPage() {
                             </details>
                           ) : null}
 
-                          {/* Primary contextual action */}
+                          {/* Tier 1 — amber filled: contextual primary */}
                           <button
                             type="button"
                             onClick={openAddResumeToCategory}
-                            className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-primary-hover"
+                            className="rounded-lg bg-amber-500/90 px-3 py-1.5 text-xs font-semibold text-black transition hover:bg-amber-400"
                           >
                             + Lebenslauf hinzufügen
                           </button>
@@ -657,10 +660,11 @@ export default function CvStudioOverviewPage() {
                           <p className="text-sm text-stone-500">
                             Noch keine Lebensläufe in dieser Kategorie.
                           </p>
+                          {/* Tier 1 — amber filled: empty state CTA */}
                           <button
                             type="button"
                             onClick={openAddResumeToCategory}
-                            className="rounded-lg bg-primary px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-primary-hover"
+                            className="rounded-lg bg-amber-500/90 px-3 py-1.5 text-xs font-semibold text-black transition hover:bg-amber-400"
                           >
                             + Lebenslauf hinzufügen
                           </button>
@@ -705,20 +709,22 @@ export default function CvStudioOverviewPage() {
               <p className="text-sm font-semibold text-stone-100">Starte mit deiner ersten Kategorie.</p>
               <p className="mt-1 text-xs text-stone-500">Danach kannst du pro Kategorie neue Lebensläufe anlegen.</p>
               <div className="mt-5 flex items-center justify-center gap-2">
+                {/* Tier 3 — ghost outlined */}
                 <button
                   type="button"
                   onClick={() => setShowCreateCategoryModal(true)}
-                  className="inline-flex items-center gap-2 rounded-lg bg-amber-500/90 px-4 py-2 text-sm font-semibold text-black transition hover:bg-amber-400"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 px-3 py-1.5 text-xs font-semibold text-stone-200 transition hover:border-amber-400/35 hover:bg-white/5 hover:text-stone-100"
                 >
-                  <FolderPlus size={14} />
+                  <FolderPlus size={12} />
                   Kategorie erstellen
                 </button>
+                {/* Tier 1 — amber filled */}
                 <button
                   type="button"
                   onClick={() => setShowDialog(true)}
-                  className="inline-flex items-center gap-2 rounded-lg bg-amber-500/90 px-4 py-2 text-sm font-semibold text-black transition hover:bg-amber-400"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500/90 px-3 py-1.5 text-xs font-semibold text-black transition hover:bg-amber-400"
                 >
-                  <Plus size={14} />
+                  <Plus size={12} />
                   Neuer Lebenslauf
                 </button>
               </div>
