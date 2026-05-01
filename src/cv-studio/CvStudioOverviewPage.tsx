@@ -611,7 +611,7 @@ export default function CvStudioOverviewPage() {
                           {/* Aktionen dropdown */}
                           {selectedCategory ? (
                             <details className="relative">
-                              <summary className="inline-flex list-none cursor-pointer items-center gap-1 rounded-lg border border-white/12 px-2.5 py-1.5 text-xs font-semibold text-stone-300 transition hover:bg-white/5 [&::-webkit-details-marker]:hidden">
+                              <summary className="inline-flex list-none cursor-pointer items-center gap-1 rounded-lg bg-white/[0.04] px-2.5 py-1.5 text-xs font-semibold text-stone-300 ring-1 ring-white/[0.08] transition hover:bg-white/[0.08] [&::-webkit-details-marker]:hidden">
                                 Aktionen
                               </summary>
                               <div className="absolute right-0 z-20 mt-1 w-42 overflow-hidden rounded-xl border border-white/10 bg-[#1b1410] p-1 shadow-xl">

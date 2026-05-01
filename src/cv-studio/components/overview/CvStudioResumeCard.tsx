@@ -1,4 +1,4 @@
-import { Copy, Download, FileText, Pencil, Trash2 } from 'lucide-react'
+import { Copy, Download, FileText, Trash2 } from 'lucide-react'
 import type { CvStudioResumeSummary } from '../../../types'
 
 interface CvStudioResumeCardProps {
@@ -50,14 +50,6 @@ export default function CvStudioResumeCard({
         onClick={e => e.stopPropagation()}
         onKeyDown={e => e.stopPropagation()}
       >
-        <button
-          type="button"
-          onClick={onEdit}
-          className="inline-flex items-center gap-1 rounded-md bg-white/[0.05] px-2.5 py-1 text-[11px] font-semibold text-stone-200 transition hover:bg-white/[0.1]"
-        >
-          <Pencil size={11} aria-hidden />
-          Öffnen
-        </button>
         <button
           type="button"
           onClick={onDuplicate}
