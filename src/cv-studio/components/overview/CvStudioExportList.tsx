@@ -6,12 +6,16 @@ interface CvStudioExportListProps {
   rows: CvStudioPdfExportRow[]
   onDelete: (id: string) => Promise<void>
   onDownload: (row: CvStudioPdfExportRow) => Promise<void>
+  compact?: boolean
 }
 
-export default function CvStudioExportList({ rows, onDelete, onDownload }: CvStudioExportListProps) {
-  const [open, setOpen] = useState(false)
+export default function CvStudioExportList({ rows, onDelete, onDownload, compact = false }: CvStudioExportListProps) {
+  const [open, setOpen] = useState(true)
+  const [showAll, setShowAll] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [downloadingId, setDownloadingId] = useState<string | null>(null)
+  const visibleRows = showAll ? rows : rows.slice(0, 5)
+  const hasMore = rows.length > 5
 
   return (
     <section className="rounded-2xl border border-white/10 bg-[#120e0b]/76">
@@ -34,7 +38,7 @@ export default function CvStudioExportList({ rows, onDelete, onDownload }: CvStu
             <p className="py-6 text-center text-xs text-stone-500">Noch keine Exporte.</p>
           ) : (
             <ul className="space-y-2">
-              {rows.map(row => {
+              {visibleRows.map(row => {
                 const date = new Date(row.createdAtUtc).toLocaleString('de-DE')
                 return (
                   <li key={row.id} className="flex items-center justify-between gap-2 rounded-xl border border-white/10 bg-black/20 px-3 py-2.5">
@@ -85,6 +89,18 @@ export default function CvStudioExportList({ rows, onDelete, onDownload }: CvStu
               })}
             </ul>
           )}
+          {hasMore ? (
+            <button
+              type="button"
+              onClick={() => setShowAll(v => !v)}
+              className="mt-3 text-xs font-semibold text-amber-300 transition hover:text-amber-200"
+            >
+              {showAll ? 'Weniger anzeigen' : 'Alle Exporte anzeigen →'}
+            </button>
+          ) : null}
+          {!hasMore && !compact && rows.length > 0 ? (
+            <p className="mt-3 text-xs font-semibold text-amber-300">Alle Exporte anzeigen →</p>
+          ) : null}
         </div>
       ) : null}
     </section>
