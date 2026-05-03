@@ -568,7 +568,7 @@ function HeroSection() {
     >
       <div className="landing-dot-grid pointer-events-none absolute inset-0 opacity-[0.52] sm:opacity-75 md:opacity-90" />
 
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+      <div className="pointer-events-none absolute inset-0 hidden overflow-hidden sm:block">
         <div className="absolute -right-40 -top-28 h-[min(95vw,780px)] w-[min(95vw,780px)] rounded-full bg-amber-600/12 blur-[130px]" />
         <div className="absolute -bottom-32 -left-32 h-[min(88vw,560px)] w-[min(88vw,560px)] rounded-full bg-amber-500/10 blur-[100px]" />
         <div className="absolute right-1/3 top-[42%] h-[min(55vw,420px)] w-[min(55vw,420px)] rounded-full bg-amber-400/6 blur-[95px]" />
@@ -680,7 +680,7 @@ function HeroSection() {
         </div>
 
         {/* Chat mockup: sichtbar ab sm (Tablet), leicht skaliert für schmalere Spalte */}
-        <div className="flex w-full justify-center pb-4 pt-2 sm:justify-end sm:pb-0 sm:pt-0 md:justify-center md:py-12">
+        <div className="hidden w-full justify-center pb-4 pt-2 sm:flex sm:justify-end sm:pb-0 sm:pt-0 md:justify-center md:py-12">
           <div className="origin-top scale-[0.82] sm:scale-90 md:scale-100">
             <ChatMockup />
           </div>
