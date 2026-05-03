@@ -1272,8 +1272,8 @@ function LiveDemoSection() {
                       : isActive && exhausted
                         ? 'bg-[#0e0b09] text-emerald-400 after:absolute after:inset-x-2 after:bottom-0 after:h-[3px] after:rounded-full after:bg-gradient-to-r after:from-emerald-500 after:to-emerald-400'
                         : exhausted
-                          ? 'text-stone-600 hover:bg-white/[0.03] hover:text-stone-500'
-                          : 'text-stone-500 hover:bg-white/[0.03] hover:text-stone-400',
+                          ? 'text-stone-400 hover:bg-white/[0.03] hover:text-stone-300'
+                          : 'text-stone-300 hover:bg-white/[0.03] hover:text-stone-200',
                   ].join(' ')}
                   title={t.label}
                 >
@@ -1873,11 +1873,11 @@ function PricingPreviewSection() {
               <div className="px-5 pb-5">
                 {plan.useSignUp ? (
                   <SignUpButton mode="modal" fallbackRedirectUrl="/tools">
-                    <button className={`w-full rounded-xl py-2.5 text-sm font-semibold transition-all ${plan.ctaClass}`}>{plan.cta}</button>
+                    <button className={`w-full rounded-xl px-4 py-3 min-h-[48px] text-base font-semibold transition-all sm:text-sm ${plan.ctaClass}`}>{plan.cta}</button>
                   </SignUpButton>
                 ) : (
                   <a href={'href' in plan ? plan.href : '/pricing'}>
-                    <button className={`w-full rounded-xl py-2.5 text-sm font-semibold transition-all ${plan.ctaClass}`}>{plan.cta}</button>
+                    <button className={`w-full rounded-xl px-4 py-3 min-h-[48px] text-base font-semibold transition-all sm:text-sm ${plan.ctaClass}`}>{plan.cta}</button>
                   </a>
                 )}
               </div>
