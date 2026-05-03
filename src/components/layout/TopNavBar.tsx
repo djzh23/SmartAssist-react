@@ -219,9 +219,17 @@ export default function TopNavBar({ onMenuClick, menuOpen }: Props) {
       <div className="flex min-w-0 items-center justify-start gap-2">
         <Link
           to="/overview"
+          aria-label="PrivatePrep"
           className="flex min-w-0 flex-shrink-0 items-center gap-2 rounded-lg py-1 pr-2 no-underline hover:opacity-90"
         >
-          <img src="/favicon.png" alt="" className="h-8 w-8 rounded-lg" width={32} height={32} />
+          <img
+            src="/logo-nav.webp"
+            alt=""
+            className="h-8 w-8 rounded-lg"
+            width={32}
+            height={32}
+            decoding="async"
+          />
           <span className="hidden text-[15px] font-bold tracking-wide text-stone-50 sm:inline">PrivatePrep</span>
         </Link>
       </div>

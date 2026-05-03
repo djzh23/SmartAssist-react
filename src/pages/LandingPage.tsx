@@ -305,6 +305,7 @@ function LandingNav() {
       >
         <button
           type="button"
+          aria-label="PrivatePrep — zum Seitenanfang"
           onClick={() => {
             window.scrollTo({ top: 0, behavior: 'smooth' })
             closeMobile()
@@ -312,8 +313,12 @@ function LandingNav() {
           className="flex min-w-0 items-center gap-2 rounded-xl py-1.5 pl-1 pr-2 text-left transition-all duration-200 hover:bg-white/10 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
         >
           <img
-            src="/favicon.png"
+            src="/logo-nav.webp"
             alt=""
+            width={96}
+            height={96}
+            decoding="async"
+            fetchPriority="high"
             className="h-8 w-8 flex-shrink-0 rounded-xl ring-1 ring-amber-500/20 sm:h-9 sm:w-9"
           />
           <span className="bg-gradient-to-r from-amber-200 via-amber-100 to-amber-50/90 bg-clip-text text-[15px] font-bold tracking-tight text-transparent sm:text-[17px]">
@@ -1447,7 +1452,7 @@ function LiveDemoSection() {
           {/* ── Per-tool message counter ── */}
           {!atToolLimit && !allExhausted && (
             <div className="flex items-center justify-between border-t border-stone-600/30 bg-[#0c0907] px-3 py-2 sm:px-5">
-              <span className="text-[10px] text-stone-600">
+              <span className="text-xs text-stone-400">
                 {PER_TOOL_LIMIT - toolCount} von {PER_TOOL_LIMIT} Nachrichten für {cfg.label}
               </span>
               <div className="flex items-center gap-1">
@@ -1975,7 +1980,15 @@ function FooterSection() {
         <div className="mb-6 flex flex-col items-center justify-between gap-6 md:flex-row">
           <div>
             <div className="mb-1 flex items-center gap-2">
-              <img src="/favicon.png" alt="PrivatePrep" className="h-7 w-7 rounded-lg" />
+              <img
+                src="/logo-nav.webp"
+                alt=""
+                width={96}
+                height={96}
+                decoding="async"
+                loading="lazy"
+                className="h-7 w-7 rounded-lg"
+              />
               <span className="bg-gradient-to-r from-amber-400 to-amber-300 bg-clip-text text-lg font-bold text-transparent">PrivatePrep</span>
             </div>
             <p className="text-sm text-stone-500">KI-Werkzeuge für deine Karriere</p>
