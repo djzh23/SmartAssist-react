@@ -2017,25 +2017,27 @@ export default function LandingPage() {
   return (
     <div className="landing-page-root min-h-screen">
       <LandingNav />
-      <HeroSection />
-      <SectionDivider from="#16110d" to="#14100c" dark variant="wave" />
-      <ProblemSolutionSection />
-      <SectionDivider from="#17110e" to="#16110d" dark variant="microdots" />
-      <FeaturesSection />
-      <SectionDivider from="#18100c" to="#120c08" dark variant="hatch" />
-      <LiveDemoSection />
-      <SectionDivider from="#14100d" to="#0f0a08" dark variant="blend" />
-      <HowItWorksSection />
-      <SectionDivider from="#0a0605" to="#15100c" dark variant="sunrise" />
-      <FuerWenSection />
-      <SectionDivider from="#16100d" to="#130e0a" dark variant="mesh" />
-      <PricingPreviewSection />
-      <SectionDivider from="#150f0c" to="#120a08" dark variant="grain" />
-      <FaqSection />
-      <SectionDivider from="#140d0a" to="#1c1200" dark variant="thread" />
-      <FinalCtaSection />
-      <SectionDivider from="#3d2a10" to="#0d0800" dark variant="night" />
-      <FooterSection />
+      <main id="main-content">
+        <HeroSection />
+        <SectionDivider from="#16110d" to="#14100c" dark variant="wave" />
+        <ProblemSolutionSection />
+        <SectionDivider from="#17110e" to="#16110d" dark variant="microdots" />
+        <FeaturesSection />
+        <SectionDivider from="#18100c" to="#120c08" dark variant="hatch" />
+        <LiveDemoSection />
+        <SectionDivider from="#14100d" to="#0f0a08" dark variant="blend" />
+        <HowItWorksSection />
+        <SectionDivider from="#0a0605" to="#15100c" dark variant="sunrise" />
+        <FuerWenSection />
+        <SectionDivider from="#16110d" to="#130e0a" dark variant="mesh" />
+        <PricingPreviewSection />
+        <SectionDivider from="#150f0c" to="#120a08" dark variant="grain" />
+        <FaqSection />
+        <SectionDivider from="#140d0a" to="#1c1200" dark variant="thread" />
+        <FinalCtaSection />
+        <SectionDivider from="#3d2a10" to="#0d0800" dark variant="night" />
+        <FooterSection />
+      </main>
     </div>
   )
 }

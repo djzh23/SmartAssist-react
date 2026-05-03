@@ -442,7 +442,7 @@ export default function AdminDashboardPage() {
 
   if (forbidden) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-slate-950 px-4 text-slate-200">
+      <main className="flex min-h-screen flex-col items-center justify-center bg-slate-950 px-4 text-slate-200">
         <ShieldAlert className="mb-4 text-orange-400" size={48} />
         <h1 className="mb-2 text-xl font-semibold text-slate-100">Kein Zugriff</h1>
         <p className="mb-6 max-w-md text-center text-sm text-slate-400">
@@ -455,7 +455,7 @@ export default function AdminDashboardPage() {
           <ArrowLeft size={16} />
           Zurück zum Chat
         </Link>
-      </div>
+      </main>
     )
   }
 
