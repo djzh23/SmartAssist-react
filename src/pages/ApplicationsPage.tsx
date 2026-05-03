@@ -12,6 +12,7 @@ import {
 import ApplicationInfoModal from '../components/applications/ApplicationInfoModal'
 import type { CvStudioResumeSummary } from '../types'
 import PageHeader from '../components/layout/PageHeader'
+import { appCtaButtonClasses } from '../components/ui/AppCtaButton'
 import ArchiveSection from '../components/applications/ArchiveSection'
 import PipelineBoard from '../components/applications/PipelineBoard'
 import { ARCHIVE_STATUSES, PIPELINE_STATUSES, TERMINAL_STATUSES } from '../components/applications/pipelineConfig'
@@ -211,7 +212,7 @@ export default function ApplicationsPage() {
                 <p className="mt-4 text-sm font-semibold text-stone-100">Noch keine Bewerbungen</p>
                 <Link
                   to="/applications/new"
-                  className="mt-5 inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-hover"
+                  className={appCtaButtonClasses({ size: 'md', className: 'mt-5' })}
                 >
                   <Plus size={18} />
                   Neue Bewerbung

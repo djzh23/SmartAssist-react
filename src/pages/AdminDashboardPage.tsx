@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { appCtaButtonClasses } from '../components/ui/AppCtaButton'
 import { useAuth } from '@clerk/clerk-react'
 import {
   ArrowLeft,
@@ -449,7 +450,7 @@ export default function AdminDashboardPage() {
         </p>
         <Link
           to="/chat"
-          className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-hover"
+          className={appCtaButtonClasses({})}
         >
           <ArrowLeft size={16} />
           Zurück zum Chat

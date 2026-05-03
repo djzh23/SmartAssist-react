@@ -16,6 +16,7 @@ import {
 import { fetchJobApplications, listCvStudioResumes } from '../api/client'
 import type { JobApplicationApi } from '../api/client'
 import PageHeader from '../components/layout/PageHeader'
+import { appCtaButtonClasses } from '../components/ui/AppCtaButton'
 import StandardPageContainer from '../components/layout/StandardPageContainer'
 import ApplicationPipelinePanel from '../components/overview/ApplicationPipelinePanel'
 import { useChatNotes } from '../hooks/useChatNotes'
@@ -163,7 +164,7 @@ export default function OverviewPage() {
           actions={(
             <Link
               to="/applications"
-              className="inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white transition hover:bg-primary-hover"
+              className={appCtaButtonClasses({ size: 'sm' })}
             >
               Zur Pipeline
               <ArrowRight size={12} />

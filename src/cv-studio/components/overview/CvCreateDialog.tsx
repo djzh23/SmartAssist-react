@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Briefcase, ChevronRight, FileText, Loader2, X } from 'lucide-react'
+import AppCtaButton from '../../../components/ui/AppCtaButton'
 import type { JobApplicationApi } from '../../../api/client'
 import type { ResumeTemplateDto } from '../../cvTypes'
 import type { CvResumeGroup } from '../../lib/cvStudioGroups'
@@ -313,14 +314,14 @@ export default function CvCreateDialog({
                 >
                   ← Zurück
                 </button>
-                <button
+                <AppCtaButton
                   type="button"
                   disabled={!cloneFromId}
                   onClick={() => setStep(3)}
-                  className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover disabled:opacity-40"
+                  className="disabled:opacity-40"
                 >
                   Weiter
-                </button>
+                </AppCtaButton>
               </div>
             </div>
           )}
@@ -358,15 +359,15 @@ export default function CvCreateDialog({
                 >
                   ← Zurück
                 </button>
-                <button
+                <AppCtaButton
                   type="button"
                   disabled={busy || !selectedTemplateKey}
                   onClick={() => void handleConfirm()}
-                  className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover disabled:opacity-40"
+                  className="flex items-center gap-2 disabled:opacity-40"
                 >
                   {busy && <Loader2 size={15} className="animate-spin" aria-hidden />}
                   Lebenslauf anlegen
-                </button>
+                </AppCtaButton>
               </div>
             </div>
           )}

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@clerk/clerk-react'
 import { ArrowLeft, Loader2 } from 'lucide-react'
 import InfoExplainerButton from '../components/ui/InfoExplainerButton'
+import AppCtaButton from '../components/ui/AppCtaButton'
 import { createJobApplication } from '../api/client'
 
 export default function ApplicationNewPage() {
@@ -114,14 +115,15 @@ export default function ApplicationNewPage() {
               placeholder="Relevante Ausschnitte aus der Stellenanzeige…"
             />
           </div>
-          <button
+          <AppCtaButton
             type="submit"
             disabled={saving}
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary py-2.5 text-sm font-semibold text-white transition hover:bg-violet-700 disabled:opacity-60"
+            size="lg"
+            className="w-full disabled:opacity-60"
           >
             {saving ? <Loader2 className="animate-spin" size={18} /> : null}
             Anlegen
-          </button>
+          </AppCtaButton>
         </form>
       </div>
     </div>

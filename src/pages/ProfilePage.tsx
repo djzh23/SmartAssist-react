@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { IconHubIcon } from '../components/ui/IconHubIcon'
 import InfoExplainerButton from '../components/ui/InfoExplainerButton'
+import { appCtaButtonClasses } from '../components/ui/AppCtaButton'
 import { useUserPlan, getPlanColors, getPlanLabel } from '../hooks/useUserPlan'
 import { confirmPlanFromSession, createPortalSession, syncPlanFromStripe } from '../services/StripeService'
 
@@ -539,7 +540,7 @@ export default function ProfilePage() {
               <div className="flex flex-wrap items-center gap-2">
                 <Link
                   to="/pricing"
-                  className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-md transition hover:bg-primary-hover"
+                  className={appCtaButtonClasses({ className: 'shadow-md' })}
                 >
                   {user.plan === 'free' ? 'Premium werden' : 'Pro werden'}
                   <ArrowRight size={14} aria-hidden />

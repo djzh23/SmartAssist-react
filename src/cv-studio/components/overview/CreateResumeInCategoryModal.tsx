@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { ChevronRight, Copy, FilePlus, FileText, Loader2, X } from 'lucide-react'
+import AppCtaButton from '../../../components/ui/AppCtaButton'
 import type { JobApplicationApi } from '../../../api/client'
 import type { CvStudioResumeSummary, CvUserCategoryDto } from '../../../types'
 import type { ResumeTemplateDto } from '../../cvTypes'
@@ -361,11 +362,11 @@ export default function CreateResumeInCategoryModal({
                   >
                     Abbrechen
                   </button>
-                  <button
+                  <AppCtaButton
                     type="button"
                     disabled={busy || (startChoice === 'new' && !selectedTemplateKey) || (startChoice === 'clone' && !cloneFromId)}
                     onClick={() => void handleConfirm()}
-                    className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-opacity hover:bg-primary-hover disabled:opacity-50"
+                    className="flex items-center gap-2 disabled:opacity-50"
                   >
                     {busy
                       ? <Loader2 size={14} className="animate-spin" aria-hidden />
@@ -373,7 +374,7 @@ export default function CreateResumeInCategoryModal({
                         ? <Copy size={14} aria-hidden />
                         : <FilePlus size={14} aria-hidden />}
                     {startChoice === 'clone' ? 'Kopie anlegen' : 'Lebenslauf anlegen'}
-                  </button>
+                  </AppCtaButton>
                 </div>
               </div>
             </div>

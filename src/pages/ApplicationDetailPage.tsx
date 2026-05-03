@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '@clerk/clerk-react'
 import { ArrowLeft, CheckCircle2, ChevronDown, Copy, FileText, Loader2, Trash2, XCircle } from 'lucide-react'
 import InfoExplainerButton from '../components/ui/InfoExplainerButton'
+import AppCtaButton from '../components/ui/AppCtaButton'
 import {
   type ApplicationStatusApi,
   type JobApplicationApi,
@@ -436,13 +437,9 @@ export default function ApplicationDetailPage() {
             {app.jobDescription?.trim() || 'Kein Stellentext hinterlegt.'}
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={goAnalyze}
-              className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white shadow-md transition hover:bg-primary-hover"
-            >
+            <AppCtaButton type="button" onClick={goAnalyze} className="shadow-md">
               Analyse starten
-            </button>
+            </AppCtaButton>
             {app.analysisSessionId && (
               <span className="self-center text-xs text-stone-500">
                 Verknüpfte Analyse-Session: {app.analysisSessionId}
@@ -517,13 +514,9 @@ export default function ApplicationDetailPage() {
 
         <section className="mb-6 rounded-xl border border-stone-400/40 bg-white/95 p-5 shadow-card">
           <h2 className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-stone-500">Interview-Vorbereitung</h2>
-          <button
-            type="button"
-            onClick={goInterview}
-            className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white shadow-md transition hover:bg-primary-hover"
-          >
+          <AppCtaButton type="button" onClick={goInterview} className="shadow-md">
             Interview-Training starten
-          </button>
+          </AppCtaButton>
           {app.interviewSessionId && (
             <p className="mt-2 text-xs text-stone-500">Verknüpfte Session-ID: {app.interviewSessionId}</p>
           )}

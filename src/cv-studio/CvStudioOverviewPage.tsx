@@ -35,6 +35,7 @@ import CreateResumeInCategoryModal, {
   type CreateResumeForCategoryParams,
 } from './components/overview/CreateResumeInCategoryModal'
 import PageHeader from '../components/layout/PageHeader'
+import AppCtaButton from '../components/ui/AppCtaButton'
 import { useMediaQuery } from '../hooks/useMediaQuery'
 
 export default function CvStudioOverviewPage() {
@@ -446,24 +447,25 @@ export default function CvStudioOverviewPage() {
         className="mb-4"
         actions={(
           <>
-            {/* Tier 3 — ghost outlined: secondary action */}
-            <button
+            <AppCtaButton
               type="button"
+              variant="secondary"
+              size="sm"
               onClick={() => setShowCreateCategoryModal(true)}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 px-3 py-1.5 text-xs font-semibold text-stone-200 transition hover:border-amber-400/35 hover:bg-white/5 hover:text-stone-100"
+              className="inline-flex items-center gap-1.5"
             >
               <FolderPlus size={13} aria-hidden />
               <span className="hidden sm:inline">Kategorie erstellen</span>
-            </button>
-            {/* Tier 1 — amber filled: primary create action */}
-            <button
+            </AppCtaButton>
+            <AppCtaButton
               type="button"
+              size="sm"
               onClick={() => setShowDialog(true)}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500/90 px-3 py-1.5 text-xs font-semibold text-black transition hover:bg-amber-400"
+              className="inline-flex items-center gap-1.5"
             >
               <Plus size={13} aria-hidden />
               Neuer Lebenslauf
-            </button>
+            </AppCtaButton>
             <div className="hidden md:block">
               <CvQuotaBadge used={pdfUsed} limit={pdfLimit} />
             </div>
@@ -642,14 +644,9 @@ export default function CvStudioOverviewPage() {
                             </details>
                           ) : null}
 
-                          {/* Tier 1 — amber filled: contextual primary */}
-                          <button
-                            type="button"
-                            onClick={openAddResumeToCategory}
-                            className="rounded-lg bg-amber-500/90 px-3 py-1.5 text-xs font-semibold text-black transition hover:bg-amber-400"
-                          >
+                          <AppCtaButton type="button" size="sm" onClick={openAddResumeToCategory}>
                             + Lebenslauf hinzufügen
-                          </button>
+                          </AppCtaButton>
                         </div>
                       </div>
 
@@ -660,14 +657,9 @@ export default function CvStudioOverviewPage() {
                           <p className="text-sm text-stone-500">
                             Noch keine Lebensläufe in dieser Kategorie.
                           </p>
-                          {/* Tier 1 — amber filled: empty state CTA */}
-                          <button
-                            type="button"
-                            onClick={openAddResumeToCategory}
-                            className="rounded-lg bg-amber-500/90 px-3 py-1.5 text-xs font-semibold text-black transition hover:bg-amber-400"
-                          >
+                          <AppCtaButton type="button" size="sm" onClick={openAddResumeToCategory}>
                             + Lebenslauf hinzufügen
-                          </button>
+                          </AppCtaButton>
                         </div>
                       ) : (
                         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -709,24 +701,25 @@ export default function CvStudioOverviewPage() {
               <p className="text-sm font-semibold text-stone-100">Starte mit deiner ersten Kategorie.</p>
               <p className="mt-1 text-xs text-stone-500">Danach kannst du pro Kategorie neue Lebensläufe anlegen.</p>
               <div className="mt-5 flex items-center justify-center gap-2">
-                {/* Tier 3 — ghost outlined */}
-                <button
+                <AppCtaButton
                   type="button"
+                  variant="secondary"
+                  size="sm"
                   onClick={() => setShowCreateCategoryModal(true)}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 px-3 py-1.5 text-xs font-semibold text-stone-200 transition hover:border-amber-400/35 hover:bg-white/5 hover:text-stone-100"
+                  className="inline-flex items-center gap-1.5"
                 >
                   <FolderPlus size={12} />
                   Kategorie erstellen
-                </button>
-                {/* Tier 1 — amber filled */}
-                <button
+                </AppCtaButton>
+                <AppCtaButton
                   type="button"
+                  size="sm"
                   onClick={() => setShowDialog(true)}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500/90 px-3 py-1.5 text-xs font-semibold text-black transition hover:bg-amber-400"
+                  className="inline-flex items-center gap-1.5"
                 >
                   <Plus size={12} />
                   Neuer Lebenslauf
-                </button>
+                </AppCtaButton>
               </div>
             </div>
           )}
@@ -747,14 +740,15 @@ export default function CvStudioOverviewPage() {
 
       {/* ── Mobile FAB ─────────────────────────────────────────────────────── */}
       <div className="fixed inset-x-4 bottom-4 z-20 sm:hidden">
-        <button
+        <AppCtaButton
           type="button"
+          size="lg"
           onClick={() => setShowDialog(true)}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500/90 px-4 py-3 text-sm font-semibold text-black shadow-lg shadow-black/35 transition hover:bg-amber-400"
+          className="w-full shadow-lg shadow-black/35"
         >
           <Plus size={16} aria-hidden />
           Neuer Lebenslauf
-        </button>
+        </AppCtaButton>
       </div>
 
       {/* ── Modals ─────────────────────────────────────────────────────────── */}

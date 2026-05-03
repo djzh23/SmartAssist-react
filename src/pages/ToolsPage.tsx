@@ -14,6 +14,7 @@ import InfoExplainerButton from '../components/ui/InfoExplainerButton'
 import type { LucideIcon } from 'lucide-react'
 import type { ToolType } from '../types'
 import PageHeader from '../components/layout/PageHeader'
+import AppCtaButton from '../components/ui/AppCtaButton'
 import StandardPageContainer from '../components/layout/StandardPageContainer'
 
 type ToolCategory = 'career' | 'general'
@@ -366,13 +367,15 @@ export default function ToolsPage() {
                   </div>
 
                   <div className="mt-auto pt-4 flex flex-col gap-2">
-                    <button
+                    <AppCtaButton
+                      type="button"
+                      size="lg"
                       onClick={() => navigate(`/chat?tool=${selected.chatParam}`)}
-                      className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-hover active:scale-[0.98]"
+                      className="w-full active:scale-[0.98]"
                     >
                       Im Chat öffnen
                       <ArrowRight size={15} />
-                    </button>
+                    </AppCtaButton>
                     <button
                       onClick={() => setSelected(null)}
                       className="inline-flex w-full items-center justify-center rounded-xl border border-stone-600/45 px-4 py-2.5 text-sm font-medium text-stone-400 transition-colors hover:border-stone-500/55 hover:text-stone-200"

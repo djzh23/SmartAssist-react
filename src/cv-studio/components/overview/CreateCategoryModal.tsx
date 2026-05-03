@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { FolderPlus, Loader2, X } from 'lucide-react'
+import AppCtaButton from '../../../components/ui/AppCtaButton'
 
 interface Props {
   onConfirm: (name: string) => Promise<void>
@@ -98,17 +99,17 @@ export default function CreateCategoryModal({ onConfirm, onClose }: Props) {
             >
               Abbrechen
             </button>
-            <button
+            <AppCtaButton
               type="button"
               disabled={busy || !name.trim()}
               onClick={() => void handleSubmit()}
-              className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-opacity hover:bg-primary-hover disabled:opacity-50"
+              className="flex items-center gap-2 disabled:opacity-50"
             >
               {busy
                 ? <Loader2 size={14} className="animate-spin" aria-hidden />
                 : <FolderPlus size={14} aria-hidden />}
               Anlegen
-            </button>
+            </AppCtaButton>
           </div>
         </div>
       </div>

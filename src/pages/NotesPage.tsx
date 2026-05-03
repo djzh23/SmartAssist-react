@@ -18,6 +18,7 @@ import StandardPageContainer from '../components/layout/StandardPageContainer'
 import { RenderedMarkdown } from '../components/chat/RenderedMarkdown'
 import { ServerSyncControl } from '../components/ui/ServerSyncControl'
 import PageHeader from '../components/layout/PageHeader'
+import AppCtaButton from '../components/ui/AppCtaButton'
 import { useAppUi } from '../context/AppUiContext'
 import { useChatNotes } from '../hooks/useChatNotes'
 import { useMediaQuery } from '../hooks/useMediaQuery'
@@ -529,14 +530,13 @@ export default function NotesPage() {
               <button type="button" onClick={closeEdit} className="rounded-lg px-4 py-2 text-sm text-stone-400 transition-colors hover:bg-white/5 hover:text-stone-200">
                 Abbrechen
               </button>
-              <button
+              <AppCtaButton
                 type="button"
                 onClick={() => void saveEdit()}
                 disabled={!editTitle.trim() || !editBody.trim() || savingEdit}
-                className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-hover disabled:opacity-50"
               >
                 {savingEdit ? 'Speichern …' : 'Speichern'}
-              </button>
+              </AppCtaButton>
             </div>
           </div>
         </div>
