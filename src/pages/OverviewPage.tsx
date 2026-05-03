@@ -155,18 +155,19 @@ export default function OverviewPage() {
         <div className="absolute -left-28 bottom-0 h-[28rem] w-[28rem] rounded-full bg-teal-500/8 blur-3xl" />
       </div>
 
-      <StandardPageContainer className="relative z-10 h-full py-4 sm:py-5 [@media(min-height:1080px)]:py-6">
+      <StandardPageContainer className="relative z-10 h-full pt-3 pb-4 sm:py-5 [@media(min-height:1080px)]:py-6">
         <PageHeader
           pageKey="overview"
           title="Übersicht"
           subtitle="Alle Kernzahlen und nächste Aktionen in einer kompakten Ansicht."
-          className="mb-6"
+          className="mb-4 sm:mb-6"
+          hideTitleOnMobile
           actions={(
             <Link
               to="/applications"
               className={appCtaButtonClasses({ size: 'sm' })}
             >
-              Zur Pipeline
+              <span className="hidden sm:inline">Zur </span>Pipeline
               <ArrowRight size={12} />
             </Link>
           )}
