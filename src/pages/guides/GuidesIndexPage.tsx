@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import {
   ArrowRight,
   Briefcase,
+  ChevronDown,
   ChevronRight,
   Clock,
   Layers,
@@ -21,7 +22,7 @@ import {
   GUIDE_CATEGORY_ORDER,
 } from '../../content/guides'
 
-// ── static config ────────────────────────────────────────────────────────────
+// ── static config ─────────────────────────────────────────────────────────────
 
 const CATEGORY_ICONS: Record<GuideCategory, LucideIcon> = {
   grundlagen: Layers,
@@ -30,55 +31,151 @@ const CATEGORY_ICONS: Record<GuideCategory, LucideIcon> = {
   interview: Mic2,
 }
 
-// Ordered flow steps shown in the sidebar
+/**
+ * Chip classes tuned for dark card backgrounds (#1e1510 range).
+ * The legacy meta.chipClass uses light backgrounds + stone-900 text — unreadable on dark.
+ */
+const DARK_CHIP: Record<GuideCategory, string> = {
+  grundlagen: 'bg-amber-500/15 text-amber-300 ring-1 ring-inset ring-amber-500/30',
+  bewerbung:  'bg-teal-500/15  text-teal-300  ring-1 ring-inset ring-teal-500/30',
+  chat:       'bg-orange-500/15 text-orange-300 ring-1 ring-inset ring-orange-500/30',
+  interview:  'bg-sky-500/15   text-sky-300   ring-1 ring-inset ring-sky-500/30',
+}
+
 const FLOW_STEPS = GUIDE_CATEGORY_ORDER.map(cat => ({
   cat,
   label: GUIDE_CATEGORY_META[cat].label,
 }))
 
-// Pinned "popular" articles by slug
 const POPULAR_SLUGS = ['app-effizienz', 'stellenanalyse-chat', 'interview-vorbereitung']
 
-// ── sub-components ────────────────────────────────────────────────────────────
+// ── inline article content ────────────────────────────────────────────────────
 
-function GuideCard({ article }: { article: GuideArticle }) {
-  const meta = GUIDE_CATEGORY_META[article.category]
+function ArticleContent({ article }: { article: GuideArticle }) {
+  return (
+    <div className="space-y-4 border-t border-white/[0.07] px-4 pb-5 pt-4">
+      {/* Intro */}
+      <p className="text-sm leading-relaxed text-stone-300">{article.intro}</p>
+
+      {/* Highlights */}
+      {article.highlights && article.highlights.length > 0 && (
+        <ul className="space-y-1.5">
+          {article.highlights.map((h, i) => (
+            <li key={i} className="flex items-start gap-2 text-xs text-stone-400">
+              <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-amber-400/60" aria-hidden />
+              {h}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {/* Steps */}
+      {article.steps?.map((step, i) => (
+        <div key={i}>
+          <p className="mb-2 text-xs font-semibold text-stone-200">{step.title}</p>
+          <ol className="space-y-1.5 pl-4">
+            {step.items.map((item, j) => (
+              <li key={j} className="list-decimal text-xs leading-relaxed text-stone-400">
+                {item}
+              </li>
+            ))}
+          </ol>
+        </div>
+      ))}
+
+      {/* Sections */}
+      {article.sections.filter(s => s.paragraphs.length > 0).map((section, i) => (
+        <div key={i}>
+          <p className="mb-1.5 text-xs font-semibold text-stone-200">{section.heading}</p>
+          {section.paragraphs.map((p, j) => (
+            <p key={j} className="text-xs leading-relaxed text-stone-400">{p}</p>
+          ))}
+        </div>
+      ))}
+
+      {/* Examples */}
+      {article.examples?.map((ex, i) => (
+        <div key={i} className="rounded-lg bg-white/[0.04] px-3 py-2.5 ring-1 ring-white/[0.06]">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-amber-400/70">{ex.label}</p>
+          <p className="mt-1 text-xs italic leading-relaxed text-stone-400">{ex.body}</p>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ── guide card (expandable inline) ───────────────────────────────────────────
+
+function GuideCard({
+  article,
+  expanded,
+  onToggle,
+}: {
+  article: GuideArticle
+  expanded: boolean
+  onToggle: () => void
+}) {
   return (
     <li>
-      <Link
-        to={`/guides/${article.slug}`}
-        className="group flex items-center gap-3 overflow-hidden rounded-xl bg-[#1e1510]/80 px-4 py-3 ring-1 ring-white/[0.07] transition hover:bg-[#251a13]/80 hover:ring-amber-400/20"
+      <div
+        className={[
+          'overflow-hidden rounded-xl ring-1 transition-all',
+          expanded
+            ? 'bg-[#251a13]/90 ring-amber-400/25'
+            : 'bg-[#1e1510]/80 ring-white/[0.07] hover:bg-[#221710]/80 hover:ring-white/[0.12]',
+        ].join(' ')}
       >
-        <div className="min-w-0 flex-1">
-          <div className="mb-1.5 flex items-center gap-2">
-            <span
+        {/* Card header — click to expand/collapse */}
+        <button
+          type="button"
+          onClick={onToggle}
+          className="flex w-full items-center gap-3 px-4 py-3 text-left"
+          aria-expanded={expanded}
+        >
+          <div className="min-w-0 flex-1">
+            <div className="mb-1.5 flex items-center gap-2">
+              <span
+                className={[
+                  'inline-flex rounded-full px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide',
+                  DARK_CHIP[article.category],
+                ].join(' ')}
+              >
+                {GUIDE_CATEGORY_META[article.category].label}
+              </span>
+              {typeof article.readingMinutes === 'number' && (
+                <span className="inline-flex items-center gap-0.5 text-[11px] text-stone-600">
+                  <Clock size={10} aria-hidden />
+                  {article.readingMinutes} Min.
+                </span>
+              )}
+            </div>
+            <p
               className={[
-                'inline-flex rounded-full px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide',
-                meta.chipClass,
+                'text-sm font-semibold leading-snug transition-colors',
+                expanded ? 'text-amber-200' : 'text-stone-100',
               ].join(' ')}
             >
-              {meta.label}
-            </span>
-            {typeof article.readingMinutes === 'number' && (
-              <span className="inline-flex items-center gap-0.5 text-[11px] text-stone-500">
-                <Clock size={10} aria-hidden />
-                {article.readingMinutes} Min.
-              </span>
+              {article.title}
+            </p>
+            {!expanded && (
+              <p className="mt-0.5 line-clamp-1 text-xs text-stone-500">
+                {article.subtitle ?? article.intro}
+              </p>
             )}
           </div>
-          <p className="text-sm font-semibold leading-snug text-stone-100 transition-colors group-hover:text-amber-200">
-            {article.title}
-          </p>
-          <p className="mt-0.5 line-clamp-1 text-xs text-stone-500">
-            {article.subtitle ?? article.intro}
-          </p>
-        </div>
-        <ChevronRight
-          size={15}
-          className="shrink-0 text-stone-600 transition group-hover:translate-x-0.5 group-hover:text-amber-400"
-          aria-hidden
-        />
-      </Link>
+          <ChevronDown
+            size={15}
+            className={[
+              'shrink-0 text-stone-500 transition-transform',
+              expanded ? 'rotate-180 text-amber-400/70' : '',
+            ].join(' ')}
+            aria-hidden
+          />
+        </button>
+
+        {/* Expanded content */}
+        {expanded && <ArticleContent article={article} />}
+      </div>
     </li>
   )
 }
@@ -86,8 +183,41 @@ function GuideCard({ article }: { article: GuideArticle }) {
 // ── page ─────────────────────────────────────────────────────────────────────
 
 export default function GuidesIndexPage() {
-  const [activeTab, setActiveTab] = useState<GuideCategory>('grundlagen')
+  // Tab state persisted in URL so the browser back button restores the same tab
+  const [searchParams, setSearchParams] = useSearchParams()
+  const activeTab = useMemo((): GuideCategory => {
+    const p = searchParams.get('tab') as GuideCategory
+    return GUIDE_CATEGORY_ORDER.includes(p) ? p : 'grundlagen'
+  }, [searchParams])
+
   const [searchQuery, setSearchQuery] = useState('')
+  // Only one card expanded at a time; reset when tab changes
+  const [expandedSlug, setExpandedSlug] = useState<string | null>(null)
+
+  function handleSetTab(cat: GuideCategory) {
+    setExpandedSlug(null)
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev)
+      next.set('tab', cat)
+      return next
+    })
+  }
+
+  function handleToggle(slug: string) {
+    setExpandedSlug(prev => (prev === slug ? null : slug))
+  }
+
+  // Expand a popular-guide from the sidebar (may switch tab)
+  function handleOpenPopular(article: GuideArticle) {
+    if (article.category !== activeTab) {
+      setSearchParams(prev => {
+        const next = new URLSearchParams(prev)
+        next.set('tab', article.category)
+        return next
+      })
+    }
+    setExpandedSlug(article.slug)
+  }
 
   const isSearching = searchQuery.trim().length > 0
   const q = searchQuery.toLowerCase().trim()
@@ -109,9 +239,9 @@ export default function GuidesIndexPage() {
 
   const popularGuides = useMemo(
     () =>
-      POPULAR_SLUGS.map(slug => GUIDE_ARTICLES.find(a => a.slug === slug)).filter(
-        (a): a is GuideArticle => Boolean(a),
-      ),
+      POPULAR_SLUGS
+        .map(slug => GUIDE_ARTICLES.find(a => a.slug === slug))
+        .filter((a): a is GuideArticle => Boolean(a)),
     [],
   )
 
@@ -128,7 +258,7 @@ export default function GuidesIndexPage() {
     <div className="min-h-0 flex-1 overflow-y-auto bg-transparent">
       <StandardPageContainer className="pt-3 pb-8 sm:py-6">
 
-        {/* ── Header ────────────────────────────────────────────────────────── */}
+        {/* ── Header ───────────────────────────────────────────────────────── */}
         <PageHeader
           pageKey="guides"
           subtitle="Kurze Anleitungen, damit du BetweenAtna effizient nutzt."
@@ -136,7 +266,7 @@ export default function GuidesIndexPage() {
           hideTitleOnMobile
         />
 
-        {/* ── Search + chips ─────────────────────────────────────────────────── */}
+        {/* ── Search + chips ───────────────────────────────────────────────── */}
         <div className="mb-5 space-y-3">
           {/* Search row */}
           <div className="flex gap-2">
@@ -146,12 +276,12 @@ export default function GuidesIndexPage() {
                 aria-hidden
               />
               <input
-                type="search"
+                type="text"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 placeholder="Wonach suchst du?"
                 aria-label="Ratgeber durchsuchen"
-                className="w-full rounded-xl bg-[#1b120d]/78 py-2.5 pl-9 pr-9 text-sm text-stone-100 placeholder:text-stone-500 ring-1 ring-white/[0.07] transition focus:outline-none focus:ring-amber-400/35"
+                className="w-full rounded-xl bg-[#1e1510] py-2.5 pl-9 pr-9 text-sm text-stone-100 placeholder:text-stone-500 ring-1 ring-white/[0.09] transition focus:outline-none focus:ring-amber-400/35"
               />
               {searchQuery && (
                 <button
@@ -173,7 +303,7 @@ export default function GuidesIndexPage() {
             </Link>
           </div>
 
-          {/* Category chips — hidden when searching */}
+          {/* Category chips — hidden while searching */}
           {!isSearching && (
             <div
               className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-hide"
@@ -189,7 +319,7 @@ export default function GuidesIndexPage() {
                     type="button"
                     role="tab"
                     aria-selected={isActive}
-                    onClick={() => setActiveTab(cat)}
+                    onClick={() => handleSetTab(cat)}
                     className={[
                       'inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition',
                       isActive
@@ -206,7 +336,7 @@ export default function GuidesIndexPage() {
           )}
         </div>
 
-        {/* ── Search results ─────────────────────────────────────────────────── */}
+        {/* ── Search results ───────────────────────────────────────────────── */}
         {isSearching ? (
           <div>
             <p className="mb-3 text-xs font-semibold uppercase tracking-[0.15em] text-stone-500">
@@ -229,16 +359,21 @@ export default function GuidesIndexPage() {
             ) : (
               <ul className="space-y-2">
                 {searchResults.map(article => (
-                  <GuideCard key={article.slug} article={article} />
+                  <GuideCard
+                    key={article.slug}
+                    article={article}
+                    expanded={expandedSlug === article.slug}
+                    onToggle={() => handleToggle(article.slug)}
+                  />
                 ))}
               </ul>
             )}
           </div>
         ) : (
-          /* ── Topic content ─────────────────────────────────────────────────── */
+          /* ── Topic content ─────────────────────────────────────────────── */
           <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_256px] lg:gap-5">
 
-            {/* Left: topic intro + article list */}
+            {/* Left: intro + guide cards */}
             <div className="min-w-0" role="tabpanel">
               {/* Topic intro strip */}
               <div className="mb-4 flex items-start gap-3 rounded-xl bg-[#1b120d]/78 px-4 py-3 ring-1 ring-white/[0.07]">
@@ -253,10 +388,14 @@ export default function GuidesIndexPage() {
                 </div>
               </div>
 
-              {/* Guide cards */}
               <ul className="space-y-2">
                 {activeArticles.map(article => (
-                  <GuideCard key={article.slug} article={article} />
+                  <GuideCard
+                    key={article.slug}
+                    article={article}
+                    expanded={expandedSlug === article.slug}
+                    onToggle={() => handleToggle(article.slug)}
+                  />
                 ))}
               </ul>
 
@@ -272,7 +411,7 @@ export default function GuidesIndexPage() {
               </div>
             </div>
 
-            {/* Right: sidebar — desktop only ─────────────────────────────── */}
+            {/* Right: sidebar — desktop only ──────────────────────────────── */}
             <aside className="hidden lg:flex lg:flex-col lg:gap-3">
 
               {/* Recommended flow */}
@@ -288,7 +427,7 @@ export default function GuidesIndexPage() {
                       <button
                         key={step.cat}
                         type="button"
-                        onClick={() => setActiveTab(step.cat)}
+                        onClick={() => handleSetTab(step.cat)}
                         className={[
                           'flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs font-medium transition',
                           isActive
@@ -312,32 +451,43 @@ export default function GuidesIndexPage() {
                 </div>
               </div>
 
-              {/* Popular guides */}
+              {/* Popular guides — click expands inline, may switch tab */}
               <div className="rounded-xl bg-[#1b120d]/78 px-4 py-4 ring-1 ring-white/[0.07]">
                 <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.16em] text-stone-500">
                   Häufig gebraucht
                 </p>
                 <ul className="space-y-1.5">
                   {popularGuides.map(article => {
-                    const meta = GUIDE_CATEGORY_META[article.category]
+                    const isOpen = expandedSlug === article.slug
                     return (
                       <li key={article.slug}>
-                        <Link
-                          to={`/guides/${article.slug}`}
-                          className="group flex items-start gap-2 rounded-lg px-1.5 py-1.5 transition hover:bg-white/5"
+                        <button
+                          type="button"
+                          onClick={() => handleOpenPopular(article)}
+                          className="group flex w-full items-start gap-2 rounded-lg px-1.5 py-1.5 text-left transition hover:bg-white/5"
                         >
                           <ChevronRight
                             size={12}
-                            className="mt-0.5 shrink-0 text-stone-700 transition group-hover:text-amber-400"
+                            className={[
+                              'mt-0.5 shrink-0 transition',
+                              isOpen ? 'text-amber-400' : 'text-stone-700 group-hover:text-amber-400',
+                            ].join(' ')}
                             aria-hidden
                           />
                           <div className="min-w-0 flex-1">
-                            <p className="line-clamp-2 text-xs font-medium leading-snug text-stone-400 transition group-hover:text-stone-200">
+                            <p
+                              className={[
+                                'line-clamp-2 text-xs font-medium leading-snug transition',
+                                isOpen ? 'text-amber-200' : 'text-stone-400 group-hover:text-stone-200',
+                              ].join(' ')}
+                            >
                               {article.title}
                             </p>
-                            <p className="mt-0.5 text-[10px] text-stone-700">{meta.label}</p>
+                            <p className="mt-0.5 text-[10px] text-stone-700">
+                              {GUIDE_CATEGORY_META[article.category].label}
+                            </p>
                           </div>
-                        </Link>
+                        </button>
                       </li>
                     )
                   })}
@@ -351,7 +501,7 @@ export default function GuidesIndexPage() {
                 </p>
                 <button
                   type="button"
-                  onClick={() => setActiveTab(nextCat)}
+                  onClick={() => handleSetTab(nextCat)}
                   className="group flex w-full items-center gap-2 rounded-lg py-0.5 text-left text-xs font-medium text-stone-500 transition hover:text-amber-300"
                 >
                   <ArrowRight
