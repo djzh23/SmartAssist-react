@@ -5,13 +5,11 @@ import {
   FolderOpen,
   LayoutDashboard,
   NotebookPen,
-  Wrench,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
 export type MainNavPageKey =
   | 'overview'
-  | 'tools'
   | 'careerProfile'
   | 'applications'
   | 'cvStudio'
@@ -35,14 +33,6 @@ export const MAIN_NAV_ITEMS: MainNavItemMeta[] = [
     subtitle: 'Zentrale Kennzahlen und Fokus für deinen nächsten Schritt.',
     icon: LayoutDashboard,
     matchesPath: pathname => pathname === '/overview',
-  },
-  {
-    key: 'tools',
-    route: '/tools',
-    label: 'Tools',
-    subtitle: 'Spezialisierte Assistenten für Analyse, Coaching und Praxis.',
-    icon: Wrench,
-    matchesPath: pathname => pathname === '/tools',
   },
   {
     key: 'careerProfile',

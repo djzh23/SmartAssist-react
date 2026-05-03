@@ -339,7 +339,7 @@ function LandingNav() {
         </div>
 
         <div className="flex flex-shrink-0 items-center gap-1.5 sm:gap-2">
-          <SignInButton mode="modal" fallbackRedirectUrl="/tools">
+          <SignInButton mode="modal" fallbackRedirectUrl="/overview">
             <button
               type="button"
               className="hidden min-h-[40px] rounded-full border border-amber-800/45 bg-white/[0.06] px-3.5 py-2 text-xs font-medium text-stone-100 shadow-sm transition-all duration-200 hover:border-amber-600/50 hover:bg-amber-950/35 hover:shadow-md active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/55 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent sm:inline-flex sm:px-4 sm:text-sm"
@@ -347,7 +347,7 @@ function LandingNav() {
               Anmelden
             </button>
           </SignInButton>
-          <SignUpButton mode="modal" fallbackRedirectUrl="/tools">
+          <SignUpButton mode="modal" fallbackRedirectUrl="/overview">
             <button
               type="button"
               className="inline-flex min-h-[40px] max-w-[calc(100vw-8rem)] items-center justify-center truncate rounded-full bg-gradient-to-r from-amber-400 to-amber-500 px-3 py-2 text-[11px] font-bold text-amber-950 shadow-lg shadow-black/30 ring-1 ring-amber-300/40 transition-all duration-200 hover:from-amber-300 hover:to-amber-400 hover:shadow-xl active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/80 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent sm:px-5 sm:text-sm"
@@ -392,7 +392,7 @@ function LandingNav() {
               <ChevronRight className="h-4 w-4 shrink-0 text-stone-500 transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-amber-400" aria-hidden />
             </button>
             <div className="my-1 border-t border-white/10" />
-            <SignInButton mode="modal" fallbackRedirectUrl="/tools">
+            <SignInButton mode="modal" fallbackRedirectUrl="/overview">
               <button
                 type="button"
                 className="w-full rounded-xl border border-white/18 bg-white/6 px-4 py-3 text-left text-sm font-medium text-stone-100 transition-all duration-200 hover:border-amber-400/35 hover:bg-white/10 hover:shadow-sm active:bg-white/12 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/45 focus-visible:ring-offset-2 focus-visible:ring-offset-[#1a1208]"
@@ -637,7 +637,7 @@ function HeroSection() {
           </p>
 
           <div className="mb-8 flex flex-col gap-4 sm:mb-7 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
-            <SignUpButton mode="modal" fallbackRedirectUrl="/tools">
+            <SignUpButton mode="modal" fallbackRedirectUrl="/overview">
               <button
                 type="button"
                 className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-amber-400 to-amber-500 px-7 text-base font-bold text-amber-950 shadow-lg shadow-black/35 ring-1 ring-inset ring-white/20 transition-all hover:scale-[1.02] hover:from-amber-300 hover:to-amber-400 hover:shadow-xl sm:w-auto sm:justify-start"
@@ -1368,14 +1368,14 @@ function LiveDemoSection() {
               <p className="mb-5 text-sm leading-relaxed text-stone-400">
                 Kostenlos registrieren: täglich 20 Nachrichten, alle Werkzeuge, Verlauf im Browser.
               </p>
-              <SignUpButton mode="modal" fallbackRedirectUrl="/tools">
+              <SignUpButton mode="modal" fallbackRedirectUrl="/overview">
                 <button className="mb-3 w-full rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-hover sm:w-auto">
                   Kostenlos registrieren: 20 Nachrichten pro Tag
                 </button>
               </SignUpButton>
               <p className="text-xs text-stone-600">
                 Bereits Konto?{' '}
-                <SignInButton mode="modal" fallbackRedirectUrl="/tools">
+                <SignInButton mode="modal" fallbackRedirectUrl="/overview">
                   <button type="button" className="font-medium text-amber-400 hover:underline">
                     Anmelden
                   </button>
@@ -1405,7 +1405,7 @@ function LiveDemoSection() {
                 ))}
               </div>
               <div className="mt-3 text-center">
-                <SignUpButton mode="modal" fallbackRedirectUrl="/tools">
+                <SignUpButton mode="modal" fallbackRedirectUrl="/overview">
                   <button className="text-xs font-medium text-amber-400 hover:underline">
                     Oder direkt registrieren →
                   </button>
@@ -1872,7 +1872,7 @@ function PricingPreviewSection() {
               </div>
               <div className="px-5 pb-5">
                 {plan.useSignUp ? (
-                  <SignUpButton mode="modal" fallbackRedirectUrl="/tools">
+                  <SignUpButton mode="modal" fallbackRedirectUrl="/overview">
                     <button className={`w-full rounded-xl px-4 py-3 min-h-[48px] text-base font-semibold transition-all sm:text-sm ${plan.ctaClass}`}>{plan.cta}</button>
                   </SignUpButton>
                 ) : (
@@ -1953,7 +1953,7 @@ function FinalCtaSection() {
             <p className="mb-10 max-w-[480px] text-lg text-stone-400">
               Mach mit bei Menschen, die ihre Bewerbungen bewusst vorbereiten und nicht nur aufs Glück hoffen.
             </p>
-            <SignUpButton mode="modal" fallbackRedirectUrl="/tools">
+            <SignUpButton mode="modal" fallbackRedirectUrl="/overview">
               <button className="rounded-2xl bg-gradient-to-r from-amber-400 to-amber-500 px-10 py-4 text-base font-bold text-amber-950 shadow-2xl shadow-black/50 transition-all hover:scale-[1.02] hover:from-amber-300 hover:to-amber-400">
                 Kostenlos starten →
               </button>
@@ -2025,7 +2025,7 @@ export default function LandingPage() {
 
   useEffect(() => {
     if (isLoaded && isSignedIn) {
-      navigate('/tools', { replace: true })
+      navigate('/overview', { replace: true })
     }
   }, [isLoaded, isSignedIn, navigate])
 

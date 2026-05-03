@@ -241,7 +241,7 @@ export default function TopNavBar({ onMenuClick, menuOpen }: Props) {
             <NavLink
               key={item.key}
               to={item.route}
-              end={item.route === '/overview' || item.route === '/tools'}
+              end={item.route === '/overview'}
               className={() => navClass(item.matchesPath(location.pathname))}
             >
               <span className="inline-flex items-center gap-1.5">

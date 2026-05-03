@@ -7,7 +7,6 @@ import MainLayout from './components/layout/MainLayout'
 import LoadingScreen from './components/LoadingScreen'
 import LandingPage from './pages/LandingPage'
 const ChatPage = lazy(() => import('./pages/ChatPage'))
-const ToolsPage = lazy(() => import('./pages/ToolsPage'))
 const ProfilePage = lazy(() => import('./pages/ProfilePage'))
 const OnboardingPage = lazy(() => import('./pages/OnboardingPage'))
 
@@ -90,14 +89,6 @@ function AppRoutes() {
           element={(
             <Suspense fallback={<RouteFallback />}>
               <ChatPage />
-            </Suspense>
-          )}
-        />
-        <Route
-          path="/tools"
-          element={(
-            <Suspense fallback={<RouteFallback />}>
-              <ToolsPage />
             </Suspense>
           )}
         />
