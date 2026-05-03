@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import AppCtaButton from '../ui/AppCtaButton'
 import type { ChangeEvent } from 'react'
 import {
   Briefcase,
@@ -391,19 +392,12 @@ export default function InterviewSetupModal({
 
         {/* Footer */}
         <div className="flex gap-2 border-t border-slate-200 px-5 py-4">
-          <button
-            onClick={onClose}
-            className="flex-1 rounded-lg border border-slate-200 py-2.5 text-sm text-slate-600 hover:border-slate-300"
-          >
+          <AppCtaButton variant="ghost" onClick={onClose} className="flex-1">
             Abbrechen
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={isBusy}
-            className="flex-1 rounded-lg bg-primary py-2.5 text-sm font-semibold text-white hover:bg-primary-hover disabled:opacity-60"
-          >
+          </AppCtaButton>
+          <AppCtaButton loading={isBusy} onClick={handleSave} className="flex-1">
             Für diesen Chat speichern
-          </button>
+          </AppCtaButton>
         </div>
       </div>
     </div>

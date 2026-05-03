@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Loader2, X } from 'lucide-react'
+import AppCtaButton from '../../../components/ui/AppCtaButton'
 import type { JobApplicationApi } from '../../../api/client'
 
 export interface LinkModalResult {
@@ -239,15 +240,13 @@ export default function CvLinkApplicationModal({
                 Verknüpfung aufheben
               </button>
             )}
-            <button
-              type="button"
-              disabled={isBusy}
+            <AppCtaButton
+              loading={isBusy}
               onClick={() => void handleConfirm()}
-              className="ml-auto flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover disabled:opacity-40"
+              className="ml-auto"
             >
-              {isBusy && <Loader2 size={15} className="animate-spin" aria-hidden />}
               Speichern
-            </button>
+            </AppCtaButton>
           </div>
         </div>
       </div>

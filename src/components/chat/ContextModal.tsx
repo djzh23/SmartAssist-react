@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAuth, useUser } from '@clerk/clerk-react'
 import { ChevronLeft, ChevronRight, FileText, Link2 } from 'lucide-react'
+import AppCtaButton from '../ui/AppCtaButton'
 import { fetchJobPreview, UsageLimitError } from '../../api/client'
 import { PROGRAMMING_LANGUAGES } from '../../types'
 import { sanitizeTechnicalContext } from '../../utils/cvTechnicalContext'
@@ -511,14 +512,13 @@ export default function ContextModal({
               type="url"
               inputMode="url"
             />
-            <button
-              type="button"
-              className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover disabled:opacity-50"
+            <AppCtaButton
+              size="sm"
               onClick={() => void loadJobPreview()}
               disabled={previewLoading}
             >
               {previewLoading ? 'Lade…' : 'Stelle laden'}
-            </button>
+            </AppCtaButton>
           </div>
           <p className="modal-hint text-slate-600">
             Bei Bot-Schutz oder Fehlern: Tab „Text einfügen“ und die komplette Anzeige kopieren.
@@ -605,19 +605,18 @@ export default function ContextModal({
 
   const stepNavRow = (opts: { step1Ok: boolean }) => (
     <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3">
-      <button
-        type="button"
-        className="btn-ghost inline-flex items-center gap-1"
+      <AppCtaButton
+        variant="ghost"
+        size="sm"
         disabled={wizardStep === 1}
         onClick={() => setWizardStep(s => (s > 1 ? (s - 1) as 1 | 2 | 3 : s))}
       >
         <ChevronLeft size={16} aria-hidden />
         Zurück
-      </button>
+      </AppCtaButton>
       {wizardStep < 3 && (
-        <button
-          type="button"
-          className="btn-primary inline-flex items-center gap-1"
+        <AppCtaButton
+          size="sm"
           disabled={(wizardStep === 1 && !opts.step1Ok) || (wizardStep === 2 && !canAdvanceStep2)}
           onClick={() => {
             if (wizardStep === 1 && !opts.step1Ok) return
@@ -626,7 +625,7 @@ export default function ContextModal({
         >
           Weiter
           <ChevronRight size={16} aria-hidden />
-        </button>
+        </AppCtaButton>
       )}
     </div>
   )
@@ -664,26 +663,25 @@ export default function ContextModal({
             {wizardStep < 3 && stepNavRow({ step1Ok: canAdvanceStep1Interview })}
 
             <div className="modal-actions mt-2 flex-wrap gap-2">
-              <button onClick={onClose} className="btn-ghost">
+              <AppCtaButton variant="ghost" size="sm" onClick={onClose}>
                 Später
-              </button>
-              <button
-                type="button"
+              </AppCtaButton>
+              <AppCtaButton
+                variant="ghost"
+                size="sm"
                 onClick={() => void submitInterviewGeneralCoaching()}
-                className="btn-ghost"
                 disabled={loading}
               >
                 Allgemeines Coaching
-              </button>
-              <button
+              </AppCtaButton>
+              <AppCtaButton
+                size="sm"
+                loading={loading}
                 onClick={() => void submitContext()}
-                className="btn-primary"
-                disabled={
-                  loading || !trimmedJobTitle || wizardStep !== 3
-                }
+                disabled={!trimmedJobTitle || wizardStep !== 3}
               >
-                {loading ? 'Wird vorbereitet…' : 'Mit Stelle starten'}
-              </button>
+                Mit Stelle starten
+              </AppCtaButton>
             </div>
           </div>
         </div>
@@ -722,24 +720,25 @@ export default function ContextModal({
             {wizardStep < 3 && stepNavRow({ step1Ok: canAdvanceStep1Analyzer })}
 
             <div className="modal-actions mt-2 flex-wrap gap-2">
-              <button onClick={onClose} className="btn-ghost">
+              <AppCtaButton variant="ghost" size="sm" onClick={onClose}>
                 Überspringen
-              </button>
-              <button
-                type="button"
+              </AppCtaButton>
+              <AppCtaButton
+                variant="ghost"
+                size="sm"
                 onClick={() => void submitJobGeneralCoaching()}
-                className="btn-ghost"
                 disabled={loading}
               >
                 Allgemeines Coaching
-              </button>
-              <button
+              </AppCtaButton>
+              <AppCtaButton
+                size="sm"
+                loading={loading}
                 onClick={() => void submitContext()}
-                disabled={!trimmedJobText || loading || wizardStep !== 3}
-                className="btn-primary"
+                disabled={!trimmedJobText || wizardStep !== 3}
               >
-                {loading ? 'Analyse läuft…' : 'Analyse starten'}
-              </button>
+                Analyse starten
+              </AppCtaButton>
             </div>
           </div>
         </div>
@@ -777,10 +776,12 @@ export default function ContextModal({
             {error && <p className="modal-error">{error}</p>}
 
             <div className="modal-actions">
-              <button onClick={onClose} className="btn-ghost">
+              <AppCtaButton variant="ghost" size="sm" onClick={onClose}>
                 Überspringen
-              </button>
-              <button
+              </AppCtaButton>
+              <AppCtaButton
+                size="sm"
+                loading={loading}
                 onClick={() => void persistAndComplete({
                   cvText: '',
                   jobText: '',
@@ -793,11 +794,10 @@ export default function ContextModal({
                   extraProjects: '',
                   extraExperienceNotes: '',
                 })}
-                disabled={!programmingLanguageId.trim() || loading}
-                className="btn-primary"
+                disabled={!programmingLanguageId.trim()}
               >
-                {loading ? 'Wird vorbereitet...' : 'Coding starten'}
-              </button>
+                Coding starten
+              </AppCtaButton>
             </div>
           </div>
         </div>

@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import AppCtaButton from '../components/ui/AppCtaButton'
 import {
   ArrowRight,
   BrainCircuit,
@@ -128,13 +129,14 @@ export default function HomePage() {
             })}
           </div>
 
-          <button
+          <AppCtaButton
+            size="lg"
             onClick={() => navigate('/chat?tool=interviewprep')}
-            className="relative mt-6 inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-hover"
+            className="relative mt-6"
           >
             Jetzt starten
             <ArrowRight size={16} />
-          </button>
+          </AppCtaButton>
         </div>
 
         <div className="mb-8">

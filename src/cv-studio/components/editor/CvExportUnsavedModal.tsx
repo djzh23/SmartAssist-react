@@ -1,4 +1,5 @@
 import { X } from 'lucide-react'
+import AppCtaButton from '../../../components/ui/AppCtaButton'
 
 interface CvExportUnsavedModalProps {
   onSaveFirst: () => void
@@ -38,20 +39,12 @@ export default function CvExportUnsavedModal({
             (nach ausstehendem Auto-Save)?
           </p>
           <div className="mt-5 flex flex-col gap-2">
-            <button
-              type="button"
-              onClick={onSaveFirst}
-              className="rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-hover"
-            >
+            <AppCtaButton onClick={onSaveFirst}>
               Snapshot speichern …
-            </button>
-            <button
-              type="button"
-              onClick={onExportWithoutSnapshot}
-              className="rounded-lg border border-white/15 px-4 py-2.5 text-sm font-medium text-stone-200 hover:bg-white/5"
-            >
+            </AppCtaButton>
+            <AppCtaButton variant="secondary" onClick={onExportWithoutSnapshot}>
               Ohne neuen Snapshot exportieren
-            </button>
+            </AppCtaButton>
             <button
               type="button"
               onClick={onDismiss}

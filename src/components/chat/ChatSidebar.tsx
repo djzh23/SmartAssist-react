@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Briefcase, Check, Code2, Globe2, GripVertical, Loader2, MessageCircle, Pencil, Plus, Target, Trash2, X } from 'lucide-react'
+import AppCtaButton from '../ui/AppCtaButton'
 import { ServerSyncControl } from '../ui/ServerSyncControl'
 import type { LucideIcon } from 'lucide-react'
 import type { ChatSession, ToolType } from '../../types'
@@ -166,13 +167,10 @@ export default function ChatSidebar({
         ].join(' ')}
       >
         <div className="flex flex-shrink-0 items-center justify-between px-3 pb-1 pt-3">
-          <button
-            onClick={onNew}
-            className="flex flex-1 items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-hover"
-          >
+          <AppCtaButton size="sm" onClick={onNew} className="flex-1">
             <Plus size={15} />
             Neues Gespräch
-          </button>
+          </AppCtaButton>
 
           <button
             onClick={onClose}

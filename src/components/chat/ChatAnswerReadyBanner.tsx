@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { MessageCircle, X } from 'lucide-react'
+import AppCtaButton from '../ui/AppCtaButton'
 import { useChatSessions, TOOL_TO_QUERY } from '../../hooks/useChatSessions'
 
 const TOOL_LABEL: Record<string, string> = {
@@ -30,18 +31,17 @@ export default function ChatAnswerReadyBanner() {
           </div>
         </div>
         <div className="flex w-full flex-shrink-0 items-center gap-2 sm:w-auto">
-          <button
-            type="button"
+          <AppCtaButton
+            size="sm"
             onClick={() => {
               const q = TOOL_TO_QUERY[answerReadyToast.toolType]
               navigate(`/chat?tool=${encodeURIComponent(q)}`)
               setActiveSession(answerReadyToast.sessionId)
               dismissAnswerToast()
             }}
-            className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-primary-hover"
           >
             Zum Gespräch
-          </button>
+          </AppCtaButton>
           <button
             type="button"
             onClick={dismissAnswerToast}

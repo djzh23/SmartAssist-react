@@ -1,5 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react'
 import { AlertTriangle } from 'lucide-react'
+import AppCtaButton from './ui/AppCtaButton'
 import { IconHubIcon } from './ui/IconHubIcon'
 
 type Props = { children: ReactNode }
@@ -42,13 +43,9 @@ export class AppErrorBoundary extends Component<Props, State> {
                 {this.state.message}
               </p>
             ) : null}
-            <button
-              type="button"
-              onClick={() => window.location.reload()}
-              className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition hover:opacity-90"
-            >
+            <AppCtaButton onClick={() => window.location.reload()}>
               Neu laden
-            </button>
+            </AppCtaButton>
           </div>
         </div>
       )

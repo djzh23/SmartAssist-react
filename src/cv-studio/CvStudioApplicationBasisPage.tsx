@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '@clerk/clerk-react'
 import { ArrowLeft, Briefcase, CheckCircle2, FileText, Loader2, Sparkles } from 'lucide-react'
+import AppCtaButton from '../components/ui/AppCtaButton'
 import InfoExplainerButton from '../components/ui/InfoExplainerButton'
 import {
   createCvStudioResume,
@@ -216,14 +217,13 @@ export default function CvStudioApplicationBasisPage() {
                       <p className="font-medium text-white">{r.title}</p>
                       <p className="mt-1 text-xs text-stone-500">Mit dieser Bewerbung verknüpft.</p>
                     </div>
-                    <button
-                      type="button"
+                    <AppCtaButton
                       disabled={creating}
                       onClick={() => navigate(`/cv-studio/edit/${encodeURIComponent(r.id)}`, { replace: true })}
-                      className="shrink-0 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-hover disabled:opacity-50"
+                      className="shrink-0"
                     >
                       CV öffnen
-                    </button>
+                    </AppCtaButton>
                   </li>
                 ))}
               </ul>
@@ -270,14 +270,14 @@ export default function CvStudioApplicationBasisPage() {
                         ? [r.targetCompany, r.targetRole].filter(Boolean).join(' - ')
                         : 'Kein Kontext'}
                     </p>
-                    <button
-                      type="button"
+                    <AppCtaButton
+                      size="sm"
                       disabled={creating}
                       onClick={() => void onPickExisting(r.id)}
-                      className="mt-3 w-full rounded-lg bg-primary py-2 text-xs font-semibold text-white hover:bg-primary-hover disabled:opacity-50"
+                      className="mt-3 w-full"
                     >
                       {creating ? 'Wird angelegt…' : 'Als Basis verwenden'}
-                    </button>
+                    </AppCtaButton>
                   </li>
                 ))}
               </ul>

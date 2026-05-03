@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ClipboardList, Loader2, X } from 'lucide-react'
+import AppCtaButton from '../ui/AppCtaButton'
 
 /** Session only: user closed modal to try chat without entering data (not the same as API skip). */
 export const ONBOARDING_CHAT_PROMPT_DISMISS_KEY = 'privateprep_onboarding_chat_prompt_dismissed'
@@ -101,14 +102,13 @@ export default function OnboardingPromptModal({
         )}
 
         <div className="flex flex-col gap-2 border-t border-slate-100 bg-slate-50/80 px-5 py-4">
-          <button
-            type="button"
+          <AppCtaButton
             onClick={handleSetup}
             disabled={skipBusy}
-            className="w-full rounded-xl bg-primary py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-50"
+            className="w-full"
           >
             Jetzt einrichten (3 kurze Schritte)
-          </button>
+          </AppCtaButton>
           <button
             type="button"
             onClick={() => void handleSkip()}

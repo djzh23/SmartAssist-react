@@ -47,6 +47,7 @@ import { useCvStudioResumeEditor } from './hooks/useCvStudioResumeEditor'
 import { downloadBlob, notify } from './lib/cvStudio'
 import { CV_MAIN_SECTION_LABELS, normalizeContentSectionOrder, type CvMainSectionKey } from './lib/cvStudioSectionOrder'
 import { buildCvExportStem, formatRelativeTimeDe } from './lib/cvStudioPhase3'
+import AppCtaButton from '../components/ui/AppCtaButton'
 import type { LanguageItemData, PdfDesign, SkillGroupData, WorkItemData } from './cvTypes'
 
 const field =
@@ -518,24 +519,23 @@ export default function CvStudioEditorPage() {
           </div>
 
           <div className="flex flex-shrink-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
-            <button
-              type="button"
+            <AppCtaButton
+              size="sm"
               disabled={busy}
               title="Speichert den aktuellen Stand als nummerierte Version - ein manueller Sicherungspunkt, jederzeit wiederherstellbar."
               onClick={() => setShowSaveModal(true)}
-              className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white hover:bg-primary-hover disabled:opacity-50 sm:text-sm"
             >
               <Save size={14} aria-hidden />
               Version speichern
-            </button>
-            <button
-              type="button"
+            </AppCtaButton>
+            <AppCtaButton
+              variant="secondary"
+              size="sm"
               onClick={() => void openLinkModal()}
-              className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-white/15 px-3 py-2 text-xs text-stone-200 hover:bg-white/5 sm:text-sm"
             >
               <Link2 size={14} aria-hidden />
               {contextLabel ? 'Kontext ändern' : 'Mit Bewerbung verknüpfen'}
-            </button>
+            </AppCtaButton>
             <button
               type="button"
               onClick={() => {
@@ -579,15 +579,13 @@ export default function CvStudioEditorPage() {
               >
                 Abbrechen
               </button>
-              <button
-                type="button"
-                disabled={notesSaving}
+              <AppCtaButton
+                size="sm"
+                loading={notesSaving}
                 onClick={() => void handleSaveNotes()}
-                className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary-hover disabled:opacity-40"
               >
-                {notesSaving && <Loader2 size={13} className="animate-spin" aria-hidden />}
                 Speichern
-              </button>
+              </AppCtaButton>
             </div>
           </div>
         )}
@@ -644,26 +642,27 @@ export default function CvStudioEditorPage() {
             </div>
             <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
               <span className="sr-only">Herunterladen</span>
-              <button
-                type="button"
+              <AppCtaButton
+                size="lg"
                 disabled={busy}
                 title="Lebenslauf als PDF speichern"
                 onClick={() => void exportPdf(null)}
-                className="inline-flex min-h-[40px] flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary-hover disabled:opacity-50 sm:flex-initial sm:min-w-[9.5rem]"
+                className="flex-1 shadow-sm sm:flex-initial sm:min-w-[9.5rem]"
               >
                 <Download size={16} aria-hidden />
                 PDF herunterladen
-              </button>
-              <button
-                type="button"
+              </AppCtaButton>
+              <AppCtaButton
+                variant="secondary"
+                size="lg"
                 disabled={busy}
                 title="Lebenslauf als Word-Datei speichern"
                 onClick={() => void exportDocx(null)}
-                className="inline-flex min-h-[40px] flex-1 items-center justify-center gap-2 rounded-lg border border-white/20 bg-white/[0.06] px-4 py-2.5 text-sm font-semibold text-stone-100 hover:bg-white/10 disabled:opacity-50 sm:flex-initial sm:min-w-[9.5rem]"
+                className="flex-1 sm:flex-initial sm:min-w-[9.5rem]"
               >
                 <FileText size={16} aria-hidden />
                 Word (.docx)
-              </button>
+              </AppCtaButton>
             </div>
             <button
               type="button"

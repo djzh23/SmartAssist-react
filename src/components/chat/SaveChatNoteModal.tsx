@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { BookmarkPlus, X } from 'lucide-react'
+import AppCtaButton from '../ui/AppCtaButton'
 
 interface Props {
   isOpen: boolean
@@ -160,22 +161,20 @@ export default function SaveChatNoteModal({
         </div>
 
         <div className="flex justify-end gap-2">
-          <button
-            type="button"
+          <AppCtaButton
+            variant="ghost"
             onClick={onClose}
             disabled={isSaving}
-            className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
           >
             Abbrechen
-          </button>
-          <button
-            type="button"
+          </AppCtaButton>
+          <AppCtaButton
             onClick={() => void handleSave()}
-            disabled={!title.trim() || !body.trim() || isSaving}
-            className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={!title.trim() || !body.trim()}
+            loading={isSaving}
           >
             {isSaving ? 'Speichern …' : 'Speichern'}
-          </button>
+          </AppCtaButton>
         </div>
       </div>
     </div>
