@@ -147,7 +147,7 @@ export default function ApplicationsPage() {
           actions={(
             <Link
               to="/applications/new"
-              className={appCtaButtonClasses({ className: 'shadow-md' })}
+              className={appCtaButtonClasses({ size: 'sm', className: 'shadow-md' })}
             >
               <Plus size={16} strokeWidth={2.5} />
               <span className="hidden sm:inline">Neue </span>Bewerbung
