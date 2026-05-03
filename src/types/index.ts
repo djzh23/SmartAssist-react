@@ -1,18 +1,6 @@
 // ── Tool types ────────────────────────────────────────────
 export type ToolType = 'general' | 'jobanalyzer' | 'language' | 'programming' | 'interview'
 
-export interface ToolMeta {
-  id: ToolType
-  name: string
-  icon: string
-  shortDescription: string
-  fullDescription: string
-  examples: string[]
-  iconBg: string
-  chatParam: string
-  featured?: boolean
-}
-
 // ── Programming languages ─────────────────────────────────
 export type ProgrammingLanguage = 'csharp' | 'java' | 'html' | 'react' | 'design-patterns' | 'architecture'
 
@@ -150,13 +138,6 @@ export interface AgentResponse {
   reply: string
   toolUsed?: string
   learningData?: LearningData
-}
-
-export interface SpeechRequest {
-  text: string
-  languageCode: string
-  voiceId?: string
-  modelId?: string
 }
 
 /** /api/skills - dynamic career modules */
