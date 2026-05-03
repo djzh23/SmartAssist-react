@@ -23,7 +23,6 @@ const TOOL_FALLBACK: Record<ToolType, string> = {
 
 function routeTitle(pathname: string): string {
   if (pathname === '/') return 'PrivatePrep'
-  if (pathname === '/tools') return 'Tools'
   if (pathname.startsWith('/career-profile')) return 'Karriereprofil'
   if (pathname.startsWith('/applications')) return 'Bewerbungen'
   if (pathname.startsWith('/cv-studio')) return 'CV.Studio'

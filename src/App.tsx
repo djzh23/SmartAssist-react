@@ -6,7 +6,6 @@ import MainLayout from './components/layout/MainLayout'
 import LoadingScreen from './components/LoadingScreen'
 import LandingPage from './pages/LandingPage'
 import ChatPage from './pages/ChatPage'
-import ToolsPage from './pages/ToolsPage'
 import ProfilePage from './pages/ProfilePage'
 import OnboardingPage from './pages/OnboardingPage'
 
@@ -83,7 +82,6 @@ function AppRoutes() {
       {/* Protected app — requires sign in, renders MainLayout with sidebar */}
       <Route element={<ProtectedApp />}>
         <Route path="/chat" element={<ChatPage />} />
-        <Route path="/tools" element={<ToolsPage />} />
         <Route
           path="/overview"
           element={(

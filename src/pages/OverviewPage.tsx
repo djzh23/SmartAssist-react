@@ -12,7 +12,6 @@ import {
   MessageCircle,
   NotebookPen,
   Sparkles,
-  Wrench,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { fetchJobApplications, listCvStudioResumes } from '../api/client'
@@ -25,7 +24,6 @@ import { applicationOverviewHint, buildApplicationOverview } from '../utils/appl
 
 const WORKSPACE_LINKS: { to: string; label: string; hint: string; icon: LucideIcon }[] = [
   { to: '/chat', label: 'Chat', hint: 'Sessions, Tools und Kontext', icon: MessageCircle },
-  { to: '/tools', label: 'Tools', hint: 'Stellenanalyse, Interview, Code', icon: Wrench },
   { to: '/career-profile', label: 'Karriereprofil', hint: 'Profildaten für KI & Bewerbungen', icon: ClipboardList },
   { to: '/applications', label: 'Bewerbungen', hint: 'Pipeline und Details', icon: FolderOpen },
   { to: '/cv-studio', label: 'CV.Studio', hint: 'Lebensläufe und PDFs', icon: FileText },

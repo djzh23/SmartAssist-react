@@ -14,7 +14,6 @@ import {
   ShieldCheck,
   Tag,
   User,
-  Wrench,
   X,
 } from 'lucide-react'
 import { useIsAdmin } from '../../hooks/useIsAdmin'
@@ -236,12 +235,6 @@ export default function TopNavBar({ onMenuClick, menuOpen }: Props) {
           <span className="inline-flex items-center gap-1.5">
             <LayoutDashboard size={15} className="shrink-0 opacity-80" aria-hidden />
             Übersicht
-          </span>
-        </NavLink>
-        <NavLink to="/tools" end className={({ isActive }) => navClass(isActive)}>
-          <span className="inline-flex items-center gap-1.5">
-            <Wrench size={15} className="shrink-0 opacity-80" aria-hidden />
-            Tools
           </span>
         </NavLink>
         <NavLink to="/career-profile" className={({ isActive }) => navClass(isActive)}>

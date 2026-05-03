@@ -228,15 +228,6 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div className="text-center">
-          <button
-            onClick={() => navigate('/tools')}
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
-          >
-            Alle Tools ansehen
-            <ArrowRight size={14} />
-          </button>
-        </div>
       </div>
     </div>
   )
