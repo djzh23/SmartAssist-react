@@ -109,8 +109,8 @@ function chatNotesDegradedBannerText(meta: ChatNotesStorageMeta): string {
     return ''
   if (meta.degradedReason === 'no_valid_supabase_connection') {
     return 'Notizen: Die API ist für Postgres/Supabase konfiguriert, aber es gibt keine gültige Datenbankverbindung. '
-      + 'Es wird Redis verwendet — in Supabase erscheinen daher keine Einträge. '
-      + 'Auf dem API-Host (Render) z. B. «DATABASE_URL» oder «SUPABASE__CONNECTIONSTRING» (zwei Unterstriche) setzen — '
+      + 'Es wird Redis verwendet - in Supabase erscheinen daher keine Einträge. '
+      + 'Auf dem API-Host (Render) z. B. «DATABASE_URL» oder «SUPABASE__CONNECTIONSTRING» (zwei Unterstriche) setzen - '
       + 'die komplette postgresql://…-URI mit echtem Passwort (kein Platzhalter [YOUR-PASSWORD]). Anschließend neu deployen.'
   }
   return 'Notizen: Postgres ist konfiguriert, die API nutzt vorerst Redis.'

@@ -32,7 +32,7 @@ function lsKeys(scopeId: string) {
   }
 }
 
-/** Per-browser last open chat for this Clerk user — avoids jumping to server-first tab after refresh. */
+/** Per-browser last open chat for this Clerk user - avoids jumping to server-first tab after refresh. */
 function lastActiveChatStorageKey(scopeId: string): string {
   return `smartassist_last_active_chat_${scopeId}`
 }
@@ -70,7 +70,7 @@ function fixMojibake(text: string): string {
   return text
     .replace(/Ã¶/g, 'ö').replace(/Ã¤/g, 'ä').replace(/Ã¼/g, 'ü')
     .replace(/Ã–/g, 'Ö').replace(/Ã„/g, 'Ä').replace(/Ãœ/g, 'Ü')
-    .replace(/ÃŸ/g, 'ß').replace(/â€"/g, '—').replace(/â€˜/g, '\u2018')
+    .replace(/ÃŸ/g, 'ß').replace(/â€"/g, '-').replace(/â€˜/g, '\u2018')
     .replace(/â€™/g, '\u2019').replace(/â€œ/g, '\u201c').replace(/â€\u009d/g, '\u201d')
     .replace(/Ã©/g, 'é').replace(/Ã /g, 'à').replace(/Ã¨/g, 'è')
     .replace(/Ã®/g, 'î').replace(/Ã´/g, 'ô').replace(/Ã»/g, 'û')
@@ -441,7 +441,7 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
         if (mode === 'refresh' && prevFp !== '' && prevFp !== fpNew) {
           if (remoteSyncToastTimerRef.current)
             clearTimeout(remoteSyncToastTimerRef.current)
-          setRemoteSyncNotice('Aktualisiert — Chats mit dem Server abgeglichen.')
+          setRemoteSyncNotice('Aktualisiert - Chats mit dem Server abgeglichen.')
           remoteSyncToastTimerRef.current = setTimeout(() => {
             remoteSyncToastTimerRef.current = null
             setRemoteSyncNotice(null)
@@ -544,7 +544,7 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     }
   }, [scopeId, loadSessionsFromApi])
 
-  /** Mehrere Browser-Tabs: andere Tabs informieren — kein automatischer Refetch. */
+  /** Mehrere Browser-Tabs: andere Tabs informieren - kein automatischer Refetch. */
   useEffect(() => {
     if (scopeId === '_loading' || scopeId === 'guest') {
       broadcastRef.current = null
@@ -562,7 +562,7 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     broadcastRef.current = ch
     ch.onmessage = () => {
       setSessionsStaleHint(
-        'In einem anderen Tab wurden Chats geändert — tippe auf „Synchronisieren“, um den Serverstand zu laden.',
+        'In einem anderen Tab wurden Chats geändert - tippe auf „Synchronisieren“, um den Serverstand zu laden.',
       )
     }
     return () => {
@@ -637,7 +637,7 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
       setActiveId(existing)
       return
     }
-    // Do not auto-create a server session when switching tools — user starts one via "Neues Gespräch".
+    // Do not auto-create a server session when switching tools - user starts one via "Neues Gespräch".
     setActiveId(null)
   }, [])
 

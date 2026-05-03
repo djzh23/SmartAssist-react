@@ -45,7 +45,7 @@ export default function CvStudioApplicationBasisPage() {
       ])
       setResumes(rows)
       setTemplates(tpl)
-      if (job) setAppLabel(`${job.company} — ${job.jobTitle}`)
+      if (job) setAppLabel(`${job.company} - ${job.jobTitle}`)
       else setAppLabel('Bewerbung')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Laden fehlgeschlagen.')
@@ -173,7 +173,7 @@ export default function CvStudioApplicationBasisPage() {
           <Briefcase size={16} className="shrink-0 text-amber-400/90" aria-hidden />
           {appLabel}
         </p>
-        <p className="mt-2 max-w-2xl text-sm text-stone-500">Verknüpft, kopieren oder neu — Details über das Info-Symbol.</p>
+        <p className="mt-2 max-w-2xl text-sm text-stone-500">Verknüpft, kopieren oder neu - Details über das Info-Symbol.</p>
       </div>
 
       {error ? (
@@ -201,7 +201,7 @@ export default function CvStudioApplicationBasisPage() {
                   className="text-emerald-200/90 hover:bg-emerald-950/60 hover:text-emerald-50"
                 >
                   <p>
-                    Dieser Eintrag ist mit dieser Stelle verknüpft — hier weiterbearbeiten, statt einen neuen Ableger
+                    Dieser Eintrag ist mit dieser Stelle verknüpft - hier weiterbearbeiten, statt einen neuen Ableger
                     anzulegen.
                   </p>
                 </InfoExplainerButton>
@@ -234,7 +234,7 @@ export default function CvStudioApplicationBasisPage() {
             <div className="mb-3 flex flex-wrap items-center gap-2">
               <h2 className="text-sm font-semibold text-white">
                 {linkedForApp.length > 0
-                  ? 'Weitere Lebensläufe — als Kopie übernehmen'
+                  ? 'Weitere Lebensläufe - als Kopie übernehmen'
                   : 'Bestehende Lebensläufe'}
               </h2>
               <InfoExplainerButton
@@ -248,7 +248,7 @@ export default function CvStudioApplicationBasisPage() {
                   Kopie übernehmen (neue Version + Verknüpfung) oder unten neu aus einer Vorlage starten.
                 </p>
                 <p className="mt-3">
-                  Ohne jeglichen CV im Konto: wähle unten eine Vorlage — der neue Lebenslauf wird mit dieser Bewerbung
+                  Ohne jeglichen CV im Konto: wähle unten eine Vorlage - der neue Lebenslauf wird mit dieser Bewerbung
                   verknüpft.
                 </p>
               </InfoExplainerButton>
@@ -267,7 +267,7 @@ export default function CvStudioApplicationBasisPage() {
                     <p className="font-medium text-stone-100">{r.title}</p>
                     <p className="mt-1 text-xs text-stone-500">
                       {r.targetCompany || r.targetRole
-                        ? [r.targetCompany, r.targetRole].filter(Boolean).join(' — ')
+                        ? [r.targetCompany, r.targetRole].filter(Boolean).join(' - ')
                         : 'Kein Kontext'}
                     </p>
                     <button

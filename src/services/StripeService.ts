@@ -74,7 +74,7 @@ export interface SyncPlanResult {
 }
 
 /**
- * Calls POST /api/stripe/sync-plan — the backend queries Stripe for the user's
+ * Calls POST /api/stripe/sync-plan - the backend queries Stripe for the user's
  * active subscription and overwrites Redis to match. Use when webhook + confirm-plan
  * have both failed and the user is still stuck on "free".
  *

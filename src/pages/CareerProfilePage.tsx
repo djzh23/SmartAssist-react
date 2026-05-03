@@ -3,10 +3,17 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '@clerk/clerk-react'
 import {
   AlertTriangle,
+  BookText,
+  BriefcaseBusiness,
   CheckCircle2,
+  ChevronRight,
+  ClipboardList,
+  FileText,
+  GraduationCap,
   Edit3,
   Eye,
   HelpCircle,
+  Languages,
   Lightbulb,
   Loader2,
   Plus,
@@ -16,6 +23,7 @@ import {
   X,
 } from 'lucide-react'
 import {
+  listCvStudioResumes,
   fetchJobApplications,
   fetchLearningInsights,
   patchLearningInsight,
@@ -43,6 +51,31 @@ import {
   type AnonymousSummaryLanguage,
 } from '../api/profileClient'
 import CvUploader from '../components/profile/CvUploader'
+import PageHeader from '../components/layout/PageHeader'
+import AppCtaButton from '../components/ui/AppCtaButton'
+import StandardPageContainer from '../components/layout/StandardPageContainer'
+import type { CvStudioResumeSummary } from '../types'
+import {
+  MobileCareerProfileOverview,
+  ProfileAreaCard,
+  ProfileCompletenessRing,
+  ProfileEmptyState,
+  ProfileRecommendationCard,
+  ProfileSectionNav,
+  ProfileStatusCard,
+  ProfileSummaryCard,
+  formatDateTime,
+} from '../components/career-profile/ProfileIntelligenceComponents'
+import {
+  calculateProfileCompleteness,
+  getAIReadiness,
+  getMissingProfileItems,
+  getNextProfileAction,
+  getProfileStatusLabel,
+  getSectionCompletion,
+  type CareerSectionKey,
+} from '../utils/careerProfileIntelligence'
+import { useMediaQuery } from '../hooks/useMediaQuery'
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -207,7 +240,7 @@ function HelpModal({ open, onClose }: { open: boolean; onClose: () => void }) {
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
       <div className="relative w-full max-w-lg rounded-2xl border border-stone-300/40 bg-white shadow-2xl">
         <div className="flex items-center justify-between border-b border-stone-200 px-5 py-4">
-          <h2 className="text-base font-semibold text-stone-900">Karriereprofil — Hilfe</h2>
+          <h2 className="text-base font-semibold text-stone-900">Karriereprofil - Hilfe</h2>
           <button
             type="button"
             onClick={onClose}
@@ -269,7 +302,7 @@ function HelpModal({ open, onClose }: { open: boolean; onClose: () => void }) {
             <div className="space-y-3">
               <p>
                 Die <strong className="text-stone-900">KI-Zusammenfassung</strong> fasst dein Profil
-                anonymisiert und strukturiert zusammen — kein Name, keine persönlichen Daten, nur
+                anonymisiert und strukturiert zusammen - kein Name, keine persönlichen Daten, nur
                 berufliche Stärken und Erfahrung.
               </p>
               <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 space-y-2">
@@ -291,7 +324,7 @@ function HelpModal({ open, onClose }: { open: boolean; onClose: () => void }) {
                 </ul>
               </div>
               <p>
-                DE und EN sind <strong className="text-stone-900">unabhängig</strong> — die Erstellung
+                DE und EN sind <strong className="text-stone-900">unabhängig</strong> - die Erstellung
                 einer Sprache löst die andere nicht automatisch aus. Du entscheidest, welche Sprache du
                 brauchst.
               </p>
@@ -308,7 +341,7 @@ function HelpModal({ open, onClose }: { open: boolean; onClose: () => void }) {
                   <p className="font-semibold text-amber-900">Wunschstellen sind entscheidend</p>
                   <p className="mt-1 text-sm">
                     Die Stellenanalyse im Chat vergleicht eine Jobanzeige direkt mit deinen
-                    Wunschstellen — so bekommst du eine präzise Passgenauigkeit statt einer
+                    Wunschstellen - so bekommst du eine präzise Passgenauigkeit statt einer
                     generischen Einschätzung.
                   </p>
                 </div>
@@ -316,7 +349,7 @@ function HelpModal({ open, onClose }: { open: boolean; onClose: () => void }) {
               <ul className="space-y-2 text-sm">
                 {[
                   'Bis zu 3 Wunschstellen speichern',
-                  'Stellentitel ist Pflicht — Unternehmen und Beschreibung optional',
+                  'Stellentitel ist Pflicht - Unternehmen und Beschreibung optional',
                   'Die Beschreibung fließt direkt in die Jobanalyse ein',
                   'Du kannst im Chat eine Wunschstelle als aktive Referenz wählen',
                 ].map(item => (
@@ -340,7 +373,7 @@ function HelpModal({ open, onClose }: { open: boolean; onClose: () => void }) {
               <p>
                 Dein hochgeladener <strong className="text-stone-900">CV-Rohtext</strong> wird sicher
                 auf dem Server gespeichert und nur für die Zusammenfassungs-Generierung und die
-                PDF-Erkennung verwendet — er erscheint nicht direkt im Chat.
+                PDF-Erkennung verwendet - er erscheint nicht direkt im Chat.
               </p>
               <p>
                 Du kannst jederzeit alle Karriereprofil-Daten über den Button{' '}
@@ -387,7 +420,7 @@ function SummaryModal({
                 {langLabel}
               </span>
             </h2>
-            <p className="mt-0.5 text-xs text-stone-500">Anonym — kein Name, nur berufliche Stärken</p>
+            <p className="mt-0.5 text-xs text-stone-500">Anonym - kein Name, nur berufliche Stärken</p>
           </div>
           <button
             type="button"
@@ -615,7 +648,7 @@ function LearningInsightsPanel() {
         <h2 className="text-sm font-semibold text-stone-900">To-dos aus Chats</h2>
       </div>
       <p className="mb-4 text-sm text-stone-700">
-        Einträge aus Stellenanalyse und Interview-Coach — gebündelt pro Bewerbung.
+        Einträge aus Stellenanalyse und Interview-Coach - gebündelt pro Bewerbung.
         Bearbeite Titel oder Text; „Erledigt" entfernt den Eintrag aus dem KI-Kontext.
       </p>
       <div className="mb-4 flex flex-wrap items-center gap-2">
@@ -708,6 +741,7 @@ function LearningInsightsPanel() {
 export default function CareerProfilePage() {
   const { getToken, isLoaded } = useAuth()
   const mergedPendingCv = useRef(false)
+  const desktopContentRef = useRef<HTMLDivElement | null>(null)
 
   const [profile, setProfile] = useState<CareerProfile | null>(null)
   const [loading, setLoading] = useState(true)
@@ -731,6 +765,10 @@ export default function CareerProfilePage() {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [profileDeleted, setProfileDeleted] = useState(false)
+  const [cvSummaries, setCvSummaries] = useState<CvStudioResumeSummary[]>([])
+  const [activeSection, setActiveSection] = useState<CareerSectionKey>('overview')
+  const [mobileSection, setMobileSection] = useState<CareerSectionKey>('overview')
+  const isDesktop = useMediaQuery('(min-width: 1024px)')
 
   const load = useCallback(async () => {
     if (!isLoaded) return
@@ -739,8 +777,12 @@ export default function CareerProfilePage() {
     try {
       const token = await getToken()
       if (!token) throw new Error('Nicht angemeldet')
-      const p = await fetchProfile(token)
+      const [p, cvs] = await Promise.all([
+        fetchProfile(token),
+        listCvStudioResumes(token).catch(() => [] as CvStudioResumeSummary[]),
+      ])
       setProfile(p)
+      setCvSummaries(cvs)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Laden fehlgeschlagen')
     } finally {
@@ -771,6 +813,11 @@ export default function CareerProfilePage() {
       /* ignore corrupt payload */
     }
   }, [profile])
+
+  useEffect(() => {
+    if (!isDesktop || !desktopContentRef.current) return
+    desktopContentRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [activeSection, isDesktop])
 
   const saveProfilePatch = async (
     patch: Partial<CareerProfile>,
@@ -908,7 +955,7 @@ export default function CareerProfilePage() {
     }
   }
 
-  /** Generates summary for ONE language only — does not touch the other. */
+  /** Generates summary for ONE language only - does not touch the other. */
   const generateSummaryForLang = async (lang: AnonymousSummaryLanguage) => {
     if (!profile || !hasEnoughForAnonymousCvSummary(profile)) return
     const token = await getToken()
@@ -1045,16 +1092,15 @@ export default function CareerProfilePage() {
             Alle Karrieredaten wurden entfernt. Du kannst jederzeit neu beginnen.
           </p>
         </div>
-        <button
+        <AppCtaButton
           type="button"
           onClick={() => {
             setProfileDeleted(false)
             void load()
           }}
-          className="rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-white hover:bg-primary-hover"
         >
           Neues Profil anlegen
-        </button>
+        </AppCtaButton>
       </div>
     )
   }
@@ -1063,13 +1109,9 @@ export default function CareerProfilePage() {
     return (
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 p-6">
         <p className="text-sm text-red-600">{error}</p>
-        <button
-          type="button"
-          onClick={() => void load()}
-          className="rounded-lg bg-primary px-4 py-2 text-sm text-white hover:bg-primary-hover"
-        >
+        <AppCtaButton type="button" onClick={() => void load()}>
           Erneut laden
-        </button>
+        </AppCtaButton>
       </div>
     )
   }
@@ -1081,6 +1123,27 @@ export default function CareerProfilePage() {
   const hasDeSummary = Boolean(profile.cvSummary?.trim())
   const hasEnSummary = Boolean(profile.cvSummaryEn?.trim())
   const canGenerate = hasEnoughForAnonymousCvSummary(profile)
+  const completeness = calculateProfileCompleteness(profile)
+  const profileStatusLabel = getProfileStatusLabel(completeness)
+  const missingItems = getMissingProfileItems(profile)
+  const aiReadiness = getAIReadiness(profile)
+  const nextAction = getNextProfileAction(profile)
+  const sectionItems: Array<{ key: CareerSectionKey; label: string; state: 'complete' | 'attention' | 'incomplete' }> = [
+    { key: 'overview', label: 'Übersicht', state: getSectionCompletion('overview', profile) },
+    { key: 'basis', label: 'Basis', state: getSectionCompletion('basis', profile) },
+    { key: 'skills', label: 'Skills', state: getSectionCompletion('skills', profile) },
+    { key: 'experience', label: 'Erfahrung', state: getSectionCompletion('experience', profile) },
+    { key: 'education', label: 'Ausbildung', state: getSectionCompletion('education', profile) },
+    { key: 'languages', label: 'Sprachen', state: getSectionCompletion('languages', profile) },
+    { key: 'summary', label: 'KI-Zusammenfassung', state: getSectionCompletion('summary', profile) },
+    { key: 'targets', label: 'Wunschstellen', state: getSectionCompletion('targets', profile) },
+  ]
+  const completedSections = sectionItems.filter(item => item.state === 'complete').length
+  const activeCv = cvSummaries
+    .slice()
+    .sort((a, b) => new Date(b.updatedAtUtc).getTime() - new Date(a.updatedAtUtc).getTime())[0] ?? null
+  const mobileIsDetail = mobileSection !== 'overview'
+  const currentSection = isDesktop ? activeSection : mobileSection
 
   return (
     <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden bg-transparent">
@@ -1104,37 +1167,235 @@ export default function CareerProfilePage() {
         />
       )}
 
-      <div className="mx-auto w-full max-w-3xl px-4 py-6">
-        {/* ── Header ─────────────────────────────────────────────────── */}
-        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0 flex items-start gap-2">
-            <div>
-              <h1 className="mb-1 text-2xl font-semibold text-stone-50">Karriereprofil</h1>
-              <p className="text-sm text-stone-400">
-                Personalisiere den Assistenten — je vollständiger, desto präziser die Antworten.
-              </p>
-            </div>
+      <StandardPageContainer className="w-full py-6">
+        <PageHeader
+          pageKey="careerProfile"
+          subtitle="Deine Datenbasis für präzisere KI-Antworten und maßgeschneiderte Empfehlungen."
+          className="mb-6"
+          infoSlot={(
             <button
               type="button"
               onClick={() => setHelpOpen(true)}
-              className="mt-1 shrink-0 rounded-full p-1.5 text-stone-400 hover:bg-stone-700 hover:text-stone-100 transition-colors"
+              className="mt-1 shrink-0 rounded-full p-1.5 text-stone-400 transition-colors hover:bg-stone-700 hover:text-stone-100"
               aria-label="Hilfe & Hinweise"
             >
               <HelpCircle size={18} />
             </button>
+          )}
+          actions={(
+            <>
+              <AppCtaButton
+                type="button"
+                size="sm"
+                onClick={() => window.print()}
+                className="inline-flex items-center gap-1.5"
+              >
+                <FileText size={14} aria-hidden />
+                Profil als PDF exportieren
+              </AppCtaButton>
+              <button
+                type="button"
+                onClick={() => setDeleteConfirmOpen(true)}
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-red-500/40 px-3 py-2 text-xs font-medium text-red-400 transition-colors hover:border-red-400 hover:bg-red-950/30 hover:text-red-300"
+              >
+                <Trash2 size={14} aria-hidden />
+                Alle Daten löschen
+              </button>
+            </>
+          )}
+        />
+
+        <ProfileStatusCard>
+          <div className="grid gap-4 lg:grid-cols-[auto_minmax(0,1.1fr)_minmax(0,1fr)_minmax(0,0.9fr)] lg:items-center">
+            <div className="flex items-center gap-4">
+              <ProfileCompletenessRing value={completeness} />
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.16em] text-stone-400">Profilvollständigkeit</p>
+                <p className="mt-1 text-sm font-semibold text-stone-100">{profileStatusLabel}</p>
+              </div>
+            </div>
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.16em] text-stone-400">Fehlende Angaben</p>
+              {missingItems.length > 0 ? (
+                <ul className="mt-2 space-y-1 text-sm text-stone-200">
+                  {missingItems.slice(0, 3).map(item => (
+                    <li key={item.id} className="flex items-center gap-2">
+                      <span className="h-1.5 w-1.5 rounded-full bg-amber-300" aria-hidden />
+                      {item.label}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-2 text-sm text-emerald-300">Profil vollständig</p>
+              )}
+            </div>
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.16em] text-stone-400">KI-Bereitschaft</p>
+              <p className="mt-2 text-sm font-semibold text-stone-100">{aiReadiness.label}</p>
+              <p className="mt-1 text-xs text-stone-400">{aiReadiness.description}</p>
+            </div>
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.16em] text-stone-400">Letzte Aktualisierung</p>
+              <p className="mt-2 text-sm text-stone-100">{formatDateTime(profile.updatedAt)}</p>
+            </div>
           </div>
-          <button
-            type="button"
-            onClick={() => setDeleteConfirmOpen(true)}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-red-500/40 px-3 py-2 text-xs font-medium text-red-400 hover:border-red-400 hover:bg-red-950/30 hover:text-red-300 transition-colors"
-          >
-            <Trash2 size={14} aria-hidden />
-            Alle Daten löschen
-          </button>
+        </ProfileStatusCard>
+
+        <MobileCareerProfileOverview>
+          <ProfileRecommendationCard
+            title={nextAction.title}
+            description={nextAction.description}
+            onAction={() => setMobileSection(nextAction.section)}
+          />
+          {!mobileIsDetail ? (
+            <div className="rounded-2xl bg-[#1b120d]/78 p-3.5 shadow-[0_10px_28px_-18px_rgba(0,0,0,0.62)]">
+              <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.16em] text-stone-400">Bereiche</p>
+              <ProfileSectionNav
+                items={sectionItems}
+                activeSection={mobileSection}
+                onSelect={setMobileSection}
+              />
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setMobileSection('overview')}
+              className="inline-flex items-center gap-1 text-sm font-semibold text-amber-300 hover:text-amber-200"
+            >
+              <ChevronRight className="rotate-180" size={14} />
+              Zur Übersicht
+            </button>
+          )}
+        </MobileCareerProfileOverview>
+
+        {(!isDesktop || activeSection === 'overview') && (
+        <div className="hidden gap-6 lg:grid lg:grid-cols-[260px_minmax(0,1fr)] lg:items-start">
+          <aside className="sticky top-[68px] space-y-3 rounded-2xl bg-[#1b120d]/78 p-3.5 shadow-[0_10px_28px_-18px_rgba(0,0,0,0.62)]">
+            <ProfileSectionNav items={sectionItems} activeSection={activeSection} onSelect={setActiveSection} />
+            <div className="rounded-xl bg-[#231811]/45 p-3 text-xs text-stone-300">
+              <p className="font-semibold text-amber-200">Warum ist das wichtig?</p>
+              <p className="mt-1">
+                Ein vollständiges Profil verbessert die Qualität der KI-Antworten und Empfehlungen.
+              </p>
+              <button
+                type="button"
+                onClick={() => setHelpOpen(true)}
+                className="mt-2 inline-flex items-center gap-1 font-semibold text-amber-300 hover:text-amber-200"
+              >
+                Mehr erfahren
+                <ChevronRight size={12} />
+              </button>
+            </div>
+          </aside>
+
+          {activeSection === 'overview' ? (
+            <section
+              ref={desktopContentRef}
+              className="min-h-[560px] space-y-4 rounded-2xl bg-[#1b120d]/78 p-4 shadow-[0_10px_28px_-18px_rgba(0,0,0,0.62)] transition-[opacity,transform] duration-200 ease-out"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-lg font-semibold text-stone-50">Übersicht</h2>
+                  <p className="text-sm text-stone-400">Dein Profil auf einen Blick</p>
+                </div>
+                <AppCtaButton
+                  type="button"
+                  size="sm"
+                  onClick={() => setActiveSection(nextAction.section)}
+                  className="inline-flex items-center gap-1"
+                >
+                  Profil verbessern
+                  <ChevronRight size={12} />
+                </AppCtaButton>
+              </div>
+              <div className="grid gap-3 md:grid-cols-3">
+                {activeCv ? (
+                  <ProfileSummaryCard
+                    title="Aktiver Lebenslauf"
+                    value={activeCv.title}
+                    details={`Aktualisiert ${formatDateTime(activeCv.updatedAtUtc)}`}
+                    icon={FileText}
+                  />
+                ) : (
+                  <ProfileEmptyState
+                    title="Kein aktiver Lebenslauf"
+                    actionLabel="CV hochladen"
+                    onAction={() => setActiveSection('basis')}
+                  />
+                )}
+                <ProfileSummaryCard
+                  title="Beruflicher Status"
+                  value={profile.currentRole?.trim() || 'Keine Rolle gesetzt'}
+                  details={`${profile.levelLabel ?? 'Kein Level'} · ${profile.fieldLabel ?? 'Kein Feld'}`}
+                  icon={BriefcaseBusiness}
+                />
+                {(profile.targetJobs[0] || profile.goals[0]) ? (
+                  <ProfileSummaryCard
+                    title="Zielrichtung"
+                    value={profile.targetJobs[0]?.title ?? 'Ziele vorhanden'}
+                    details={profile.goals.slice(0, 2).join(' · ') || 'Keine Ziele'}
+                    icon={Target}
+                  />
+                ) : (
+                  <ProfileEmptyState
+                    title="Noch keine Zielrichtung"
+                    actionLabel="Ziele hinzufügen"
+                    onAction={() => setActiveSection('targets')}
+                  />
+                )}
+              </div>
+              <div>
+                <div className="mb-2 flex items-center justify-between text-sm">
+                  <p className="font-semibold text-stone-200">Profilbereiche</p>
+                  <p className="text-stone-400">{completedSections} / {sectionItems.length} Bereiche abgeschlossen</p>
+                </div>
+                <div className="h-2 overflow-hidden rounded-full bg-white/10">
+                  <div className="h-full bg-amber-400" style={{ width: `${Math.round((completedSections / sectionItems.length) * 100)}%` }} />
+                </div>
+              </div>
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                <ProfileAreaCard title="Skills" value={`${profile.skills.length} / 30`} status={profile.skills.length > 0 ? 'gepflegt' : 'ausstehend'} icon={Sparkles} onClick={() => setActiveSection('skills')} />
+                <ProfileAreaCard title="Erfahrung" value={`${profile.experience.length} Einträge`} status={profile.experience.length > 0 ? 'vorhanden' : 'fehlt'} icon={BriefcaseBusiness} onClick={() => setActiveSection('experience')} />
+                <ProfileAreaCard title="Ausbildung" value={`${profile.educationEntries.length} Einträge`} status={profile.educationEntries.length > 0 ? 'vorhanden' : 'fehlt'} icon={GraduationCap} onClick={() => setActiveSection('education')} />
+                <ProfileAreaCard title="Sprachen" value={`${profile.languages.length} Sprachen`} status={profile.languages.length > 0 ? 'vorhanden' : 'fehlt'} icon={Languages} onClick={() => setActiveSection('languages')} />
+                <ProfileAreaCard title="KI-Zusammenfassung" value={(hasDeSummary || hasEnSummary) ? 'Vorhanden' : 'Fehlt'} status={(hasDeSummary || hasEnSummary) ? 'bereit' : 'ausstehend'} icon={BookText} onClick={() => setActiveSection('summary')} />
+                <ProfileAreaCard title="Wunschstellen" value={`${profile.targetJobs.length} / 3`} status={profile.targetJobs.length > 0 ? 'gesetzt' : 'fehlt'} icon={ClipboardList} onClick={() => setActiveSection('targets')} />
+              </div>
+              <ProfileRecommendationCard
+                title={nextAction.title}
+                description={nextAction.description}
+                onAction={() => setActiveSection(nextAction.section)}
+              />
+            </section>
+          ) : null}
         </div>
+        )}
 
-        <LearningInsightsPanel />
-
+        {currentSection !== 'overview' && (
+          <div className="lg:grid lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-6">
+        <aside className="hidden lg:block lg:sticky lg:top-[68px] lg:h-fit lg:space-y-3 lg:rounded-2xl lg:bg-[#1b120d]/78 lg:p-3.5 lg:shadow-[0_10px_28px_-18px_rgba(0,0,0,0.62)]">
+          <ProfileSectionNav items={sectionItems} activeSection={activeSection} onSelect={setActiveSection} />
+          <div className="rounded-xl bg-[#231811]/45 p-3 text-xs text-stone-300">
+            <p className="font-semibold text-amber-200">Warum ist das wichtig?</p>
+            <p className="mt-1">
+              Ein vollständiges Profil verbessert die Qualität der KI-Antworten und Empfehlungen.
+            </p>
+            <button
+              type="button"
+              onClick={() => setHelpOpen(true)}
+              className="mt-2 inline-flex items-center gap-1 font-semibold text-amber-300 hover:text-amber-200"
+            >
+              Mehr erfahren
+              <ChevronRight size={12} />
+            </button>
+          </div>
+        </aside>
+          <div
+            ref={isDesktop ? desktopContentRef : undefined}
+            className="min-h-[560px] transition-[opacity,transform] duration-200 ease-out"
+          >
+        {currentSection === 'basis' && (
+          <>
         {/* ── CV-Import ──────────────────────────────────────────────── */}
         <section className="mb-8 rounded-xl border border-violet-500/35 bg-app-parchment p-5 shadow-landing text-stone-900">
           <h2 className="mb-1 text-sm font-semibold text-stone-900">Profil befüllen</h2>
@@ -1194,27 +1455,27 @@ export default function CareerProfilePage() {
             <div>
               <p className="font-semibold text-emerald-900">Profil eingerichtet</p>
               <p className="mt-1 leading-relaxed text-stone-800">
-                Im Chat aktivierst du den Kontext über die Schalter über dem Eingabefeld —{' '}
+                Im Chat aktivierst du den Kontext über die Schalter über dem Eingabefeld -{' '}
                 <strong className="font-medium">farbig = aktiv</strong>.
               </p>
             </div>
           </div>
         ) : canMarkProfileSetupComplete(profile) ? (
           <div className="mb-6 rounded-xl border border-amber-600/35 bg-app-parchment px-4 py-3 text-sm text-stone-900">
-            <p className="font-semibold text-amber-950">Daten gespeichert — Setup noch offen</p>
+            <p className="font-semibold text-amber-950">Daten gespeichert - Setup noch offen</p>
             <p className="mt-2 leading-relaxed text-stone-800">
-              Klicke unten, um das Profil als eingerichtet zu markieren — danach entfällt der
+              Klicke unten, um das Profil als eingerichtet zu markieren - danach entfällt der
               Chat-Hinweis.
             </p>
-            <button
+            <AppCtaButton
               type="button"
               disabled={markSetupBusy || saving}
               onClick={() => void handleMarkSetupComplete()}
-              className="mt-3 inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-hover disabled:opacity-50"
+              className="mt-3 inline-flex items-center justify-center gap-2 disabled:opacity-50"
             >
               {markSetupBusy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
               Profil als eingerichtet markieren
-            </button>
+            </AppCtaButton>
           </div>
         ) : (
           <div className="mb-6 rounded-xl border border-amber-600/35 bg-app-parchment px-4 py-3 text-sm text-stone-900">
@@ -1240,18 +1501,18 @@ export default function CareerProfilePage() {
         {pendingMergedDraftHint && (
           <div className="mb-4 flex flex-col gap-3 rounded-lg border border-violet-500/35 bg-app-parchment px-4 py-3 text-sm text-stone-900 sm:flex-row sm:items-center sm:justify-between">
             <p>
-              PDF-Daten wurden ins Formular übernommen — noch nicht gespeichert. Jetzt alle
+              PDF-Daten wurden ins Formular übernommen - noch nicht gespeichert. Jetzt alle
               sichtbaren Felder auf dem Server speichern?
             </p>
-            <button
+            <AppCtaButton
               type="button"
               disabled={saving}
               onClick={() => void persistFullProfileFromState()}
-              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-white hover:bg-primary-hover disabled:opacity-50"
+              className="inline-flex shrink-0 items-center justify-center gap-2 disabled:opacity-50"
             >
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
               Jetzt speichern
-            </button>
+            </AppCtaButton>
           </div>
         )}
 
@@ -1270,7 +1531,7 @@ export default function CareerProfilePage() {
                 }}
                 className="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 text-stone-900"
               >
-                <option value="">—</option>
+                <option value="">-</option>
                 {FIELDS.map(f => (
                   <option key={f.value} value={f.value}>{f.label}</option>
                 ))}
@@ -1287,7 +1548,7 @@ export default function CareerProfilePage() {
                 }}
                 className="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 text-stone-900"
               >
-                <option value="">—</option>
+                <option value="">-</option>
                 {LEVELS.map(l => (
                   <option key={l.value} value={l.value}>{l.label}</option>
                 ))}
@@ -1314,7 +1575,7 @@ export default function CareerProfilePage() {
                 className={[
                   'rounded-full px-3 py-1 text-xs font-medium',
                   profile.goals.includes(g.id)
-                    ? 'bg-primary text-white'
+                    ? 'bg-amber-500/90 text-black'
                     : 'border border-stone-400/40 bg-stone-200/70 text-stone-800 hover:bg-stone-300/60',
                 ].join(' ')}
               >
@@ -1340,8 +1601,11 @@ export default function CareerProfilePage() {
             </button>
           </div>
         </section>
+          </>
+        )}
 
         {/* ── Skills ─────────────────────────────────────────────────── */}
+        {currentSection === 'skills' && (
         <section className="mb-8 rounded-xl border border-stone-400/40 bg-app-parchment p-5 shadow-landing text-stone-900">
           <h2 className="mb-3 text-sm font-semibold text-stone-900">Skills (max. 30)</h2>
           <div className="mb-3 flex flex-wrap gap-2">
@@ -1365,18 +1629,20 @@ export default function CareerProfilePage() {
               className="flex-1 rounded-lg border border-stone-300 px-3 py-2 text-sm"
               onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), void addSkill())}
             />
-            <button
+            <AppCtaButton
               type="button"
               onClick={() => void addSkill()}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover"
+              className="inline-flex items-center gap-1.5"
             >
               <Plus size={18} aria-hidden />
               Hinzufügen
-            </button>
+            </AppCtaButton>
           </div>
         </section>
+        )}
 
         {/* ── Berufserfahrung ─────────────────────────────────────────── */}
+        {currentSection === 'experience' && (
         <section className="mb-8 rounded-xl border border-stone-400/40 bg-app-parchment p-5 shadow-landing text-stone-900">
           <h2 className="mb-3 text-sm font-semibold text-stone-900">Berufserfahrung</h2>
           {(profile.experience ?? []).map((exp, i) => (
@@ -1442,17 +1708,18 @@ export default function CareerProfilePage() {
               <Plus size={18} aria-hidden />
               Eintrag hinzufügen
             </button>
-            <button
+            <AppCtaButton
               type="button"
               onClick={() => void saveProfilePatch({ experience: profile.experience ?? [] })}
-              className="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover"
             >
               Änderungen speichern
-            </button>
+            </AppCtaButton>
           </div>
         </section>
+        )}
 
         {/* ── Ausbildung ──────────────────────────────────────────────── */}
+        {currentSection === 'education' && (
         <section className="mb-8 rounded-xl border border-stone-400/40 bg-app-parchment p-5 shadow-landing text-stone-900">
           <h2 className="mb-3 text-sm font-semibold text-stone-900">Ausbildung</h2>
           {(profile.educationEntries ?? []).map((ed, i) => (
@@ -1512,17 +1779,18 @@ export default function CareerProfilePage() {
               <Plus size={18} aria-hidden />
               Eintrag hinzufügen
             </button>
-            <button
+            <AppCtaButton
               type="button"
               onClick={() => void saveProfilePatch({ educationEntries: profile.educationEntries ?? [] })}
-              className="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover"
             >
               Änderungen speichern
-            </button>
+            </AppCtaButton>
           </div>
         </section>
+        )}
 
         {/* ── Sprachen ────────────────────────────────────────────────── */}
+        {currentSection === 'languages' && (
         <section className="mb-8 rounded-xl border border-stone-400/40 bg-app-parchment p-5 shadow-landing text-stone-900">
           <h2 className="mb-3 text-sm font-semibold text-stone-900">Sprachen</h2>
           {(profile.languages ?? []).map((lang, i) => (
@@ -1567,23 +1835,26 @@ export default function CareerProfilePage() {
               <Plus size={18} aria-hidden />
               Sprache hinzufügen
             </button>
-            <button
+            <AppCtaButton
               type="button"
               onClick={() => void saveProfilePatch({ languages: profile.languages ?? [] })}
-              className="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover"
             >
               Änderungen speichern
-            </button>
+            </AppCtaButton>
           </div>
         </section>
+        )}
 
         {/* ── KI-Zusammenfassung ─────────────────────────────────────── */}
+        {currentSection === 'summary' && (
+        <>
+        <LearningInsightsPanel />
         <section className="mb-8 rounded-xl border border-violet-500/35 bg-app-parchment p-5 shadow-landing text-stone-900">
           <div className="mb-4 flex items-start justify-between gap-3">
             <div>
               <h2 className="text-sm font-semibold text-stone-900">KI-Zusammenfassung</h2>
               <p className="mt-1 text-xs text-stone-600">
-                Anonymisierter Profil-Kontext für den Assistenten — kein Name, nur berufliche Stärken.
+                Anonymisierter Profil-Kontext für den Assistenten - kein Name, nur berufliche Stärken.
                 Wird aus allen Profildaten + CV generiert.
               </p>
             </div>
@@ -1688,15 +1959,18 @@ export default function CareerProfilePage() {
             ))}
           </div>
         </section>
+        </>
+        )}
 
         {/* ── Wunschstellen ───────────────────────────────────────────── */}
+        {currentSection === 'targets' && (
         <section className="mb-8 rounded-xl border border-amber-500/35 bg-app-parchment p-5 shadow-landing text-stone-900">
           <div className="mb-4 flex items-start gap-3">
             <Target className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" aria-hidden />
             <div>
               <h2 className="text-sm font-semibold text-stone-900">Wunschstellen (max. 3)</h2>
               <p className="mt-1 text-xs text-amber-800 font-medium">
-                Wichtig für die Stellenanalyse — je mehr Details, desto präziser der Match mit
+                Wichtig für die Stellenanalyse - je mehr Details, desto präziser der Match mit
                 Jobanzeigen im Chat.
               </p>
             </div>
@@ -1742,21 +2016,24 @@ export default function CareerProfilePage() {
               <textarea
                 value={jobDesc}
                 onChange={e => setJobDesc(e.target.value)}
-                placeholder="Stellenbeschreibung — fließt direkt in die Jobanalyse ein (optional)"
+                placeholder="Stellenbeschreibung - fließt direkt in die Jobanalyse ein (optional)"
                 rows={3}
                 className="col-span-full rounded-lg border border-stone-300 px-3 py-2 text-sm"
               />
-              <button
+              <AppCtaButton
                 type="button"
                 onClick={() => void addJob()}
                 disabled={saving || !jobTitle.trim()}
-                className="rounded-lg bg-primary px-4 py-2 text-sm text-white hover:bg-primary-hover disabled:opacity-50"
               >
                 Hinzufügen
-              </button>
+              </AppCtaButton>
             </div>
           )}
         </section>
+        )}
+          </div>
+          </div>
+        )}
 
         {saving && (
           <p className="flex items-center gap-2 pb-4 text-sm text-stone-600">
@@ -1764,7 +2041,7 @@ export default function CareerProfilePage() {
             Speichern…
           </p>
         )}
-      </div>
+      </StandardPageContainer>
     </div>
   )
 }

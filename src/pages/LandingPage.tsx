@@ -305,6 +305,7 @@ function LandingNav() {
       >
         <button
           type="button"
+          aria-label="PrivatePrep — zum Seitenanfang"
           onClick={() => {
             window.scrollTo({ top: 0, behavior: 'smooth' })
             closeMobile()
@@ -312,8 +313,12 @@ function LandingNav() {
           className="flex min-w-0 items-center gap-2 rounded-xl py-1.5 pl-1 pr-2 text-left transition-all duration-200 hover:bg-white/10 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
         >
           <img
-            src="/favicon.png"
+            src="/logo-nav.webp"
             alt=""
+            width={96}
+            height={96}
+            decoding="async"
+            fetchPriority="high"
             className="h-8 w-8 flex-shrink-0 rounded-xl ring-1 ring-amber-500/20 sm:h-9 sm:w-9"
           />
           <span className="bg-gradient-to-r from-amber-200 via-amber-100 to-amber-50/90 bg-clip-text text-[15px] font-bold tracking-tight text-transparent sm:text-[17px]">
@@ -563,7 +568,7 @@ function HeroSection() {
     >
       <div className="landing-dot-grid pointer-events-none absolute inset-0 opacity-[0.52] sm:opacity-75 md:opacity-90" />
 
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+      <div className="pointer-events-none absolute inset-0 hidden overflow-hidden sm:block">
         <div className="absolute -right-40 -top-28 h-[min(95vw,780px)] w-[min(95vw,780px)] rounded-full bg-amber-600/12 blur-[130px]" />
         <div className="absolute -bottom-32 -left-32 h-[min(88vw,560px)] w-[min(88vw,560px)] rounded-full bg-amber-500/10 blur-[100px]" />
         <div className="absolute right-1/3 top-[42%] h-[min(55vw,420px)] w-[min(55vw,420px)] rounded-full bg-amber-400/6 blur-[95px]" />
@@ -626,7 +631,7 @@ function HeroSection() {
             Stellenanzeige verstehen, schneller antworten.
           </p>
 
-          <p className="mb-8 max-w-[520px] text-lg leading-relaxed text-stone-400">
+          <p className="mb-8 max-w-[520px] text-lg leading-relaxed text-stone-300">
             Kopier einfach die Stellenanzeige rein. Innerhalb von zehn Sekunden siehst du, welche Keywords wirklich zählen,
             wo dein Lebenslauf noch Lücken hat und welche Interviewfragen sehr wahrscheinlich auf dich zukommen.
           </p>
@@ -651,7 +656,7 @@ function HeroSection() {
             </button>
           </div>
 
-          <div className="flex max-w-[520px] flex-col gap-2 text-sm text-stone-500 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-3 sm:gap-y-1">
+          <div className="flex max-w-[520px] flex-col gap-2 text-sm text-stone-400 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-3 sm:gap-y-1">
             <span className="inline-flex items-center gap-1.5">
               <Check size={14} className="shrink-0 text-emerald-500" aria-hidden />
               Keine Kreditkarte
@@ -675,7 +680,7 @@ function HeroSection() {
         </div>
 
         {/* Chat mockup: sichtbar ab sm (Tablet), leicht skaliert für schmalere Spalte */}
-        <div className="flex w-full justify-center pb-4 pt-2 sm:justify-end sm:pb-0 sm:pt-0 md:justify-center md:py-12">
+        <div className="hidden w-full justify-center pb-4 pt-2 sm:flex sm:justify-end sm:pb-0 sm:pt-0 md:justify-center md:py-12">
           <div className="origin-top scale-[0.82] sm:scale-90 md:scale-100">
             <ChatMockup />
           </div>
@@ -1267,8 +1272,8 @@ function LiveDemoSection() {
                       : isActive && exhausted
                         ? 'bg-[#0e0b09] text-emerald-400 after:absolute after:inset-x-2 after:bottom-0 after:h-[3px] after:rounded-full after:bg-gradient-to-r after:from-emerald-500 after:to-emerald-400'
                         : exhausted
-                          ? 'text-stone-600 hover:bg-white/[0.03] hover:text-stone-500'
-                          : 'text-stone-500 hover:bg-white/[0.03] hover:text-stone-400',
+                          ? 'text-stone-400 hover:bg-white/[0.03] hover:text-stone-300'
+                          : 'text-stone-300 hover:bg-white/[0.03] hover:text-stone-200',
                   ].join(' ')}
                   title={t.label}
                 >
@@ -1302,7 +1307,7 @@ function LiveDemoSection() {
             {currentMsgs.length === 0 && !loading && (
               <div className="flex flex-col items-center gap-2 py-8 text-center">
                 <IconHubIcon name={cfg.icon} className="h-14 w-14" tone="onDark" />
-                <p className="text-sm text-stone-500">
+                <p className="text-sm text-stone-400">
                   {atToolLimit && !allExhausted
                     ? `${cfg.label} ausprobiert! Wähle ein anderes Werkzeug.`
                     : allExhausted
@@ -1346,7 +1351,7 @@ function LiveDemoSection() {
               >
                 <IconHubIcon name={cfg.icon} className="h-4 w-4 shrink-0" tone="onDark" />
                 <span className="truncate">{cfg.chip}</span>
-                <span className="ml-auto flex-shrink-0 rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-white">
+                <span className="ml-auto flex-shrink-0 rounded-full bg-amber-400/95 px-2 py-0.5 text-[10px] font-bold text-stone-950">
                   Ausprobieren →
                 </span>
               </button>
@@ -1360,7 +1365,7 @@ function LiveDemoSection() {
                 <IconHubIcon name="winner" className="h-5 w-5 shrink-0" tone="onDark" />
                 Du hast alle 5 Werkzeuge ausprobiert
               </p>
-              <p className="mb-5 text-sm leading-relaxed text-stone-500">
+              <p className="mb-5 text-sm leading-relaxed text-stone-400">
                 Kostenlos registrieren: täglich 20 Nachrichten, alle Werkzeuge, Verlauf im Browser.
               </p>
               <SignUpButton mode="modal" fallbackRedirectUrl="/overview">
@@ -1413,10 +1418,11 @@ function LiveDemoSection() {
                 <button
                   type="button"
                   onClick={handleReset}
-                  className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl border border-stone-600/45 text-stone-500 transition-colors hover:border-amber-500/35 hover:text-stone-300"
+                  className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl border border-stone-600/45 text-stone-400 transition-colors hover:border-amber-500/35 hover:text-stone-300"
+                  aria-label="Gespräch zurücksetzen"
                   title="Gespräch zurücksetzen"
                 >
-                  <RotateCcw size={14} />
+                  <RotateCcw size={14} aria-hidden />
                 </button>
               )}
               <input
@@ -1435,9 +1441,10 @@ function LiveDemoSection() {
                 type="button"
                 onClick={() => void send(input)}
                 disabled={loading || !input.trim()}
+                aria-label={loading ? 'Nachricht wird gesendet' : 'Nachricht senden'}
                 className="flex h-10 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-primary text-white transition-colors hover:bg-primary-hover disabled:opacity-40"
               >
-                {loading ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+                {loading ? <Loader2 size={16} className="animate-spin" aria-hidden /> : <Send size={16} aria-hidden />}
               </button>
             </div>
           )}
@@ -1445,7 +1452,7 @@ function LiveDemoSection() {
           {/* ── Per-tool message counter ── */}
           {!atToolLimit && !allExhausted && (
             <div className="flex items-center justify-between border-t border-stone-600/30 bg-[#0c0907] px-3 py-2 sm:px-5">
-              <span className="text-[10px] text-stone-600">
+              <span className="text-xs text-stone-400">
                 {PER_TOOL_LIMIT - toolCount} von {PER_TOOL_LIMIT} Nachrichten für {cfg.label}
               </span>
               <div className="flex items-center gap-1">
@@ -1866,11 +1873,11 @@ function PricingPreviewSection() {
               <div className="px-5 pb-5">
                 {plan.useSignUp ? (
                   <SignUpButton mode="modal" fallbackRedirectUrl="/overview">
-                    <button className={`w-full rounded-xl py-2.5 text-sm font-semibold transition-all ${plan.ctaClass}`}>{plan.cta}</button>
+                    <button className={`w-full rounded-xl px-4 py-3 min-h-[48px] text-base font-semibold transition-all sm:text-sm ${plan.ctaClass}`}>{plan.cta}</button>
                   </SignUpButton>
                 ) : (
                   <a href={'href' in plan ? plan.href : '/pricing'}>
-                    <button className={`w-full rounded-xl py-2.5 text-sm font-semibold transition-all ${plan.ctaClass}`}>{plan.cta}</button>
+                    <button className={`w-full rounded-xl px-4 py-3 min-h-[48px] text-base font-semibold transition-all sm:text-sm ${plan.ctaClass}`}>{plan.cta}</button>
                   </a>
                 )}
               </div>
@@ -1973,7 +1980,15 @@ function FooterSection() {
         <div className="mb-6 flex flex-col items-center justify-between gap-6 md:flex-row">
           <div>
             <div className="mb-1 flex items-center gap-2">
-              <img src="/favicon.png" alt="PrivatePrep" className="h-7 w-7 rounded-lg" />
+              <img
+                src="/logo-nav.webp"
+                alt=""
+                width={96}
+                height={96}
+                decoding="async"
+                loading="lazy"
+                className="h-7 w-7 rounded-lg"
+              />
               <span className="bg-gradient-to-r from-amber-400 to-amber-300 bg-clip-text text-lg font-bold text-transparent">PrivatePrep</span>
             </div>
             <p className="text-sm text-stone-500">KI-Werkzeuge für deine Karriere</p>
@@ -2017,25 +2032,27 @@ export default function LandingPage() {
   return (
     <div className="landing-page-root min-h-screen">
       <LandingNav />
-      <HeroSection />
-      <SectionDivider from="#16110d" to="#14100c" dark variant="wave" />
-      <ProblemSolutionSection />
-      <SectionDivider from="#17110e" to="#16110d" dark variant="microdots" />
-      <FeaturesSection />
-      <SectionDivider from="#18100c" to="#120c08" dark variant="hatch" />
-      <LiveDemoSection />
-      <SectionDivider from="#14100d" to="#0f0a08" dark variant="blend" />
-      <HowItWorksSection />
-      <SectionDivider from="#0a0605" to="#15100c" dark variant="sunrise" />
-      <FuerWenSection />
-      <SectionDivider from="#16100d" to="#130e0a" dark variant="mesh" />
-      <PricingPreviewSection />
-      <SectionDivider from="#150f0c" to="#120a08" dark variant="grain" />
-      <FaqSection />
-      <SectionDivider from="#140d0a" to="#1c1200" dark variant="thread" />
-      <FinalCtaSection />
-      <SectionDivider from="#3d2a10" to="#0d0800" dark variant="night" />
-      <FooterSection />
+      <main id="main-content">
+        <HeroSection />
+        <SectionDivider from="#16110d" to="#14100c" dark variant="wave" />
+        <ProblemSolutionSection />
+        <SectionDivider from="#17110e" to="#16110d" dark variant="microdots" />
+        <FeaturesSection />
+        <SectionDivider from="#18100c" to="#120c08" dark variant="hatch" />
+        <LiveDemoSection />
+        <SectionDivider from="#14100d" to="#0f0a08" dark variant="blend" />
+        <HowItWorksSection />
+        <SectionDivider from="#0a0605" to="#15100c" dark variant="sunrise" />
+        <FuerWenSection />
+        <SectionDivider from="#16110d" to="#130e0a" dark variant="mesh" />
+        <PricingPreviewSection />
+        <SectionDivider from="#150f0c" to="#120a08" dark variant="grain" />
+        <FaqSection />
+        <SectionDivider from="#140d0a" to="#1c1200" dark variant="thread" />
+        <FinalCtaSection />
+        <SectionDivider from="#3d2a10" to="#0d0800" dark variant="night" />
+        <FooterSection />
+      </main>
     </div>
   )
 }

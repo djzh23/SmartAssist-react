@@ -37,5 +37,5 @@ export function nextApplicationStep(app: JobApplicationApi, summaries: CvStudioR
     return 'Schreibe oder füge dein Anschreiben im Abschnitt „Anschreiben“ auf dieser Seite ein und speichere.'
   if (!hasLeftDraft(app))
     return 'Wenn du dich beworben hast, setze den Status von „Entwurf“ auf „Beworben“ oder den passenden nächsten Schritt.'
-  return 'Kernpaket steht — pflege Timeline und Notizen oder passe den Status an.'
+  return 'Kernpaket steht - pflege Timeline und Notizen oder passe den Status an.'
 }

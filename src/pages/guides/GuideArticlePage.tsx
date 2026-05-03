@@ -1,6 +1,7 @@
 import { Link, useParams } from 'react-router-dom'
 import { ArrowLeft, Clock, Lightbulb, ListOrdered } from 'lucide-react'
 import { guideBySlug, GUIDE_CATEGORY_META } from '../../content/guides'
+import StandardPageContainer from '../../components/layout/StandardPageContainer'
 
 export default function GuideArticlePage() {
   const { slug } = useParams<{ slug: string }>()
@@ -23,7 +24,7 @@ export default function GuideArticlePage() {
 
   return (
     <div className="min-h-0 flex-1 overflow-y-auto bg-transparent">
-      <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-8">
+      <StandardPageContainer className="py-6 sm:py-8">
         <div className="rounded-2xl border border-stone-400/40 bg-app-parchment/95 p-5 shadow-landing sm:p-6">
           <Link
             to="/guides"
@@ -142,7 +143,7 @@ export default function GuideArticlePage() {
             ) : null}
           </article>
         </div>
-      </div>
+      </StandardPageContainer>
     </div>
   )
 }

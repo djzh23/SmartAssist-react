@@ -48,7 +48,7 @@ export default function CvSaveVersionModal({
           </div>
 
           <p className="mb-4 text-xs leading-relaxed text-stone-400">
-            Eine Version ist ein manueller Sicherungspunkt des aktuellen Stands — du kannst jederzeit
+            Eine Version ist ein manueller Sicherungspunkt des aktuellen Stands - du kannst jederzeit
             zu früheren Versionen zurückkehren oder sie als PDF exportieren.
           </p>
 

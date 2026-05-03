@@ -17,7 +17,7 @@ export default function CvResumeCard({ resume, onDelete }: CvResumeCardProps) {
 
   return (
     <div className="group flex h-full flex-col overflow-hidden rounded-xl border border-stone-600/40 bg-stone-800/50 transition-colors hover:border-stone-500/60 hover:bg-stone-700/50">
-      {/* Document preview — fixed height */}
+      {/* Document preview - fixed height */}
       <Link
         to={`/cv-studio/edit/${resume.id}`}
         className="flex shrink-0 items-center justify-center bg-black/20 px-3 pt-3 pb-2"
@@ -27,7 +27,7 @@ export default function CvResumeCard({ resume, onDelete }: CvResumeCardProps) {
         <CvMiniDocPreview resume={resume} compact />
       </Link>
 
-      {/* Info section — fills remaining height */}
+      {/* Info section - fills remaining height */}
       <div className="flex min-w-0 flex-1 flex-col px-2.5 pb-2.5 pt-2">
         <Link
           to={`/cv-studio/edit/${resume.id}`}

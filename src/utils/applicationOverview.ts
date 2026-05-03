@@ -85,23 +85,23 @@ export function buildApplicationOverview(apps: JobApplicationApi[]): Application
  */
 export function applicationOverviewHint(o: ApplicationOverview): string {
   if (o.total === 0) {
-    return 'Noch keine Bewerbung angelegt — starte mit einer Stelle, um die Pipeline zu füllen.'
+    return 'Noch keine Bewerbung angelegt - starte mit einer Stelle, um die Pipeline zu füllen.'
   }
   if (o.draftShare >= 0.55 && o.total >= 3) {
     return 'Viele Entwürfe: prüfe, welche du versenden oder archivieren möchtest, damit die Übersicht stimmt.'
   }
   if (o.terminalShare >= 0.6 && o.total >= 4) {
-    return 'Großer Anteil im Archiv — das ist in Ordnung; für den Fokus kannst du aktive Phasen oben in der Pipeline priorisieren.'
+    return 'Großer Anteil im Archiv - das ist in Ordnung; für den Fokus kannst du aktive Phasen oben in der Pipeline priorisieren.'
   }
   const interviewPlus = (o.pipeline.find(p => p.status === 'interview')?.count ?? 0)
     + (o.pipeline.find(p => p.status === 'assessment')?.count ?? 0)
     + (o.pipeline.find(p => p.status === 'offer')?.count ?? 0)
   const applied = o.pipeline.find(p => p.status === 'applied')?.count ?? 0
   if (interviewPlus >= 2 && applied >= 3) {
-    return 'Du hast mehrere Gespräche oder späte Phasen — nutze die Bewerbungsdetails für Notizen und nächste Schritte.'
+    return 'Du hast mehrere Gespräche oder späte Phasen - nutze die Bewerbungsdetails für Notizen und nächste Schritte.'
   }
   if (o.activeInPipeline >= o.inArchive * 2 && o.activeInPipeline >= 5) {
     return 'Aktive Pipeline wächst: Status in den Details aktuell halten, damit diese Grafik deinen echten Stand abbildet.'
   }
-  return 'Verteilung wirkt ausgewogen — passe Status an, sobald sich etwas bei einer Stelle ändert.'
+  return 'Verteilung wirkt ausgewogen - passe Status an, sobald sich etwas bei einer Stelle ändert.'
 }

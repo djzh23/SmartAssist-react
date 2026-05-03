@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '@clerk/clerk-react'
 import { ArrowLeft, CheckCircle2, ChevronDown, Copy, FileText, Loader2, Trash2, XCircle } from 'lucide-react'
 import InfoExplainerButton from '../components/ui/InfoExplainerButton'
+import AppCtaButton from '../components/ui/AppCtaButton'
 import {
   type ApplicationStatusApi,
   type JobApplicationApi,
@@ -261,7 +262,7 @@ export default function ApplicationDetailPage() {
           <div className="mb-5 rounded-xl border border-teal-200 bg-teal-50/90 px-4 py-3 text-sm text-teal-900">
             <span className="font-semibold">Profil {getProfileCompleteness(careerProfile)}%</span>
             {getProfileCompletenessGapHint(careerProfile)
-              ? <> — {getProfileCompletenessGapHint(careerProfile)}</>
+              ? <> - {getProfileCompletenessGapHint(careerProfile)}</>
               : null}
             {' '}
             <Link to="/career-profile" className="font-semibold text-primary hover:underline">
@@ -363,21 +364,21 @@ export default function ApplicationDetailPage() {
             >
               <p>
                 Hier bearbeitest du eine einzelne Bewerbung. Der Lebenslauf liegt in CV.Studio und wird über dieselbe
-                Bewerbungs-ID verknüpft — die Pipeline auf „Meine Bewerbungen“ liest genau diese Verknüpfung aus.
+                Bewerbungs-ID verknüpft - die Pipeline auf „Meine Bewerbungen“ liest genau diese Verknüpfung aus.
               </p>
               <div className="mt-4 border-t border-stone-200 pt-4">
                 <p className="font-semibold text-stone-900">Lebenslauf (CV.Studio)</p>
                 <p className="mt-1">
                   {linkedCv
                     ? `Mit „${linkedCv.title}“ verknüpft. Zum Bearbeiten den Button „${cvStudioLabel}“ oben nutzen.`
-                    : 'Noch kein CV verknüpft. Über den Button oben in CV.Studio einen Lebenslauf wählen oder anlegen — die Verknüpfung erfolgt automatisch mit dieser Bewerbung.'}
+                    : 'Noch kein CV verknüpft. Über den Button oben in CV.Studio einen Lebenslauf wählen oder anlegen - die Verknüpfung erfolgt automatisch mit dieser Bewerbung.'}
                 </p>
               </div>
               <div className="mt-4 border-t border-stone-200 pt-4">
                 <p className="font-semibold text-stone-900">Anschreiben</p>
                 <p className="mt-1">
                   {hasCoverLetter(app)
-                    ? 'Text ist gespeichert — unten bei Bedarf weiter bearbeiten.'
+                    ? 'Text ist gespeichert - unten bei Bedarf weiter bearbeiten.'
                     : 'Unten im Abschnitt „Anschreiben“ Text einfügen und speichern.'}
                 </p>
               </div>
@@ -386,8 +387,8 @@ export default function ApplicationDetailPage() {
                 <p className="mt-1">
                   Aktuell: <span className="font-medium text-stone-900">{statusLabelFor(app.status)}</span>
                   {!hasLeftDraft(app)
-                    ? ' — nach dem Bewerben Status anheben, damit die Kanban-Spalte auf „Meine Bewerbungen“ stimmt.'
-                    : ' — passt zur Spalte auf der Übersichtsseite.'}
+                    ? ' - nach dem Bewerben Status anheben, damit die Kanban-Spalte auf „Meine Bewerbungen“ stimmt.'
+                    : ' - passt zur Spalte auf der Übersichtsseite.'}
                 </p>
               </div>
             </InfoExplainerButton>
@@ -436,13 +437,9 @@ export default function ApplicationDetailPage() {
             {app.jobDescription?.trim() || 'Kein Stellentext hinterlegt.'}
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={goAnalyze}
-              className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white shadow-md transition hover:bg-primary-hover"
-            >
+            <AppCtaButton type="button" onClick={goAnalyze} className="shadow-md">
               Analyse starten
-            </button>
+            </AppCtaButton>
             {app.analysisSessionId && (
               <span className="self-center text-xs text-stone-500">
                 Verknüpfte Analyse-Session: {app.analysisSessionId}
@@ -461,7 +458,7 @@ export default function ApplicationDetailPage() {
               className="translate-y-px"
             >
               <p>
-                Du kannst den Text hier bearbeiten oder extern (z. B. mit der KI im Chat) vorbereiten und einfügen —
+                Du kannst den Text hier bearbeiten oder extern (z. B. mit der KI im Chat) vorbereiten und einfügen -
                 anschließend auf dieser Seite speichern.
               </p>
               <p className="mt-3">
@@ -505,7 +502,7 @@ export default function ApplicationDetailPage() {
               className="translate-y-px"
             >
               <p>
-                Hier können später stellenbezogene Hinweise zur CV-Anpassung stehen — oder du erarbeitest sie per KI
+                Hier können später stellenbezogene Hinweise zur CV-Anpassung stehen - oder du erarbeitest sie per KI
                 im Chat und überträgst die Kernaussagen.
               </p>
             </InfoExplainerButton>
@@ -517,13 +514,9 @@ export default function ApplicationDetailPage() {
 
         <section className="mb-6 rounded-xl border border-stone-400/40 bg-white/95 p-5 shadow-card">
           <h2 className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-stone-500">Interview-Vorbereitung</h2>
-          <button
-            type="button"
-            onClick={goInterview}
-            className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white shadow-md transition hover:bg-primary-hover"
-          >
+          <AppCtaButton type="button" onClick={goInterview} className="shadow-md">
             Interview-Training starten
-          </button>
+          </AppCtaButton>
           {app.interviewSessionId && (
             <p className="mt-2 text-xs text-stone-500">Verknüpfte Session-ID: {app.interviewSessionId}</p>
           )}

@@ -2,12 +2,13 @@ import { lazy, Suspense } from 'react'
 import { BrowserRouter, Navigate, Route, Routes, useNavigate } from 'react-router-dom'
 import { ClerkProvider, useAuth, useUser } from '@clerk/clerk-react'
 import { AppErrorBoundary } from './components/AppErrorBoundary'
+import DocumentHead from './components/layout/DocumentHead'
 import MainLayout from './components/layout/MainLayout'
 import LoadingScreen from './components/LoadingScreen'
 import LandingPage from './pages/LandingPage'
-import ChatPage from './pages/ChatPage'
-import ProfilePage from './pages/ProfilePage'
-import OnboardingPage from './pages/OnboardingPage'
+const ChatPage = lazy(() => import('./pages/ChatPage'))
+const ProfilePage = lazy(() => import('./pages/ProfilePage'))
+const OnboardingPage = lazy(() => import('./pages/OnboardingPage'))
 
 const OverviewPage = lazy(() => import('./pages/OverviewPage'))
 const PricingPage = lazy(() => import('./pages/PricingPage'))
@@ -42,7 +43,7 @@ function ClerkProviderWithRouter({ children }: { children: React.ReactNode }) {
   )
 }
 
-// Requires authentication — redirects to landing if not signed in
+// Requires authentication - redirects to landing if not signed in
 function ProtectedApp() {
   const { isSignedIn, isLoaded } = useUser()
 
@@ -51,7 +52,7 @@ function ProtectedApp() {
   return <MainLayout />
 }
 
-/** Signed-in only, no MainLayout — /admin (sidebar shows link only for admins). */
+/** Signed-in only, no MainLayout - /admin (sidebar shows link only for admins). */
 function RequireSignedIn({ children }: { children: React.ReactNode }) {
   const { isSignedIn, isLoaded } = useUser()
 
@@ -74,14 +75,23 @@ function AppRoutes() {
         path="/onboarding"
         element={
           <RequireSignedIn>
-            <OnboardingPage />
+            <Suspense fallback={<RouteFallback />}>
+              <OnboardingPage />
+            </Suspense>
           </RequireSignedIn>
         }
       />
 
-      {/* Protected app — requires sign in, renders MainLayout with sidebar */}
+      {/* Protected app - requires sign in, renders MainLayout with sidebar */}
       <Route element={<ProtectedApp />}>
-        <Route path="/chat" element={<ChatPage />} />
+        <Route
+          path="/chat"
+          element={(
+            <Suspense fallback={<RouteFallback />}>
+              <ChatPage />
+            </Suspense>
+          )}
+        />
         <Route
           path="/overview"
           element={(
@@ -90,7 +100,14 @@ function AppRoutes() {
             </Suspense>
           )}
         />
-        <Route path="/profile" element={<ProfilePage />} />
+        <Route
+          path="/profile"
+          element={(
+            <Suspense fallback={<RouteFallback />}>
+              <ProfilePage />
+            </Suspense>
+          )}
+        />
         <Route
           path="/career-profile"
           element={(
@@ -187,6 +204,7 @@ export default function App() {
     <AppErrorBoundary>
       <BrowserRouter>
         <ClerkProviderWithRouter>
+          <DocumentHead />
           <AppRoutes />
         </ClerkProviderWithRouter>
       </BrowserRouter>

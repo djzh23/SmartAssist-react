@@ -1,18 +1,6 @@
 // ── Tool types ────────────────────────────────────────────
 export type ToolType = 'general' | 'jobanalyzer' | 'language' | 'programming' | 'interview'
 
-export interface ToolMeta {
-  id: ToolType
-  name: string
-  icon: string
-  shortDescription: string
-  fullDescription: string
-  examples: string[]
-  iconBg: string
-  chatParam: string
-  featured?: boolean
-}
-
 // ── Programming languages ─────────────────────────────────
 export type ProgrammingLanguage = 'csharp' | 'java' | 'html' | 'react' | 'design-patterns' | 'architecture'
 
@@ -110,7 +98,7 @@ export interface ProfileContextToggles {
   activeTargetJobId: string | null
 }
 
-/** Strukturierter Kontext für Job-Analyzer / Interview — Backend baut daraus die Nutzerrolle. */
+/** Strukturierter Kontext für Job-Analyzer / Interview - Backend baut daraus die Nutzerrolle. */
 export interface CareerToolSetup {
   cvText?: string
   jobText?: string
@@ -120,7 +108,7 @@ export interface CareerToolSetup {
   interviewLanguageCode?: string
   jobAnalyzerFollowUp?: boolean
   interviewAlias?: string
-  /** Keine feste Stellenanzeige — allgemeines Job-/Interview-Coaching (Backend + Assembler). */
+  /** Keine feste Stellenanzeige - allgemeines Job-/Interview-Coaching (Backend + Assembler). */
   generalCoaching?: boolean
 }
 
@@ -152,14 +140,7 @@ export interface AgentResponse {
   learningData?: LearningData
 }
 
-export interface SpeechRequest {
-  text: string
-  languageCode: string
-  voiceId?: string
-  modelId?: string
-}
-
-/** /api/skills — dynamic career modules */
+/** /api/skills - dynamic career modules */
 export interface SkillSummary {
   id: string
   name: string
@@ -175,7 +156,7 @@ export interface SkillSummary {
   isAccessible: boolean
 }
 
-/** /api/cv-studio/resumes — Lebenslauf-Übersicht (camelCase vom Backend) */
+/** /api/cv-studio/resumes - Lebenslauf-Übersicht (camelCase vom Backend) */
 export interface CvStudioResumeSummary {
   id: string
   title: string
@@ -194,7 +175,7 @@ export interface CvStudioResumeSummary {
   } | null
 }
 
-/** /api/cv-studio/categories — DB-gespeicherte Kategorien */
+/** /api/cv-studio/categories - DB-gespeicherte Kategorien */
 export interface CvUserCategoryDto {
   id: string
   name: string
@@ -207,7 +188,7 @@ export interface CvCategoriesResponse {
   assignments: Record<string, string>
 }
 
-/** /api/cv-studio/pdf-exports — getrackte PDF-Downloads (Kontingent) */
+/** /api/cv-studio/pdf-exports - getrackte PDF-Downloads (Kontingent) */
 export interface CvStudioPdfExportRow {
   id: string
   resumeId: string

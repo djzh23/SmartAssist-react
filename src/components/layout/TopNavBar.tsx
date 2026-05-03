@@ -3,13 +3,8 @@ import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { SignOutButton } from '@clerk/clerk-react'
 import {
   ArrowLeft,
-  BookOpen,
-  ClipboardList,
-  FileText,
-  FolderOpen,
   LayoutDashboard,
   Menu,
-  NotebookPen,
   Settings,
   ShieldCheck,
   Tag,
@@ -21,6 +16,7 @@ import { useUserPlan } from '../../hooks/useUserPlan'
 import { useBreakpoint } from '../../hooks/useBreakpoint'
 import { useMobileNavTitle } from '../../hooks/useMobileNavTitle'
 import { useLayoutChrome } from '../../context/LayoutChromeContext'
+import { MAIN_NAV_ITEMS } from '../../config/mainNavigation'
 
 interface Props {
   onMenuClick: () => void
@@ -223,60 +219,38 @@ export default function TopNavBar({ onMenuClick, menuOpen }: Props) {
       <div className="flex min-w-0 items-center justify-start gap-2">
         <Link
           to="/overview"
+          aria-label="PrivatePrep"
           className="flex min-w-0 flex-shrink-0 items-center gap-2 rounded-lg py-1 pr-2 no-underline hover:opacity-90"
         >
-          <img src="/favicon.png" alt="" className="h-8 w-8 rounded-lg" width={32} height={32} />
+          <img
+            src="/logo-nav.webp"
+            alt=""
+            className="h-8 w-8 rounded-lg"
+            width={32}
+            height={32}
+            decoding="async"
+          />
           <span className="hidden text-[15px] font-bold tracking-wide text-stone-50 sm:inline">PrivatePrep</span>
         </Link>
       </div>
 
       <nav className="hidden shrink-0 items-center justify-center gap-0.5 min-[769px]:flex desktop:gap-1">
-        <NavLink to="/overview" end className={({ isActive }) => navClass(isActive)}>
-          <span className="inline-flex items-center gap-1.5">
-            <LayoutDashboard size={15} className="shrink-0 opacity-80" aria-hidden />
-            Übersicht
-          </span>
-        </NavLink>
-        <NavLink to="/career-profile" className={({ isActive }) => navClass(isActive)}>
-          <span className="inline-flex items-center gap-1.5">
-            <ClipboardList size={15} className="shrink-0 opacity-80" aria-hidden />
-            Karriereprofil
-          </span>
-        </NavLink>
-        <NavLink
-          to="/applications"
-          className={({ isActive }) =>
-            navClass(isActive || location.pathname.startsWith('/applications'))
-          }
-        >
-          <span className="inline-flex items-center gap-1.5">
-            <FolderOpen size={15} className="shrink-0 opacity-80" aria-hidden />
-            Bewerbungen
-          </span>
-        </NavLink>
-        <NavLink to="/cv-studio" className={({ isActive }) => navClass(isActive)}>
-          <span className="inline-flex items-center gap-1.5">
-            <FileText size={15} className="shrink-0 opacity-80" aria-hidden />
-            CV.Studio
-          </span>
-        </NavLink>
-        <NavLink
-          to="/guides"
-          className={({ isActive }) =>
-            navClass(isActive || location.pathname.startsWith('/guides'))
-          }
-        >
-          <span className="inline-flex items-center gap-1.5">
-            <BookOpen size={15} className="shrink-0 opacity-80" aria-hidden />
-            Ratgeber
-          </span>
-        </NavLink>
-        <NavLink to="/notes" className={({ isActive }) => navClass(isActive)}>
-          <span className="inline-flex items-center gap-1.5">
-            <NotebookPen size={15} className="shrink-0 opacity-80" aria-hidden />
-            Notizen
-          </span>
-        </NavLink>
+        {MAIN_NAV_ITEMS.map(item => {
+          const Icon = item.icon
+          return (
+            <NavLink
+              key={item.key}
+              to={item.route}
+              end={item.route === '/overview'}
+              className={() => navClass(item.matchesPath(location.pathname))}
+            >
+              <span className="inline-flex items-center gap-1.5">
+                <Icon size={15} className="shrink-0 opacity-80" aria-hidden />
+                {item.label}
+              </span>
+            </NavLink>
+          )
+        })}
       </nav>
 
       <div className="ml-auto flex min-w-0 flex-shrink-0 items-center justify-end gap-1.5 min-[769px]:ml-0 sm:gap-2">

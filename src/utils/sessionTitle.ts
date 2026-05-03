@@ -21,7 +21,7 @@ function stripStarters(text: string): string {
     .replace(/^(hallo|hey|hi|moin|guten\s+(tag|morgen|abend)|servus|grüezi)[,!.?\s]+/i, '')
     // Polite request prefixes
     .replace(/^(bitte|please|könntest\s+du|kannst\s+du(mir)?|können\s+sie|würden\s+sie)\s+/i, '')
-    // "Ich möchte/will/brauche/habe/suche/bin…" — keep what follows
+    // "Ich möchte/will/brauche/habe/suche/bin…" - keep what follows
     .replace(/^(ich\s+(möchte|will|würde\s+gerne|hätte\s+gerne|brauche|suche|habe|bin))\s+/i, '')
     // "Can you…", "Could you…", "I need…", "I want…"
     .replace(/^(can\s+you|could\s+you|i\s+(need|want|would\s+like|am\s+looking))\s+/i, '')

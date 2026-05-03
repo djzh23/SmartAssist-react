@@ -85,7 +85,7 @@ export default function CvApplicationGroup({
           {variant !== 'linked' ? (
             <p className="mt-0.5 text-[11px] leading-snug text-stone-500">
               {variant === 'context'
-                ? 'Nur Firmen- oder Rollenname — nicht mit einer Pipeline-Bewerbung verknüpft.'
+                ? 'Nur Firmen- oder Rollenname - nicht mit einer Pipeline-Bewerbung verknüpft.'
                 : 'Master- oder Übungs-CVs ohne feste Bewerbung.'}
             </p>
           ) : null}

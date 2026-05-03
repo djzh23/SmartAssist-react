@@ -68,6 +68,14 @@ async function main() {
     .toFile(destPath)
 
   console.log('Wrote', destPath)
+
+  const navPath = join(publicDir, 'logo-nav.webp')
+  await sharp(destPath)
+    .resize(96, 96)
+    .webp({ quality: 82, effort: 6 })
+    .toFile(navPath)
+
+  console.log('Wrote', navPath, '(header / in-app logo, avoids loading 512×512 PNG in nav)')
 }
 
 main().catch((e) => {

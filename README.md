@@ -1,77 +1,105 @@
-# SmartAssist Frontend
+# BetweenAtna — Frontend
 
-React Frontend für die SmartAssist KI Plattform.
-Live unter: **[betweenatna.de](https://www.betweenatna.de)**
-Backend Repo: [github.com/djzh23/SmartAIAssist](https://github.com/djzh23/SmartAIAssist)
+React frontend for **BetweenAtna**, an AI-powered career platform that helps professionals manage their job search end-to-end.
 
----
-
-## Was ist SmartAssist?
-
-SmartAssist ist ein KI Assistent mit mehreren spezialisierten Chat Werkzeugen.
-Der Nutzer wählt ein Werkzeug, schreibt eine Nachricht und erhält eine strukturierte, kontextbewusste Antwort vom KI Modell (Anthropic Claude).
+Live: **[betweenatna.de](https://www.betweenatna.de)**
+Backend: [github.com/djzh23/SmartAIAssist](https://github.com/djzh23/SmartAIAssist)
 
 ---
 
-## Werkzeuge
+## What is BetweenAtna?
 
-| Werkzeug | Beschreibung |
+BetweenAtna is a career workspace that combines structured job application tracking with AI coaching and a built-in CV editor. Users manage the full journey from finding a role to signing an offer — all in one place.
+
+---
+
+## Core Features
+
+### Job Applications
+Track every application through a visual pipeline with 9 stages: Draft → Applied → Phone Screen → Interview → Assessment → Offer → Accepted / Rejected / Withdrawn. A Sankey flow diagram shows the distribution of your applications at a glance.
+
+### CV.Studio
+Create, organize, and export professional CVs directly in the browser:
+- Category-based organization (e.g. "SAP Roles", "Startups", "Remote")
+- Multiple CV variants per category
+- PDF export with quota tracking
+- Snapshot versioning — save named versions before major edits
+- Link a CV directly to a job application
+
+### AI Chat & Coaching
+Specialized AI modes powered by Anthropic Claude:
+
+| Mode | What it does |
 |---|---|
-| Allgemeiner Chat | Freie KI Konversation |
-| Sprachen lernen | KI antwortet strukturiert in Zielsprache mit Übersetzung und Lerntipp, Audio per Browser TTS |
-| Stellenanalyse | Stellenbeschreibung einfügen und Schlüsselanforderungen, passende Keywords und CV Tipps erhalten |
-| Vorstellungsgespräch | Interview Vorbereitung mit realistischen Fragen basierend auf Stelle und Lebenslauf |
-| Programmierung | Code Hilfe, Debugging und Best Practices mit Syntax Highlighting |
-| Wetter | Aktuelles Wetter für jede Stadt weltweit |
+| Career Coach | General career advice and job search strategy |
+| Job Analysis | Paste a job description — get key requirements, relevant keywords, and CV tips |
+| Interview Prep | Realistic interview questions tailored to your CV and the target role |
+| Language Learning | Structured answers in the target language with translation and a learning tip |
+| Programming | Code help, debugging, and best practices with syntax highlighting |
+
+### Profile & Dashboard
+- Overview cockpit with active pipeline count and archive stats
+- Career profile with skills, languages, and experience level
+- Application activity feed
+
+### Subscriptions
+Stripe-powered plans with daily message limits. Free tier included.
 
 ---
 
 ## Tech Stack
 
-| Bereich | Technologie |
+| Area | Technology |
 |---|---|
 | Framework | React 18 + TypeScript |
-| Build Tool | Vite |
+| Build | Vite |
 | Styling | Tailwind CSS v3 |
 | Icons | Lucide React |
 | Routing | React Router v6 |
-| Authentifizierung | Clerk |
-| Schriften | Google Fonts (Inter + Lora) |
+| Auth | Clerk |
+| Payments | Stripe (via backend) |
+| Fonts | Google Fonts (Inter + Lora) |
+| Deployment | Vercel (auto-deploy on push to `main`) |
 
 ---
 
-## Projektstruktur
+## Project Structure
 
 ```
 src/
 ├── api/
-│   └── client.ts            Alle API Aufrufe zum Backend (SSE Streaming, Speech)
+│   └── client.ts              Typed fetch wrapper for all backend calls
 ├── components/
-│   ├── chat/                ChatSidebar, MessageList, MessageBubble, ChatInput,
-│   │                        LearningResponse, JobAnalysisCard, CodeBlock, ...
-│   ├── layout/              MainLayout, Sidebar
-│   └── ui/                  UsageLimitModal, AuthButton
+│   ├── chat/                  ChatSidebar, MessageList, MessageBubble,
+│   │                          LearningResponse, JobAnalysisCard, CodeBlock
+│   ├── layout/                MainLayout, Sidebar, BottomTabBar, PageHeader
+│   ├── overview/              ApplicationFlowSankey, ApplicationCard
+│   └── ui/                    Modal, UsageLimitModal, InfoExplainerButton
+├── cv-studio/
+│   ├── CvStudioOverviewPage   Category chips + workspace + export panel
+│   ├── CvStudioEditorPage     Live CV editor with template switching
+│   └── components/            CategoryCard, ResumeCard, ExportList, dialogs
 ├── hooks/
-│   ├── useChatSessions.ts   Session State (localStorage)
-│   └── useUserPlan.ts       Nutzerlimit und Plan Verwaltung
+│   ├── useCvResumeCategories  Category CRUD with optimistic updates
+│   ├── useChatSessions        Chat session state (localStorage)
+│   └── useMediaQuery          Responsive breakpoint detection
 ├── pages/
-│   ├── LandingPage.tsx      Startseite mit Live Demo
-│   ├── ChatPage.tsx         Haupt Chat Seite
-│   ├── ProfilePage.tsx      Profil und Verbrauchsanzeige
-│   └── PricingPage.tsx      Preisübersicht
+│   ├── OverviewPage           Cockpit: pipeline stats + Sankey + quick actions
+│   ├── ApplicationsPage       Full pipeline board with status management
+│   ├── CareerProfilePage      Skills, languages, experience
+│   └── PricingPage            Plan overview with Stripe checkout
 ├── types/
-│   └── index.ts             Gemeinsame Typen und Konstanten
+│   └── index.ts               All shared TypeScript types
 └── utils/
-    ├── parseLearningResponse.ts   Sprachlern Antwort Parser
-    ├── markdownRenderer.ts        Markdown zu HTML
-    └── jobMarkdown.ts             Stellenanalyse Formatierung
+    ├── applicationOverview    Pipeline aggregation logic
+    └── jobMarkdown            Job analysis card formatting
 ```
 
 ---
 
-## Lokal starten
+## Local Development
 
-**Voraussetzungen:** Node.js 18+
+**Requirements:** Node.js 20+
 
 ```bash
 git clone https://github.com/djzh23/SmartAssist-react.git
@@ -80,32 +108,41 @@ npm install
 npm run dev
 ```
 
-Öffnet unter `http://localhost:5174`.
+Opens at `http://localhost:5174`. Vite proxies `/api/*` to the hosted backend — no local backend needed for basic UI work.
 
-Der Vite Dev Server leitet `/api/*` automatisch an das gehostete Backend weiter.
-Keine weitere Konfiguration nötig.
+Copy `.env.example` to `.env.local` and set your Clerk key:
+
+```
+VITE_CLERK_PUBLISHABLE_KEY=pk_test_...
+```
 
 ---
 
 ## Deployment
 
-Das Projekt läuft auf **Vercel**. Die `vercel.json` leitet alle `/api/*` Anfragen an das Backend auf Render weiter.
+Push to `main` — Vercel auto-deploys via GitHub Actions:
+
+```
+push to main → CI (lint + build) → deploy to Vercel
+```
+
+Manual deploy if needed:
 
 ```bash
-vercel --prod --yes
+npx vercel --prod
 ```
 
 ---
 
-## Umgebungsvariablen
+## Environment Variables
 
-| Variable | Beschreibung |
+| Variable | Description |
 |---|---|
-| `VITE_API_BASE_URL` | Backend URL (leer lassen für Proxy im Dev Modus) |
-| `VITE_CLERK_PUBLISHABLE_KEY` | Clerk Authentifizierung Key |
+| `VITE_API_BASE_URL` | Backend URL (leave empty in dev — uses Vite proxy) |
+| `VITE_CLERK_PUBLISHABLE_KEY` | Clerk publishable key |
 
 ---
 
-## Lizenz
+## License
 
 MIT

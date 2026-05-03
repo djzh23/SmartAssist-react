@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { IconHubIcon } from '../components/ui/IconHubIcon'
 import InfoExplainerButton from '../components/ui/InfoExplainerButton'
+import { appCtaButtonClasses } from '../components/ui/AppCtaButton'
 import { useUserPlan, getPlanColors, getPlanLabel } from '../hooks/useUserPlan'
 import { confirmPlanFromSession, createPortalSession, syncPlanFromStripe } from '../services/StripeService'
 
@@ -285,7 +286,7 @@ export default function ProfilePage() {
                   </InfoExplainerButton>
                 </div>
                 <p className="mt-2 text-sm leading-relaxed text-stone-700">
-                  Limits, Plan und Abo — getrennt von der Arbeitsübersicht.
+                  Limits, Plan und Abo - getrennt von der Arbeitsübersicht.
                 </p>
                 <Link
                   to="/overview"
@@ -426,7 +427,7 @@ export default function ProfilePage() {
                 lebt im Browser und wird mit dem Server abgeglichen, sobald Antworten zurückkommen.
               </p>
               <p className="mt-3">
-                „Antworten gesamt“ und „Aktive Tage“ werden aus deiner lokalen Nutzungshistorie zusammengerechnet — gut
+                „Antworten gesamt“ und „Aktive Tage“ werden aus deiner lokalen Nutzungshistorie zusammengerechnet - gut
                 als Motivation, nicht als offizielle Abrechnung.
               </p>
               <p className="mt-3 text-stone-600">
@@ -460,7 +461,7 @@ export default function ProfilePage() {
                 {
                   icon: <Star size={15} className="text-amber-600" aria-hidden />,
                   label: 'Lieblingstool',
-                  value: user.favoriteTool ?? '—',
+                  value: user.favoriteTool ?? '-',
                   sub: 'häufigstes Tool',
                 },
               ].map(stat => (
@@ -499,7 +500,7 @@ export default function ProfilePage() {
               </p>
               <p className="mt-3">
                 Wenn du gerade bezahlt hast, der Badge aber noch nicht stimmt: „Plan synchronisieren“ holt den Stand
-                direkt bei Stripe — ohne die Seite endlos neu zu laden.
+                direkt bei Stripe - ohne die Seite endlos neu zu laden.
               </p>
             </InfoExplainerButton>
           </div>
@@ -539,7 +540,7 @@ export default function ProfilePage() {
               <div className="flex flex-wrap items-center gap-2">
                 <Link
                   to="/pricing"
-                  className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-md transition hover:bg-primary-hover"
+                  className={appCtaButtonClasses({ className: 'shadow-md' })}
                 >
                   {user.plan === 'free' ? 'Premium werden' : 'Pro werden'}
                   <ArrowRight size={14} aria-hidden />

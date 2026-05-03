@@ -359,7 +359,7 @@ export default function InterviewSetupModal({
             <div className="space-y-3 rounded-xl border border-emerald-200 bg-emerald-50/60 p-3">
               <div className="flex items-center gap-2 text-xs font-semibold text-emerald-700">
                 <CheckCircle2 size={14} />
-                Kontext aufbereitet — bereit zum Speichern
+                Kontext aufbereitet - bereit zum Speichern
               </div>
 
               {/* CV preview */}

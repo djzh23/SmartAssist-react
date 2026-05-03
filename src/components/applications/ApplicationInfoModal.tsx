@@ -80,7 +80,7 @@ export default function ApplicationInfoModal({ app, cvSummaries, onClose }: Appl
           <h2 id="app-info-title" className="mt-1 text-lg font-bold text-slate-900">
             {app.jobTitle || 'Ohne Titel'}
           </h2>
-          <p className="text-sm text-slate-600">{app.company || '—'}</p>
+          <p className="text-sm text-slate-600">{app.company || '-'}</p>
         </div>
 
         <div className="space-y-2 border-t border-slate-100 px-5 py-4">
@@ -91,7 +91,7 @@ export default function ApplicationInfoModal({ app, cvSummaries, onClose }: Appl
             detail={
               cvOk && linked
                 ? `Mit dieser Bewerbung verknüpft: „${linked.title}“. Bearbeiten über CV.Studio → Lebenslauf öffnen.`
-                : 'Noch kein Lebenslauf mit dieser Bewerbungs-ID in CV.Studio verknüpft. Über „CV.Studio“ einen CV anlegen oder verknüpfen — die ID kommt von dieser Bewerbung.'
+                : 'Noch kein Lebenslauf mit dieser Bewerbungs-ID in CV.Studio verknüpft. Über „CV.Studio“ einen CV anlegen oder verknüpfen - die ID kommt von dieser Bewerbung.'
             }
           />
           <Row
@@ -108,7 +108,7 @@ export default function ApplicationInfoModal({ app, cvSummaries, onClose }: Appl
             title="Pipeline-Status"
             detail={
               pipeOk
-                ? 'Der Bewerbungs-Status ist nicht mehr „Entwurf“ — du trackst den weiteren Verlauf in der Pipeline.'
+                ? 'Der Bewerbungs-Status ist nicht mehr „Entwurf“ - du trackst den weiteren Verlauf in der Pipeline.'
                 : 'Status ist noch „Entwurf“. Nach dem Bewerben den Status anheben (z. B. „Beworben“), damit die Pipeline stimmt.'
             }
           />

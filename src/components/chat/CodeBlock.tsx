@@ -1,6 +1,4 @@
 import { useState } from 'react'
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { Copy, Check } from 'lucide-react'
 
 interface Props {
@@ -29,15 +27,9 @@ export default function CodeBlock({ code, language }: Props) {
           {copied ? 'Copied!' : 'Copy'}
         </button>
       </div>
-      <SyntaxHighlighter
-        language={language}
-        style={vscDarkPlus}
-        showLineNumbers
-        customStyle={{ margin: 0, borderRadius: 0, fontSize: '0.78rem', lineHeight: '1.5' }}
-        lineNumberStyle={{ minWidth: '2.2em', paddingRight: '1em', color: '#555' }}
-      >
-        {code}
-      </SyntaxHighlighter>
+      <pre className="overflow-x-auto bg-[#0f172a] px-4 py-3 text-[12px] leading-relaxed text-slate-100">
+        <code className="font-mono">{code}</code>
+      </pre>
     </div>
   )
 }

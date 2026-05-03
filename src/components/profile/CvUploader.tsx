@@ -14,7 +14,7 @@ interface Props {
   levelOptions: FieldOpt[]
   cvPasteText: string
   onCvPasteTextChange: (v: string) => void
-  /** Nach Bestätigung der Vorschau — Parent führt Onboarding + Profil-Update aus. */
+  /** Nach Bestätigung der Vorschau - Parent führt Onboarding + Profil-Update aus. */
   onApplyParsed: (draft: ParsedCvData) => Promise<void>
   onManualAdjust: (draft: ParsedCvData) => void
 }
@@ -164,7 +164,7 @@ export default function CvUploader({
               onChange={e => setDraft({ ...draft, field: e.target.value })}
               className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm text-slate-800"
             >
-              <option value="">—</option>
+              <option value="">-</option>
               {fieldOptions.map(f => (
                 <option key={f.value} value={f.value}>
                   {f.label}
@@ -182,7 +182,7 @@ export default function CvUploader({
               onChange={e => setDraft({ ...draft, level: e.target.value })}
               className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm text-slate-800"
             >
-              <option value="">—</option>
+              <option value="">-</option>
               {levelOptions.map(l => (
                 <option key={l.value} value={l.value}>
                   {l.label}

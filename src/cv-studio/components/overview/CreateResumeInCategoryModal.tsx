@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { ChevronRight, Copy, FilePlus, FileText, Loader2, X } from 'lucide-react'
+import AppCtaButton from '../../../components/ui/AppCtaButton'
 import type { JobApplicationApi } from '../../../api/client'
 import type { CvStudioResumeSummary, CvUserCategoryDto } from '../../../types'
 import type { ResumeTemplateDto } from '../../cvTypes'
@@ -20,7 +21,7 @@ interface Props {
   category: CvUserCategoryDto
   templates: ResumeTemplateDto[]
   jobApplications: JobApplicationApi[]
-  /** All existing resumes — for the clone picker. */
+  /** All existing resumes - for the clone picker. */
   allResumes: CvStudioResumeSummary[]
   getCategoryName: (resumeId: string) => string | null
   onConfirm: (params: CreateResumeForCategoryParams) => Promise<void>
@@ -147,7 +148,7 @@ export default function CreateResumeInCategoryModal({
               <ChoiceCard
                 icon={<FileText size={20} />}
                 title="Neue Vorlage"
-                description="Starte mit einer leeren Vorlage — Daten werden direkt im Editor eingetragen."
+                description="Starte mit einer leeren Vorlage - Daten werden direkt im Editor eingetragen."
                 onClick={() => handleChoose('new')}
               />
 
@@ -249,7 +250,7 @@ export default function CreateResumeInCategoryModal({
                 </div>
               )}
 
-              {/* Job context — always shown */}
+              {/* Job context - always shown */}
               <div className="space-y-3">
                 <p className="text-xs font-semibold text-stone-300">
                   Bewerbungskontext{' '}
@@ -267,10 +268,10 @@ export default function CreateResumeInCategoryModal({
                       onChange={e => setSelectedAppId(e.target.value)}
                       className="w-full rounded-lg border border-stone-600/60 bg-stone-700 px-3 py-2 text-sm text-stone-100 focus:border-violet-500/60 focus:outline-none"
                     >
-                      <option value="">— Keine Bewerbung verknüpfen —</option>
+                      <option value="">- Keine Bewerbung verknüpfen -</option>
                       {jobApplications.map(a => (
                         <option key={a.id} value={a.id}>
-                          {a.company} — {a.jobTitle}
+                          {a.company} - {a.jobTitle}
                         </option>
                       ))}
                     </select>
@@ -318,7 +319,7 @@ export default function CreateResumeInCategoryModal({
                         />
                         <span className="text-xs leading-relaxed text-stone-300">
                           <span className="font-medium text-stone-200">In Bewerbungsliste anlegen</span>
-                          {' — '}
+                          {' - '}
                           erstellt einen Eintrag unter „Meine Bewerbungen" und verknüpft diesen CV.
                         </span>
                       </label>
@@ -361,11 +362,11 @@ export default function CreateResumeInCategoryModal({
                   >
                     Abbrechen
                   </button>
-                  <button
+                  <AppCtaButton
                     type="button"
                     disabled={busy || (startChoice === 'new' && !selectedTemplateKey) || (startChoice === 'clone' && !cloneFromId)}
                     onClick={() => void handleConfirm()}
-                    className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-opacity hover:bg-primary-hover disabled:opacity-50"
+                    className="flex items-center gap-2 disabled:opacity-50"
                   >
                     {busy
                       ? <Loader2 size={14} className="animate-spin" aria-hidden />
@@ -373,7 +374,7 @@ export default function CreateResumeInCategoryModal({
                         ? <Copy size={14} aria-hidden />
                         : <FilePlus size={14} aria-hidden />}
                     {startChoice === 'clone' ? 'Kopie anlegen' : 'Lebenslauf anlegen'}
-                  </button>
+                  </AppCtaButton>
                 </div>
               </div>
             </div>

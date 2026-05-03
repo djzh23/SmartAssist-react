@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { appCtaButtonClasses } from '../components/ui/AppCtaButton'
 import { useAuth } from '@clerk/clerk-react'
 import {
   ArrowLeft,
@@ -105,7 +106,7 @@ function getTopTool(summary: UserUsageSummary): string {
   if (summary.topTool) return toolLabel(summary.topTool)
   const by = summary.byTool ?? {}
   const entries = Object.entries(by)
-  if (entries.length === 0) return '—'
+  if (entries.length === 0) return '-'
   const top = entries.reduce((a, b) => (b[1].costUsd > a[1].costUsd ? b : a))
   return toolLabel(top[0])
 }
@@ -401,7 +402,7 @@ export default function AdminDashboardPage() {
   )
 
   const payingSubtitle = useMemo(() => {
-    if (!data?.topUsers?.length) return '—'
+    if (!data?.topUsers?.length) return '-'
     let starter = 0
     let pro = 0
     for (const u of data.topUsers) {
@@ -441,7 +442,7 @@ export default function AdminDashboardPage() {
 
   if (forbidden) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-slate-950 px-4 text-slate-200">
+      <main className="flex min-h-screen flex-col items-center justify-center bg-slate-950 px-4 text-slate-200">
         <ShieldAlert className="mb-4 text-orange-400" size={48} />
         <h1 className="mb-2 text-xl font-semibold text-slate-100">Kein Zugriff</h1>
         <p className="mb-6 max-w-md text-center text-sm text-slate-400">
@@ -449,12 +450,12 @@ export default function AdminDashboardPage() {
         </p>
         <Link
           to="/chat"
-          className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-hover"
+          className={appCtaButtonClasses({})}
         >
           <ArrowLeft size={16} />
           Zurück zum Chat
         </Link>
-      </div>
+      </main>
     )
   }
 
@@ -477,7 +478,7 @@ export default function AdminDashboardPage() {
           </div>
           <div className="flex flex-col items-end gap-1 sm:flex-row sm:items-center sm:gap-3">
             <p className="max-w-[220px] text-right text-[11px] leading-snug text-slate-500">
-              Daten manuell synchronisieren — kein automatischer Hintergrund-Abruf.
+              Daten manuell synchronisieren - kein automatischer Hintergrund-Abruf.
             </p>
             <ServerSyncControl
               variant="dark"
@@ -1111,7 +1112,7 @@ export default function AdminDashboardPage() {
               {selectedUser && !detailLoading && (
                 <>
                   <p className="text-xs text-slate-500">
-                    Zeitraum: {detailRangeLabel || '—'} (wie Tabellen-Filter)
+                    Zeitraum: {detailRangeLabel || '-'} (wie Tabellen-Filter)
                   </p>
                   <p className="font-mono text-xs text-slate-300">{selectedUser.userId}</p>
                   {selectedUser.userEmail?.trim() ? (

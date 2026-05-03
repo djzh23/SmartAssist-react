@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@clerk/clerk-react'
-import { FolderPlus, Loader2, Plus, Sparkles } from 'lucide-react'
+import { FileText, FolderOpen, FolderPlus, Loader2, Plus } from 'lucide-react'
 import {
   assignCvStudioCategory,
   createCvStudioResume,
   createCvStudioResumeFromTemplate,
   createJobApplication,
+  downloadCvStudioPdf,
   deleteCvStudioPdfExport,
   deleteCvStudioResume,
   fetchJobApplications,
@@ -20,16 +21,22 @@ import {
 import { useAppUi } from '../context/AppUiContext'
 import type { CvStudioPdfExportRow, CvStudioResumeSummary, CvUserCategoryDto } from '../types'
 import type { ResumeTemplateDto } from './cvTypes'
+import { downloadBlob, notify } from './lib/cvStudio'
 import { useCvResumeCategories } from '../hooks/useCvResumeCategories'
 import CvCreateDialog, { type CreateParams } from './components/overview/CvCreateDialog'
-import CvExportHistory from './components/overview/CvExportHistory'
-import CvMasterCategoriesBoard from './components/overview/CvMasterCategoriesBoard'
+import CVStudioGuidanceBar from './components/overview/CVStudioGuidanceBar'
 import CvQuotaBadge from './components/overview/CvQuotaBadge'
+import CvStudioCategoryCard from './components/overview/CvStudioCategoryCard'
+import CvStudioExportList from './components/overview/CvStudioExportList'
+import CvStudioResumeCard from './components/overview/CvStudioResumeCard'
+import MobileCVStudioTabs, { type CVStudioMobileTab } from './components/overview/MobileCVStudioTabs'
 import CreateCategoryModal from './components/overview/CreateCategoryModal'
 import CreateResumeInCategoryModal, {
   type CreateResumeForCategoryParams,
 } from './components/overview/CreateResumeInCategoryModal'
-import InfoExplainerButton from '../components/ui/InfoExplainerButton'
+import PageHeader from '../components/layout/PageHeader'
+import AppCtaButton from '../components/ui/AppCtaButton'
+import { useMediaQuery } from '../hooks/useMediaQuery'
 
 export default function CvStudioOverviewPage() {
   const navigate = useNavigate()
@@ -50,14 +57,12 @@ export default function CvStudioOverviewPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | 'uncategorized' | null>(null)
+  const [mobileTab, setMobileTab] = useState<CVStudioMobileTab>('categories')
+  const isDesktop = useMediaQuery('(min-width: 1024px)')
 
-  // General "Neuer Lebenslauf" dialog (no category context)
   const [showDialog, setShowDialog] = useState(false)
-
-  // Modal: create category
   const [showCreateCategoryModal, setShowCreateCategoryModal] = useState(false)
-
-  // Modal: create resume inside a specific category
   const [showCreateResumeModal, setShowCreateResumeModal] = useState(false)
   const [selectedCategoryForResume, setSelectedCategoryForResume] = useState<CvUserCategoryDto | null>(null)
 
@@ -99,7 +104,6 @@ export default function CvStudioOverviewPage() {
     void load()
   }, [load])
 
-  /** Redirect when opened via „CV anzeigen" in Bewerbungen. */
   useEffect(() => {
     if (!forApplication || loading || resumes === null) return
     const linked = resumes.find(r => r.linkedJobApplicationId === forApplication)
@@ -121,9 +125,9 @@ export default function CvStudioOverviewPage() {
     categories,
     loaded: categoriesLoaded,
     categoryError,
-    assignResume,
     addCategory,
     removeCategory,
+    renameCategory,
     getCategoryIdForResume,
   } = useCvResumeCategories(resumeIds)
 
@@ -149,9 +153,13 @@ export default function CvStudioOverviewPage() {
     await removeCategory(cat.id)
   }
 
-  // ── Handlers: resumes ─────────────────────────────────────────────────────
+  async function handleRenameCategory(category: CvUserCategoryDto) {
+    const next = window.prompt('Neuer Kategoriename', category.name)?.trim()
+    if (!next || next === category.name) return
+    await renameCategory(category.id, next)
+  }
 
-  /** General create (no category pre-selection). */
+  // ── Handlers: resumes ─────────────────────────────────────────────────────
   async function handleCreate(params: CreateParams) {
     const token = await getToken()
     if (!token) throw new Error('Kein Sitzungs-Token. Bitte neu anmelden.')
@@ -195,7 +203,6 @@ export default function CvStudioOverviewPage() {
     navigate(`/cv-studio/edit/${created.id}`)
   }
 
-  /** Create inside a category: create resume → assign → navigate to editor. */
   async function handleCreateResumeInCategory(params: CreateResumeForCategoryParams) {
     const token = await getToken()
     if (!token) throw new Error('Kein Sitzungs-Token. Bitte neu anmelden.')
@@ -225,7 +232,6 @@ export default function CvStudioOverviewPage() {
 
     let created
     if (params.cloneFromId) {
-      // Clone: copy resumeData from the source, then apply any link context
       const source = await getCvStudioResume(token, params.cloneFromId)
       created = await createCvStudioResume(token, {
         title: `Kopie von ${source.title}`,
@@ -237,9 +243,7 @@ export default function CvStudioOverviewPage() {
       created = await createCvStudioResumeFromTemplate(token, params.templateKey, linkPayload)
     }
 
-    // Assign to the category
     await assignCvStudioCategory(token, created.id, params.categoryId)
-
     navigate(`/cv-studio/edit/${created.id}`)
   }
 
@@ -263,207 +267,491 @@ export default function CvStudioOverviewPage() {
   }
 
   async function handleDeletePdf(id: string) {
+    const ok = await requestConfirm({
+      title: 'Export entfernen?',
+      message: 'Der Eintrag wird gelöscht und das Kontingent freigegeben.',
+      confirmLabel: 'Löschen',
+      cancelLabel: 'Abbrechen',
+      danger: true,
+    })
+    if (!ok) return
     const token = await getToken()
     if (!token) return
     await deleteCvStudioPdfExport(token, id)
     await load()
   }
 
-  // ── Derived: filtered resumes for search ──────────────────────────────────
+  async function handleDuplicateResume(resume: CvStudioResumeSummary) {
+    const token = await getToken()
+    if (!token) { setError('Bitte anmelden.'); return }
+    setError(null)
+    try {
+      const source = await getCvStudioResume(token, resume.id)
+      const created = await createCvStudioResume(token, {
+        title: `Kopie von ${source.title}`,
+        templateKey: source.templateKey ?? resume.templateKey,
+        resumeData: source.resumeData,
+      })
+      if (resume.linkedJobApplicationId || resume.targetCompany || resume.targetRole) {
+        await linkCvStudioJobApplication(token, created.id, {
+          jobApplicationId: resume.linkedJobApplicationId ?? null,
+          targetCompany: resume.targetCompany ?? null,
+          targetRole: resume.targetRole ?? null,
+        })
+      }
+      const categoryId = getCategoryIdForResume(resume.id)
+      if (categoryId) {
+        await assignCvStudioCategory(token, created.id, categoryId)
+      }
+      await load()
+      navigate(`/cv-studio/edit/${created.id}`)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Duplizieren fehlgeschlagen.')
+    }
+  }
+
+  async function handleExportResumePdf(resume: CvStudioResumeSummary) {
+    const token = await getToken()
+    if (!token) { setError('Bitte anmelden.'); return }
+    setError(null)
+    try {
+      const fileName = `${resume.title || 'Lebenslauf'}.pdf`
+      const { blob, limit, used } = await downloadCvStudioPdf(token, resume.id, { design: 'A', fileName })
+      downloadBlob(fileName, blob)
+      setPdfLimit(limit)
+      setPdfUsed(used)
+      await load()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'PDF-Export fehlgeschlagen.')
+    }
+  }
+
+  async function handleDownloadExportRow(row: CvStudioPdfExportRow) {
+    const token = await getToken()
+    if (!token) { setError('Bitte anmelden.'); return }
+    try {
+      const safeDesign = row.design === 'B' || row.design === 'C' ? row.design : 'A'
+      const fallbackName = row.fileLabel.endsWith('.pdf') ? row.fileLabel : `${row.fileLabel}.pdf`
+      const { blob } = await downloadCvStudioPdf(token, row.resumeId, {
+        versionId: row.versionId,
+        design: safeDesign,
+        fileName: fallbackName,
+      })
+      downloadBlob(fallbackName, blob)
+    } catch (e) {
+      notify(e instanceof Error ? e.message : 'Download fehlgeschlagen.', 'error')
+    }
+  }
+
+  // ── Derived: filtered resumes ─────────────────────────────────────────────
   const filteredResumes = useMemo(() => {
     const q = searchQuery.trim().toLowerCase()
     if (!q || !resumes) return resumes ?? []
+    const matchingCategoryIds = new Set(
+      categories
+        .filter(cat => cat.name.toLowerCase().includes(q))
+        .map(cat => cat.id),
+    )
     return resumes.filter(r =>
       r.title.toLowerCase().includes(q) ||
       (r.targetCompany ?? '').toLowerCase().includes(q) ||
-      (r.targetRole ?? '').toLowerCase().includes(q),
+      (r.targetRole ?? '').toLowerCase().includes(q) ||
+      (() => {
+        const catId = getCategoryIdForResume(r.id)
+        return catId != null && matchingCategoryIds.has(catId)
+      })(),
     )
-  }, [resumes, searchQuery])
+  }, [categories, getCategoryIdForResume, resumes, searchQuery])
 
+  const filteredCategoryIds = useMemo(() => {
+    return new Set(
+      filteredResumes
+        .map(r => getCategoryIdForResume(r.id))
+        .filter((id): id is string => Boolean(id)),
+    )
+  }, [filteredResumes, getCategoryIdForResume])
+
+  const filteredCategories = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase()
+    if (!q) return categories
+    return categories.filter(cat =>
+      cat.name.toLowerCase().includes(q) || filteredCategoryIds.has(cat.id),
+    )
+  }, [categories, filteredCategoryIds, searchQuery])
+
+  const sortedCategories = useMemo(
+    () => [...filteredCategories].sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name)),
+    [filteredCategories],
+  )
+
+  const uncategorizedResumes = useMemo(
+    () => filteredResumes.filter(r => !getCategoryIdForResume(r.id)),
+    [filteredResumes, getCategoryIdForResume],
+  )
+
+  const hasResumes = filteredResumes.length > 0
   const existingResumes = (resumes ?? []).map(r => ({ id: r.id, title: r.title }))
-  const hasResumes = (resumes?.length ?? 0) > 0
+
+  // Auto-select first available category
+  useEffect(() => {
+    const availableKeys = new Set<string | 'uncategorized'>([
+      ...sortedCategories.map(cat => cat.id),
+      ...(uncategorizedResumes.length > 0 ? (['uncategorized'] as const) : []),
+    ])
+    if (availableKeys.size === 0) {
+      setSelectedCategoryId(null)
+      return
+    }
+    if (!selectedCategoryId || !availableKeys.has(selectedCategoryId)) {
+      setSelectedCategoryId(sortedCategories[0]?.id ?? 'uncategorized')
+    }
+  }, [selectedCategoryId, sortedCategories, uncategorizedResumes.length])
+
+  const selectedCategoryResumes = useMemo(() => {
+    if (!selectedCategoryId) return []
+    if (selectedCategoryId === 'uncategorized') return uncategorizedResumes
+    return filteredResumes.filter(r => getCategoryIdForResume(r.id) === selectedCategoryId)
+  }, [filteredResumes, getCategoryIdForResume, selectedCategoryId, uncategorizedResumes])
+
+  const selectedCategoryName = useMemo(() => {
+    if (!selectedCategoryId) return null
+    if (selectedCategoryId === 'uncategorized') return 'Ohne Kategorie'
+    return sortedCategories.find(cat => cat.id === selectedCategoryId)?.name ?? null
+  }, [selectedCategoryId, sortedCategories])
+
+  const selectedCategory = useMemo(
+    () => (selectedCategoryId && selectedCategoryId !== 'uncategorized'
+      ? sortedCategories.find(cat => cat.id === selectedCategoryId) ?? null
+      : null),
+    [selectedCategoryId, sortedCategories],
+  )
+
+  function openAddResumeToCategory() {
+    if (selectedCategoryId === 'uncategorized' || !selectedCategory) {
+      setShowDialog(true)
+      return
+    }
+    setSelectedCategoryForResume(selectedCategory)
+    setShowCreateResumeModal(true)
+  }
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="pb-10">
-      {/* Page header */}
-      <div className="mb-8 flex flex-col gap-2 border-b border-white/10 pb-6">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary-light">
-          CV.Studio
-        </p>
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="min-w-0 max-w-2xl">
-            <div className="flex flex-wrap items-start gap-2">
-              <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
-                Bewerbungen & Lebensläufe
-              </h1>
-              <InfoExplainerButton
-                variant="onDark"
-                trigger="hint"
-                modalTitle="So funktioniert CV.Studio"
-                ariaLabel="Hinweis: Ablauf CV.Studio"
-                className="border-white/20 text-stone-200 hover:bg-white/12"
-              >
-                <p>
-                  Organisiere deine Lebensläufe in <strong>Kategorien</strong> — z. B. „Frontend", „SAP" oder nach
-                  Zielunternehmen. Innerhalb jeder Kategorie legst du einen oder mehrere Lebensläufe für konkrete
-                  Bewerbungen an.
-                </p>
-                <p className="mt-3">
-                  Klicke auf <strong>„+ Lebenslauf"</strong> in einer Kategorie, um einen neuen CV direkt dort
-                  anzulegen. Du kannst optional eine Bewerbung aus „Meine Bewerbungen" verknüpfen oder eine neue
-                  anlegen.
-                </p>
-                <p className="mt-3">
-                  <strong>Vorlagen</strong> starten mit anonymen Beispieldaten. Mehr dazu im{' '}
-                  <Link to="/guides/cv-studio-vorlagen-dummy" className="font-semibold text-primary hover:underline">
-                    Ratgeber
-                  </Link>
-                  .
-                </p>
-              </InfoExplainerButton>
-            </div>
-            <p className="mt-2 text-sm leading-relaxed text-stone-400">
-              Erstelle Kategorien für deine Bewerbungsfelder und lege darin passende Lebensläufe an —
-              alles übersichtlich an einem Ort.
-            </p>
-          </div>
+    <div className="pb-24 lg:pb-10">
 
-          {/* Header actions */}
-          <div className="flex flex-col items-end gap-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setShowCreateCategoryModal(true)}
-                className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/10 px-4 py-2 text-sm font-semibold text-primary-light transition-colors hover:bg-primary/20"
-              >
-                <FolderPlus size={16} aria-hidden />
-                Neue Kategorie
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowDialog(true)}
-                className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-hover"
-              >
-                <Plus size={16} aria-hidden />
-                Neuer Lebenslauf
-              </button>
+      {/* ── Page Header ────────────────────────────────────────────────────── */}
+      <PageHeader
+        pageKey="cvStudio"
+        title="CV.Studio"
+        subtitle="Verwalte Kategorien und Lebensläufe an einem Ort."
+        className="mb-4"
+        actions={(
+          <>
+            <AppCtaButton
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={() => setShowCreateCategoryModal(true)}
+              className="inline-flex items-center gap-1.5"
+            >
+              <FolderPlus size={13} aria-hidden />
+              <span className="hidden sm:inline">Kategorie erstellen</span>
+            </AppCtaButton>
+            <AppCtaButton
+              type="button"
+              size="sm"
+              onClick={() => setShowDialog(true)}
+              className="inline-flex items-center gap-1.5"
+            >
+              <Plus size={13} aria-hidden />
+              Neuer Lebenslauf
+            </AppCtaButton>
+            <div className="hidden md:block">
+              <CvQuotaBadge used={pdfUsed} limit={pdfLimit} />
             </div>
-            <CvQuotaBadge used={pdfUsed} limit={pdfLimit} />
-          </div>
+          </>
+        )}
+      />
+
+      {/* Mobile quota badge */}
+      {!isDesktop ? (
+        <div className="mb-3">
+          <CvQuotaBadge used={pdfUsed} limit={pdfLimit} />
         </div>
-      </div>
+      ) : null}
 
-      {/* Error banner */}
+      {/* ── Guidance Bar ───────────────────────────────────────────────────── */}
+      <CVStudioGuidanceBar onCreateResume={() => setShowDialog(true)} />
+
+      {/* ── Error banner ───────────────────────────────────────────────────── */}
       {error && (
         <div
           role="alert"
-          className="mb-6 rounded-lg border border-rose-500/40 bg-rose-950/40 px-4 py-3 text-sm text-rose-100"
+          className="mb-4 rounded-xl border border-rose-500/35 bg-rose-950/40 px-4 py-3 text-sm text-rose-200"
         >
           {error}
         </div>
       )}
 
-      {/* Loading */}
+      {/* ── Loading ─────────────────────────────────────────────────────────── */}
       {loading && (
-        <div className="flex items-center gap-2 py-8 text-sm text-stone-400">
-          <Loader2 className="animate-spin" size={18} aria-hidden />
+        <div className="flex items-center gap-2 py-10 text-sm text-stone-400">
+          <Loader2 className="animate-spin" size={16} aria-hidden />
           Daten werden geladen…
         </div>
       )}
 
-      {/* Main content */}
+      {/* ── Main content ───────────────────────────────────────────────────── */}
       {!loading && resumes !== null && (
         <>
-          {/* Search bar (only when there are resumes) */}
-          {hasResumes && (
-            <div className="mb-5 flex flex-wrap items-center gap-3">
-              <input
-                type="search"
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                placeholder="Lebensläufe durchsuchen…"
-                className="w-full max-w-sm rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm text-white placeholder:text-stone-600 focus:border-primary/60 focus:outline-none"
-              />
-              {searchQuery && (
-                <span className="text-xs text-stone-500">
-                  {filteredResumes.length} Ergebnis{filteredResumes.length !== 1 ? 'se' : ''}
-                </span>
-              )}
+          {/* Mobile tab bar */}
+          {!isDesktop ? (
+            <MobileCVStudioTabs activeTab={mobileTab} onChange={setMobileTab} />
+          ) : null}
+
+          {categoryError && (
+            <div className="mb-3 rounded-lg border border-rose-500/35 bg-rose-950/40 px-4 py-2 text-xs text-rose-200">
+              {categoryError}
             </div>
           )}
 
-          {/* No resumes at all */}
-          {!hasResumes && (
-            <div className="mb-8 rounded-xl border border-dashed border-white/15 bg-white/[0.03] px-5 py-14 text-center">
-              <Sparkles className="mx-auto mb-3 text-primary-light/80" size={28} aria-hidden />
-              <p className="text-sm font-medium text-stone-200">Noch kein Lebenslauf</p>
-              <p className="mt-1 text-xs text-stone-500">
-                Lege zuerst eine Kategorie an und erstelle darin deinen ersten Lebenslauf.
-              </p>
-              <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-                <button
+          {hasResumes || sortedCategories.length > 0 ? (
+            /**
+             * Desktop: 2-col grid — left=(search + categories + workspace) | right=export panel
+             * Mobile: single column, tabs control which section is visible
+             */
+            <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start lg:gap-5">
+
+              {/* ── LEFT COLUMN ─────────────────────────────────────────────── */}
+              <div className="min-w-0 space-y-4">
+
+                {/* Search */}
+                <input
+                  type="search"
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  placeholder="Kategorien oder Lebensläufe suchen…"
+                  className="w-full rounded-xl bg-[#17120e] px-3 py-2 text-sm text-stone-100 placeholder:text-stone-500 ring-1 ring-white/[0.07] transition focus:outline-none focus:ring-amber-400/30"
+                />
+
+                {!categoriesLoaded && (
+                  <div className="flex items-center gap-2 py-4 text-sm text-stone-400">
+                    <Loader2 className="animate-spin" size={14} />
+                    Kategorien werden geladen…
+                  </div>
+                )}
+
+                {/* ── Category chips ────────────────────────────────────────── */}
+                {(isDesktop || mobileTab === 'categories') ? (
+                  <div className="flex flex-wrap gap-2">
+                    {sortedCategories.map(cat => {
+                      const resumesInCategory = filteredResumes.filter(r => getCategoryIdForResume(r.id) === cat.id)
+                      const latestTimestamp = resumesInCategory
+                        .slice()
+                        .sort((a, b) => new Date(b.updatedAtUtc).getTime() - new Date(a.updatedAtUtc).getTime())[0]
+                        ?.updatedAtUtc
+                      return (
+                        <CvStudioCategoryCard
+                          key={cat.id}
+                          name={cat.name}
+                          count={resumesInCategory.length}
+                          updatedLabel={latestTimestamp
+                            ? new Date(latestTimestamp).toLocaleDateString('de-DE')
+                            : '—'}
+                          active={selectedCategoryId === cat.id}
+                          onOpen={() => {
+                            setSelectedCategoryId(cat.id)
+                            if (!isDesktop) setMobileTab('resumes')
+                          }}
+                          onRename={() => void handleRenameCategory(cat)}
+                          onDelete={() => void handleDeleteCategory(cat)}
+                        />
+                      )
+                    })}
+                    {uncategorizedResumes.length > 0 ? (
+                      <CvStudioCategoryCard
+                        name="Ohne Kategorie"
+                        count={uncategorizedResumes.length}
+                        updatedLabel={new Date(uncategorizedResumes[0].updatedAtUtc).toLocaleDateString('de-DE')}
+                        active={selectedCategoryId === 'uncategorized'}
+                        onOpen={() => {
+                          setSelectedCategoryId('uncategorized')
+                          if (!isDesktop) setMobileTab('resumes')
+                        }}
+                        onRename={() => { /* no-op */ }}
+                        onDelete={() => { /* no-op */ }}
+                        showMenu={false}
+                      />
+                    ) : null}
+                  </div>
+                ) : null}
+
+                {/* ── Selected category workspace ──────────────────────────── */}
+                {(isDesktop || mobileTab === 'resumes') ? (
+                  <section className="overflow-hidden rounded-2xl bg-[#1a140f] ring-1 ring-white/[0.08] shadow-[0_10px_26px_-18px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.03)]">
+                    {/* Amber accent top stripe — visual connector to active chip above */}
+                    <div className="h-[2px] w-full bg-gradient-to-r from-amber-500/60 via-amber-400/25 to-transparent" />
+
+                    <div className="p-4">
+                      {/* Workspace header */}
+                      <div className="mb-4 flex items-center justify-between gap-3">
+                        <div className="flex min-w-0 items-center gap-2.5">
+                          <span className="shrink-0 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/15 text-amber-300">
+                            <FolderOpen size={15} aria-hidden />
+                          </span>
+                          <div className="min-w-0">
+                            <h3 className="truncate text-sm font-semibold text-stone-100">
+                              {selectedCategoryName ?? 'Kategorie wählen'}
+                            </h3>
+                            <p className="text-[11px] text-stone-500">
+                              {selectedCategoryResumes.length === 1
+                                ? '1 Lebenslauf'
+                                : `${selectedCategoryResumes.length} Lebensläufe`}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex shrink-0 items-center gap-2">
+                          {/* Aktionen dropdown */}
+                          {selectedCategory ? (
+                            <details className="relative">
+                              {/* Tier 3 — ghost outlined: secondary dropdown */}
+                              <summary className="inline-flex list-none cursor-pointer items-center gap-1 rounded-lg border border-white/15 px-3 py-1.5 text-xs font-semibold text-stone-200 transition hover:border-amber-400/30 hover:bg-white/5 hover:text-stone-100 [&::-webkit-details-marker]:hidden">
+                                Aktionen
+                              </summary>
+                              <div className="absolute right-0 z-20 mt-1 w-42 overflow-hidden rounded-xl border border-white/10 bg-[#1b1410] p-1 shadow-xl">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    (document.activeElement as HTMLElement)?.blur?.()
+                                    void handleRenameCategory(selectedCategory)
+                                  }}
+                                  className="w-full rounded-md px-2.5 py-1.5 text-left text-xs text-stone-200 hover:bg-white/5"
+                                >
+                                  Kategorie umbenennen
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    (document.activeElement as HTMLElement)?.blur?.()
+                                    void handleDeleteCategory(selectedCategory)
+                                  }}
+                                  className="w-full rounded-md px-2.5 py-1.5 text-left text-xs text-rose-300 hover:bg-rose-500/10"
+                                >
+                                  Kategorie löschen
+                                </button>
+                              </div>
+                            </details>
+                          ) : null}
+
+                          <AppCtaButton type="button" size="sm" onClick={openAddResumeToCategory}>
+                            + Lebenslauf hinzufügen
+                          </AppCtaButton>
+                        </div>
+                      </div>
+
+                      {/* CV grid or empty state */}
+                      {selectedCategoryResumes.length === 0 ? (
+                        <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-white/10 px-4 py-10 text-center">
+                          <FileText size={26} className="text-stone-700" aria-hidden />
+                          <p className="text-sm text-stone-500">
+                            Noch keine Lebensläufe in dieser Kategorie.
+                          </p>
+                          <AppCtaButton type="button" size="sm" onClick={openAddResumeToCategory}>
+                            + Lebenslauf hinzufügen
+                          </AppCtaButton>
+                        </div>
+                      ) : (
+                        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                          {selectedCategoryResumes.map(resume => (
+                            <CvStudioResumeCard
+                              key={resume.id}
+                              resume={resume}
+                              onEdit={() => navigate(`/cv-studio/edit/${resume.id}`)}
+                              onDuplicate={() => void handleDuplicateResume(resume)}
+                              onExportPdf={() => void handleExportResumePdf(resume)}
+                              onDelete={() => void handleDeleteResume(resume)}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </section>
+                ) : null}
+
+              </div>
+              {/* END LEFT COLUMN */}
+
+              {/* ── RIGHT COLUMN: Export panel (desktop only) ────────────── */}
+              {isDesktop ? (
+                <aside className="sticky top-20">
+                  <CvStudioExportList
+                    rows={pdfRows}
+                    onDelete={handleDeletePdf}
+                    onDownload={handleDownloadExportRow}
+                  />
+                </aside>
+              ) : null}
+
+            </div>
+          ) : (
+            /* ── Global empty state ─────────────────────────────────────── */
+            <div className="rounded-2xl border border-dashed border-white/15 bg-white/[0.02] px-6 py-14 text-center">
+              <FolderPlus size={28} className="mx-auto mb-3 text-stone-600" aria-hidden />
+              <p className="text-sm font-semibold text-stone-100">Starte mit deiner ersten Kategorie.</p>
+              <p className="mt-1 text-xs text-stone-500">Danach kannst du pro Kategorie neue Lebensläufe anlegen.</p>
+              <div className="mt-5 flex items-center justify-center gap-2">
+                <AppCtaButton
                   type="button"
+                  variant="secondary"
+                  size="sm"
                   onClick={() => setShowCreateCategoryModal(true)}
-                  className="inline-flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/10 px-4 py-2 text-sm font-semibold text-primary-light hover:bg-primary/20"
+                  className="inline-flex items-center gap-1.5"
                 >
-                  <FolderPlus size={15} aria-hidden />
-                  Kategorie anlegen
-                </button>
-                <button
+                  <FolderPlus size={12} />
+                  Kategorie erstellen
+                </AppCtaButton>
+                <AppCtaButton
                   type="button"
+                  size="sm"
                   onClick={() => setShowDialog(true)}
-                  className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover"
+                  className="inline-flex items-center gap-1.5"
                 >
-                  <Plus size={15} aria-hidden />
-                  Direkt Lebenslauf anlegen
-                </button>
+                  <Plus size={12} />
+                  Neuer Lebenslauf
+                </AppCtaButton>
               </div>
             </div>
           )}
 
-          {/* No search results */}
-          {hasResumes && searchQuery && filteredResumes.length === 0 && (
-            <p className="mb-8 text-sm text-stone-500">
-              Keine Treffer für „{searchQuery}".
-            </p>
-          )}
-
-          {/* Category board */}
-          {(!searchQuery || filteredResumes.length > 0) && (
-            <div className="mb-8">
-              <CvMasterCategoriesBoard
-                resumes={filteredResumes}
-                categories={categories}
-                loaded={categoriesLoaded}
-                categoryError={categoryError}
-                getCategoryIdForResume={getCategoryIdForResume}
-                assignResume={assignResume}
-                onDeleteCategory={handleDeleteCategory}
-                onDeleteResume={handleDeleteResume}
-                onCreateCategory={() => setShowCreateCategoryModal(true)}
-                onCreateResumeInCategory={cat => {
-                  setSelectedCategoryForResume(cat)
-                  setShowCreateResumeModal(true)
-                }}
+          {/* Mobile: export tab */}
+          {!isDesktop && mobileTab === 'exports' ? (
+            <section className="mt-4">
+              <CvStudioExportList
+                rows={pdfRows}
+                onDelete={handleDeletePdf}
+                onDownload={handleDownloadExportRow}
+                compact
               />
-            </div>
-          )}
-
-          {/* PDF export history */}
-          <CvExportHistory
-            rows={pdfRows}
-            used={pdfUsed}
-            limit={pdfLimit}
-            onDelete={handleDeletePdf}
-            requestConfirm={requestConfirm}
-          />
+            </section>
+          ) : null}
         </>
       )}
 
-      {/* ── Modals ─────────────────────────────────────────────────────────── */}
+      {/* ── Mobile FAB ─────────────────────────────────────────────────────── */}
+      <div className="fixed inset-x-4 bottom-4 z-20 sm:hidden">
+        <AppCtaButton
+          type="button"
+          size="lg"
+          onClick={() => setShowDialog(true)}
+          className="w-full shadow-lg shadow-black/35"
+        >
+          <Plus size={16} aria-hidden />
+          Neuer Lebenslauf
+        </AppCtaButton>
+      </div>
 
-      {/* General CV create dialog */}
+      {/* ── Modals ─────────────────────────────────────────────────────────── */}
       {showDialog && (
         <CvCreateDialog
           templates={templates}
@@ -475,7 +763,6 @@ export default function CvStudioOverviewPage() {
         />
       )}
 
-      {/* Create category modal */}
       {showCreateCategoryModal && (
         <CreateCategoryModal
           onConfirm={handleCreateCategory}
@@ -483,7 +770,6 @@ export default function CvStudioOverviewPage() {
         />
       )}
 
-      {/* Create resume in category modal */}
       {showCreateResumeModal && selectedCategoryForResume && (
         <CreateResumeInCategoryModal
           category={selectedCategoryForResume}

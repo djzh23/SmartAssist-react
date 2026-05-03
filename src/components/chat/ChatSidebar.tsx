@@ -35,7 +35,7 @@ const SESSION_THEMES = [
   { bg: 'bg-teal-950/40', border: 'border-l-teal-400', icon: 'text-teal-300', dot: 'bg-teal-400', shape1: 'bg-teal-500/12', shape2: 'border-teal-500/35' },
 ] as const
 
-// Geometric shape variants — cycles through for visual variety
+// Geometric shape variants - cycles through for visual variety
 const SHAPES = [
   { type: 'circle',  cls: 'rounded-full' },
   { type: 'square',  cls: 'rounded-md rotate-12' },

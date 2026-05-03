@@ -40,7 +40,7 @@ const SPEECH_LANG_MAP: Record<string, string> = {
 
 /**
  * Pick the highest-quality voice for a given BCP-47 tag from a known list.
- * Must match the language prefix exactly — never return a voice from a different language.
+ * Must match the language prefix exactly - never return a voice from a different language.
  * Priority: Google neural > Microsoft Natural/Online > any remote voice > local voice.
  */
 function pickBestVoice(voices: SpeechSynthesisVoice[], langTag: string): SpeechSynthesisVoice | null {
@@ -145,7 +145,7 @@ export default function LearningResponse({
     setIsPlaying(true)
     setAudioError(null)
 
-    // ── Primary: backend TTS (Azure Neural — real human voice) ───────────
+    // ── Primary: backend TTS (Azure Neural - real human voice) ───────────
     try {
       const blob = fetchAudio
         ? await fetchAudio(text, targetLangCode)
@@ -168,7 +168,7 @@ export default function LearningResponse({
         return
       }
     } catch {
-      // backend unavailable — fall through to browser TTS silently
+      // backend unavailable - fall through to browser TTS silently
     }
 
     // ── Fallback: browser Web Speech API ──────────────────────────────────

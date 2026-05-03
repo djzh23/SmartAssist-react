@@ -154,10 +154,10 @@ export default function CvLinkApplicationModal({
                   onChange={e => setSelectedAppId(e.target.value)}
                   className="mt-1.5 w-full rounded-lg border border-white/15 bg-black/30 px-3 py-2 text-sm text-white focus:border-primary/60 focus:outline-none"
                 >
-                  <option value="">— Keine Verknüpfung —</option>
+                  <option value="">- Keine Verknüpfung -</option>
                   {jobApplications.map(a => (
                     <option key={a.id} value={a.id}>
-                      {a.company} — {a.jobTitle}
+                      {a.company} - {a.jobTitle}
                     </option>
                   ))}
                 </select>
@@ -194,7 +194,7 @@ export default function CvLinkApplicationModal({
                 />
                 <span className="text-xs text-stone-300">
                   <span className="font-medium text-stone-200">In Bewerbungsliste speichern</span>
-                  {' — '}
+                  {' - '}
                   legt unter „Bewerbungen" einen neuen Eintrag an und verknüpft diesen CV.
                 </span>
               </label>
@@ -208,7 +208,7 @@ export default function CvLinkApplicationModal({
                   />
                   <span className="text-xs text-stone-300">
                     <span className="font-medium text-stone-200">Neuen Lebenslauf anlegen</span>
-                    {' — '}
+                    {' - '}
                     kopiert den aktuellen CV als Basis für diese Bewerbung.
                   </span>
                 </label>

@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useSkills } from './useSkills'
 import type { ToolType } from '../types'
+import { findMainNavMetaByPath } from '../config/mainNavigation'
 
 function isToolType(value: string): value is ToolType {
   return value === 'general' || value === 'jobanalyzer' || value === 'language' || value === 'programming' || value === 'interview'
@@ -23,12 +24,8 @@ const TOOL_FALLBACK: Record<ToolType, string> = {
 
 function routeTitle(pathname: string): string {
   if (pathname === '/') return 'PrivatePrep'
-  if (pathname.startsWith('/career-profile')) return 'Karriereprofil'
-  if (pathname.startsWith('/applications')) return 'Bewerbungen'
-  if (pathname.startsWith('/cv-studio')) return 'CV.Studio'
-  if (pathname.startsWith('/guides')) return 'Ratgeber'
-  if (pathname.startsWith('/notes')) return 'Notizen'
-  if (pathname.startsWith('/overview')) return 'Übersicht'
+  const navMeta = findMainNavMetaByPath(pathname)
+  if (navMeta) return navMeta.label
   if (pathname.startsWith('/profile')) return 'Profil'
   if (pathname.startsWith('/pricing')) return 'Preise'
   if (pathname.startsWith('/onboarding')) return 'PrivatePrep'

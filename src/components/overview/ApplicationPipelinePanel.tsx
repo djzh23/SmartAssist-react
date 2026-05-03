@@ -1,53 +1,36 @@
 import { Link } from 'react-router-dom'
 import type { ApplicationOverview } from '../../utils/applicationOverview'
-import InfoExplainerButton from '../ui/InfoExplainerButton'
 import ApplicationFlowSankey from './ApplicationFlowSankey'
 import { SANKEY_PIPELINE_FILL } from './applicationSankeyLayout'
 import type { ApplicationStatusApi } from '../../api/client'
 
 interface Props {
   overview: ApplicationOverview
-  hint: string
 }
 
 function legendDot(status: ApplicationStatusApi): string {
   return SANKEY_PIPELINE_FILL[status] ?? '#64748b'
 }
 
-export default function ApplicationPipelinePanel({ overview, hint }: Props) {
+export default function ApplicationPipelinePanel({ overview }: Props) {
   const { total, pipeline, archive } = overview
 
   return (
-    <div className="rounded-xl border border-stone-400/35 bg-white/95 p-4 shadow-card sm:p-5">
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <h3 className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">
-          Bewerbungen — Fluss nach Status
+    <div
+      className="flex h-full min-h-0 flex-col rounded-2xl bg-[#241913]/80 p-3.5 shadow-[0_12px_34px_-22px_rgba(0,0,0,0.65)] sm:p-4"
+    >
+      <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2">
+        <h3 className="text-[11px] font-bold uppercase tracking-[0.18em] text-amber-100/65">
+          Bewerbungen, Fluss nach Status
         </h3>
-        <InfoExplainerButton
-          variant="onLight"
-          trigger="hint"
-          modalTitle="So liest du den Fluss"
-          ariaLabel="Hinweis: Bewerbungsflussdiagramm"
-        >
-          <p>
-            Das Diagramm zeigt nur den <strong>aktuellen Stand</strong>: wie viele Bewerbungen in welchem Status
-            liegen. Breite der Verbindungen ist näherungsweise nach Anteil skaliert — nicht nach Zeit oder
-            Reihenfolge der Bewerbung.
-          </p>
-          <p className="mt-3">
-            Zuerst siehst du die Gesamtzahl, dann die Aufteilung in <strong>aktive Pipeline</strong> und{' '}
-            <strong>Archiv</strong>, danach die einzelnen Status — wie auf der Seite „Meine Bewerbungen“.
-          </p>
-          <p className="mt-3 rounded-lg border border-stone-200 bg-app-parchment/60 px-3 py-2 text-stone-800">
-            <span className="font-semibold text-stone-900">Tipp: </span>
-            {hint}
-          </p>
-        </InfoExplainerButton>
+        <span className="rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-amber-100/70">
+          Live View
+        </span>
       </div>
 
       {total === 0 ? (
-        <p className="rounded-lg border border-dashed border-stone-400/50 bg-app-parchment/60 py-8 text-center text-sm text-stone-600">
-          Noch keine Daten —{' '}
+        <p className="rounded-xl bg-amber-300/10 py-8 text-center text-sm text-amber-100/80 shadow-[inset_0_0_0_1px_rgba(251,191,36,0.16)]">
+          Noch keine Daten,{' '}
           <Link to="/applications/new" className="font-semibold text-primary hover:underline">
             erste Bewerbung anlegen
           </Link>
@@ -55,9 +38,11 @@ export default function ApplicationPipelinePanel({ overview, hint }: Props) {
         </p>
       ) : (
         <>
-          <ApplicationFlowSankey overview={overview} />
-          <div className="flex flex-wrap gap-x-3 gap-y-1.5 border-t border-stone-200 pt-3 text-[10px] text-stone-600">
-            <span className="font-semibold text-stone-500">Legende:</span>
+          <div className="min-h-0 flex-1">
+            <ApplicationFlowSankey overview={overview} />
+          </div>
+          <div className="flex flex-wrap gap-x-3 gap-y-1.5 pt-2 text-[10px] text-amber-100/75">
+            <span className="font-semibold text-amber-100/60">Legende:</span>
             {pipeline.map(seg => (
               <span key={seg.status} className="inline-flex items-center gap-1 tabular-nums">
                 <span
@@ -70,7 +55,7 @@ export default function ApplicationPipelinePanel({ overview, hint }: Props) {
                 ({seg.count})
               </span>
             ))}
-            <span className="text-stone-400" aria-hidden>
+            <span className="text-amber-100/35" aria-hidden>
               |
             </span>
             {archive.map(seg => (

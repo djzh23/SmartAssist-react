@@ -73,11 +73,11 @@ export default function OnboardingPromptModal({
             </div>
             <div>
               <h2 id="onboarding-prompt-title" className="text-lg font-semibold text-slate-900">
-                Karriereprofil — einmal einrichten
+                Karriereprofil - einmal einrichten
               </h2>
               <p className="mt-1 text-sm leading-relaxed text-slate-600">
                 Du kannst den Chat sofort nutzen. Wenn du ein kurzes Profil anlegst, passen sich Antworten besser an dich
-                an — <strong className="font-medium text-slate-800">du gibst nichts doppelt ein</strong>: entweder hier
+                an - <strong className="font-medium text-slate-800">du gibst nichts doppelt ein</strong>: entweder hier
                 die geführten 3 Schritte oder später alles unter <strong className="font-medium text-slate-800">Karriereprofil</strong>{' '}
                 in der Seitenleiste.
               </p>
@@ -90,7 +90,7 @@ export default function OnboardingPromptModal({
           <ol className="list-inside list-decimal space-y-2 text-sm text-slate-700">
             <li>Berufsfeld &amp; Erfahrung (für passenden Ton und Themen)</li>
             <li>Ziele wählen (z.&nbsp;B. Bewerbung, Interview, CV)</li>
-            <li>Optional: CV-Text — oder überspringen</li>
+            <li>Optional: CV-Text - oder überspringen</li>
           </ol>
         </div>
 
@@ -124,7 +124,7 @@ export default function OnboardingPromptModal({
             disabled={skipBusy}
             className="w-full py-2 text-sm text-slate-500 underline-offset-2 hover:text-slate-700 hover:underline disabled:opacity-50"
           >
-            Schließen — nur testen (ich richte später ein)
+            Schließen - nur testen (ich richte später ein)
           </button>
         </div>
       </div>

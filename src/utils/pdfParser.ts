@@ -1,6 +1,6 @@
 import * as pdfjsLib from 'pdfjs-dist'
 
-// Point to the bundled worker — Vite handles the URL correctly
+// Point to the bundled worker - Vite handles the URL correctly
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
   'pdfjs-dist/build/pdf.worker.min.mjs',
   import.meta.url,
@@ -20,7 +20,7 @@ export async function extractTextFromPdf(file: File): Promise<string> {
     const page = await pdf.getPage(i)
     const content = await page.getTextContent()
 
-    // TextItem has .str; TextMarkedContent does not — filter with type guard
+    // TextItem has .str; TextMarkedContent does not - filter with type guard
     const pageText = content.items
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .map((item: any) => (typeof item.str === 'string' ? item.str : ''))

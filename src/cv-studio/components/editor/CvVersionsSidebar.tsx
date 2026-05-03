@@ -89,7 +89,7 @@ export default function CvVersionsSidebar({
       {/* Explanation */}
       <div className="max-h-[min(70vh,32rem)] flex-1 overflow-y-auto p-2">
         <p className="mb-2 rounded-lg border border-white/10 bg-black/30 px-2 py-2 text-[10px] leading-relaxed text-stone-500">
-          <span className="font-medium text-stone-400">Versionen</span> sind manuelle Sicherungspunkte —
+          <span className="font-medium text-stone-400">Versionen</span> sind manuelle Sicherungspunkte -
           dein Lebenslauf wird ohnehin automatisch gespeichert. Eine Version festigt einen Stand, z. B.
           vor größeren Änderungen oder zum Exportieren.{' '}
           Neue Version anlegen: oben auf{' '}
