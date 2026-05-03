@@ -340,6 +340,7 @@ export default function ApplicationDetailPage() {
             </Link>
             <AppCtaButton
               variant="danger"
+              size="sm"
               type="button"
               onClick={() => void removeApp()}
             >
@@ -437,7 +438,7 @@ export default function ApplicationDetailPage() {
             {app.jobDescription?.trim() || 'Kein Stellentext hinterlegt.'}
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
-            <AppCtaButton type="button" onClick={goAnalyze} className="shadow-md">
+            <AppCtaButton type="button" size="sm" onClick={goAnalyze} className="shadow-md">
               Analyse starten
             </AppCtaButton>
             {app.analysisSessionId && (
@@ -475,6 +476,7 @@ export default function ApplicationDetailPage() {
           <div className="mt-3 flex flex-wrap gap-2">
             <AppCtaButton
               type="button"
+              size="sm"
               onClick={() => void saveCover()}
               loading={savingCover}
               className="shadow-md"
@@ -483,6 +485,7 @@ export default function ApplicationDetailPage() {
             </AppCtaButton>
             <AppCtaButton
               variant="ghost"
+              size="sm"
               type="button"
               onClick={() => void copyCover()}
             >
@@ -514,7 +517,7 @@ export default function ApplicationDetailPage() {
 
         <section className="mb-6 rounded-xl border border-stone-400/40 bg-white/95 p-5 shadow-card">
           <h2 className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-stone-500">Interview-Vorbereitung</h2>
-          <AppCtaButton type="button" onClick={goInterview} className="shadow-md">
+          <AppCtaButton type="button" size="sm" onClick={goInterview} className="shadow-md">
             Interview-Training starten
           </AppCtaButton>
           {app.interviewSessionId && (
@@ -529,6 +532,7 @@ export default function ApplicationDetailPage() {
             />
             <AppCtaButton
               variant="ghost"
+              size="sm"
               type="button"
               onClick={() => void saveInterview()}
               loading={savingInterview}
