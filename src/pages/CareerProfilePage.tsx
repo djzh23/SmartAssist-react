@@ -1167,11 +1167,12 @@ export default function CareerProfilePage() {
         />
       )}
 
-      <StandardPageContainer className="w-full py-6">
+      <StandardPageContainer className="w-full pt-3 pb-6 sm:py-6">
         <PageHeader
           pageKey="careerProfile"
           subtitle="Deine Datenbasis für präzisere KI-Antworten und maßgeschneiderte Empfehlungen."
-          className="mb-6"
+          className="mb-4 sm:mb-6"
+          hideTitleOnMobile
           infoSlot={(
             <button
               type="button"
@@ -1184,6 +1185,7 @@ export default function CareerProfilePage() {
           )}
           actions={(
             <>
+              {/* PDF — compact label on mobile */}
               <AppCtaButton
                 type="button"
                 size="sm"
@@ -1191,12 +1193,13 @@ export default function CareerProfilePage() {
                 className="inline-flex items-center gap-1.5"
               >
                 <FileText size={14} aria-hidden />
-                Profil als PDF exportieren
+                <span className="hidden sm:inline">Profil als </span>PDF exportieren
               </AppCtaButton>
+              {/* Delete — desktop only; on mobile it appears at the bottom of the page */}
               <button
                 type="button"
                 onClick={() => setDeleteConfirmOpen(true)}
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-red-500/40 px-3 py-2 text-xs font-medium text-red-400 transition-colors hover:border-red-400 hover:bg-red-950/30 hover:text-red-300"
+                className="hidden sm:inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-red-500/40 px-3 py-2 text-xs font-medium text-red-400 transition-colors hover:border-red-400 hover:bg-red-950/30 hover:text-red-300"
               >
                 <Trash2 size={14} aria-hidden />
                 Alle Daten löschen
@@ -2041,6 +2044,18 @@ export default function CareerProfilePage() {
             Speichern…
           </p>
         )}
+
+        {/* Mobile-only danger zone — delete is hidden from the top header on mobile */}
+        <div className="mt-8 sm:hidden">
+          <button
+            type="button"
+            onClick={() => setDeleteConfirmOpen(true)}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-red-500/40 px-3 py-2 text-xs font-medium text-red-400 transition-colors hover:border-red-400 hover:bg-red-950/30 hover:text-red-300"
+          >
+            <Trash2 size={13} aria-hidden />
+            Alle Daten löschen
+          </button>
+        </div>
       </StandardPageContainer>
     </div>
   )

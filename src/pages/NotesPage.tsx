@@ -205,11 +205,12 @@ export default function NotesPage() {
   }
 
   return (
-    <StandardPageContainer className="flex min-h-0 w-full flex-1 flex-col gap-6 overflow-hidden py-6 md:py-8">
+    <StandardPageContainer className="flex min-h-0 w-full flex-1 flex-col gap-4 overflow-hidden pt-3 pb-6 md:gap-6 md:py-8">
       <PageHeader
         pageKey="notes"
         subtitle="Aus dem Chat gespeichert, über Geräte hinweg synchronisiert."
         className="mb-0"
+        hideTitleOnMobile
         infoSlot={(
           <InfoExplainerButton
             variant="onDark"

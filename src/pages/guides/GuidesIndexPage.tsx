@@ -31,11 +31,12 @@ const CATEGORY_ICONS: Record<GuideCategory, LucideIcon> = {
 export default function GuidesIndexPage() {
   return (
     <div className="min-h-0 flex-1 overflow-y-auto bg-transparent">
-      <StandardPageContainer className="py-6 sm:py-8">
+      <StandardPageContainer className="pt-3 pb-6 sm:py-8">
         <PageHeader
           pageKey="guides"
           subtitle="Praxisnahe Anleitungen für klare Abläufe in Profil, Bewerbungen, CV.Studio und Chat."
-          className="mb-6"
+          className="mb-4 sm:mb-6"
+          hideTitleOnMobile
           infoSlot={(
             <InfoExplainerButton
               variant="onDark"
@@ -54,7 +55,7 @@ export default function GuidesIndexPage() {
             </InfoExplainerButton>
           )}
         />
-        <section className="mb-8 rounded-xl border border-stone-400/35 bg-app-parchment/85 px-4 py-4 shadow-card sm:px-5">
+        <section className="mb-5 rounded-xl border border-stone-400/35 bg-app-parchment/85 px-4 py-3 shadow-card sm:mb-8 sm:px-5 sm:py-4">
           <p className="flex items-start gap-2 text-sm font-medium text-stone-800">
             <Route className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
             <span>{GUIDE_INDEX_PATH_HINT}</span>

@@ -437,7 +437,7 @@ export default function CvStudioOverviewPage() {
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="pb-24 lg:pb-10">
+    <div className="pt-3 pb-24 lg:pt-0 lg:pb-10">
 
       {/* ── Page Header ────────────────────────────────────────────────────── */}
       <PageHeader
@@ -445,18 +445,20 @@ export default function CvStudioOverviewPage() {
         title="CV.Studio"
         subtitle="Verwalte Kategorien und Lebensläufe an einem Ort."
         className="mb-4"
+        hideTitleOnMobile
         actions={(
           <>
-            <AppCtaButton
+            {/* Category create — icon-only on mobile, icon+label on sm+ */}
+            <button
               type="button"
-              variant="secondary"
-              size="sm"
               onClick={() => setShowCreateCategoryModal(true)}
-              className="inline-flex items-center gap-1.5"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 px-2.5 py-1.5 text-xs font-semibold text-stone-200 transition hover:border-amber-400/35 hover:bg-white/5 sm:px-3"
+              aria-label="Kategorie erstellen"
             >
               <FolderPlus size={13} aria-hidden />
               <span className="hidden sm:inline">Kategorie erstellen</span>
-            </AppCtaButton>
+            </button>
+            {/* New resume */}
             <AppCtaButton
               type="button"
               size="sm"
@@ -464,7 +466,7 @@ export default function CvStudioOverviewPage() {
               className="inline-flex items-center gap-1.5"
             >
               <Plus size={13} aria-hidden />
-              Neuer Lebenslauf
+              <span className="hidden sm:inline">Neuer </span>Lebenslauf
             </AppCtaButton>
             <div className="hidden md:block">
               <CvQuotaBadge used={pdfUsed} limit={pdfLimit} />

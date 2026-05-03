@@ -138,18 +138,19 @@ export default function ApplicationsPage() {
 
   return (
     <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden bg-transparent">
-      <div className="mx-auto w-full max-w-[1580px] px-4 py-6 sm:px-6 sm:py-7">
+      <div className="mx-auto w-full max-w-[1580px] px-4 pt-3 pb-6 sm:px-6 sm:py-7">
         <PageHeader
           pageKey="applications"
           subtitle={`${activeCount} aktiv · ${apps.length} gesamt · ${archiveTotal} Archiv`}
           className="mb-4"
+          hideTitleOnMobile
           actions={(
             <Link
               to="/applications/new"
-              className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-md transition hover:bg-primary-hover"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-3 py-2 text-sm font-semibold text-white shadow-md transition hover:bg-primary-hover sm:gap-2 sm:px-4 sm:py-2.5"
             >
-              <Plus size={17} strokeWidth={2.5} />
-              Neue Bewerbung
+              <Plus size={16} strokeWidth={2.5} />
+              <span className="hidden sm:inline">Neue </span>Bewerbung
             </Link>
           )}
         />
