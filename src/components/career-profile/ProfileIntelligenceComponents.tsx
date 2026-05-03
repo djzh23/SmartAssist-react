@@ -1,6 +1,7 @@
 import { CheckCircle2, ChevronRight, Circle, Dot, Sparkles } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
+import AppCtaButton from '../ui/AppCtaButton'
 import type { CareerSectionKey } from '../../utils/careerProfileIntelligence'
 
 export function formatDateTime(value: string | null | undefined): string {
@@ -127,10 +128,10 @@ export function ProfileRecommendationCard({
           <p className="mt-1 text-xs text-amber-200/85">{description}</p>
         </div>
       </div>
-      <button type="button" onClick={onAction} className="mt-3 inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-white hover:bg-primary-hover">
+      <AppCtaButton size="sm" onClick={onAction} className="mt-3">
         Weiter zum nächsten Schritt
         <ChevronRight size={12} />
-      </button>
+      </AppCtaButton>
     </div>
   )
 }

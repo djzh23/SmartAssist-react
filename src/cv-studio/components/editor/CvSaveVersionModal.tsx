@@ -1,4 +1,5 @@
-import { Layers, Loader2, X } from 'lucide-react'
+import { Layers, X } from 'lucide-react'
+import AppCtaButton from '../../../components/ui/AppCtaButton'
 import { useState } from 'react'
 
 interface CvSaveVersionModalProps {
@@ -66,23 +67,19 @@ export default function CvSaveVersionModal({
           </label>
 
           <div className="mt-5 flex flex-col gap-2">
-            <button
-              type="button"
-              disabled={busy}
+            <AppCtaButton
+              loading={busy}
               onClick={() => void onSaveAndPdf(label)}
-              className="flex items-center justify-center gap-2 rounded-lg bg-primary py-2.5 text-sm font-semibold text-white hover:bg-primary-hover disabled:opacity-40"
             >
-              {busy && <Loader2 size={15} className="animate-spin" aria-hidden />}
               Version speichern & PDF herunterladen
-            </button>
-            <button
-              type="button"
+            </AppCtaButton>
+            <AppCtaButton
+              variant="secondary"
               disabled={busy}
               onClick={() => void onSave(label)}
-              className="rounded-lg border border-white/20 py-2.5 text-sm text-stone-200 hover:bg-white/5 disabled:opacity-40"
             >
               Nur Version speichern
-            </button>
+            </AppCtaButton>
           </div>
         </div>
       </div>

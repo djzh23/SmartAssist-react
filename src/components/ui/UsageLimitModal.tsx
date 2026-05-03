@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { SignInButton, useAuth, useUser } from '@clerk/clerk-react'
 import { Check, Rocket, X } from 'lucide-react'
+import AppCtaButton from './AppCtaButton'
 import { createCheckoutSession } from '../../services/StripeService'
 
 interface Props {
@@ -111,13 +112,14 @@ export default function UsageLimitModal({ isOpen, isLoggedIn, userEmail, onClose
                 <Check size={12} className="text-emerald-500" /> 4,99 € pro Monat
               </li>
             </ul>
-            <button
+            <AppCtaButton
+              size="sm"
               onClick={handleUpgrade}
-              className="relative w-full rounded-xl bg-primary py-2 text-xs font-semibold text-white transition-colors hover:bg-primary-hover disabled:opacity-60"
-              disabled={isUpgrading}
+              loading={isUpgrading}
+              className="w-full"
             >
-              {isUpgrading ? 'Weiterleitung…' : 'Jetzt upgraden'}
-            </button>
+              Jetzt upgraden
+            </AppCtaButton>
           </div>
         </div>
 

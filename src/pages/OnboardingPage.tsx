@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import AppCtaButton from '../components/ui/AppCtaButton'
 import { useAuth } from '@clerk/clerk-react'
 import {
   completeOnboarding,
@@ -225,13 +226,9 @@ export default function OnboardingPage() {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 px-6">
         <p className="mb-4 text-center text-sm text-slate-700">{profileError}</p>
-        <button
-          type="button"
-          onClick={() => void reload()}
-          className="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover"
-        >
+        <AppCtaButton onClick={() => void reload()}>
           Erneut versuchen
-        </button>
+        </AppCtaButton>
         <button
           type="button"
           onClick={() => navigate('/chat', { replace: true })}
@@ -318,14 +315,9 @@ export default function OnboardingPage() {
               />
             </label>
             <div className="mt-auto flex flex-col gap-2 pt-6">
-              <button
-                type="button"
-                onClick={goNextFromStep1}
-                disabled={busy}
-                className="rounded-xl bg-primary py-3 text-sm font-medium text-white hover:bg-primary-hover disabled:opacity-50"
-              >
+              <AppCtaButton onClick={goNextFromStep1} disabled={busy}>
                 Weiter
-              </button>
+              </AppCtaButton>
               <button
                 type="button"
                 onClick={handleSkipAll}
@@ -358,14 +350,9 @@ export default function OnboardingPage() {
               ))}
             </div>
             <div className="mt-auto flex flex-col gap-2 pt-6">
-              <button
-                type="button"
-                onClick={goNextFromStep2}
-                disabled={busy}
-                className="rounded-xl bg-primary py-3 text-sm font-medium text-white hover:bg-primary-hover disabled:opacity-50"
-              >
+              <AppCtaButton onClick={goNextFromStep2} disabled={busy}>
                 Weiter
-              </button>
+              </AppCtaButton>
               <button
                 type="button"
                 onClick={() => setStep(1)}
@@ -470,14 +457,9 @@ export default function OnboardingPage() {
                   className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800"
                 />
                 <div className="mt-auto flex flex-col gap-2 pt-6">
-                  <button
-                    type="button"
-                    onClick={() => void finishOnboarding(true)}
-                    disabled={busy}
-                    className="rounded-xl bg-primary py-3 text-sm font-medium text-white hover:bg-primary-hover disabled:opacity-50"
-                  >
+                  <AppCtaButton onClick={() => void finishOnboarding(true)} disabled={busy}>
                     Fertig
-                  </button>
+                  </AppCtaButton>
                   <button
                     type="button"
                     onClick={() => void finishOnboarding(false)}

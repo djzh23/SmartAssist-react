@@ -3,6 +3,7 @@ import {
   Check, ChevronDown, ChevronRight, FolderOpen,
   GripVertical, Loader2, Pencil, Plus, Trash2, X,
 } from 'lucide-react'
+import AppCtaButton from '../../../components/ui/AppCtaButton'
 import type { CvStudioResumeSummary, CvUserCategoryDto } from '../../../types'
 import CvResumeRow from './CvResumeRow'
 
@@ -98,14 +99,10 @@ export default function CvMasterCategoriesBoard({
           <p className="mt-1 text-xs text-stone-600">
             Lege deine erste Kategorie an - z. B. „Frontend", „SAP" oder „Google".
           </p>
-          <button
-            type="button"
-            onClick={onCreateCategory}
-            className="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary/90"
-          >
+          <AppCtaButton onClick={onCreateCategory} className="mt-4">
             <Plus size={15} aria-hidden />
             Erste Kategorie anlegen
-          </button>
+          </AppCtaButton>
         </div>
       </div>
     )

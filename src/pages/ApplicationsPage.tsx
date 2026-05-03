@@ -146,7 +146,7 @@ export default function ApplicationsPage() {
           actions={(
             <Link
               to="/applications/new"
-              className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-md transition hover:bg-primary-hover"
+              className={appCtaButtonClasses({ className: 'shadow-md' })}
             >
               <Plus size={17} strokeWidth={2.5} />
               Neue Bewerbung

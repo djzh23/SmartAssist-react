@@ -4,6 +4,7 @@ import { SignInButton, SignUpButton, useUser } from '@clerk/clerk-react'
 import { Check, ChevronRight, Loader2, Menu, Play, RotateCcw, Send, X } from 'lucide-react'
 import { askAgentDemo, fetchDemoTtsAudio } from '../api/client'
 import LearningResponse from '../components/chat/LearningResponse'
+import AppCtaButton from '../components/ui/AppCtaButton'
 import { IconHubIcon, type IconHubName } from '../components/ui/IconHubIcon'
 import { parseLearningResponse } from '../utils/parseLearningResponse'
 import '../styles/landing.css'
@@ -1369,9 +1370,9 @@ function LiveDemoSection() {
                 Kostenlos registrieren: täglich 20 Nachrichten, alle Werkzeuge, Verlauf im Browser.
               </p>
               <SignUpButton mode="modal" fallbackRedirectUrl="/overview">
-                <button className="mb-3 w-full rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-hover sm:w-auto">
+                <AppCtaButton size="lg" className="mb-3 w-full sm:w-auto">
                   Kostenlos registrieren: 20 Nachrichten pro Tag
-                </button>
+                </AppCtaButton>
               </SignUpButton>
               <p className="text-xs text-stone-600">
                 Bereits Konto?{' '}

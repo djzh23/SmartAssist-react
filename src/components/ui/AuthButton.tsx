@@ -1,6 +1,7 @@
 import { SignInButton, SignOutButton, useUser } from '@clerk/clerk-react'
 import { useUserPlan } from '../../hooks/useUserPlan'
 import { Loader2 } from 'lucide-react'
+import AppCtaButton from './AppCtaButton'
 
 interface Props {
   variant?: 'full' | 'compact'
@@ -54,9 +55,9 @@ export default function AuthButton({ variant = 'full' }: Props) {
   return (
     <div className="px-3 py-2">
       <SignInButton mode="modal">
-        <button className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary py-2 text-xs font-semibold text-white transition-colors hover:bg-primary-hover">
+        <AppCtaButton size="sm" className="w-full">
           🔐 Anmelden
-        </button>
+        </AppCtaButton>
       </SignInButton>
     </div>
   )

@@ -277,13 +277,9 @@ export default function CvCreateDialog({
                 >
                   ← Zurück
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setStep(3)}
-                  className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover"
-                >
+                <AppCtaButton onClick={() => setStep(3)}>
                   Weiter
-                </button>
+                </AppCtaButton>
               </div>
             </div>
           )}

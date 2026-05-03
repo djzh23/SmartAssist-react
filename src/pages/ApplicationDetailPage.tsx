@@ -338,14 +338,14 @@ export default function ApplicationDetailPage() {
               <FileText size={16} aria-hidden />
               {cvStudioLabel}
             </Link>
-            <button
+            <AppCtaButton
+              variant="danger"
               type="button"
               onClick={() => void removeApp()}
-              className="inline-flex items-center gap-1 rounded-xl border border-rose-300/60 bg-white/90 px-3 py-2 text-sm font-semibold text-rose-800 shadow-sm transition hover:bg-rose-50"
             >
               <Trash2 size={16} />
               Löschen
-            </button>
+            </AppCtaButton>
           </div>
         </div>
 
@@ -473,22 +473,22 @@ export default function ApplicationDetailPage() {
             placeholder="Text hier einfügen oder schreiben …"
           />
           <div className="mt-3 flex flex-wrap gap-2">
-            <button
+            <AppCtaButton
               type="button"
               onClick={() => void saveCover()}
-              disabled={savingCover}
-              className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white shadow-md transition hover:bg-primary-hover disabled:opacity-60"
+              loading={savingCover}
+              className="shadow-md"
             >
               {savingCover ? 'Speichert…' : 'Speichern'}
-            </button>
-            <button
+            </AppCtaButton>
+            <AppCtaButton
+              variant="ghost"
               type="button"
               onClick={() => void copyCover()}
-              className="inline-flex items-center gap-1 rounded-xl border border-stone-400/45 bg-white px-4 py-2 text-sm font-semibold text-stone-800 shadow-sm transition hover:bg-app-parchmentDeep/80"
             >
               <Copy size={16} />
               Kopieren
-            </button>
+            </AppCtaButton>
           </div>
         </section>
 
@@ -527,14 +527,15 @@ export default function ApplicationDetailPage() {
               value={interviewNotes}
               onChange={e => setInterviewNotes(e.target.value.slice(0, 3000))}
             />
-            <button
+            <AppCtaButton
+              variant="ghost"
               type="button"
               onClick={() => void saveInterview()}
-              disabled={savingInterview}
-              className="mt-2 rounded-xl border border-stone-400/45 bg-white px-4 py-2 text-sm font-semibold text-stone-800 shadow-sm transition hover:bg-app-parchmentDeep/80 disabled:opacity-60"
+              loading={savingInterview}
+              className="mt-2"
             >
               {savingInterview ? 'Speichert…' : 'Interview-Notizen speichern'}
-            </button>
+            </AppCtaButton>
           </div>
         </section>
 

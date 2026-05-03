@@ -1,6 +1,8 @@
 import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { CheckCircle2, X, XCircle } from 'lucide-react'
+import AppCtaButton from '../ui/AppCtaButton'
+import { appCtaButtonClasses } from '../ui/AppCtaButton'
 import type { JobApplicationApi } from '../../api/client'
 import type { CvStudioResumeSummary } from '../../types'
 import {
@@ -120,17 +122,13 @@ export default function ApplicationInfoModal({ app, cvSummaries, onClose }: Appl
         </div>
 
         <div className="flex flex-col gap-2 border-t border-slate-100 px-5 py-4 sm:flex-row sm:justify-end">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-          >
+          <AppCtaButton variant="ghost" onClick={onClose}>
             Schließen
-          </button>
+          </AppCtaButton>
           <Link
             to={`/applications/${encodeURIComponent(app.id)}`}
             onClick={onClose}
-            className="inline-flex justify-center rounded-lg bg-primary px-4 py-2 text-center text-sm font-semibold text-white hover:bg-amber-700"
+            className={appCtaButtonClasses()}
           >
             Bewerbung bearbeiten
           </Link>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Loader2, X } from 'lucide-react'
+import { X } from 'lucide-react'
+import AppCtaButton from '../../../components/ui/AppCtaButton'
 
 interface CvRenameSnapshotModalProps {
   busy: boolean
@@ -64,23 +65,19 @@ export default function CvRenameSnapshotModal({
           </label>
 
           <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-            <button
-              type="button"
+            <AppCtaButton
+              variant="ghost"
               disabled={busy}
               onClick={onClose}
-              className="rounded-lg border border-white/15 px-4 py-2 text-sm text-stone-300 hover:bg-white/5 disabled:opacity-40"
             >
               Abbrechen
-            </button>
-            <button
-              type="button"
-              disabled={busy}
+            </AppCtaButton>
+            <AppCtaButton
+              loading={busy}
               onClick={() => void onSave(label)}
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover disabled:opacity-40"
             >
-              {busy && <Loader2 size={15} className="animate-spin" aria-hidden />}
               Speichern
-            </button>
+            </AppCtaButton>
           </div>
         </div>
       </div>

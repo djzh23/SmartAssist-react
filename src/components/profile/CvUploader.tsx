@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from 'react'
 import { FileUp, Loader2 } from 'lucide-react'
+import AppCtaButton from '../ui/AppCtaButton'
 import type { Education, ParsedCvData, ProfileLanguage, WorkExperience } from '../../api/profileClient'
 import { uploadCvPdfForParsing } from '../../api/profileClient'
 
@@ -318,9 +319,8 @@ export default function CvUploader({
         </div>
 
         <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-          <button
-            type="button"
-            disabled={applyBusy}
+          <AppCtaButton
+            loading={applyBusy}
             onClick={() => {
               void (async () => {
                 setApplyBusy(true)
@@ -334,17 +334,15 @@ export default function CvUploader({
                 }
               })()
             }}
-            className="rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-white hover:bg-primary-hover disabled:opacity-50"
           >
             {applyBusy ? 'Speichern…' : 'Alles übernehmen'}
-          </button>
-          <button
-            type="button"
+          </AppCtaButton>
+          <AppCtaButton
+            variant="ghost"
             onClick={() => onManualAdjust(draft)}
-            className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
           >
             Im Formular bearbeiten (speichert nicht automatisch)
-          </button>
+          </AppCtaButton>
           <button
             type="button"
             onClick={() => setDraft(null)}
