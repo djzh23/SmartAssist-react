@@ -626,7 +626,7 @@ function HeroSection() {
             Stellenanzeige verstehen, schneller antworten.
           </p>
 
-          <p className="mb-8 max-w-[520px] text-lg leading-relaxed text-stone-400">
+          <p className="mb-8 max-w-[520px] text-lg leading-relaxed text-stone-300">
             Kopier einfach die Stellenanzeige rein. Innerhalb von zehn Sekunden siehst du, welche Keywords wirklich zählen,
             wo dein Lebenslauf noch Lücken hat und welche Interviewfragen sehr wahrscheinlich auf dich zukommen.
           </p>
@@ -651,7 +651,7 @@ function HeroSection() {
             </button>
           </div>
 
-          <div className="flex max-w-[520px] flex-col gap-2 text-sm text-stone-500 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-3 sm:gap-y-1">
+          <div className="flex max-w-[520px] flex-col gap-2 text-sm text-stone-400 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-3 sm:gap-y-1">
             <span className="inline-flex items-center gap-1.5">
               <Check size={14} className="shrink-0 text-emerald-500" aria-hidden />
               Keine Kreditkarte
@@ -1302,7 +1302,7 @@ function LiveDemoSection() {
             {currentMsgs.length === 0 && !loading && (
               <div className="flex flex-col items-center gap-2 py-8 text-center">
                 <IconHubIcon name={cfg.icon} className="h-14 w-14" tone="onDark" />
-                <p className="text-sm text-stone-500">
+                <p className="text-sm text-stone-400">
                   {atToolLimit && !allExhausted
                     ? `${cfg.label} ausprobiert! Wähle ein anderes Werkzeug.`
                     : allExhausted
@@ -1346,7 +1346,7 @@ function LiveDemoSection() {
               >
                 <IconHubIcon name={cfg.icon} className="h-4 w-4 shrink-0" tone="onDark" />
                 <span className="truncate">{cfg.chip}</span>
-                <span className="ml-auto flex-shrink-0 rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-white">
+                <span className="ml-auto flex-shrink-0 rounded-full bg-amber-400/95 px-2 py-0.5 text-[10px] font-bold text-stone-950">
                   Ausprobieren →
                 </span>
               </button>
@@ -1360,7 +1360,7 @@ function LiveDemoSection() {
                 <IconHubIcon name="winner" className="h-5 w-5 shrink-0" tone="onDark" />
                 Du hast alle 5 Werkzeuge ausprobiert
               </p>
-              <p className="mb-5 text-sm leading-relaxed text-stone-500">
+              <p className="mb-5 text-sm leading-relaxed text-stone-400">
                 Kostenlos registrieren: täglich 20 Nachrichten, alle Werkzeuge, Verlauf im Browser.
               </p>
               <SignUpButton mode="modal" fallbackRedirectUrl="/tools">
@@ -1413,10 +1413,11 @@ function LiveDemoSection() {
                 <button
                   type="button"
                   onClick={handleReset}
-                  className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl border border-stone-600/45 text-stone-500 transition-colors hover:border-amber-500/35 hover:text-stone-300"
+                  className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl border border-stone-600/45 text-stone-400 transition-colors hover:border-amber-500/35 hover:text-stone-300"
+                  aria-label="Gespräch zurücksetzen"
                   title="Gespräch zurücksetzen"
                 >
-                  <RotateCcw size={14} />
+                  <RotateCcw size={14} aria-hidden />
                 </button>
               )}
               <input
@@ -1435,9 +1436,10 @@ function LiveDemoSection() {
                 type="button"
                 onClick={() => void send(input)}
                 disabled={loading || !input.trim()}
+                aria-label={loading ? 'Nachricht wird gesendet' : 'Nachricht senden'}
                 className="flex h-10 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-primary text-white transition-colors hover:bg-primary-hover disabled:opacity-40"
               >
-                {loading ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+                {loading ? <Loader2 size={16} className="animate-spin" aria-hidden /> : <Send size={16} aria-hidden />}
               </button>
             </div>
           )}
