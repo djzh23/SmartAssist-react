@@ -5,8 +5,9 @@ import {
   ArrowLeft,
   LayoutDashboard,
   Menu,
-  Settings,
+  Moon,
   ShieldCheck,
+  Sun,
   Tag,
   User,
   X,
@@ -164,11 +165,14 @@ export default function TopNavBar({ onMenuClick, menuOpen }: Props) {
   const bp = useBreakpoint()
   const mobileTitle = useMobileNavTitle()
   const { drawerTriggerRef } = useLayoutChrome()
+  const { notesTheme, setNotesTheme } = useLayoutChrome()
   const { isAdmin } = useIsAdmin()
   const { plan, planLabel, planColor, initials, email } = useUserPlan()
 
   const showPlanBadge = plan === 'premium' || plan === 'pro'
   const isChatRoute = location.pathname === '/chat'
+  const isNotesRoute = location.pathname.startsWith('/notes')
+  const notesDark = notesTheme === 'dark'
 
   if (bp === 'mobile') {
     return (
@@ -267,15 +271,18 @@ export default function TopNavBar({ onMenuClick, menuOpen }: Props) {
           </span>
         )}
 
-        <button
-          type="button"
-          onClick={() => navigate('/pricing')}
-          className="flex h-9 w-9 items-center justify-center rounded-lg text-stone-400 transition-colors hover:bg-white/10 hover:text-stone-100"
-          aria-label="Preise und Einstellungen"
-          title="Preise"
-        >
-          <Settings size={20} />
-        </button>
+        {isNotesRoute && (
+          <button
+            type="button"
+            onClick={() => setNotesTheme(prev => prev === 'dark' ? 'light' : 'dark')}
+            className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-2.5 text-xs font-medium text-stone-100 transition-colors hover:bg-white/10"
+            aria-label={notesDark ? 'Hellmodus aktivieren' : 'Dunkelmodus aktivieren'}
+            title={notesDark ? 'Light Mode' : 'Dark Mode'}
+          >
+            {notesDark ? <Sun size={14} aria-hidden /> : <Moon size={14} aria-hidden />}
+            {notesDark ? 'Light' : 'Dark'}
+          </button>
+        )}
 
         <UserAvatarMenu
           isMobile={false}

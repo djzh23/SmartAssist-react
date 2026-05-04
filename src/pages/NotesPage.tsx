@@ -6,11 +6,9 @@ import {
   ChevronRight,
   ExternalLink,
   Loader2,
-  Moon,
   NotebookPen,
   Pencil,
   Search,
-  Sun,
   Tag,
   Trash2,
   X,
@@ -22,6 +20,7 @@ import { ServerSyncControl } from '../components/ui/ServerSyncControl'
 import PageHeader from '../components/layout/PageHeader'
 import AppCtaButton from '../components/ui/AppCtaButton'
 import { useAppUi } from '../context/AppUiContext'
+import { useLayoutChrome } from '../context/LayoutChromeContext'
 import { useChatNotes } from '../hooks/useChatNotes'
 import { useMediaQuery } from '../hooks/useMediaQuery'
 import type { ChatSavedNote } from '../types'
@@ -74,17 +73,9 @@ export default function NotesPage() {
   const isMdUp = useMediaQuery('(min-width: 768px)')
   /** Unter md: entweder Liste oder Lesen - volle Breite, besser bedienbar. */
   const [mobileStep, setMobileStep] = useState<'list' | 'reader'>('list')
-  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
-    if (typeof window === 'undefined') return 'dark'
-    const saved = window.localStorage.getItem('notes-theme')
-    return saved === 'light' ? 'light' : 'dark'
-  })
+  const { notesTheme } = useLayoutChrome()
+  const theme = notesTheme
   const isDark = theme === 'dark'
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    window.localStorage.setItem('notes-theme', theme)
-  }, [theme])
 
   useEffect(() => {
     if (isMdUp)
@@ -245,29 +236,13 @@ export default function NotesPage() {
           </InfoExplainerButton>
         )}
         actions={(
-          <div className="flex items-center gap-2 self-start">
-            <button
-              type="button"
-              onClick={() => setTheme(prev => prev === 'dark' ? 'light' : 'dark')}
-              className={[
-                'inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition',
-                isDark
-                  ? 'border-white/20 bg-white/5 text-stone-100 hover:bg-white/10'
-                  : 'border-stone-300 bg-white text-stone-700 hover:bg-stone-100',
-              ].join(' ')}
-              aria-label={isDark ? 'Hellmodus aktivieren' : 'Dunkelmodus aktivieren'}
-            >
-              {isDark ? <Sun className="h-3.5 w-3.5" aria-hidden /> : <Moon className="h-3.5 w-3.5" aria-hidden />}
-              {isDark ? 'Light' : 'Dark'}
-            </button>
-            <ServerSyncControl
-              variant="dark"
-              className="self-start"
-              onSync={() => void reload()}
-              syncing={notesLoading}
-              lastSyncedAt={notesLastSyncedAt}
-            />
-          </div>
+          <ServerSyncControl
+            variant="dark"
+            className="self-start"
+            onSync={() => void reload()}
+            syncing={notesLoading}
+            lastSyncedAt={notesLastSyncedAt}
+          />
         )}
       />
 
@@ -552,7 +527,7 @@ export default function NotesPage() {
                   className={[
                     'mx-auto max-w-3xl rounded-2xl border px-3 py-5 shadow-inner sm:px-6 sm:py-7',
                     isDark
-                      ? 'border-white/15 bg-gradient-to-b from-[#1d1611] via-[#16110d] to-[#1b130c]'
+                      ? 'border-white/15 bg-gradient-to-b from-[#1d1611] via-[#16110d] to-[#1b130c] [&_.reader-markdown_h2]:!text-amber-100 [&_.reader-markdown_h2]:!border-amber-300/70 [&_.reader-markdown_h2]:!from-amber-500/20 [&_.reader-markdown_h2]:!via-amber-400/10 [&_.reader-markdown_h3]:!text-stone-100 [&_.reader-markdown_h4]:!text-amber-200 [&_.reader-markdown_p]:!text-stone-200 [&_.reader-markdown_li]:!text-stone-200 [&_.reader-markdown_em]:!text-stone-100 [&_.reader-markdown_strong]:!text-amber-100 [&_.reader-markdown_blockquote]:!bg-amber-500/10 [&_.reader-markdown_blockquote]:!text-stone-100'
                       : 'border-stone-400/35 bg-gradient-to-b from-app-parchment via-white to-amber-50/30',
                   ].join(' ')}
                 >

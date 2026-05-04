@@ -20,6 +20,8 @@ export interface LayoutChromeState {
   setKeyboardLikelyOpen: (v: boolean) => void
   /** Ref to restore focus after closing drawer (hamburger) */
   drawerTriggerRef: React.RefObject<HTMLButtonElement | null>
+  notesTheme: 'dark' | 'light'
+  setNotesTheme: (v: 'dark' | 'light' | ((p: 'dark' | 'light') => 'dark' | 'light')) => void
 }
 
 const LayoutChromeContext = createContext<LayoutChromeState | null>(null)
@@ -35,6 +37,13 @@ export function LayoutChromeProvider({ children }: { children: ReactNode }) {
     }
   })
   const [keyboardLikelyOpen, setKeyboardLikelyOpen] = useState(false)
+  const [notesTheme, setNotesTheme] = useState<'dark' | 'light'>(() => {
+    try {
+      return localStorage.getItem('privateprep_notes_theme') === 'light' ? 'light' : 'dark'
+    } catch {
+      return 'dark'
+    }
+  })
   const drawerTriggerRef = useRef<HTMLButtonElement | null>(null)
 
   useEffect(() => {
@@ -65,6 +74,18 @@ export function LayoutChromeProvider({ children }: { children: ReactNode }) {
     })
   }, [])
 
+  const persistNotesTheme = useCallback((v: 'dark' | 'light' | ((p: 'dark' | 'light') => 'dark' | 'light')) => {
+    setNotesTheme(prev => {
+      const next = typeof v === 'function' ? v(prev) : v
+      try {
+        localStorage.setItem('privateprep_notes_theme', next)
+      } catch {
+        /* ignore */
+      }
+      return next
+    })
+  }, [])
+
   const value = useMemo<LayoutChromeState>(
     () => ({
       drawerOpen,
@@ -76,8 +97,10 @@ export function LayoutChromeProvider({ children }: { children: ReactNode }) {
       keyboardLikelyOpen,
       setKeyboardLikelyOpen,
       drawerTriggerRef,
+      notesTheme,
+      setNotesTheme: persistNotesTheme,
     }),
-    [drawerOpen, moreSheetOpen, tabletSidebarExpanded, persistTablet, keyboardLikelyOpen],
+    [drawerOpen, moreSheetOpen, tabletSidebarExpanded, persistTablet, keyboardLikelyOpen, notesTheme, persistNotesTheme],
   )
 
   return <LayoutChromeContext.Provider value={value}>{children}</LayoutChromeContext.Provider>
