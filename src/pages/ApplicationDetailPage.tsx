@@ -258,7 +258,7 @@ export default function ApplicationDetailPage() {
   return (
     <div className="min-h-0 flex-1 overflow-y-auto bg-transparent">
       <StandardPageContainer className="py-6 sm:py-8">
-        <div className="mx-auto max-w-3xl">
+        <div className="mx-auto max-w-5xl">
         {!careerProfileLoading && careerProfile && getProfileCompleteness(careerProfile) < 90 && (
           <div className="mb-5 rounded-xl bg-amber-500/10 px-4 py-3 text-sm text-amber-200 ring-1 ring-amber-400/20">
             <span className="font-semibold">Profil {getProfileCompleteness(careerProfile)}%</span>
@@ -279,15 +279,18 @@ export default function ApplicationDetailPage() {
             <ArrowLeft size={16} />
             Alle Bewerbungen
           </Link>
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">Bewerbung</p>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight text-stone-100">{app.jobTitle}</h1>
-          <p className="mt-0.5 text-stone-400">{app.company}</p>
-          {app.jobUrl && (
-            <a href={app.jobUrl} target="_blank" rel="noreferrer" className="mt-2 inline-block text-sm font-medium text-amber-400 hover:text-amber-300">
-              Stellenanzeige öffnen
-            </a>
-          )}
-          <div className="mt-4 flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="min-w-0">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">Bewerbung</p>
+              <h1 className="mt-1 text-2xl font-bold tracking-tight text-stone-100">{app.jobTitle}</h1>
+              <p className="mt-0.5 text-stone-400">{app.company}</p>
+              {app.jobUrl && (
+                <a href={app.jobUrl} target="_blank" rel="noreferrer" className="mt-2 inline-block text-sm font-medium text-amber-400 hover:text-amber-300">
+                  Stellenanzeige öffnen
+                </a>
+              )}
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
             <span className="sr-only" id="app-status-label">Status</span>
             <div className="relative" ref={statusMenuRef}>
               <button
@@ -346,6 +349,7 @@ export default function ApplicationDetailPage() {
               <Trash2 size={16} />
               Löschen
             </AppCtaButton>
+            </div>
           </div>
         </div>
 
