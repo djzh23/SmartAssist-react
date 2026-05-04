@@ -1,12 +1,16 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@clerk/clerk-react'
 import {
+  ArrowLeft,
   Briefcase,
   Check,
   ChevronDown,
   Code2,
   Download,
+  Edit3,
+  EllipsisVertical,
+  Eye,
   ExternalLink,
   FileText,
   GraduationCap,
@@ -48,6 +52,7 @@ import { downloadBlob, notify } from './lib/cvStudio'
 import { CV_MAIN_SECTION_LABELS, normalizeContentSectionOrder, type CvMainSectionKey } from './lib/cvStudioSectionOrder'
 import { buildCvExportStem, formatRelativeTimeDe } from './lib/cvStudioPhase3'
 import AppCtaButton from '../components/ui/AppCtaButton'
+import BottomSheet from '../components/ui/BottomSheet'
 import type { LanguageItemData, PdfDesign, SkillGroupData, WorkItemData } from './cvTypes'
 
 const field =
@@ -80,7 +85,7 @@ function useMediaMinWidth(px: number): boolean {
   return matches
 }
 
-type TabId = 'profil' | 'beruf' | 'ausbildung' | 'kenntnisse' | 'hobby' | 'sprachen' | 'darstellung'
+type TabId = 'profil' | 'beruf' | 'ausbildung' | 'kenntnisse' | 'hobby' | 'sprachen' | 'darstellung' | 'vorschau'
 
 function templateIconComponent(key: string) {
   if (key === 'software-developer' || key === 'softwareentwickler') return Code2
@@ -130,11 +135,17 @@ export default function CvStudioEditorPage() {
   } = vm
 
   const [activeTab, setActiveTab] = useState<TabId>('profil')
+  const [lastEditorTab, setLastEditorTab] = useState<TabId>('profil')
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [pdfExportName, setPdfExportName] = useState('')
   const [exportNameTouched, setExportNameTouched] = useState(false)
   const [previewWidthPx, setPreviewWidthPx] = useState(380)
   const [previewCollapsed, setPreviewCollapsed] = useState(false)
+  const [pdfBusy, setPdfBusy] = useState(false)
+  const [docxBusy, setDocxBusy] = useState(false)
+  const contentScrollRef = useRef<HTMLDivElement | null>(null)
   const previewLayoutXl = useMediaMinWidth(1280)
+  const isDesktopLayout = useMediaMinWidth(769)
 
   // Phase 3 UI state
   const [showSaveModal, setShowSaveModal] = useState(false)
@@ -185,6 +196,17 @@ export default function CvStudioEditorPage() {
       setActiveTab('darstellung')
     }
   }, [tabParam])
+
+  useEffect(() => {
+    if (activeTab !== 'vorschau') setLastEditorTab(activeTab)
+    contentScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [activeTab])
+
+  useEffect(() => {
+    if (isDesktopLayout && activeTab === 'vorschau') {
+      setActiveTab(lastEditorTab === 'vorschau' ? 'profil' : lastEditorTab)
+    }
+  }, [isDesktopLayout, activeTab, lastEditorTab])
 
   useEffect(() => {
     if (resume?.notes !== undefined) {
@@ -244,6 +266,7 @@ export default function CvStudioEditorPage() {
 
   const runExportPdf = async (vId?: string | null, fileStem?: string | null) => {
     if (!resume) return
+    setPdfBusy(true)
     await flushAutoSave()
     try {
       const token = await getToken()
@@ -269,6 +292,8 @@ export default function CvStudioEditorPage() {
       downloadBlob(downloadName, blob)
     } catch (e) {
       notify(e instanceof Error ? e.message : 'PDF-Export fehlgeschlagen.', 'error')
+    } finally {
+      setPdfBusy(false)
     }
   }
 
@@ -283,6 +308,7 @@ export default function CvStudioEditorPage() {
 
   const runExportDocx = async (vId?: string | null, fileStem?: string | null) => {
     if (!resume) return
+    setDocxBusy(true)
     await flushAutoSave()
     try {
       const token = await getToken()
@@ -303,6 +329,8 @@ export default function CvStudioEditorPage() {
       downloadBlob(name, blob)
     } catch (e) {
       notify(e instanceof Error ? e.message : 'DOCX-Export fehlgeschlagen.', 'error')
+    } finally {
+      setDocxBusy(false)
     }
   }
 
@@ -435,11 +463,82 @@ export default function CvStudioEditorPage() {
   const d = resume.resumeData
   const st = d.sectionTitles ?? {}
   const contextLabel = [resume.targetCompany, resume.targetRole].filter(Boolean).join(' - ')
+  const mobileTitle = contextLabel || resume.title || 'Lebenslauf'
+  const compactTitle = mobileTitle.replace(/\s+/g, ' ').trim()
+  const mobileTabs: Array<{ id: TabId; label: string; icon?: typeof User }> = [
+    { id: 'profil', label: 'Profil', icon: User },
+    { id: 'ausbildung', label: 'Bildung', icon: GraduationCap },
+    { id: 'kenntnisse', label: 'Skills', icon: Wrench },
+    { id: 'sprachen', label: 'Sprachen', icon: Languages },
+    { id: 'beruf', label: 'Berufe', icon: Briefcase },
+    { id: 'hobby', label: 'Hobbys', icon: Heart },
+    { id: 'darstellung', label: 'Darstellung', icon: SlidersHorizontal },
+    { id: 'vorschau', label: 'Vorschau', icon: Eye },
+  ]
 
   return (
-    <div className="pb-12">
+    <div className="pb-[calc(72px+env(safe-area-inset-bottom))] md:pb-12">
+      {!isDesktopLayout ? (
+        <>
+          <header className="sticky top-0 z-50 border-b border-white/10 bg-[#1a120d]/95 backdrop-blur">
+            <div className="flex h-12 items-center gap-2 px-2.5">
+              <button
+                type="button"
+                onClick={() => navigate('/cv-studio')}
+                className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-stone-200 hover:bg-white/5"
+                aria-label="Zur Übersicht"
+              >
+                <ArrowLeft size={20} aria-hidden />
+              </button>
+              <p className="min-w-0 flex-1 truncate text-sm font-semibold text-stone-100">
+                {compactTitle}
+              </p>
+              <span className="hidden text-[11px] text-emerald-300 min-[390px]:inline">
+                {autoSaving ? 'Speichert…' : 'Gespeichert ✓'}
+              </span>
+              <button
+                type="button"
+                onClick={() => setMobileMenuOpen(true)}
+                className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-stone-200 hover:bg-white/5"
+                aria-label="Mehr Aktionen"
+              >
+                <EllipsisVertical size={20} aria-hidden />
+              </button>
+            </div>
+          </header>
+
+          <nav className="sticky top-12 z-40 border-b border-white/10 bg-[#1a120d]/92 px-1.5 backdrop-blur">
+            <div className="no-scrollbar flex snap-x snap-mandatory gap-1 overflow-x-auto py-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {mobileTabs.map(tab => {
+                const Icon = tab.icon
+                const active = activeTab === tab.id
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setActiveTab(tab.id)}
+                    className={[
+                      'snap-center whitespace-nowrap rounded-lg border-b-2 px-4 py-2 text-[13px] transition-colors',
+                      active
+                        ? 'border-amber-400 text-amber-200'
+                        : 'border-transparent text-stone-400 hover:text-stone-200',
+                      tab.id === 'vorschau' ? 'font-semibold text-sky-300/90' : '',
+                    ].join(' ')}
+                  >
+                    <span className="inline-flex items-center gap-1.5">
+                      {Icon ? <Icon size={13} aria-hidden /> : null}
+                      {tab.label}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          </nav>
+        </>
+      ) : null}
       {/* ── Editor header ───────────────────────────────────────────────── */}
-      <header className="mb-4 border-b border-white/10 pb-4">
+      {isDesktopLayout ? (
+        <header className="mb-4 border-b border-white/10 pb-4">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0 space-y-2">
             <h1 className="text-xl font-semibold leading-snug text-white sm:text-2xl">
@@ -558,44 +657,45 @@ export default function CvStudioEditorPage() {
           </div>
         </div>
 
-        {/* Notes panel */}
-        {showNotes && (
-          <div className="mt-3 rounded-xl border border-white/10 bg-black/20 p-4">
-            <label className="block text-xs font-medium text-stone-400">
-              Notizen zu diesem Lebenslauf
-              <textarea
-                className={`${field} mt-1.5`}
-                rows={4}
-                value={notesDraft}
-                onChange={e => setNotesDraft(e.target.value)}
-                placeholder="z. B. Zielstelle, offene Punkte, Anpassungsideen …"
-              />
-            </label>
-            <div className="mt-2 flex items-center justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setShowNotes(false)}
-                className="text-xs text-stone-500 hover:text-stone-300"
-              >
-                Abbrechen
-              </button>
-              <AppCtaButton
-                size="sm"
-                loading={notesSaving}
-                onClick={() => void handleSaveNotes()}
-              >
-                Speichern
-              </AppCtaButton>
-            </div>
-          </div>
-        )}
-      </header>
+        </header>
+      ) : null}
 
       {error ? (
         <div role="alert" className="mb-4 rounded-lg border border-rose-500/40 bg-rose-950/40 px-3 py-2 text-sm text-rose-100">
           {error}
         </div>
       ) : null}
+
+      {showNotes && (
+        <div className="mb-4 rounded-xl border border-white/10 bg-black/20 p-4">
+          <label className="block text-xs font-medium text-stone-400">
+            Notizen zu diesem Lebenslauf
+            <textarea
+              className={`${field} mt-1.5`}
+              rows={4}
+              value={notesDraft}
+              onChange={e => setNotesDraft(e.target.value)}
+              placeholder="z. B. Zielstelle, offene Punkte, Anpassungsideen …"
+            />
+          </label>
+          <div className="mt-2 flex items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setShowNotes(false)}
+              className="text-xs text-stone-500 hover:text-stone-300"
+            >
+              Abbrechen
+            </button>
+            <AppCtaButton
+              size="sm"
+              loading={notesSaving}
+              onClick={() => void handleSaveNotes()}
+            >
+              Speichern
+            </AppCtaButton>
+          </div>
+        </div>
+      )}
 
       {previewCollapsed ? (
         <div className="mb-2 hidden justify-end lg:flex">
@@ -615,7 +715,7 @@ export default function CvStudioEditorPage() {
         {/* ── Editor panel ──────────────────────────────────────────────── */}
         <section className="min-w-0 flex-1 rounded-xl border border-white/10 bg-black/20">
           {/* Toolbar */}
-          <div className="flex flex-col gap-3 border-b border-white/10 p-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+          <div className="hidden flex-col gap-3 border-b border-white/10 p-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between md:flex">
             <div className="flex flex-wrap items-center gap-2">
               <select
                 className={`${field} w-auto min-w-[200px]`}
@@ -676,7 +776,7 @@ export default function CvStudioEditorPage() {
           </div>
 
           {/* Template selector (for new Arbeitsversion) */}
-          {templates.length > 0 && (
+          {isDesktopLayout && templates.length > 0 && (
             <details className="border-b border-white/10">
               <summary className="flex cursor-pointer items-center justify-between px-4 py-2.5 text-xs text-stone-500 hover:text-stone-300">
                 <span>Vorlage für neue Arbeitsversion</span>
@@ -710,7 +810,7 @@ export default function CvStudioEditorPage() {
           )}
 
           {/* Tabs */}
-          <div className="flex flex-wrap gap-1 border-b border-white/10 p-2">
+          <div className="hidden flex-wrap gap-1 border-b border-white/10 p-2 md:flex">
             <button type="button" className={tabClass('darstellung')} onClick={() => setActiveTab('darstellung')}>
               <SlidersHorizontal size={14} aria-hidden />
               Darstellung
@@ -742,7 +842,15 @@ export default function CvStudioEditorPage() {
           </div>
 
           {/* Tab content */}
-          <div className="max-h-[70vh] overflow-y-auto p-4 text-sm">
+          <div
+            ref={contentScrollRef}
+            className={[
+              'overflow-y-auto text-sm',
+              isDesktopLayout
+                ? 'max-h-[70vh] p-4'
+                : 'min-h-[calc(100vh-48px-44px-52px)] px-4 py-3',
+            ].join(' ')}
+          >
             {/* ── Profil ──────────────────────────────────────────────── */}
             {activeTab === 'profil' ? (
               <div className="space-y-4">
@@ -1068,9 +1176,26 @@ export default function CvStudioEditorPage() {
                 </div>
               </div>
             ) : null}
+
+            {activeTab === 'vorschau' ? (
+              <div className="relative">
+                <div className="min-h-[calc(100vh-48px-44px-52px-28px)] overflow-y-auto pr-1">
+                  <LivePreview resume={resume} pdfDesign={pdfDesign} />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab(lastEditorTab)}
+                  className="fixed bottom-[calc(60px+env(safe-area-inset-bottom))] right-4 inline-flex h-11 w-11 items-center justify-center rounded-full bg-amber-500/90 text-stone-950 shadow-lg backdrop-blur transition hover:bg-amber-400 md:hidden"
+                  aria-label="Zurück zum Bearbeiten"
+                >
+                  <Edit3 size={18} aria-hidden />
+                </button>
+              </div>
+            ) : null}
           </div>
         </section>
 
+        {isDesktopLayout ? (
         <CvVersionsSidebar
           open={versionsSidebarOpen}
           onToggle={() => setVersionsSidebarOpen(o => !o)}
@@ -1129,10 +1254,11 @@ export default function CvStudioEditorPage() {
             })()
           }}
         />
+        ) : null}
         </div>
 
         {/* ── Live preview ──────────────────────────────────────────────── */}
-        {!previewCollapsed ? (
+        {isDesktopLayout && !previewCollapsed ? (
           <>
             <div
               role="separator"
@@ -1169,6 +1295,136 @@ export default function CvStudioEditorPage() {
           </>
         ) : null}
       </div>
+
+      {!isDesktopLayout ? (
+        <footer
+          className="fixed bottom-0 left-0 right-0 z-50 border-t border-white/10 bg-[#1a120d]/95 backdrop-blur"
+          style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+        >
+          <div className="grid h-[52px] grid-cols-3 gap-1 px-2 py-1">
+            <button
+              type="button"
+              disabled={busy || pdfBusy}
+              onClick={() => void exportPdf(null)}
+              className="inline-flex min-h-[44px] items-center justify-center gap-1 rounded-lg text-xs font-semibold text-stone-100 transition hover:bg-white/5 disabled:opacity-60"
+            >
+              <Download size={14} aria-hidden />
+              {pdfBusy ? 'PDF…' : 'PDF'}
+            </button>
+            <button
+              type="button"
+              disabled={busy || docxBusy}
+              onClick={() => void exportDocx(null)}
+              className="inline-flex min-h-[44px] items-center justify-center gap-1 rounded-lg text-xs font-semibold text-stone-100 transition hover:bg-white/5 disabled:opacity-60"
+            >
+              <FileText size={14} aria-hidden />
+              {docxBusy ? 'Word…' : 'Word'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(true)}
+              className="inline-flex min-h-[44px] items-center justify-center gap-1 rounded-lg text-xs font-semibold text-stone-100 transition hover:bg-white/5"
+            >
+              <EllipsisVertical size={14} aria-hidden />
+              Mehr
+            </button>
+          </div>
+        </footer>
+      ) : null}
+
+      <BottomSheet open={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} title="CV-Studio Aktionen">
+        <div className="space-y-2 pb-2 text-sm">
+          <label className={lab}>
+            Dokumentname
+            <input
+              className={field}
+              value={resume.title}
+              onChange={e => updateResume(r => void (r.title = e.target.value))}
+            />
+          </label>
+          <label className={lab}>
+            Design
+            <select
+              className={`${field} w-full`}
+              value={pdfDesign}
+              onChange={e => setPdfDesign(e.target.value as PdfDesign)}
+            >
+              <option value="A">Design A - Klassisch (ATS)</option>
+              <option value="B">Design B - Modern</option>
+              <option value="C">Design C - Professional</option>
+            </select>
+          </label>
+          <label className={lab}>
+            Dateiname (ohne Endung)
+            <input
+              className={field}
+              maxLength={180}
+              value={pdfExportName}
+              onChange={e => {
+                setExportNameTouched(true)
+                setPdfExportName(e.target.value)
+              }}
+            />
+          </label>
+          <div className="grid grid-cols-2 gap-2 pt-1">
+            <AppCtaButton
+              size="sm"
+              disabled={busy}
+              onClick={() => {
+                setMobileMenuOpen(false)
+                setShowSaveModal(true)
+              }}
+            >
+              <Save size={14} aria-hidden />
+              Version speichern
+            </AppCtaButton>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => {
+                setMobileMenuOpen(false)
+                void createArbeitsversion().then(id => id && navigate(`/cv-studio/edit/${id}`))
+              }}
+              className="inline-flex items-center justify-center gap-1 rounded-lg border border-white/15 px-3 py-2 text-xs text-stone-200 hover:bg-white/5 disabled:opacity-60"
+            >
+              <Plus size={13} aria-hidden />
+              Neue Version
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setMobileMenuOpen(false)
+                void openLinkModal()
+              }}
+              className="inline-flex items-center justify-center gap-1 rounded-lg border border-white/15 px-3 py-2 text-xs text-stone-200 hover:bg-white/5"
+            >
+              <Link2 size={13} aria-hidden />
+              Kontext ändern
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setMobileMenuOpen(false)
+                setShowNotes(true)
+              }}
+              className="inline-flex items-center justify-center gap-1 rounded-lg border border-white/15 px-3 py-2 text-xs text-stone-200 hover:bg-white/5"
+            >
+              <MessageSquare size={13} aria-hidden />
+              Notizen
+            </button>
+          </div>
+          {resume.linkedJobApplicationId ? (
+            <Link
+              to={`/applications/${encodeURIComponent(resume.linkedJobApplicationId)}`}
+              className="inline-flex w-full items-center justify-center gap-1 rounded-lg border border-primary/30 bg-primary/10 px-3 py-2 text-xs font-medium text-primary-light"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Zur Bewerbung
+              <ExternalLink size={11} aria-hidden />
+            </Link>
+          ) : null}
+        </div>
+      </BottomSheet>
 
       {/* ── Modals ──────────────────────────────────────────────────────── */}
       {exportUnsavedModal && (
