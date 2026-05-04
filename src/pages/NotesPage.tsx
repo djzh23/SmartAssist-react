@@ -214,7 +214,7 @@ export default function NotesPage() {
   }
 
   return (
-    <StandardPageContainer className="flex min-h-0 w-full flex-1 flex-col gap-4 overflow-hidden pt-3 pb-6 md:gap-6 md:py-8">
+    <StandardPageContainer className="flex min-h-0 w-full flex-1 flex-col gap-4 overflow-hidden pt-3 pb-24 md:gap-6 md:py-8">
       <PageHeader
         pageKey="notes"
         subtitle="Aus dem Chat gespeichert."
@@ -513,7 +513,7 @@ export default function NotesPage() {
               <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-3 py-4 sm:px-4 md:px-6 md:py-6">
                 <div
                   className={[
-                    'mx-auto max-w-3xl rounded-2xl border px-3 py-5 shadow-inner sm:px-6 sm:py-7',
+                    'mx-auto max-w-3xl rounded-2xl border px-3 py-5 shadow-inner max-md:rounded-xl max-md:px-2.5 max-md:py-4 sm:px-6 sm:py-7',
                     isDark
                       ? 'border-white/15 bg-gradient-to-b from-[#1d1611] via-[#16110d] to-[#1b130c] [&_.reader-markdown_h2]:!text-amber-100 [&_.reader-markdown_h2]:!border-amber-300/70 [&_.reader-markdown_h2]:!from-amber-500/20 [&_.reader-markdown_h2]:!via-amber-400/10 [&_.reader-markdown_h3]:!text-stone-100 [&_.reader-markdown_h4]:!text-amber-200 [&_.reader-markdown_p]:!text-stone-200 [&_.reader-markdown_li]:!text-stone-200 [&_.reader-markdown_em]:!text-stone-100 [&_.reader-markdown_strong]:!text-amber-100 [&_.reader-markdown_blockquote]:!bg-amber-500/10 [&_.reader-markdown_blockquote]:!text-stone-100'
                       : 'border-stone-400/35 bg-gradient-to-b from-app-parchment via-white to-amber-50/30',

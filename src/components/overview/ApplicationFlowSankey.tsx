@@ -9,6 +9,7 @@ interface Props {
 
 const DEFAULT_W = 720
 const BOX_BG = 'rgb(238, 233, 226)'
+const MOBILE_BREAKPOINT = 640
 
 // ── Node renderer ─────────────────────────────────────────────────────────────
 
@@ -247,6 +248,7 @@ export default function ApplicationFlowSankey({ overview }: Props) {
     () => buildApplicationSankeyLayout(overview, w, viewH),
     [overview, w, viewH],
   )
+  const isMobileLayout = w < MOBILE_BREAKPOINT
 
   if (overview.total <= 0) return null
 
@@ -283,6 +285,68 @@ export default function ApplicationFlowSankey({ overview }: Props) {
   function handleBandLeave() {
     setActiveBandId(null)
     setTooltip(null)
+  }
+
+  if (isMobileLayout) {
+    return (
+      <div
+        ref={wrapRef}
+        className="relative w-full rounded-2xl bg-white/70 px-3 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.55),0_0_0_1px_rgba(245,158,11,0.18),0_16px_30px_-20px_rgba(15,23,42,0.6)]"
+        style={{ backgroundColor: BOX_BG }}
+      >
+        <div className="space-y-2 rounded-xl bg-white/65 p-2 ring-1 ring-stone-300/60">
+          <div className="rounded-lg bg-white px-3 py-2 shadow-[0_2px_8px_rgba(24,24,27,0.07)]">
+            <p className="text-[11px] font-medium text-stone-600">Alle Bewerbungen</p>
+            <p className="text-lg font-bold tabular-nums text-violet-600">{overview.total}</p>
+          </div>
+          <div className="flex justify-center text-stone-400">↓</div>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="rounded-lg bg-white px-3 py-2 shadow-[0_2px_8px_rgba(24,24,27,0.07)]">
+              <p className="text-[11px] font-medium text-stone-600">Aktive Pipeline</p>
+              <p className="text-base font-bold tabular-nums text-teal-600">{overview.activeInPipeline}</p>
+            </div>
+            <div className="rounded-lg bg-white px-3 py-2 shadow-[0_2px_8px_rgba(24,24,27,0.07)]">
+              <p className="text-[11px] font-medium text-stone-600">Archiv</p>
+              <p className="text-base font-bold tabular-nums text-slate-600">{overview.inArchive}</p>
+            </div>
+          </div>
+
+          <div className="pt-1">
+            <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-stone-500">Pipeline Status</p>
+            <div className="space-y-1.5">
+              {overview.pipeline.map(seg => (
+                <div key={seg.status} className="flex items-center justify-between rounded-md bg-white px-2.5 py-2 ring-1 ring-stone-300/60">
+                  <span className="inline-flex min-w-0 items-center gap-2 text-[12px] font-medium text-stone-700">
+                    <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: SANKEY_PIPELINE_FILL[seg.status] }} aria-hidden />
+                    <span className="truncate">{seg.label}</span>
+                  </span>
+                  <span className="shrink-0 text-sm font-semibold tabular-nums text-stone-800">{seg.count}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="pt-1">
+            <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-stone-500">Archiv Status</p>
+            <div className="space-y-1.5">
+              {overview.archive.map(seg => (
+                <div key={seg.status} className="flex items-center justify-between rounded-md bg-white px-2.5 py-2 ring-1 ring-stone-300/60">
+                  <span className="inline-flex min-w-0 items-center gap-2 text-[12px] font-medium text-stone-700">
+                    <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: SANKEY_PIPELINE_FILL[seg.status] }} aria-hidden />
+                    <span className="truncate">{seg.label}</span>
+                  </span>
+                  <span className="shrink-0 text-sm font-semibold tabular-nums text-stone-800">{seg.count}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <p className="px-1 pb-0.5 pt-2 text-center text-[10px] text-stone-500">
+          Mobile-Ansicht · von oben nach unten lesbar
+        </p>
+      </div>
+    )
   }
 
   return (

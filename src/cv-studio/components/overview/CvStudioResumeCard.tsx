@@ -48,9 +48,9 @@ export default function CvStudioResumeCard({
         </div>
       </div>
 
-      {/* Actions — one row: Kopie, PDF, Löschen; stop propagation so card click doesn't fire onEdit */}
+      {/* Actions — one row with aligned vertical center */}
       <div
-        className="mt-auto flex min-h-[38px] items-center gap-1.5 pt-3"
+        className="mt-auto grid min-h-[38px] grid-cols-[minmax(0,1fr)_minmax(0,1fr)_30px] items-center gap-1.5 pt-3"
         onClick={e => e.stopPropagation()}
         onKeyDown={e => e.stopPropagation()}
       >
@@ -74,7 +74,7 @@ export default function CvStudioResumeCard({
         <button
           type="button"
           onClick={onDelete}
-          className="inline-flex h-[30px] w-[30px] shrink-0 items-center justify-center self-center rounded-lg text-stone-500 transition hover:bg-rose-500/10 hover:text-rose-400"
+          className="inline-flex h-[30px] w-[30px] items-center justify-center rounded-lg text-stone-500 transition hover:bg-rose-500/10 hover:text-rose-400"
           aria-label="Lebenslauf löschen"
         >
           <Trash2 size={12} aria-hidden />
