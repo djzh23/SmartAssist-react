@@ -45,6 +45,7 @@ function minimalProfile(overrides: Partial<CareerProfile> = {}): CareerProfile {
     cvUploadedAt: null,
     targetJobs: [],
     onboardingCompleted: true,
+    onboardingCoachTourCompleted: false,
     createdAt: now,
     updatedAt: now,
     ...overrides,

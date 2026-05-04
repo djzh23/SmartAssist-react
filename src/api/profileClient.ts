@@ -24,8 +24,19 @@ export interface CareerProfile {
   cvUploadedAt: string | null
   targetJobs: TargetJob[]
   onboardingCompleted: boolean
+  onboardingCoachTourCompleted: boolean
   createdAt: string
   updatedAt: string
+}
+
+/** Partial form data persisted server-side between onboarding sessions. */
+export interface OnboardingDraft {
+  field?: string
+  level?: string
+  currentRole?: string
+  goals?: string[]
+  lastStep?: number
+  updatedAt?: string
 }
 
 export interface WorkExperience {
@@ -209,4 +220,32 @@ export async function deleteCareerProfile(token: string): Promise<void> {
     headers: { Authorization: `Bearer ${token}` },
   })
   if (!res.ok) throw new Error(await readError(res, `Profile delete failed (${res.status})`))
+}
+
+export async function fetchOnboardingDraft(token: string): Promise<OnboardingDraft> {
+  const res = await fetch(`${API_BASE}/api/profile/onboarding/draft`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok) throw new Error(await readError(res, `Draft fetch failed (${res.status})`))
+  return res.json() as Promise<OnboardingDraft>
+}
+
+export async function putOnboardingDraft(
+  token: string,
+  draft: Omit<OnboardingDraft, 'updatedAt'>,
+): Promise<void> {
+  const res = await fetch(`${API_BASE}/api/profile/onboarding/draft`, {
+    method: 'PUT',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(draft),
+  })
+  if (!res.ok) throw new Error(await readError(res, `Draft save failed (${res.status})`))
+}
+
+export async function postCoachTourDone(token: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/api/profile/onboarding/coach-tour/done`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok) throw new Error(await readError(res, `Coach tour flag failed (${res.status})`))
 }
