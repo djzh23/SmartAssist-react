@@ -16,7 +16,6 @@ import {
 import InfoExplainerButton from '../components/ui/InfoExplainerButton'
 import StandardPageContainer from '../components/layout/StandardPageContainer'
 import { RenderedMarkdown } from '../components/chat/RenderedMarkdown'
-import { ServerSyncControl } from '../components/ui/ServerSyncControl'
 import PageHeader from '../components/layout/PageHeader'
 import AppCtaButton from '../components/ui/AppCtaButton'
 import { useAppUi } from '../context/AppUiContext'
@@ -53,7 +52,6 @@ export default function NotesPage() {
     allTags,
     notesLoading,
     notesError,
-    notesLastSyncedAt,
     clearNotesError,
     updateNote,
     deleteNote,
@@ -223,15 +221,6 @@ export default function NotesPage() {
               sobald du angemeldet bist.
             </p>
           </InfoExplainerButton>
-        )}
-        actions={(
-          <ServerSyncControl
-            variant="dark"
-            className="self-start"
-            onSync={() => void reload()}
-            syncing={notesLoading}
-            lastSyncedAt={notesLastSyncedAt}
-          />
         )}
       />
 
