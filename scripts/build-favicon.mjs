@@ -1,10 +1,12 @@
 /**
  * Dark gradient plate + centered artwork, clipped to a rounded square (professional tab icon).
  * Source: public/favicon-source.png (seeded from favicon.png on first run).
+ * Also writes favicon.ico (Google Search crawlers often request /favicon.ico).
  * Run: node scripts/build-favicon.mjs
  */
 import sharp from 'sharp'
-import { copyFileSync, existsSync } from 'fs'
+import pngToIco from 'png-to-ico'
+import { copyFileSync, existsSync, writeFileSync } from 'fs'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
 
@@ -68,6 +70,11 @@ async function main() {
     .toFile(destPath)
 
   console.log('Wrote', destPath)
+
+  const icoPath = join(publicDir, 'favicon.ico')
+  const icoBuf = await pngToIco(destPath)
+  writeFileSync(icoPath, icoBuf)
+  console.log('Wrote', icoPath)
 
   const navPath = join(publicDir, 'logo-nav.webp')
   await sharp(destPath)

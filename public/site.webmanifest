@@ -1,0 +1,19 @@
+{
+  "name": "PrivatePrep | Bewerbung mit KI",
+  "short_name": "PrivatePrep",
+  "description": "Stellenanzeige analysieren, Interview-Fragen üben, Anschreiben optimieren, mit KI in Sekunden statt Stunden. Kostenlos starten, keine Kreditkarte nötig.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "lang": "de",
+  "background_color": "#0d0800",
+  "theme_color": "#7c3aed",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

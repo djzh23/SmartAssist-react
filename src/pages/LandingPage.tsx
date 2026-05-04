@@ -306,7 +306,7 @@ function LandingNav() {
       >
         <button
           type="button"
-          aria-label="PrivatePrep — zum Seitenanfang"
+          aria-label="PrivatePrep: zum Seitenanfang"
           onClick={() => {
             window.scrollTo({ top: 0, behavior: 'smooth' })
             closeMobile()
