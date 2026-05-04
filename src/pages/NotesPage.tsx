@@ -16,7 +16,6 @@ import {
 import InfoExplainerButton from '../components/ui/InfoExplainerButton'
 import StandardPageContainer from '../components/layout/StandardPageContainer'
 import { RenderedMarkdown } from '../components/chat/RenderedMarkdown'
-import { ServerSyncControl } from '../components/ui/ServerSyncControl'
 import PageHeader from '../components/layout/PageHeader'
 import AppCtaButton from '../components/ui/AppCtaButton'
 import { useAppUi } from '../context/AppUiContext'
@@ -54,7 +53,6 @@ export default function NotesPage() {
     allTags,
     notesLoading,
     notesError,
-    notesLastSyncedAt,
     clearNotesError,
     updateNote,
     deleteNote,
@@ -219,7 +217,7 @@ export default function NotesPage() {
     <StandardPageContainer className="flex min-h-0 w-full flex-1 flex-col gap-4 overflow-hidden pt-3 pb-6 md:gap-6 md:py-8">
       <PageHeader
         pageKey="notes"
-        subtitle="Aus dem Chat gespeichert, über Geräte hinweg synchronisiert."
+        subtitle="Aus dem Chat gespeichert."
         className="mb-0"
         hideTitleOnMobile
         infoSlot={(
@@ -230,19 +228,9 @@ export default function NotesPage() {
             className="shrink-0"
           >
             <p>
-              Gespeicherte Antworten aus dem Chat - mit dem Server synchronisiert und auf allen Geräten verfügbar,
-              sobald du angemeldet bist.
+              Gespeicherte Antworten aus dem Chat, sobald du angemeldet bist.
             </p>
           </InfoExplainerButton>
-        )}
-        actions={(
-          <ServerSyncControl
-            variant="dark"
-            className="self-start"
-            onSync={() => void reload()}
-            syncing={notesLoading}
-            lastSyncedAt={notesLastSyncedAt}
-          />
         )}
       />
 

@@ -3,6 +3,7 @@ import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { SignOutButton } from '@clerk/clerk-react'
 import {
   ArrowLeft,
+  CircleOff,
   LayoutDashboard,
   Menu,
   Moon,
@@ -173,6 +174,10 @@ export default function TopNavBar({ onMenuClick, menuOpen }: Props) {
   const isChatRoute = location.pathname === '/chat'
   const isNotesRoute = location.pathname.startsWith('/notes')
   const notesDark = notesTheme === 'dark'
+  const themeToggleLabel = notesDark ? 'Light' : 'Dark'
+  const themeToggleTitle = isNotesRoute
+    ? (notesDark ? 'Light Mode aktivieren' : 'Dark Mode aktivieren')
+    : 'Theme-Schalter ist aktuell nur auf Notizen aktiv'
 
   if (bp === 'mobile') {
     return (
@@ -201,6 +206,27 @@ export default function TopNavBar({ onMenuClick, menuOpen }: Props) {
           <p className="min-w-0 flex-1 truncate text-center text-sm font-semibold tracking-wide text-white">
             {mobileTitle}
           </p>
+          <button
+            type="button"
+            onClick={() => {
+              if (!isNotesRoute) return
+              setNotesTheme(prev => prev === 'dark' ? 'light' : 'dark')
+            }}
+            disabled={!isNotesRoute}
+            className={[
+              'inline-flex h-9 min-h-[36px] items-center justify-center gap-1.5 rounded-lg border px-2 text-[11px] font-medium transition-colors',
+              isNotesRoute
+                ? 'border-white/15 bg-white/5 text-stone-100 hover:bg-white/10'
+                : 'cursor-not-allowed border-white/10 bg-white/5 text-stone-500 opacity-80',
+            ].join(' ')}
+            aria-label={themeToggleTitle}
+            title={themeToggleTitle}
+          >
+            {isNotesRoute
+              ? (notesDark ? <Sun size={13} aria-hidden /> : <Moon size={13} aria-hidden />)
+              : <CircleOff size={13} aria-hidden />}
+            {themeToggleLabel}
+          </button>
         </div>
         <UserAvatarMenu
           isMobile
@@ -271,18 +297,27 @@ export default function TopNavBar({ onMenuClick, menuOpen }: Props) {
           </span>
         )}
 
-        {isNotesRoute && (
-          <button
-            type="button"
-            onClick={() => setNotesTheme(prev => prev === 'dark' ? 'light' : 'dark')}
-            className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-2.5 text-xs font-medium text-stone-100 transition-colors hover:bg-white/10"
-            aria-label={notesDark ? 'Hellmodus aktivieren' : 'Dunkelmodus aktivieren'}
-            title={notesDark ? 'Light Mode' : 'Dark Mode'}
-          >
-            {notesDark ? <Sun size={14} aria-hidden /> : <Moon size={14} aria-hidden />}
-            {notesDark ? 'Light' : 'Dark'}
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={() => {
+            if (!isNotesRoute) return
+            setNotesTheme(prev => prev === 'dark' ? 'light' : 'dark')
+          }}
+          disabled={!isNotesRoute}
+          className={[
+            'inline-flex h-9 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium transition-colors',
+            isNotesRoute
+              ? 'border-white/15 bg-white/5 text-stone-100 hover:bg-white/10'
+              : 'cursor-not-allowed border-white/10 bg-white/5 text-stone-500 opacity-80',
+          ].join(' ')}
+          aria-label={themeToggleTitle}
+          title={themeToggleTitle}
+        >
+          {isNotesRoute
+            ? (notesDark ? <Sun size={14} aria-hidden /> : <Moon size={14} aria-hidden />)
+            : <CircleOff size={14} aria-hidden />}
+          {themeToggleLabel}
+        </button>
 
         <UserAvatarMenu
           isMobile={false}
