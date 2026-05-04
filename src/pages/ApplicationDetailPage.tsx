@@ -239,9 +239,9 @@ export default function ApplicationDetailPage() {
   if (!app) {
     return (
       <div className="min-h-0 flex-1 overflow-y-auto bg-transparent px-4 py-10">
-        <div className="mx-auto max-w-lg rounded-2xl border border-stone-400/40 bg-app-parchment/95 px-6 py-12 text-center shadow-landing">
-          <p className="text-stone-700">{error ?? 'Bewerbung nicht gefunden.'}</p>
-          <Link to="/applications" className="mt-4 inline-block text-sm font-semibold text-primary hover:underline">
+        <div className="mx-auto max-w-lg rounded-2xl bg-[#1b120d]/78 px-6 py-12 text-center ring-1 ring-white/[0.07]">
+          <p className="text-stone-400">{error ?? 'Bewerbung nicht gefunden.'}</p>
+          <Link to="/applications" className="mt-4 inline-block text-sm font-semibold text-amber-400 hover:text-amber-300">
             Zurück zu allen Bewerbungen
           </Link>
         </div>
@@ -258,33 +258,33 @@ export default function ApplicationDetailPage() {
   return (
     <div className="min-h-0 flex-1 overflow-y-auto bg-transparent">
       <StandardPageContainer className="py-6 sm:py-8">
-        <div className="mx-auto max-w-3xl rounded-2xl border border-stone-400/40 bg-app-parchment/95 p-5 shadow-landing sm:p-6">
+        <div className="mx-auto max-w-3xl">
         {!careerProfileLoading && careerProfile && getProfileCompleteness(careerProfile) < 90 && (
-          <div className="mb-5 rounded-xl border border-teal-200 bg-teal-50/90 px-4 py-3 text-sm text-teal-900">
+          <div className="mb-5 rounded-xl bg-amber-500/10 px-4 py-3 text-sm text-amber-200 ring-1 ring-amber-400/20">
             <span className="font-semibold">Profil {getProfileCompleteness(careerProfile)}%</span>
             {getProfileCompletenessGapHint(careerProfile)
               ? <> - {getProfileCompletenessGapHint(careerProfile)}</>
               : null}
             {' '}
-            <Link to="/career-profile" className="font-semibold text-primary hover:underline">
+            <Link to="/career-profile" className="font-semibold text-amber-400 hover:text-amber-300">
               Profil stärken
             </Link>
           </div>
         )}
-        <div className="mb-6 flex flex-wrap items-start justify-between gap-4 border-b border-stone-400/35 pb-6">
+        <div className="mb-6 flex flex-wrap items-start justify-between gap-4 border-b border-white/[0.07] pb-6">
           <div>
             <Link
               to="/applications"
-              className="mb-6 inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
+              className="mb-6 inline-flex items-center gap-1.5 text-sm font-semibold text-amber-400 hover:text-amber-300"
             >
               <ArrowLeft size={16} />
               Alle Bewerbungen
             </Link>
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">Bewerbung</p>
-            <h1 className="mt-1 text-2xl font-bold tracking-tight text-stone-900">{app.jobTitle}</h1>
-            <p className="mt-0.5 text-stone-700">{app.company}</p>
+            <h1 className="mt-1 text-2xl font-bold tracking-tight text-stone-100">{app.jobTitle}</h1>
+            <p className="mt-0.5 text-stone-400">{app.company}</p>
             {app.jobUrl && (
-              <a href={app.jobUrl} target="_blank" rel="noreferrer" className="mt-2 inline-block text-sm font-medium text-primary hover:underline">
+              <a href={app.jobUrl} target="_blank" rel="noreferrer" className="mt-2 inline-block text-sm font-medium text-amber-400 hover:text-amber-300">
                 Stellenanzeige öffnen
               </a>
             )}
@@ -300,7 +300,7 @@ export default function ApplicationDetailPage() {
                 aria-expanded={statusMenuOpen}
                 disabled={statusSaving}
                 onClick={() => setStatusMenuOpen(v => !v)}
-                className="inline-flex min-w-[12rem] items-center justify-between gap-2 rounded-xl border border-stone-400/45 bg-white/95 px-3 py-2 text-left text-sm font-semibold text-stone-900 shadow-card outline-none ring-primary transition hover:border-stone-400/60 hover:bg-app-parchmentDeep/50 focus-visible:ring-2 disabled:opacity-60"
+                className="inline-flex min-w-[12rem] items-center justify-between gap-2 rounded-xl bg-[#1b120d]/78 px-3 py-2 text-left text-sm font-semibold text-stone-200 outline-none ring-1 ring-white/[0.12] transition hover:bg-[#251a13]/80 hover:ring-white/20 focus-visible:ring-2 focus-visible:ring-amber-400/50 disabled:opacity-60"
               >
                 <span className="truncate">{statusLabelFor(app.status)}</span>
                 {statusSaving
@@ -311,7 +311,7 @@ export default function ApplicationDetailPage() {
                 <ul
                   role="listbox"
                   aria-labelledby="app-status-label"
-                  className="absolute right-0 z-[120] mt-1 max-h-72 min-w-[12rem] overflow-y-auto rounded-xl border border-stone-400/40 bg-app-parchment/98 py-1 shadow-landing [scrollbar-width:thin]"
+                  className="absolute right-0 z-[120] mt-1 max-h-72 min-w-[12rem] overflow-y-auto rounded-xl bg-[#1b120d] py-1 ring-1 ring-white/[0.12] [scrollbar-width:thin]"
                 >
                   {STATUS_OPTIONS.map(o => (
                     <li key={o.value} role="presentation">
@@ -320,8 +320,8 @@ export default function ApplicationDetailPage() {
                         role="option"
                         aria-selected={o.value === app.status}
                         className={[
-                          'w-full px-3 py-2.5 text-left text-sm text-stone-800 transition hover:bg-app-parchmentDeep/90',
-                          o.value === app.status ? 'bg-primary/10 font-semibold text-stone-900' : '',
+                          'w-full px-3 py-2.5 text-left text-sm text-stone-300 transition hover:bg-white/[0.08]',
+                          o.value === app.status ? 'bg-amber-500/12 font-semibold text-amber-200' : '',
                         ].join(' ')}
                         onClick={() => void pickStatus(o.value)}
                       >
@@ -334,7 +334,7 @@ export default function ApplicationDetailPage() {
             </div>
             <Link
               to={cvStudioHref}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-stone-400/45 bg-white/95 px-3 py-2 text-sm font-semibold text-stone-900 shadow-card transition hover:border-stone-400/60 hover:bg-app-parchmentDeep/50"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-white/[0.06] px-3 py-2 text-sm font-semibold text-stone-200 ring-1 ring-white/[0.12] transition hover:bg-white/[0.1] hover:ring-white/20"
             >
               <FileText size={16} aria-hidden />
               {cvStudioLabel}
@@ -352,27 +352,27 @@ export default function ApplicationDetailPage() {
         </div>
 
         {error && (
-          <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</div>
+          <div className="mb-5 rounded-xl bg-rose-500/15 px-4 py-3 text-sm text-rose-300 ring-1 ring-rose-400/20">{error}</div>
         )}
 
-        <section className="mb-6 rounded-xl border border-stone-400/40 bg-white/95 px-4 py-4 shadow-card sm:px-5 sm:py-5">
+        <section className="mb-6 rounded-xl bg-[#1b120d]/78 px-4 py-4 ring-1 ring-white/[0.07] sm:px-5 sm:py-5">
           <div className="flex items-start justify-between gap-2">
-            <h2 className="text-base font-bold text-stone-900">Fortschritt für diese Stelle</h2>
+            <h2 className="text-base font-bold text-stone-100">Fortschritt für diese Stelle</h2>
             <InfoExplainerButton
-              variant="onLight"
+              variant="onDark"
               modalTitle="Fortschritt & CV.Studio"
               ariaLabel="Erklärung zum Fortschritt, zur CV-Verknüpfung und zur Pipeline"
               className="mt-0.5"
             >
               <p>
                 Hier bearbeitest du eine einzelne Bewerbung. Der Lebenslauf liegt in CV.Studio und wird über dieselbe
-                Bewerbungs-ID verknüpft - die Pipeline auf „Meine Bewerbungen“ liest genau diese Verknüpfung aus.
+                Bewerbungs-ID verknüpft - die Pipeline auf „Meine Bewerbungen" liest genau diese Verknüpfung aus.
               </p>
               <div className="mt-4 border-t border-stone-200 pt-4">
                 <p className="font-semibold text-stone-900">Lebenslauf (CV.Studio)</p>
                 <p className="mt-1">
                   {linkedCv
-                    ? `Mit „${linkedCv.title}“ verknüpft. Zum Bearbeiten den Button „${cvStudioLabel}“ oben nutzen.`
+                    ? `Mit „${linkedCv.title}" verknüpft. Zum Bearbeiten den Button „${cvStudioLabel}" oben nutzen.`
                     : 'Noch kein CV verknüpft. Über den Button oben in CV.Studio einen Lebenslauf wählen oder anlegen - die Verknüpfung erfolgt automatisch mit dieser Bewerbung.'}
                 </p>
               </div>
@@ -381,7 +381,7 @@ export default function ApplicationDetailPage() {
                 <p className="mt-1">
                   {hasCoverLetter(app)
                     ? 'Text ist gespeichert - unten bei Bedarf weiter bearbeiten.'
-                    : 'Unten im Abschnitt „Anschreiben“ Text einfügen und speichern.'}
+                    : 'Unten im Abschnitt „Anschreiben" Text einfügen und speichern.'}
                 </p>
               </div>
               <div className="mt-4 border-t border-stone-200 pt-4">
@@ -389,57 +389,57 @@ export default function ApplicationDetailPage() {
                 <p className="mt-1">
                   Aktuell: <span className="font-medium text-stone-900">{statusLabelFor(app.status)}</span>
                   {!hasLeftDraft(app)
-                    ? ' - nach dem Bewerben Status anheben, damit die Kanban-Spalte auf „Meine Bewerbungen“ stimmt.'
+                    ? ' - nach dem Bewerben Status anheben, damit die Kanban-Spalte auf „Meine Bewerbungen" stimmt.'
                     : ' - passt zur Spalte auf der Übersichtsseite.'}
                 </p>
               </div>
             </InfoExplainerButton>
           </div>
           <ul className="mt-4 space-y-2">
-            <li className="flex gap-3 rounded-xl border border-stone-400/35 bg-white/95 px-3 py-2.5 shadow-sm">
+            <li className="flex gap-3 rounded-xl bg-[#1e1510]/80 px-3 py-2.5 ring-1 ring-white/[0.07]">
               {hasLinkedCv(app.id, cvSummaries)
-                ? <CheckCircle2 className="mt-0.5 shrink-0 text-emerald-600" size={20} strokeWidth={2.25} aria-hidden />
-                : <XCircle className="mt-0.5 shrink-0 text-rose-600" size={20} strokeWidth={2.25} aria-hidden />}
+                ? <CheckCircle2 className="mt-0.5 shrink-0 text-emerald-400" size={20} strokeWidth={2.25} aria-hidden />
+                : <XCircle className="mt-0.5 shrink-0 text-rose-400" size={20} strokeWidth={2.25} aria-hidden />}
               <div>
-                <p className="text-sm font-semibold text-stone-900">Lebenslauf (CV.Studio)</p>
-                <p className="mt-0.5 text-xs text-stone-600">
-                  {linkedCv ? `Verknüpft: „${linkedCv.title}“` : 'Nicht verknüpft'}
+                <p className="text-sm font-semibold text-stone-100">Lebenslauf (CV.Studio)</p>
+                <p className="mt-0.5 text-xs text-stone-500">
+                  {linkedCv ? `Verknüpft: „${linkedCv.title}"` : 'Nicht verknüpft'}
                 </p>
               </div>
             </li>
-            <li className="flex gap-3 rounded-xl border border-stone-400/35 bg-white/95 px-3 py-2.5 shadow-sm">
+            <li className="flex gap-3 rounded-xl bg-[#1e1510]/80 px-3 py-2.5 ring-1 ring-white/[0.07]">
               {hasCoverLetter(app)
-                ? <CheckCircle2 className="mt-0.5 shrink-0 text-emerald-600" size={20} strokeWidth={2.25} aria-hidden />
-                : <XCircle className="mt-0.5 shrink-0 text-rose-600" size={20} strokeWidth={2.25} aria-hidden />}
+                ? <CheckCircle2 className="mt-0.5 shrink-0 text-emerald-400" size={20} strokeWidth={2.25} aria-hidden />
+                : <XCircle className="mt-0.5 shrink-0 text-rose-400" size={20} strokeWidth={2.25} aria-hidden />}
               <div>
-                <p className="text-sm font-semibold text-stone-900">Anschreiben</p>
-                <p className="mt-0.5 text-xs text-stone-600">{hasCoverLetter(app) ? 'Gespeichert' : 'Noch leer'}</p>
+                <p className="text-sm font-semibold text-stone-100">Anschreiben</p>
+                <p className="mt-0.5 text-xs text-stone-500">{hasCoverLetter(app) ? 'Gespeichert' : 'Noch leer'}</p>
               </div>
             </li>
-            <li className="flex gap-3 rounded-xl border border-stone-400/35 bg-white/95 px-3 py-2.5 shadow-sm">
+            <li className="flex gap-3 rounded-xl bg-[#1e1510]/80 px-3 py-2.5 ring-1 ring-white/[0.07]">
               {hasLeftDraft(app)
-                ? <CheckCircle2 className="mt-0.5 shrink-0 text-emerald-600" size={20} strokeWidth={2.25} aria-hidden />
-                : <XCircle className="mt-0.5 shrink-0 text-rose-600" size={20} strokeWidth={2.25} aria-hidden />}
+                ? <CheckCircle2 className="mt-0.5 shrink-0 text-emerald-400" size={20} strokeWidth={2.25} aria-hidden />
+                : <XCircle className="mt-0.5 shrink-0 text-rose-400" size={20} strokeWidth={2.25} aria-hidden />}
               <div>
-                <p className="text-sm font-semibold text-stone-900">Pipeline-Status</p>
-                <p className="mt-0.5 text-xs text-stone-600">
-                  <span className="font-medium text-stone-800">{statusLabelFor(app.status)}</span>
+                <p className="text-sm font-semibold text-stone-100">Pipeline-Status</p>
+                <p className="mt-0.5 text-xs text-stone-500">
+                  <span className="font-medium text-stone-400">{statusLabelFor(app.status)}</span>
                 </p>
               </div>
             </li>
           </ul>
-          <p className="mt-4 rounded-xl border border-stone-400/30 bg-app-parchmentDeep/80 px-3 py-2.5 text-sm font-medium text-stone-800">
+          <p className="mt-4 rounded-xl bg-amber-500/10 px-3 py-2.5 text-sm font-medium text-amber-200 ring-1 ring-amber-400/15">
             {nextApplicationStep(app, cvSummaries)}
           </p>
         </section>
 
-        <section className="mb-6 rounded-xl border border-stone-400/40 bg-white/95 px-4 py-4 shadow-card sm:px-5 sm:py-5">
+        <section className="mb-6 rounded-xl bg-[#1b120d]/78 px-4 py-4 ring-1 ring-white/[0.07] sm:px-5 sm:py-5">
           <h2 className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-stone-500">Stellenanzeige</h2>
-          <p className="whitespace-pre-wrap text-sm text-stone-800">
+          <p className="whitespace-pre-wrap text-sm text-stone-400">
             {app.jobDescription?.trim() || 'Kein Stellentext hinterlegt.'}
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
-            <AppCtaButton type="button" size="sm" onClick={goAnalyze} className="shadow-md">
+            <AppCtaButton type="button" size="sm" onClick={goAnalyze}>
               Analyse starten
             </AppCtaButton>
             {app.analysisSessionId && (
@@ -450,11 +450,11 @@ export default function ApplicationDetailPage() {
           </div>
         </section>
 
-        <section className="mb-6 rounded-xl border border-stone-400/40 bg-white/95 px-4 py-4 shadow-card sm:px-5 sm:py-5">
+        <section className="mb-6 rounded-xl bg-[#1b120d]/78 px-4 py-4 ring-1 ring-white/[0.07] sm:px-5 sm:py-5">
           <div className="mb-2 flex items-center gap-1.5">
             <h2 className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">Anschreiben</h2>
             <InfoExplainerButton
-              variant="onLight"
+              variant="onDark"
               modalTitle="Anschreiben"
               ariaLabel="Hinweise zum Anschreiben und PDF-Export"
               className="translate-y-px"
@@ -469,7 +469,7 @@ export default function ApplicationDetailPage() {
             </InfoExplainerButton>
           </div>
           <textarea
-            className="min-h-[140px] w-full rounded-xl border border-stone-400/40 bg-app-parchment/40 px-3 py-2 text-sm text-stone-900 outline-none ring-primary placeholder:text-stone-500 focus:ring-2"
+            className="min-h-[140px] w-full rounded-xl bg-[#1e1510]/80 px-3 py-2 text-sm text-stone-200 outline-none ring-1 ring-white/[0.07] placeholder:text-stone-600 transition focus:ring-amber-400/35"
             value={coverLetter}
             onChange={e => setCoverLetter(e.target.value.slice(0, 5000))}
             placeholder="Text hier einfügen oder schreiben …"
@@ -480,7 +480,6 @@ export default function ApplicationDetailPage() {
               size="sm"
               onClick={() => void saveCover()}
               loading={savingCover}
-              className="shadow-md"
             >
               {savingCover ? 'Speichert…' : 'Speichern'}
             </AppCtaButton>
@@ -496,11 +495,11 @@ export default function ApplicationDetailPage() {
           </div>
         </section>
 
-        <section className="mb-6 rounded-xl border border-stone-400/40 bg-white/95 px-4 py-4 shadow-card sm:px-5 sm:py-5">
+        <section className="mb-6 rounded-xl bg-[#1b120d]/78 px-4 py-4 ring-1 ring-white/[0.07] sm:px-5 sm:py-5">
           <div className="mb-2 flex items-center gap-1.5">
             <h2 className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">CV-Anpassungen</h2>
             <InfoExplainerButton
-              variant="onLight"
+              variant="onDark"
               modalTitle="CV-Anpassungen"
               ariaLabel="Erklärung zu CV-Anpassungen"
               className="translate-y-px"
@@ -512,13 +511,13 @@ export default function ApplicationDetailPage() {
             </InfoExplainerButton>
           </div>
           {app.tailoredCvNotes?.trim()
-            ? <p className="text-sm text-stone-700">{app.tailoredCvNotes.trim()}</p>
-            : <p className="text-sm text-stone-500">Noch keine Einträge.</p>}
+            ? <p className="text-sm text-stone-400">{app.tailoredCvNotes.trim()}</p>
+            : <p className="text-sm text-stone-600">Noch keine Einträge.</p>}
         </section>
 
-        <section className="mb-6 rounded-xl border border-stone-400/40 bg-white/95 px-4 py-4 shadow-card sm:px-5 sm:py-5">
+        <section className="mb-6 rounded-xl bg-[#1b120d]/78 px-4 py-4 ring-1 ring-white/[0.07] sm:px-5 sm:py-5">
           <h2 className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-stone-500">Interview-Vorbereitung</h2>
-          <AppCtaButton type="button" size="sm" onClick={goInterview} className="shadow-md">
+          <AppCtaButton type="button" size="sm" onClick={goInterview}>
             Interview-Training starten
           </AppCtaButton>
           {app.interviewSessionId && (
@@ -527,7 +526,7 @@ export default function ApplicationDetailPage() {
           <div className="mt-4">
             <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-stone-500">Notizen</label>
             <textarea
-              className="min-h-[100px] w-full rounded-xl border border-stone-400/40 bg-app-parchment/40 px-3 py-2 text-sm text-stone-900 outline-none ring-primary focus:ring-2"
+              className="min-h-[100px] w-full rounded-xl bg-[#1e1510]/80 px-3 py-2 text-sm text-stone-200 outline-none ring-1 ring-white/[0.07] transition focus:ring-amber-400/35"
               value={interviewNotes}
               onChange={e => setInterviewNotes(e.target.value.slice(0, 3000))}
             />
@@ -544,16 +543,16 @@ export default function ApplicationDetailPage() {
           </div>
         </section>
 
-        <section className="rounded-xl border border-stone-400/40 bg-white/95 px-4 py-4 shadow-card sm:px-5 sm:py-5">
+        <section className="rounded-xl bg-[#1b120d]/78 px-4 py-4 ring-1 ring-white/[0.07] sm:px-5 sm:py-5">
           <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-stone-500">Timeline</h2>
           <ul className="space-y-3">
             {timelineSorted.map((ev, i) => (
-              <li key={`${ev.date}-${i}`} className="border-l-[3px] border-primary pl-3 text-sm">
+              <li key={`${ev.date}-${i}`} className="border-l-[3px] border-amber-500/50 pl-3 text-sm">
                 <span className="text-xs text-stone-500">
                   {new Date(ev.date).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' })}
                 </span>
-                <p className="font-semibold text-stone-900">{ev.description}</p>
-                {ev.note && <p className="text-stone-600">{ev.note}</p>}
+                <p className="font-semibold text-stone-100">{ev.description}</p>
+                {ev.note && <p className="text-stone-500">{ev.note}</p>}
               </li>
             ))}
           </ul>
