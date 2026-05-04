@@ -6,6 +6,7 @@ import DocumentHead from './components/layout/DocumentHead'
 import MainLayout from './components/layout/MainLayout'
 import LoadingScreen from './components/LoadingScreen'
 import LandingPage from './pages/LandingPage'
+import { useCareerProfile } from './hooks/useCareerProfile'
 const ChatPage = lazy(() => import('./pages/ChatPage'))
 const ProfilePage = lazy(() => import('./pages/ProfilePage'))
 const OnboardingPage = lazy(() => import('./pages/OnboardingPage'))
@@ -43,12 +44,14 @@ function ClerkProviderWithRouter({ children }: { children: React.ReactNode }) {
   )
 }
 
-// Requires authentication - redirects to landing if not signed in
+// Requires authentication - redirects to landing if not signed in, to /onboarding if not yet onboarded
 function ProtectedApp() {
   const { isSignedIn, isLoaded } = useUser()
+  const { needsOnboarding, loading: profileLoading } = useCareerProfile()
 
-  if (!isLoaded) return <LoadingScreen />
+  if (!isLoaded || profileLoading) return <LoadingScreen />
   if (!isSignedIn) return <Navigate to="/" replace />
+  if (needsOnboarding) return <Navigate to="/onboarding" replace />
   return <MainLayout />
 }
 
