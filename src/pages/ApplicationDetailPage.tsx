@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '@clerk/clerk-react'
 import { ArrowLeft, CheckCircle2, ChevronDown, Copy, FileText, Loader2, Trash2, XCircle } from 'lucide-react'
+import StandardPageContainer from '../components/layout/StandardPageContainer'
 import InfoExplainerButton from '../components/ui/InfoExplainerButton'
 import AppCtaButton from '../components/ui/AppCtaButton'
 import {
@@ -238,7 +239,7 @@ export default function ApplicationDetailPage() {
   if (!app) {
     return (
       <div className="min-h-0 flex-1 overflow-y-auto bg-transparent px-4 py-10">
-        <div className="mx-auto max-w-lg rounded-2xl border border-stone-400/40 bg-app-parchment/90 px-6 py-12 text-center shadow-landing">
+        <div className="mx-auto max-w-lg rounded-2xl border border-stone-400/40 bg-app-parchment/95 px-6 py-12 text-center shadow-landing">
           <p className="text-stone-700">{error ?? 'Bewerbung nicht gefunden.'}</p>
           <Link to="/applications" className="mt-4 inline-block text-sm font-semibold text-primary hover:underline">
             Zurück zu allen Bewerbungen
@@ -256,8 +257,8 @@ export default function ApplicationDetailPage() {
 
   return (
     <div className="min-h-0 flex-1 overflow-y-auto bg-transparent">
-      <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-8">
-        <div className="rounded-2xl border border-stone-400/40 bg-app-parchment/90 p-5 shadow-landing backdrop-blur-sm sm:p-6">
+      <StandardPageContainer className="py-6 sm:py-8">
+        <div className="mx-auto max-w-3xl rounded-2xl border border-stone-400/40 bg-app-parchment/95 p-5 shadow-landing sm:p-6">
         {!careerProfileLoading && careerProfile && getProfileCompleteness(careerProfile) < 90 && (
           <div className="mb-5 rounded-xl border border-teal-200 bg-teal-50/90 px-4 py-3 text-sm text-teal-900">
             <span className="font-semibold">Profil {getProfileCompleteness(careerProfile)}%</span>
@@ -274,12 +275,12 @@ export default function ApplicationDetailPage() {
           <div>
             <Link
               to="/applications"
-              className="mb-2 inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
+              className="mb-6 inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
             >
               <ArrowLeft size={16} />
               Alle Bewerbungen
             </Link>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-500">Bewerbung</p>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">Bewerbung</p>
             <h1 className="mt-1 text-2xl font-bold tracking-tight text-stone-900">{app.jobTitle}</h1>
             <p className="mt-0.5 text-stone-700">{app.company}</p>
             {app.jobUrl && (
@@ -354,7 +355,7 @@ export default function ApplicationDetailPage() {
           <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{error}</div>
         )}
 
-        <section className="mb-6 rounded-2xl border border-stone-400/40 bg-gradient-to-b from-app-parchment via-app-parchmentDeep/95 to-app-parchment/90 p-5 shadow-card">
+        <section className="mb-6 rounded-xl border border-stone-400/40 bg-white/95 px-4 py-4 shadow-card sm:px-5 sm:py-5">
           <div className="flex items-start justify-between gap-2">
             <h2 className="text-base font-bold text-stone-900">Fortschritt für diese Stelle</h2>
             <InfoExplainerButton
@@ -432,7 +433,7 @@ export default function ApplicationDetailPage() {
           </p>
         </section>
 
-        <section className="mb-6 rounded-xl border border-stone-400/40 bg-white/95 p-5 shadow-card">
+        <section className="mb-6 rounded-xl border border-stone-400/40 bg-white/95 px-4 py-4 shadow-card sm:px-5 sm:py-5">
           <h2 className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-stone-500">Stellenanzeige</h2>
           <p className="whitespace-pre-wrap text-sm text-stone-800">
             {app.jobDescription?.trim() || 'Kein Stellentext hinterlegt.'}
@@ -449,7 +450,7 @@ export default function ApplicationDetailPage() {
           </div>
         </section>
 
-        <section className="mb-6 rounded-xl border border-stone-400/40 bg-white/95 p-5 shadow-card">
+        <section className="mb-6 rounded-xl border border-stone-400/40 bg-white/95 px-4 py-4 shadow-card sm:px-5 sm:py-5">
           <div className="mb-2 flex items-center gap-1.5">
             <h2 className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">Anschreiben</h2>
             <InfoExplainerButton
@@ -495,7 +496,7 @@ export default function ApplicationDetailPage() {
           </div>
         </section>
 
-        <section className="mb-6 rounded-xl border border-stone-400/40 bg-white/95 p-5 shadow-card">
+        <section className="mb-6 rounded-xl border border-stone-400/40 bg-white/95 px-4 py-4 shadow-card sm:px-5 sm:py-5">
           <div className="mb-2 flex items-center gap-1.5">
             <h2 className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">CV-Anpassungen</h2>
             <InfoExplainerButton
@@ -515,7 +516,7 @@ export default function ApplicationDetailPage() {
             : <p className="text-sm text-stone-500">Noch keine Einträge.</p>}
         </section>
 
-        <section className="mb-6 rounded-xl border border-stone-400/40 bg-white/95 p-5 shadow-card">
+        <section className="mb-6 rounded-xl border border-stone-400/40 bg-white/95 px-4 py-4 shadow-card sm:px-5 sm:py-5">
           <h2 className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-stone-500">Interview-Vorbereitung</h2>
           <AppCtaButton type="button" size="sm" onClick={goInterview} className="shadow-md">
             Interview-Training starten
@@ -543,7 +544,7 @@ export default function ApplicationDetailPage() {
           </div>
         </section>
 
-        <section className="rounded-xl border border-stone-400/40 bg-white/95 p-5 shadow-card">
+        <section className="rounded-xl border border-stone-400/40 bg-white/95 px-4 py-4 shadow-card sm:px-5 sm:py-5">
           <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-stone-500">Timeline</h2>
           <ul className="space-y-3">
             {timelineSorted.map((ev, i) => (
@@ -558,7 +559,7 @@ export default function ApplicationDetailPage() {
           </ul>
         </section>
         </div>
-      </div>
+      </StandardPageContainer>
     </div>
   )
 }
