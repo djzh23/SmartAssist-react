@@ -1,11 +1,11 @@
 import { NavLink } from 'react-router-dom'
-import { Home, MessageCircle, UserCircle, LayoutGrid } from 'lucide-react'
+import { Home, MessageCircle, UserCircle, Ellipsis } from 'lucide-react'
 import { useChatSessions, TOOL_TO_QUERY } from '../../hooks/useChatSessions'
 import { useLayoutChrome } from '../../context/LayoutChromeContext'
 
 export default function BottomTabBar() {
   const store = useChatSessions()
-  const { setMoreSheetOpen, keyboardLikelyOpen } = useLayoutChrome()
+  const { setMoreSheetOpen, moreSheetOpen, keyboardLikelyOpen } = useLayoutChrome()
 
   const q = TOOL_TO_QUERY[store.currentToolType]
   const chatTo = `/chat?tool=${encodeURIComponent(q)}`
@@ -59,7 +59,14 @@ export default function BottomTabBar() {
           onClick={() => setMoreSheetOpen(true)}
           aria-label="Mehr Optionen"
         >
-          <LayoutGrid size={20} aria-hidden />
+          <Ellipsis
+            size={20}
+            aria-hidden
+            className={[
+              'transition-transform duration-200',
+              moreSheetOpen ? 'scale-110 text-primary' : '',
+            ].join(' ')}
+          />
           <span>Mehr</span>
         </button>
       </div>

@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   Menu,
   Moon,
+  Palette,
   ShieldCheck,
   Sun,
   Tag,
@@ -49,8 +50,11 @@ function UserAvatarMenu({
 }) {
   const navigate = useNavigate()
   const location = useLocation()
+  const { notesTheme, setNotesTheme } = useLayoutChrome()
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const userMenuRef = useRef<HTMLDivElement>(null)
+  const notesDark = notesTheme === 'dark'
+  const isNotesRoute = location.pathname.startsWith('/notes')
 
   useEffect(() => {
     setUserMenuOpen(false)
@@ -130,6 +134,25 @@ function UserAvatarMenu({
             <Tag size={16} className="text-stone-400" aria-hidden />
             Preise
           </button>
+          {isMobile && (
+            <button
+              type="button"
+              role="menuitem"
+              className={[
+                'flex w-full items-center gap-2 px-3 py-2 text-left text-sm',
+                isNotesRoute ? 'text-stone-200 hover:bg-white/6' : 'cursor-not-allowed text-stone-500',
+              ].join(' ')}
+              onClick={() => {
+                if (!isNotesRoute) return
+                setNotesTheme(prev => prev === 'dark' ? 'light' : 'dark')
+              }}
+              aria-label={isNotesRoute ? 'Theme für Notizen wechseln' : 'Theme-Schalter ist nur auf Notizen aktiv'}
+              title={isNotesRoute ? 'Theme für Notizen wechseln' : 'Schalter nur auf Notizen aktiv'}
+            >
+              <Palette size={16} className="text-stone-400" aria-hidden />
+              {notesDark ? 'Light Mode' : 'Dark Mode'}
+            </button>
+          )}
           {isAdmin && (
             <button
               type="button"
