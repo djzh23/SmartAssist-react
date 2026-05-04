@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '@clerk/clerk-react'
 import {
+  AlertCircle,
   AlertTriangle,
   BookText,
   BriefcaseBusiness,
@@ -60,6 +61,7 @@ import {
   ProfileAreaCard,
   ProfileCompletenessRing,
   ProfileEmptyState,
+  ProfileInsightModal,
   ProfileRecommendationCard,
   ProfileSectionNav,
   ProfileStatusCard,
@@ -68,7 +70,6 @@ import {
 } from '../components/career-profile/ProfileIntelligenceComponents'
 import {
   calculateProfileCompleteness,
-  getAIReadiness,
   getMissingProfileItems,
   getNextProfileAction,
   getProfileStatusLabel,
@@ -762,6 +763,7 @@ export default function CareerProfilePage() {
   /** Which language summary is open in the modal (null = closed) */
   const [summaryModalLang, setSummaryModalLang] = useState<'de' | 'en' | null>(null)
   const [helpOpen, setHelpOpen] = useState(false)
+  const [insightModalOpen, setInsightModalOpen] = useState(false)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [profileDeleted, setProfileDeleted] = useState(false)
@@ -1126,8 +1128,11 @@ export default function CareerProfilePage() {
   const completeness = calculateProfileCompleteness(profile)
   const profileStatusLabel = getProfileStatusLabel(completeness)
   const missingItems = getMissingProfileItems(profile)
-  const aiReadiness = getAIReadiness(profile)
   const nextAction = getNextProfileAction(profile)
+  const goalLabels = profile.goals
+    .map(id => GOALS.find(g => g.id === id)?.label)
+    .filter((l): l is string => Boolean(l))
+  const showProfileSetupBadge = profile.onboardingCompleted || canMarkProfileSetupComplete(profile)
   const sectionItems: Array<{ key: CareerSectionKey; label: string; state: 'complete' | 'attention' | 'incomplete' }> = [
     { key: 'overview', label: 'Übersicht', state: getSectionCompletion('overview', profile) },
     { key: 'basis', label: 'Basis', state: getSectionCompletion('basis', profile) },
@@ -1148,6 +1153,17 @@ export default function CareerProfilePage() {
   return (
     <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden bg-transparent">
       {helpOpen && <HelpModal open={helpOpen} onClose={() => setHelpOpen(false)} />}
+      <ProfileInsightModal
+        open={insightModalOpen}
+        onClose={() => setInsightModalOpen(false)}
+        missingItems={missingItems}
+        goalLabels={goalLabels}
+        nextAction={nextAction}
+        onGoToSection={key => {
+          setMobileSection(key)
+          if (isDesktop) setActiveSection(key)
+        }}
+      />
       {deleteConfirmOpen && (
         <DeleteConfirmModal
           onConfirm={handleDeleteProfile}
@@ -1185,17 +1201,21 @@ export default function CareerProfilePage() {
           )}
           actions={(
             <>
-              {/* PDF — compact label on mobile */}
-              <AppCtaButton
-                type="button"
-                size="sm"
-                onClick={() => window.print()}
-                className="inline-flex items-center gap-1.5"
-              >
-                <FileText size={14} aria-hidden />
-                <span className="hidden sm:inline">Profil als </span>PDF exportieren
-              </AppCtaButton>
-              {/* Delete — desktop only; on mobile it appears at the bottom of the page */}
+              <div className="flex flex-wrap items-end gap-x-3 gap-y-1.5 sm:items-center">
+                <AppCtaButton
+                  type="button"
+                  size="sm"
+                  onClick={() => window.print()}
+                  className="inline-flex items-center gap-1.5"
+                >
+                  <FileText size={14} aria-hidden />
+                  <span className="hidden sm:inline">Profil als </span>PDF exportieren
+                </AppCtaButton>
+                <div className="min-w-0 sm:text-right">
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-stone-500">Letzte Aktualisierung</p>
+                  <p className="text-xs font-medium tabular-nums text-stone-200">{formatDateTime(profile.updatedAt)}</p>
+                </div>
+              </div>
               <button
                 type="button"
                 onClick={() => setDeleteConfirmOpen(true)}
@@ -1209,21 +1229,78 @@ export default function CareerProfilePage() {
         />
 
         <ProfileStatusCard>
-          <div className="grid gap-4 lg:grid-cols-[auto_minmax(0,1.1fr)_minmax(0,1fr)_minmax(0,0.9fr)] lg:items-center">
+          {/* Mobile: kompakter Ring, Kurz-Hinweis, Info-Modal */}
+          <div className="lg:hidden">
+            <div className="flex gap-3">
+              <ProfileCompletenessRing value={completeness} compact />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-[10px] uppercase tracking-[0.16em] text-stone-400">Profilvollständigkeit</p>
+                    <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1">
+                      <span className="text-sm font-semibold text-stone-100">{profileStatusLabel}</span>
+                      {showProfileSetupBadge ? (
+                        <span className="inline-flex items-center gap-0.5 text-[11px] font-medium text-emerald-400">
+                          <CheckCircle2 size={13} className="shrink-0" aria-hidden />
+                          Profil eingerichtet
+                        </span>
+                      ) : null}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setInsightModalOpen(true)}
+                    className="shrink-0 rounded-lg p-1.5 text-amber-400/90 transition hover:bg-white/5 hover:text-amber-300"
+                    aria-label="Ziele und fehlende Angaben im Detail"
+                  >
+                    <AlertCircle size={22} strokeWidth={2} aria-hidden />
+                  </button>
+                </div>
+                {missingItems.length > 0 ? (
+                  <p className="mt-2 text-[11px] leading-snug text-stone-400">
+                    <span className="text-stone-500">Fehlt noch: </span>
+                    {missingItems.slice(0, 4).map(i => i.label).join(' · ')}
+                    {missingItems.length > 4 ? ` … +${missingItems.length - 4}` : ''}
+                  </p>
+                ) : (
+                  <p className="mt-2 text-[11px] text-emerald-400/90">Keine kritischen Lücken</p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Desktop */}
+          <div className="hidden gap-6 lg:grid lg:grid-cols-[minmax(0,auto)_minmax(0,1fr)] lg:items-start">
             <div className="flex items-center gap-4">
               <ProfileCompletenessRing value={completeness} />
               <div>
                 <p className="text-[11px] uppercase tracking-[0.16em] text-stone-400">Profilvollständigkeit</p>
-                <p className="mt-1 text-sm font-semibold text-stone-100">{profileStatusLabel}</p>
+                <div className="mt-1 flex flex-wrap items-center gap-2">
+                  <p className="text-sm font-semibold text-stone-100">{profileStatusLabel}</p>
+                  {showProfileSetupBadge ? (
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-400">
+                      <CheckCircle2 size={14} aria-hidden />
+                      Profil eingerichtet
+                    </span>
+                  ) : null}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setInsightModalOpen(true)}
+                  className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-amber-400 hover:text-amber-300"
+                >
+                  <AlertCircle size={16} aria-hidden />
+                  Details zu Zielen und Lücken
+                </button>
               </div>
             </div>
             <div>
               <p className="text-[11px] uppercase tracking-[0.16em] text-stone-400">Fehlende Angaben</p>
               {missingItems.length > 0 ? (
                 <ul className="mt-2 space-y-1 text-sm text-stone-200">
-                  {missingItems.slice(0, 3).map(item => (
+                  {missingItems.slice(0, 6).map(item => (
                     <li key={item.id} className="flex items-center gap-2">
-                      <span className="h-1.5 w-1.5 rounded-full bg-amber-300" aria-hidden />
+                      <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-300" aria-hidden />
                       {item.label}
                     </li>
                   ))}
@@ -1232,24 +1309,10 @@ export default function CareerProfilePage() {
                 <p className="mt-2 text-sm text-emerald-300">Profil vollständig</p>
               )}
             </div>
-            <div>
-              <p className="text-[11px] uppercase tracking-[0.16em] text-stone-400">KI-Bereitschaft</p>
-              <p className="mt-2 text-sm font-semibold text-stone-100">{aiReadiness.label}</p>
-              <p className="mt-1 text-xs text-stone-400">{aiReadiness.description}</p>
-            </div>
-            <div>
-              <p className="text-[11px] uppercase tracking-[0.16em] text-stone-400">Letzte Aktualisierung</p>
-              <p className="mt-2 text-sm text-stone-100">{formatDateTime(profile.updatedAt)}</p>
-            </div>
           </div>
         </ProfileStatusCard>
 
         <MobileCareerProfileOverview>
-          <ProfileRecommendationCard
-            title={nextAction.title}
-            description={nextAction.description}
-            onAction={() => setMobileSection(nextAction.section)}
-          />
           {!mobileIsDetail ? (
             <div className="rounded-2xl bg-[#1b120d]/78 p-3.5 shadow-[0_10px_28px_-18px_rgba(0,0,0,0.62)]">
               <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.16em] text-stone-400">Bereiche</p>

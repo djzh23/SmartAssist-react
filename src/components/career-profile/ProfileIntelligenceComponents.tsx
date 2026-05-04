@@ -1,8 +1,8 @@
-import { CheckCircle2, ChevronRight, Circle, Dot, Sparkles } from 'lucide-react'
+import { CheckCircle2, ChevronRight, Circle, Dot, Sparkles, X } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
 import AppCtaButton from '../ui/AppCtaButton'
-import type { CareerSectionKey } from '../../utils/careerProfileIntelligence'
+import type { CareerSectionKey, MissingItem } from '../../utils/careerProfileIntelligence'
 
 export function formatDateTime(value: string | null | undefined): string {
   if (!value) return 'Keine Daten'
@@ -11,28 +11,32 @@ export function formatDateTime(value: string | null | undefined): string {
   return date.toLocaleString('de-DE', { dateStyle: 'medium', timeStyle: 'short' })
 }
 
-export function ProfileCompletenessRing({ value }: { value: number }) {
-  const r = 34
+export function ProfileCompletenessRing({ value, compact = false }: { value: number; compact?: boolean }) {
+  const r = compact ? 26 : 34
+  const stroke = compact ? 6 : 8
   const c = 2 * Math.PI * r
   const pct = Math.max(0, Math.min(100, value))
   const offset = c - (pct / 100) * c
+  const wrap = compact ? 'relative h-20 w-20' : 'relative h-24 w-24'
+  const svgCls = compact ? 'h-20 w-20' : 'h-24 w-24'
+  const labelCls = compact ? 'text-lg font-bold text-amber-100' : 'text-xl font-bold text-amber-100'
   return (
-    <div className="relative h-24 w-24">
-      <svg viewBox="0 0 80 80" className="h-24 w-24 -rotate-90">
-        <circle cx="40" cy="40" r={r} stroke="rgba(120,113,108,0.3)" strokeWidth="8" fill="none" />
+    <div className={wrap}>
+      <svg viewBox="0 0 80 80" className={`${svgCls} -rotate-90`}>
+        <circle cx="40" cy="40" r={r} stroke="rgba(120,113,108,0.3)" strokeWidth={stroke} fill="none" />
         <circle
           cx="40"
           cy="40"
           r={r}
           stroke="rgb(245, 158, 11)"
-          strokeWidth="8"
+          strokeWidth={stroke}
           fill="none"
           strokeLinecap="round"
           strokeDasharray={c}
           strokeDashoffset={offset}
         />
       </svg>
-      <div className="absolute inset-0 flex items-center justify-center text-xl font-bold text-amber-100">{pct}%</div>
+      <div className={`absolute inset-0 flex items-center justify-center ${labelCls}`}>{pct}%</div>
     </div>
   )
 }
@@ -177,4 +181,127 @@ export function ProfileSectionNav({
 
 export function MobileCareerProfileOverview({ children }: { children: ReactNode }) {
   return <div className="space-y-4 lg:hidden">{children}</div>
+}
+
+export function ProfileInsightModal({
+  open,
+  onClose,
+  missingItems,
+  goalLabels,
+  nextAction,
+  onGoToSection,
+}: {
+  open: boolean
+  onClose: () => void
+  missingItems: MissingItem[]
+  goalLabels: string[]
+  nextAction: { title: string; description: string; section: CareerSectionKey }
+  onGoToSection?: (section: CareerSectionKey) => void
+}) {
+  if (!open) return null
+
+  return (
+    <div
+      className="fixed inset-0 z-[90] flex items-end justify-center sm:items-center"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="profile-insight-title"
+    >
+      <button
+        type="button"
+        className="absolute inset-0 bg-black/55"
+        aria-label="Schließen"
+        onClick={onClose}
+      />
+      <div className="relative z-10 flex max-h-[90vh] w-full max-w-lg flex-col rounded-t-2xl border border-white/10 bg-[#1a140f] shadow-2xl sm:mx-4 sm:rounded-2xl">
+        <div className="flex items-start justify-between gap-3 border-b border-white/10 px-4 pb-3 pt-4 sm:px-5">
+          <h2 id="profile-insight-title" className="pr-2 text-lg font-semibold text-stone-100">
+            Ziele & fehlende Angaben
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="shrink-0 rounded-lg p-2 text-stone-400 transition hover:bg-white/5 hover:text-stone-100"
+            aria-label="Schließen"
+          >
+            <X size={22} aria-hidden />
+          </button>
+        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-6 pt-3 sm:px-5">
+          <section className="mb-6">
+            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-stone-500">Karriereziele</p>
+            {goalLabels.length > 0 ? (
+              <ul className="mt-2 space-y-2">
+                {goalLabels.map(label => (
+                  <li
+                    key={label}
+                    className="flex items-start gap-2 rounded-lg bg-white/[0.04] px-3 py-2 text-sm text-stone-200 ring-1 ring-white/[0.06]"
+                  >
+                    <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-amber-400/80" aria-hidden />
+                    {label}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-2 rounded-lg bg-white/[0.04] px-3 py-2.5 text-sm text-stone-400 ring-1 ring-white/[0.06]">
+                Noch keine Ziele gewählt. Unter <strong className="text-stone-200">Basis</strong> kannst du passende Ziele festlegen.
+              </p>
+            )}
+          </section>
+
+          <section className="mb-6">
+            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-stone-500">Fehlende Angaben</p>
+            {missingItems.length > 0 ? (
+              <ul className="mt-2 space-y-2">
+                {missingItems.map(item => (
+                  <li
+                    key={item.id}
+                    className="flex items-start justify-between gap-3 rounded-lg bg-rose-950/25 px-3 py-2.5 ring-1 ring-rose-500/20"
+                  >
+                    <span className="text-sm text-stone-100">{item.label}</span>
+                    {onGoToSection ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onGoToSection(item.section)
+                          onClose()
+                        }}
+                        className="shrink-0 text-xs font-semibold text-amber-400 hover:text-amber-300"
+                      >
+                        Öffnen
+                      </button>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-2 flex items-center gap-2 text-sm text-emerald-300">
+                <CheckCircle2 size={18} className="shrink-0" aria-hidden />
+                Keine offenen Pflichtlücken — stark!
+              </p>
+            )}
+          </section>
+
+          <section className="rounded-xl bg-amber-500/10 px-3 py-3 ring-1 ring-amber-400/25">
+            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-amber-200/80">Nächster sinnvoller Schritt</p>
+            <p className="mt-1.5 text-sm font-semibold text-amber-50">{nextAction.title}</p>
+            <p className="mt-1 text-xs leading-relaxed text-amber-100/85">{nextAction.description}</p>
+            {onGoToSection ? (
+              <button
+                type="button"
+                onClick={() => {
+                  onGoToSection(nextAction.section)
+                  onClose()
+                }}
+                className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-amber-300 hover:text-amber-200"
+              >
+                Zum Bereich
+                <ChevronRight size={14} aria-hidden />
+              </button>
+            ) : null}
+          </section>
+        </div>
+      </div>
+    </div>
+  )
 }
