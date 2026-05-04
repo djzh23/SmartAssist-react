@@ -271,25 +271,23 @@ export default function ApplicationDetailPage() {
             </Link>
           </div>
         )}
-        <div className="mb-6 flex flex-wrap items-start justify-between gap-4 border-b border-white/[0.07] pb-6">
-          <div>
-            <Link
-              to="/applications"
-              className="mb-6 inline-flex items-center gap-1.5 text-sm font-semibold text-amber-400 hover:text-amber-300"
-            >
-              <ArrowLeft size={16} />
-              Alle Bewerbungen
-            </Link>
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">Bewerbung</p>
-            <h1 className="mt-1 text-2xl font-bold tracking-tight text-stone-100">{app.jobTitle}</h1>
-            <p className="mt-0.5 text-stone-400">{app.company}</p>
-            {app.jobUrl && (
-              <a href={app.jobUrl} target="_blank" rel="noreferrer" className="mt-2 inline-block text-sm font-medium text-amber-400 hover:text-amber-300">
-                Stellenanzeige öffnen
-              </a>
-            )}
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
+        <div className="mb-6 border-b border-white/[0.07] pb-6">
+          <Link
+            to="/applications"
+            className="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-amber-400 hover:text-amber-300"
+          >
+            <ArrowLeft size={16} />
+            Alle Bewerbungen
+          </Link>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-stone-500">Bewerbung</p>
+          <h1 className="mt-1 text-2xl font-bold tracking-tight text-stone-100">{app.jobTitle}</h1>
+          <p className="mt-0.5 text-stone-400">{app.company}</p>
+          {app.jobUrl && (
+            <a href={app.jobUrl} target="_blank" rel="noreferrer" className="mt-2 inline-block text-sm font-medium text-amber-400 hover:text-amber-300">
+              Stellenanzeige öffnen
+            </a>
+          )}
+          <div className="mt-4 flex flex-wrap items-center gap-2">
             <span className="sr-only" id="app-status-label">Status</span>
             <div className="relative" ref={statusMenuRef}>
               <button
@@ -311,7 +309,7 @@ export default function ApplicationDetailPage() {
                 <ul
                   role="listbox"
                   aria-labelledby="app-status-label"
-                  className="absolute right-0 z-[120] mt-1 max-h-72 min-w-[12rem] overflow-y-auto rounded-xl bg-[#1b120d] py-1 ring-1 ring-white/[0.12] [scrollbar-width:thin]"
+                  className="absolute left-0 z-[120] mt-1 max-h-72 min-w-[12rem] overflow-y-auto rounded-xl bg-[#1b120d] py-1 ring-1 ring-white/[0.12] [scrollbar-width:thin]"
                 >
                   {STATUS_OPTIONS.map(o => (
                     <li key={o.value} role="presentation">
