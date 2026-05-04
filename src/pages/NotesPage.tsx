@@ -290,7 +290,7 @@ export default function NotesPage() {
               ? 'flex min-h-0 w-full min-w-0 flex-shrink-0 flex-col border-white/10 md:w-[min(100%,320px)] md:max-h-none md:border-r md:bg-[#18120d]/85'
               : 'flex min-h-0 w-full min-w-0 flex-shrink-0 flex-col border-stone-400/35 md:w-[min(100%,320px)] md:max-h-none md:border-r md:bg-app-parchmentDeep/70',
             !isMdUp && mobileStep === 'reader' ? 'hidden' : '',
-            !isMdUp ? 'max-md:max-h-[55vh] max-md:flex-1' : '',
+            !isMdUp ? 'max-md:flex-1' : '',
           ].filter(Boolean).join(' ')}
         >
           <div className={['flex flex-shrink-0 flex-col gap-3 border-b p-3 md:p-4', isDark ? 'border-white/10' : 'border-stone-400/30'].join(' ')}>
@@ -357,7 +357,7 @@ export default function NotesPage() {
             ) : null}
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto p-2 md:p-3">
+          <div className="min-h-0 flex-1 overflow-y-auto p-2 max-md:pb-24 md:p-3">
             {notesLoading && notes.length === 0 ? (
               <div className={['flex flex-col items-center justify-center gap-2 py-12 text-sm', isDark ? 'text-stone-300' : 'text-stone-600'].join(' ')}>
                 <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden />
