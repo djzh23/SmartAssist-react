@@ -130,25 +130,23 @@ function UserAvatarMenu({
             <Tag size={16} className="text-stone-400" aria-hidden />
             Preise
           </button>
-          {isMobile && (
-            <button
-              type="button"
-              role="menuitem"
-              className={[
-                'flex w-full items-center gap-2 px-3 py-2 text-left text-sm',
-                isNotesRoute ? 'text-stone-200 hover:bg-white/6' : 'cursor-not-allowed text-stone-500',
-              ].join(' ')}
-              onClick={() => {
-                if (!isNotesRoute) return
-                setNotesTheme(prev => prev === 'dark' ? 'light' : 'dark')
-              }}
-              aria-label={isNotesRoute ? 'Theme für Notizen wechseln' : 'Theme-Schalter ist nur auf Notizen aktiv'}
-              title={isNotesRoute ? 'Theme für Notizen wechseln' : 'Schalter nur auf Notizen aktiv'}
-            >
-              <Palette size={16} className="text-stone-400" aria-hidden />
-              {notesDark ? 'Light Mode' : 'Dark Mode'}
-            </button>
-          )}
+          <button
+            type="button"
+            role="menuitem"
+            className={[
+              'flex w-full items-center gap-2 px-3 py-2 text-left text-sm',
+              isNotesRoute ? 'text-stone-200 hover:bg-white/6' : 'cursor-not-allowed text-stone-500',
+            ].join(' ')}
+            onClick={() => {
+              if (!isNotesRoute) return
+              setNotesTheme(prev => prev === 'dark' ? 'light' : 'dark')
+            }}
+            aria-label={isNotesRoute ? 'Theme für Notizen wechseln' : 'Theme-Schalter ist nur auf Notizen aktiv'}
+            title={isNotesRoute ? 'Theme für Notizen wechseln' : 'Schalter nur auf Notizen aktiv'}
+          >
+            <Palette size={16} className="text-stone-400" aria-hidden />
+            {notesDark ? 'Light Mode' : 'Dark Mode'}
+          </button>
           {isAdmin && (
             <button
               type="button"
@@ -186,9 +184,7 @@ export default function TopNavBar({ onMenuClick, menuOpen }: Props) {
   const mobileTitle = useMobileNavTitle()
   const { drawerTriggerRef } = useLayoutChrome()
   const { isAdmin } = useIsAdmin()
-  const { plan, planLabel, planColor, initials, email } = useUserPlan()
-
-  const showPlanBadge = plan === 'premium' || plan === 'pro'
+  const { planLabel, planColor, initials, email } = useUserPlan()
   const isChatRoute = location.pathname === '/chat'
 
   if (bp === 'mobile') {
@@ -276,19 +272,6 @@ export default function TopNavBar({ onMenuClick, menuOpen }: Props) {
       </nav>
 
       <div className="ml-auto flex min-w-0 flex-shrink-0 items-center justify-end gap-1.5 min-[769px]:ml-0 sm:gap-2">
-        {showPlanBadge && (
-          <span
-            className="hidden rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide sm:inline"
-            style={{
-              backgroundColor: `${planColor}22`,
-              color: planColor,
-              border: `1px solid ${planColor}44`,
-            }}
-          >
-            {planLabel}
-          </span>
-        )}
-
         <UserAvatarMenu
           isMobile={false}
           planColor={planColor}
