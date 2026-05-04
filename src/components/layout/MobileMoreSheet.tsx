@@ -47,46 +47,42 @@ export default function MobileMoreSheet() {
       <div
         className="absolute bottom-0 left-0 right-0 max-h-[88vh] origin-bottom transform rounded-t-2xl bg-sidebar pb-[env(safe-area-inset-bottom)] text-sidebar-text shadow-xl transition-transform duration-200 ease-out"
       >
-        <div className="flex items-center justify-end px-5 py-3">
-          <button
-            type="button"
-            onClick={() => setMoreSheetOpen(false)}
-            className="flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-slate-400 hover:bg-sidebar-hover hover:text-white"
-            aria-label="Schließen"
-          >
-            <X size={22} />
-          </button>
-        </div>
-        <nav className="max-h-[66vh] overflow-y-auto px-3 py-3">
+        <nav className="max-h-[72vh] overflow-y-auto px-3 pb-2 pt-1.5">
+          <div className="mb-1 flex items-center justify-end">
+            <button
+              type="button"
+              onClick={() => setMoreSheetOpen(false)}
+              className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-slate-400 hover:bg-sidebar-hover hover:text-white"
+              aria-label="Schließen"
+            >
+              <X size={20} aria-hidden />
+            </button>
+          </div>
           <section className="rounded-xl bg-black/10 p-2">
-            <p className="px-2 pb-1 text-[10px] font-bold uppercase tracking-wide text-slate-500">
-              Seiten
-            </p>
-
-          <button
-            type="button"
-            className={itemClass(location.pathname.startsWith('/applications'))}
-            onClick={() => go('/applications')}
-          >
-            <FolderOpen size={18} className="text-slate-400" aria-hidden />
-            Bewerbungen
-          </button>
-          <button
-            type="button"
-            className={itemClass(location.pathname.startsWith('/guides'))}
-            onClick={() => go('/guides')}
-          >
-            <BookOpen size={18} className="text-slate-400" aria-hidden />
-            Ratgeber
-          </button>
-          <button
-            type="button"
-            className={itemClass(location.pathname.startsWith('/notes'))}
-            onClick={() => go('/notes')}
-          >
-            <NotebookPen size={18} className="text-slate-400" aria-hidden />
-            Notizen
-          </button>
+            <button
+              type="button"
+              className={itemClass(location.pathname.startsWith('/applications'))}
+              onClick={() => go('/applications')}
+            >
+              <FolderOpen size={18} className="text-slate-400" aria-hidden />
+              Bewerbungen
+            </button>
+            <button
+              type="button"
+              className={itemClass(location.pathname.startsWith('/guides'))}
+              onClick={() => go('/guides')}
+            >
+              <BookOpen size={18} className="text-slate-400" aria-hidden />
+              Ratgeber
+            </button>
+            <button
+              type="button"
+              className={itemClass(location.pathname.startsWith('/notes'))}
+              onClick={() => go('/notes')}
+            >
+              <NotebookPen size={18} className="text-slate-400" aria-hidden />
+              Notizen
+            </button>
           </section>
         </nav>
       </div>

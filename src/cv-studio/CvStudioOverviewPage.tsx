@@ -614,9 +614,9 @@ export default function CvStudioOverviewPage() {
                     <div className="h-[2px] w-full bg-gradient-to-r from-amber-500/60 via-amber-400/25 to-transparent" />
 
                     <div className="p-4">
-                      {/* Workspace header */}
-                    <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                      <div className="flex min-w-0 items-center gap-2.5">
+                      {/* Workspace header: title + compact actions top-right */}
+                      <div className="mb-4 flex items-start justify-between gap-2">
+                        <div className="flex min-w-0 flex-1 items-center gap-2.5">
                           <span className="shrink-0 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/15 text-amber-300">
                             <FolderOpen size={15} aria-hidden />
                           </span>
@@ -632,10 +632,15 @@ export default function CvStudioOverviewPage() {
                           </div>
                         </div>
 
-                        <div className="flex w-full shrink-0 items-center justify-end gap-2 sm:w-auto">
-                          <AppCtaButton type="button" size="sm" onClick={openAddResumeToCategory}>
-                            + Lebenslauf hinzufügen
-                          </AppCtaButton>
+                        <div className="flex shrink-0 items-center gap-1.5 pt-0.5">
+                          <button
+                            type="button"
+                            onClick={openAddResumeToCategory}
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500 text-stone-950 shadow-sm transition hover:bg-amber-400 active:scale-[0.98]"
+                            aria-label="Lebenslauf hinzufügen"
+                          >
+                            <Plus size={18} strokeWidth={2.5} aria-hidden />
+                          </button>
                           {selectedCategory ? (
                             <details className="relative">
                               <summary className="inline-flex h-8 w-8 list-none cursor-pointer items-center justify-center rounded-lg border border-white/15 text-stone-200 transition hover:border-amber-400/30 hover:bg-white/5 hover:text-stone-100 [&::-webkit-details-marker]:hidden">

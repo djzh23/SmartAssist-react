@@ -28,7 +28,7 @@ export default function CvStudioResumeCard({
   return (
     <article
       onClick={onEdit}
-      className="group flex min-h-[140px] cursor-pointer flex-col rounded-xl bg-[#22170f]/80 p-3 ring-1 ring-white/[0.06] transition-all duration-150 hover:-translate-y-px hover:ring-amber-400/20 hover:shadow-[0_6px_16px_-11px_rgba(0,0,0,0.7)]"
+      className="group flex min-h-[140px] cursor-pointer flex-col rounded-xl bg-[#22170f]/80 p-3 max-sm:pe-4 ring-1 ring-white/[0.06] transition-all duration-150 hover:-translate-y-px hover:ring-amber-400/20 hover:shadow-[0_6px_16px_-11px_rgba(0,0,0,0.7)]"
     >
       {/* Header: icon + title + meta */}
       <div className="flex items-start gap-2.5">
