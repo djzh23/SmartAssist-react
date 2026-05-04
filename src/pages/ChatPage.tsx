@@ -13,6 +13,7 @@ import ContextModal, { type ContextModalToolType, type ContextPayload } from '..
 import MessageList from '../components/chat/MessageList'
 import { ThinkingIndicator, shouldSkipThinkingUi, STREAM_CHARS_PER_SECOND } from '../components/chat/ThinkingIndicator'
 import ChatAnswerReadyBanner from '../components/chat/ChatAnswerReadyBanner'
+import ChatSwitcherStrip from '../components/chat/ChatSwitcherStrip'
 import OnboardingPromptModal, { ONBOARDING_CHAT_PROMPT_DISMISS_KEY } from '../components/chat/OnboardingPromptModal'
 import UsageLimitModal from '../components/ui/UsageLimitModal'
 import { useAppUi } from '../context/AppUiContext'
@@ -1470,6 +1471,8 @@ export default function ChatPage() {
             <Plus size={16} />
           </button>
         </div>
+
+        <ChatSwitcherStrip />
 
         {checkoutBanner && (
           <div className="flex-shrink-0 px-4 pb-0 pt-3">
