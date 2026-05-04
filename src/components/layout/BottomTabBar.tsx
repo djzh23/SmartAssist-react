@@ -1,14 +1,9 @@
 import { NavLink } from 'react-router-dom'
-import { Home, MessageCircle, UserCircle, Ellipsis, FileText } from 'lucide-react'
-import { useChatSessions, TOOL_TO_QUERY } from '../../hooks/useChatSessions'
+import { Home, UserCircle, Ellipsis, FileText, FolderOpen } from 'lucide-react'
 import { useLayoutChrome } from '../../context/LayoutChromeContext'
 
 export default function BottomTabBar() {
-  const store = useChatSessions()
   const { setMoreSheetOpen, moreSheetOpen, keyboardLikelyOpen } = useLayoutChrome()
-
-  const q = TOOL_TO_QUERY[store.currentToolType]
-  const chatTo = `/chat?tool=${encodeURIComponent(q)}`
 
   const tabClass = (active: boolean) =>
     [
@@ -44,11 +39,11 @@ export default function BottomTabBar() {
           )}
         </NavLink>
 
-        <NavLink to={chatTo} className={({ isActive }) => tabClass(isActive)}>
+        <NavLink to="/applications" className={({ isActive }) => tabClass(isActive)}>
           {({ isActive }) => (
             <>
-              <MessageCircle size={20} strokeWidth={isActive ? 2.5 : 2} aria-hidden />
-              <span>Chats</span>
+              <FolderOpen size={20} strokeWidth={isActive ? 2.5 : 2} aria-hidden />
+              <span>Bewerbungen</span>
             </>
           )}
         </NavLink>
@@ -57,7 +52,7 @@ export default function BottomTabBar() {
           {({ isActive }) => (
             <>
               <FileText size={20} strokeWidth={isActive ? 2.5 : 2} aria-hidden />
-              <span>CV</span>
+              <span>CV&apos;s</span>
             </>
           )}
         </NavLink>

@@ -3,7 +3,7 @@ import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { SignOutButton } from '@clerk/clerk-react'
 import {
   ArrowLeft,
-  Menu,
+  MessageCircle,
   Palette,
   ShieldCheck,
   Tag,
@@ -206,9 +206,9 @@ export default function TopNavBar({ onMenuClick, menuOpen }: Props) {
               type="button"
               onClick={onMenuClick}
               className="flex h-11 w-11 min-h-[44px] min-w-[44px] flex-shrink-0 items-center justify-center rounded-lg text-white/90 hover:bg-sidebar-hover"
-              aria-label={menuOpen ? 'Navigation schließen' : 'Navigation öffnen'}
+              aria-label={menuOpen ? 'Chat-Navigation schließen' : 'Chat-Navigation öffnen'}
             >
-              {menuOpen ? <X size={22} /> : <Menu size={22} />}
+              {menuOpen ? <X size={22} /> : <MessageCircle size={22} strokeWidth={2} />}
             </button>
           )}
           <p className="min-w-0 flex-1 truncate text-center text-sm font-semibold tracking-wide text-white">
