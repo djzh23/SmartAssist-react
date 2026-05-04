@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { Home, MessageCircle, UserCircle, Ellipsis } from 'lucide-react'
+import { Home, MessageCircle, UserCircle, Ellipsis, FileText } from 'lucide-react'
 import { useChatSessions, TOOL_TO_QUERY } from '../../hooks/useChatSessions'
 import { useLayoutChrome } from '../../context/LayoutChromeContext'
 
@@ -49,6 +49,15 @@ export default function BottomTabBar() {
             <>
               <MessageCircle size={20} strokeWidth={isActive ? 2.5 : 2} aria-hidden />
               <span>Chats</span>
+            </>
+          )}
+        </NavLink>
+
+        <NavLink to="/cv-studio" className={({ isActive }) => tabClass(isActive)}>
+          {({ isActive }) => (
+            <>
+              <FileText size={20} strokeWidth={isActive ? 2.5 : 2} aria-hidden />
+              <span>CV</span>
             </>
           )}
         </NavLink>

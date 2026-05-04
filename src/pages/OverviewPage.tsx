@@ -167,7 +167,7 @@ export default function OverviewPage() {
               to="/applications"
               className={appCtaButtonClasses({ size: 'sm' })}
             >
-              <span className="hidden sm:inline">Zur </span>Pipeline
+              <span className="hidden sm:inline">Zu </span>Meine Bewerbungen
               <ArrowRight size={12} />
             </Link>
           )}

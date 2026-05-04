@@ -2,7 +2,6 @@ import { useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import {
   BookOpen,
-  FileText,
   FolderOpen,
   NotebookPen,
   X,
@@ -38,7 +37,7 @@ export default function MobileMoreSheet() {
   ].join(' ')
 
   return (
-    <div className="fixed inset-0 z-[100] max-[768px]:block desktop:hidden" role="dialog" aria-modal="true" aria-labelledby="mobile-more-title">
+    <div className="fixed inset-0 z-[100] max-[768px]:block desktop:hidden" role="dialog" aria-modal="true" aria-label="Mehr Navigation">
       <button
         type="button"
         className="absolute inset-0 bg-black/50"
@@ -46,12 +45,9 @@ export default function MobileMoreSheet() {
         onClick={() => setMoreSheetOpen(false)}
       />
       <div
-        className="absolute bottom-0 left-0 right-0 max-h-[88vh] origin-bottom transform rounded-t-2xl border border-white/10 bg-sidebar pb-[env(safe-area-inset-bottom)] text-sidebar-text shadow-xl transition-transform duration-200 ease-out"
+        className="absolute bottom-0 left-0 right-0 max-h-[88vh] origin-bottom transform rounded-t-2xl bg-sidebar pb-[env(safe-area-inset-bottom)] text-sidebar-text shadow-xl transition-transform duration-200 ease-out"
       >
-        <div className="flex items-center justify-between border-b border-sidebar-border px-5 py-4">
-          <h2 id="mobile-more-title" className="text-sm font-semibold text-white">
-            Mehr
-          </h2>
+        <div className="flex items-center justify-end px-5 py-3">
           <button
             type="button"
             onClick={() => setMoreSheetOpen(false)}
@@ -62,7 +58,7 @@ export default function MobileMoreSheet() {
           </button>
         </div>
         <nav className="max-h-[66vh] overflow-y-auto px-3 py-3">
-          <section className="rounded-xl border border-sidebar-border/80 bg-black/10 p-2">
+          <section className="rounded-xl bg-black/10 p-2">
             <p className="px-2 pb-1 text-[10px] font-bold uppercase tracking-wide text-slate-500">
               Seiten
             </p>
@@ -74,14 +70,6 @@ export default function MobileMoreSheet() {
           >
             <FolderOpen size={18} className="text-slate-400" aria-hidden />
             Bewerbungen
-          </button>
-          <button
-            type="button"
-            className={itemClass(location.pathname.startsWith('/cv-studio'))}
-            onClick={() => go('/cv-studio')}
-          >
-            <FileText size={18} className="text-slate-400" aria-hidden />
-            CV.Studio
           </button>
           <button
             type="button"

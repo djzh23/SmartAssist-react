@@ -3,13 +3,9 @@ import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { SignOutButton } from '@clerk/clerk-react'
 import {
   ArrowLeft,
-  CircleOff,
-  LayoutDashboard,
   Menu,
-  Moon,
   Palette,
   ShieldCheck,
-  Sun,
   Tag,
   User,
   X,
@@ -38,12 +34,14 @@ function navClass(isActive: boolean): string {
 function UserAvatarMenu({
   isMobile,
   planColor,
+  planLabel,
   initials,
   email,
   isAdmin,
 }: {
   isMobile: boolean
   planColor: string
+  planLabel: string
   initials: string
   email: string | null
   isAdmin: boolean
@@ -88,32 +86,30 @@ function UserAvatarMenu({
       </button>
       {userMenuOpen && (
         <div
-          className="absolute right-0 top-full z-[60] mt-1.5 min-w-[200px] rounded-lg border border-stone-600/50 bg-[#1f1812] py-1 shadow-landing-md"
+          className="absolute right-0 top-full z-[60] mt-1.5 min-w-[220px] rounded-lg border border-stone-600/50 bg-[#1f1812] py-1 shadow-landing-md"
           role="menu"
         >
+          <span
+            className="absolute right-2 top-2 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide"
+            style={{
+              backgroundColor: `${planColor}22`,
+              color: planColor,
+              border: `1px solid ${planColor}44`,
+            }}
+          >
+            {planLabel}
+          </span>
           <p className="truncate px-3 py-2 text-xs text-stone-400" title={email ?? undefined}>
             {email?.split('@')[0] ?? 'Account'}
           </p>
-          <button
-            type="button"
-            role="menuitem"
-            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-stone-200 hover:bg-white/6"
-            onClick={() => {
-              setUserMenuOpen(false)
-              navigate('/overview')
-            }}
-          >
-            <LayoutDashboard size={16} className="text-stone-400" aria-hidden />
-            Übersicht
-          </button>
-          <div className="my-1.5 border-t border-stone-600/40" role="presentation" />
+          <div className="my-1 border-t border-stone-600/40" role="presentation" />
           <p className="px-3 pb-1 pt-0.5 text-[10px] font-bold uppercase tracking-wide text-stone-500">
             Konto & Plan
           </p>
           <button
             type="button"
             role="menuitem"
-            className="flex w-full items-center gap-2 px-3 py-2 pl-5 text-left text-sm text-stone-200 hover:bg-white/6"
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-stone-200 hover:bg-white/6"
             onClick={() => {
               setUserMenuOpen(false)
               navigate('/profile')
@@ -189,18 +185,11 @@ export default function TopNavBar({ onMenuClick, menuOpen }: Props) {
   const bp = useBreakpoint()
   const mobileTitle = useMobileNavTitle()
   const { drawerTriggerRef } = useLayoutChrome()
-  const { notesTheme, setNotesTheme } = useLayoutChrome()
   const { isAdmin } = useIsAdmin()
   const { plan, planLabel, planColor, initials, email } = useUserPlan()
 
   const showPlanBadge = plan === 'premium' || plan === 'pro'
   const isChatRoute = location.pathname === '/chat'
-  const isNotesRoute = location.pathname.startsWith('/notes')
-  const notesDark = notesTheme === 'dark'
-  const themeToggleLabel = notesDark ? 'Light' : 'Dark'
-  const themeToggleTitle = isNotesRoute
-    ? (notesDark ? 'Light Mode aktivieren' : 'Dark Mode aktivieren')
-    : 'Theme-Schalter ist aktuell nur auf Notizen aktiv'
 
   if (bp === 'mobile') {
     return (
@@ -229,31 +218,11 @@ export default function TopNavBar({ onMenuClick, menuOpen }: Props) {
           <p className="min-w-0 flex-1 truncate text-center text-sm font-semibold tracking-wide text-white">
             {mobileTitle}
           </p>
-          <button
-            type="button"
-            onClick={() => {
-              if (!isNotesRoute) return
-              setNotesTheme(prev => prev === 'dark' ? 'light' : 'dark')
-            }}
-            disabled={!isNotesRoute}
-            className={[
-              'inline-flex h-9 min-h-[36px] items-center justify-center gap-1.5 rounded-lg border px-2 text-[11px] font-medium transition-colors',
-              isNotesRoute
-                ? 'border-white/15 bg-white/5 text-stone-100 hover:bg-white/10'
-                : 'cursor-not-allowed border-white/10 bg-white/5 text-stone-500 opacity-80',
-            ].join(' ')}
-            aria-label={themeToggleTitle}
-            title={themeToggleTitle}
-          >
-            {isNotesRoute
-              ? (notesDark ? <Sun size={13} aria-hidden /> : <Moon size={13} aria-hidden />)
-              : <CircleOff size={13} aria-hidden />}
-            {themeToggleLabel}
-          </button>
         </div>
         <UserAvatarMenu
           isMobile
           planColor={planColor}
+          planLabel={planLabel}
           initials={initials}
           email={email}
           isAdmin={isAdmin}
@@ -320,31 +289,10 @@ export default function TopNavBar({ onMenuClick, menuOpen }: Props) {
           </span>
         )}
 
-        <button
-          type="button"
-          onClick={() => {
-            if (!isNotesRoute) return
-            setNotesTheme(prev => prev === 'dark' ? 'light' : 'dark')
-          }}
-          disabled={!isNotesRoute}
-          className={[
-            'inline-flex h-9 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium transition-colors',
-            isNotesRoute
-              ? 'border-white/15 bg-white/5 text-stone-100 hover:bg-white/10'
-              : 'cursor-not-allowed border-white/10 bg-white/5 text-stone-500 opacity-80',
-          ].join(' ')}
-          aria-label={themeToggleTitle}
-          title={themeToggleTitle}
-        >
-          {isNotesRoute
-            ? (notesDark ? <Sun size={14} aria-hidden /> : <Moon size={14} aria-hidden />)
-            : <CircleOff size={14} aria-hidden />}
-          {themeToggleLabel}
-        </button>
-
         <UserAvatarMenu
           isMobile={false}
           planColor={planColor}
+          planLabel={planLabel}
           initials={initials}
           email={email}
           isAdmin={isAdmin}
