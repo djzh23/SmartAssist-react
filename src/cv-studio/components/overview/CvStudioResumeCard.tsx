@@ -48,46 +48,37 @@ export default function CvStudioResumeCard({
         </div>
       </div>
 
-      {/* Actions — pinned to bottom via mt-auto; stop propagation so card click doesn't fire onEdit */}
+      {/* Actions — one row: Kopie, PDF, Löschen; stop propagation so card click doesn't fire onEdit */}
       <div
-        className="mt-auto flex flex-col gap-2 pt-3 sm:flex-row sm:items-center sm:justify-between sm:gap-1.5"
+        className="mt-auto flex min-h-[38px] items-center gap-1.5 pt-3"
         onClick={e => e.stopPropagation()}
         onKeyDown={e => e.stopPropagation()}
       >
-        <div className="flex min-w-0 flex-wrap items-center gap-1.5 sm:flex-nowrap">
-          {/* Tier 4 — soft neutral: utility action */}
-          <button
-            type="button"
-            onClick={onDuplicate}
-            className="inline-flex min-w-0 flex-1 items-center justify-center gap-1 rounded-lg bg-white/[0.05] px-2.5 py-1.5 text-xs font-semibold text-stone-300 transition hover:bg-white/10 hover:text-stone-100 sm:flex-none sm:justify-start sm:px-3"
-          >
-            <Copy size={11} aria-hidden />
-            <span className="hidden sm:inline">Duplizieren</span>
-            <span className="sm:hidden">Kopie</span>
-          </button>
-
-          {/* Tier — amber tinted: export-specific */}
-          <button
-            type="button"
-            onClick={onExportPdf}
-            className="inline-flex min-w-0 flex-1 items-center justify-center gap-1 rounded-lg bg-amber-500/12 px-2.5 py-1.5 text-xs font-semibold text-amber-300 transition hover:bg-amber-500/22 sm:flex-none sm:justify-start sm:px-3"
-          >
-            <Download size={11} aria-hidden />
-            PDF
-          </button>
-        </div>
-
-        {/* Tier 5 — danger ghost: destructive, minimal presence */}
-        <div className="flex justify-end sm:shrink-0 sm:justify-start">
-          <button
-            type="button"
-            onClick={onDelete}
-            className="inline-flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-lg text-stone-500 transition hover:bg-rose-500/10 hover:text-rose-400"
-            aria-label="Lebenslauf löschen"
-          >
-            <Trash2 size={12} aria-hidden />
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={onDuplicate}
+          className="inline-flex min-w-0 flex-1 items-center justify-center gap-1 rounded-lg bg-white/[0.05] px-2 py-1.5 text-xs font-semibold text-stone-300 transition hover:bg-white/10 hover:text-stone-100"
+        >
+          <Copy size={11} aria-hidden />
+          <span className="hidden sm:inline">Duplizieren</span>
+          <span className="sm:hidden">Kopie</span>
+        </button>
+        <button
+          type="button"
+          onClick={onExportPdf}
+          className="inline-flex min-w-0 flex-1 items-center justify-center gap-1 rounded-lg bg-amber-500/12 px-2 py-1.5 text-xs font-semibold text-amber-300 transition hover:bg-amber-500/22"
+        >
+          <Download size={11} aria-hidden />
+          PDF
+        </button>
+        <button
+          type="button"
+          onClick={onDelete}
+          className="inline-flex h-[30px] w-[30px] shrink-0 items-center justify-center self-center rounded-lg text-stone-500 transition hover:bg-rose-500/10 hover:text-rose-400"
+          aria-label="Lebenslauf löschen"
+        >
+          <Trash2 size={12} aria-hidden />
+        </button>
       </div>
     </article>
   )

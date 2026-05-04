@@ -2,7 +2,6 @@ import { useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import {
   BookOpen,
-  FolderOpen,
   NotebookPen,
   X,
 } from 'lucide-react'
@@ -59,14 +58,6 @@ export default function MobileMoreSheet() {
             </button>
           </div>
           <section className="rounded-xl bg-black/10 p-2">
-            <button
-              type="button"
-              className={itemClass(location.pathname.startsWith('/applications'))}
-              onClick={() => go('/applications')}
-            >
-              <FolderOpen size={18} className="text-slate-400" aria-hidden />
-              Bewerbungen
-            </button>
             <button
               type="button"
               className={itemClass(location.pathname.startsWith('/guides'))}
