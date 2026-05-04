@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@clerk/clerk-react'
-import { FileText, FolderOpen, FolderPlus, Loader2, Plus } from 'lucide-react'
+import { EllipsisVertical, FileText, FolderOpen, FolderPlus, Loader2, Plus } from 'lucide-react'
 import {
   assignCvStudioCategory,
   createCvStudioResume,
@@ -24,7 +24,6 @@ import type { ResumeTemplateDto } from './cvTypes'
 import { downloadBlob, notify } from './lib/cvStudio'
 import { useCvResumeCategories } from '../hooks/useCvResumeCategories'
 import CvCreateDialog, { type CreateParams } from './components/overview/CvCreateDialog'
-import CVStudioGuidanceBar from './components/overview/CVStudioGuidanceBar'
 import CvQuotaBadge from './components/overview/CvQuotaBadge'
 import CvStudioCategoryCard from './components/overview/CvStudioCategoryCard'
 import CvStudioExportList from './components/overview/CvStudioExportList'
@@ -446,33 +445,33 @@ export default function CvStudioOverviewPage() {
         subtitle="Verwalte Kategorien und Lebensläufe an einem Ort."
         className="mb-4"
         hideTitleOnMobile
-        actions={(
-          <>
-            {/* Category create — icon-only on mobile, icon+label on sm+ */}
-            <button
-              type="button"
-              onClick={() => setShowCreateCategoryModal(true)}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 px-2.5 py-1.5 text-xs font-semibold text-stone-200 transition hover:border-amber-400/35 hover:bg-white/5 sm:px-3"
-              aria-label="Kategorie erstellen"
-            >
-              <FolderPlus size={13} aria-hidden />
-              <span className="hidden sm:inline">Kategorie erstellen</span>
-            </button>
-            {/* New resume */}
-            <AppCtaButton
-              type="button"
-              size="sm"
-              onClick={() => setShowDialog(true)}
-              className="inline-flex items-center gap-1.5"
-            >
-              <Plus size={13} aria-hidden />
-              <span className="hidden sm:inline">Neuer </span>Lebenslauf
-            </AppCtaButton>
-            <div className="hidden md:block">
-              <CvQuotaBadge used={pdfUsed} limit={pdfLimit} />
-            </div>
-          </>
-        )}
+        actions={isDesktop
+          ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setShowCreateCategoryModal(true)}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 px-2.5 py-1.5 text-xs font-semibold text-stone-200 transition hover:border-amber-400/35 hover:bg-white/5 sm:px-3"
+                  aria-label="Kategorie erstellen"
+                >
+                  <FolderPlus size={13} aria-hidden />
+                  <span className="hidden sm:inline">Kategorie erstellen</span>
+                </button>
+                <AppCtaButton
+                  type="button"
+                  size="sm"
+                  onClick={() => setShowDialog(true)}
+                  className="inline-flex items-center gap-1.5"
+                >
+                  <Plus size={13} aria-hidden />
+                  <span className="hidden sm:inline">Neuer </span>Lebenslauf
+                </AppCtaButton>
+                <div className="hidden md:block">
+                  <CvQuotaBadge used={pdfUsed} limit={pdfLimit} />
+                </div>
+              </>
+            )
+          : null}
       />
 
       {/* Mobile quota badge */}
@@ -482,8 +481,28 @@ export default function CvStudioOverviewPage() {
         </div>
       ) : null}
 
-      {/* ── Guidance Bar ───────────────────────────────────────────────────── */}
-      <CVStudioGuidanceBar onCreateResume={() => setShowDialog(true)} />
+      {!isDesktop && !loading && resumes !== null ? (
+        <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-xs text-stone-500">
+            {mobileTab === 'categories'
+              ? 'neue Kategorie'
+              : mobileTab === 'resumes'
+                ? 'bereit'
+                : 'PDF-Export'}
+          </p>
+          {mobileTab === 'categories' ? (
+            <AppCtaButton
+              type="button"
+              size="sm"
+              onClick={() => setShowCreateCategoryModal(true)}
+              className="inline-flex w-full items-center justify-center gap-1.5 sm:w-auto"
+            >
+              <FolderPlus size={13} aria-hidden />
+              neue Kategorie
+            </AppCtaButton>
+          ) : null}
+        </div>
+      ) : null}
 
       {/* ── Error banner ───────────────────────────────────────────────────── */}
       {error && (
@@ -596,8 +615,8 @@ export default function CvStudioOverviewPage() {
 
                     <div className="p-4">
                       {/* Workspace header */}
-                      <div className="mb-4 flex items-center justify-between gap-3">
-                        <div className="flex min-w-0 items-center gap-2.5">
+                    <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex min-w-0 items-center gap-2.5">
                           <span className="shrink-0 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/15 text-amber-300">
                             <FolderOpen size={15} aria-hidden />
                           </span>
@@ -613,15 +632,17 @@ export default function CvStudioOverviewPage() {
                           </div>
                         </div>
 
-                        <div className="flex shrink-0 items-center gap-2">
-                          {/* Aktionen dropdown */}
+                        <div className="flex w-full shrink-0 items-center justify-end gap-2 sm:w-auto">
+                          <AppCtaButton type="button" size="sm" onClick={openAddResumeToCategory}>
+                            + Lebenslauf hinzufügen
+                          </AppCtaButton>
                           {selectedCategory ? (
                             <details className="relative">
-                              {/* Tier 3 — ghost outlined: secondary dropdown */}
-                              <summary className="inline-flex list-none cursor-pointer items-center gap-1 rounded-lg border border-white/15 px-3 py-1.5 text-xs font-semibold text-stone-200 transition hover:border-amber-400/30 hover:bg-white/5 hover:text-stone-100 [&::-webkit-details-marker]:hidden">
-                                Aktionen
+                              <summary className="inline-flex h-8 w-8 list-none cursor-pointer items-center justify-center rounded-lg border border-white/15 text-stone-200 transition hover:border-amber-400/30 hover:bg-white/5 hover:text-stone-100 [&::-webkit-details-marker]:hidden">
+                                <EllipsisVertical size={16} aria-hidden />
+                                <span className="sr-only">Kategorie-Aktionen</span>
                               </summary>
-                              <div className="absolute right-0 z-20 mt-1 w-42 overflow-hidden rounded-xl border border-white/10 bg-[#1b1410] p-1 shadow-xl">
+                              <div className="absolute right-0 z-20 mt-1 w-44 overflow-hidden rounded-xl border border-white/10 bg-[#1b1410] p-1 shadow-xl">
                                 <button
                                   type="button"
                                   onClick={() => {
@@ -645,10 +666,6 @@ export default function CvStudioOverviewPage() {
                               </div>
                             </details>
                           ) : null}
-
-                          <AppCtaButton type="button" size="sm" onClick={openAddResumeToCategory}>
-                            + Lebenslauf hinzufügen
-                          </AppCtaButton>
                         </div>
                       </div>
 
@@ -664,7 +681,7 @@ export default function CvStudioOverviewPage() {
                           </AppCtaButton>
                         </div>
                       ) : (
-                        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
                           {selectedCategoryResumes.map(resume => (
                             <CvStudioResumeCard
                               key={resume.id}
@@ -739,19 +756,6 @@ export default function CvStudioOverviewPage() {
           ) : null}
         </>
       )}
-
-      {/* ── Mobile FAB ─────────────────────────────────────────────────────── */}
-      <div className="fixed inset-x-4 bottom-4 z-20 sm:hidden">
-        <AppCtaButton
-          type="button"
-          size="lg"
-          onClick={() => setShowDialog(true)}
-          className="w-full shadow-lg shadow-black/35"
-        >
-          <Plus size={16} aria-hidden />
-          Neuer Lebenslauf
-        </AppCtaButton>
-      </div>
 
       {/* ── Modals ─────────────────────────────────────────────────────────── */}
       {showDialog && (

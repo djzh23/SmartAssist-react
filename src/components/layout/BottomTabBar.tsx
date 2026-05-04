@@ -12,7 +12,7 @@ export default function BottomTabBar() {
 
   const tabClass = (active: boolean) =>
     [
-      'flex min-h-[44px] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-lg py-1 text-[10px] font-medium transition-transform duration-100 active:scale-95',
+      'flex min-h-[44px] min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-0.5 rounded-lg py-1 text-[10px] font-medium transition-transform duration-100 active:scale-95',
       active ? 'text-primary' : 'text-white/50',
     ].join(' ')
 
@@ -25,7 +25,7 @@ export default function BottomTabBar() {
       role="navigation"
       aria-label="Hauptnavigation"
     >
-      <div className="flex h-14 w-full items-stretch border-t border-white/10 bg-sidebar px-1 pt-0.5">
+      <div className="flex h-14 w-full items-stretch justify-evenly border-t border-white/10 bg-sidebar px-1 pt-0.5">
         <NavLink to="/overview" className={({ isActive }) => tabClass(isActive)} end>
           {({ isActive }) => (
             <>

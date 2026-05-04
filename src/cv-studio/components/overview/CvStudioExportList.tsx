@@ -60,7 +60,12 @@ export default function CvStudioExportList({ rows, onDelete, onDownload, compact
                       Design {row.design}
                     </p>
                   </div>
-                  <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                  <div
+                    className={[
+                      'flex shrink-0 items-center gap-1',
+                      compact ? 'opacity-100' : 'opacity-0 transition-opacity group-hover:opacity-100',
+                    ].join(' ')}
+                  >
                     {/* Tier 4 — soft neutral icon: download */}
                     <button
                       type="button"
