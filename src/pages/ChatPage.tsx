@@ -1530,29 +1530,20 @@ export default function ChatPage() {
         {activeContextInfo && (
           <div className="flex-shrink-0 px-3 pb-0 pt-1.5 min-[769px]:px-4 min-[769px]:pt-2">
             <div className="mx-auto max-w-3xl">
-              <div className="flex items-center justify-between gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowActiveContextInfo(prev => {
-                      const next = !prev
-                      writeActiveContextInfoVisible(next)
-                      return next
-                    })
-                  }}
-                  className="inline-flex items-center gap-1 rounded-full border border-stone-600/45 bg-app-raised/80 px-2.5 py-1 text-[10px] font-medium text-stone-300 transition-colors hover:bg-white/8"
-                >
-                  {showActiveContextInfo ? <ChevronUp size={13} aria-hidden /> : <ChevronDown size={13} aria-hidden />}
-                  {showActiveContextInfo ? 'Details ausblenden' : 'Details anzeigen'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowContextModal(true)}
-                  className="rounded-full px-2 py-1 text-[11px] font-medium text-amber-300/90 transition hover:bg-amber-500/10 hover:text-amber-200"
-                >
-                  Bearbeiten
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowActiveContextInfo(prev => {
+                    const next = !prev
+                    writeActiveContextInfoVisible(next)
+                    return next
+                  })
+                }}
+                className="inline-flex items-center gap-1 rounded-full border border-stone-600/45 bg-app-raised/80 px-2.5 py-1 text-[10px] font-medium text-stone-300 transition-colors hover:bg-white/8"
+              >
+                {showActiveContextInfo ? <ChevronUp size={13} aria-hidden /> : <ChevronDown size={13} aria-hidden />}
+                {showActiveContextInfo ? 'Stellendetails ausblenden' : 'Stellendetails anzeigen'}
+              </button>
               {showActiveContextInfo && (
                 <div className="mt-1.5 rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-1.5 text-xs font-medium text-amber-100">
                   {activeContextInfo}

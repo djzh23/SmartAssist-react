@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Send, Loader2 } from 'lucide-react'
 import type { ToolType } from '../../types'
+import { useLayoutChrome } from '../../context/LayoutChromeContext'
 
 const PLACEHOLDERS: Record<ToolType, string> = {
   general: 'Nachricht schreiben…',
@@ -22,6 +23,10 @@ export default function ChatInput({ toolType, isLoading, noActiveSession = false
   const [text, setText] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const near = text.length > 3500
+  const { keyboardLikelyOpen } = useLayoutChrome()
+  const mobileBottom = keyboardLikelyOpen
+    ? '0px'
+    : 'calc(56px + env(safe-area-inset-bottom))'
 
   useEffect(() => {
     const el = textareaRef.current
@@ -43,7 +48,10 @@ export default function ChatInput({ toolType, isLoading, noActiveSession = false
   }
 
   return (
-    <div className="z-20 flex-shrink-0 border-t border-stone-700/40 bg-app-muted/94 px-2.5 pb-0 pt-1.5 backdrop-blur-sm max-[768px]:fixed max-[768px]:bottom-[calc(56px+env(safe-area-inset-bottom))] max-[768px]:left-0 max-[768px]:right-0 min-[391px]:px-3 min-[391px]:pt-2 min-[769px]:sticky min-[769px]:bottom-0 min-[769px]:px-4 min-[769px]:py-3">
+    <div
+      className="z-20 flex-shrink-0 border-t border-stone-700/40 bg-app-muted/94 px-2.5 pb-0 pt-1.5 backdrop-blur-sm max-[768px]:fixed max-[768px]:bottom-[var(--chat-input-mobile-bottom)] max-[768px]:left-0 max-[768px]:right-0 min-[391px]:px-3 min-[391px]:pt-2 min-[769px]:sticky min-[769px]:bottom-0 min-[769px]:px-4 min-[769px]:py-3"
+      style={{ ['--chat-input-mobile-bottom' as string]: mobileBottom }}
+    >
       <div className="mx-auto max-w-3xl">
         <div
           className={[
