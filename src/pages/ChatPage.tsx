@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
-import { AlertCircle, Briefcase, ChevronDown, ChevronUp, CheckCircle2, Code2, Globe2, MessageCircle, RefreshCw, Target, X, type LucideIcon } from 'lucide-react'
+import { AlertCircle, ChevronDown, ChevronUp, CheckCircle2, MessageCircle, RefreshCw, X } from 'lucide-react'
 import type { CareerToolSetup, ToolType } from '../types'
 import { PROGRAMMING_LANGUAGES } from '../types'
 import { UsageLimitError, askAgentStream, linkJobApplicationSession } from '../api/client'
@@ -875,15 +875,6 @@ export default function ChatPage() {
     mobileSessionLabel.trim().toLowerCase() === 'neues gespräch'
       ? ''
       : mobileSessionLabel
-  const MOBILE_TOOL_ICON: Record<string, LucideIcon> = {
-    general: MessageCircle,
-    jobanalyzer: Briefcase,
-    language: Globe2,
-    programming: Code2,
-    interview: Target,
-  }
-  const MobileToolIcon: LucideIcon = MOBILE_TOOL_ICON[store.currentToolType] ?? MessageCircle
-
   const activeContextTool = asContextTool(store.currentToolType)
   const activeContextKey = activeContextTool && store.activeSessionId
     ? contextKey(activeContextTool, store.activeSessionId)
@@ -1463,7 +1454,6 @@ export default function ChatPage() {
             className="flex min-w-0 flex-1 items-center gap-1.5 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-white/5 active:bg-white/10"
             aria-label="Gespräche öffnen"
           >
-            <MobileToolIcon size={13} className="shrink-0 text-stone-500" />
             {mobileSessionDisplayLabel ? (
               <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-stone-300">
                 {mobileSessionDisplayLabel}
@@ -1708,7 +1698,10 @@ export default function ChatPage() {
                 ) : null}
 
                 {store.currentToolType !== 'language' && store.currentToolType !== 'general' && (
-                  <div className="rounded-lg border border-white/10 bg-app-muted/50 px-2 py-2">
+                  <div className="px-0.5 py-1">
+                    <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-stone-400">
+                      Profil-Kontext
+                    </p>
                     <ChatContextBar
                       compact
                       careerProfile={careerProfile}
