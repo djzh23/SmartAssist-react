@@ -8,9 +8,12 @@ const LS_CONTEXT_BAR_EXPANDED = 'privateprep_chat_context_bar_expanded'
 
 function readStoredExpanded(): boolean {
   try {
-    return localStorage.getItem(LS_CONTEXT_BAR_EXPANDED) === '1'
+    const stored = localStorage.getItem(LS_CONTEXT_BAR_EXPANDED)
+    // Default to visible so badges are discoverable on mobile.
+    if (stored == null) return true
+    return stored === '1'
   } catch {
-    return false
+    return true
   }
 }
 
@@ -78,7 +81,7 @@ export default function ChatContextBar({
           ) : (
             <>
               <ChevronDown className="h-3.5 w-3.5 text-stone-500" aria-hidden />
-              Kontext
+              Kontext anzeigen
             </>
           )}
         </button>
