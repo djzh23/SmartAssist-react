@@ -871,6 +871,10 @@ export default function ChatPage() {
   const mobileSessionLabel = mobileActiveSession
     ? sessionListLabel(mobileActiveSession, 28)
     : 'Gespräch wählen'
+  const mobileSessionDisplayLabel =
+    mobileSessionLabel.trim().toLowerCase() === 'neues gespräch'
+      ? ''
+      : mobileSessionLabel
   const MOBILE_TOOL_ICON: Record<string, LucideIcon> = {
     general: MessageCircle,
     jobanalyzer: Briefcase,
@@ -1325,11 +1329,6 @@ export default function ChatPage() {
   } as const
 
   const activeContextInfo = activeContextTool ? contextInfo[activeContextTool] : null
-  const showProfileContextBar =
-    isSignedIn
-    && !careerProfileLoading
-    && store.currentToolType !== 'language'
-    && store.currentToolType !== 'general'
   const activeModalInitialData = useMemo(() => {
     const profileCvRaw = careerProfile?.cvRawText?.trim()
     const profileCv = profileCvRaw
@@ -1465,9 +1464,13 @@ export default function ChatPage() {
             aria-label="Gespräche öffnen"
           >
             <MobileToolIcon size={13} className="shrink-0 text-stone-500" />
-            <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-stone-300">
-              {mobileSessionLabel}
-            </span>
+            {mobileSessionDisplayLabel ? (
+              <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-stone-300">
+                {mobileSessionDisplayLabel}
+              </span>
+            ) : (
+              <span className="min-w-0 flex-1" aria-hidden />
+            )}
             {isInterview && (
               <span className="shrink-0 rounded bg-sky-900/70 px-1.5 py-0.5 text-[9px] font-bold uppercase text-sky-300">Intv</span>
             )}
@@ -1704,7 +1707,7 @@ export default function ChatPage() {
                   </button>
                 ) : null}
 
-                {showProfileContextBar && (
+                {store.currentToolType !== 'language' && store.currentToolType !== 'general' && (
                   <div className="rounded-lg border border-white/10 bg-app-muted/50 px-2 py-2">
                     <ChatContextBar
                       compact
