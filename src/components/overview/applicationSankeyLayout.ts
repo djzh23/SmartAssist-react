@@ -58,14 +58,17 @@ export function curvePath(x0: number, y0: number, x1: number, y1: number): strin
   return `M ${x0} ${y0} C ${cp} ${y0}, ${cp} ${y1}, ${x1} ${y1}`
 }
 
-const NODE_H = 24
-const NODE_GAP = 9
-const GROUP_GAP = 28
-
-function strokeW(v: number, maxV: number): number {
-  if (maxV <= 0 || v <= 0) return 1.5
+function strokeW(v: number, maxV: number, maxStroke = 9): number {
+  if (maxV <= 0 || v <= 0) return 1.2
   const t = Math.sqrt(v / maxV)
-  return Math.max(1.5, Math.min(9, 1.8 + t * 7.2))
+  return Math.max(1.2, Math.min(maxStroke, 1.4 + t * (maxStroke - 1.4)))
+}
+
+function bandOpacity(v: number, total: number, muted: boolean): number {
+  if (muted) return 0.08
+  if (total <= 0 || v <= 0) return 0.1
+  const pct = v / total
+  return Math.max(0.16, Math.min(0.68, 0.18 + Math.sqrt(pct) * 0.52))
 }
 
 const BASE_FILL = 'rgb(238, 233, 226)'
@@ -86,42 +89,48 @@ export function buildApplicationSankeyLayout(
   const bands: SankeyBand[] = []
   const { total, activeInPipeline, inArchive, pipeline, archive } = overview
 
-  const PAD_L = 14
-  const PAD_R = 14
-  const PAD_T = 22
-  const PAD_B = 28
+  const isMobile = width < 560
+  const isCompactMobile = width <= 360
+  const isWideMobile = width >= 390 && width < 560
+  const PAD_L = isCompactMobile ? 8 : isMobile ? 10 : 14
+  const PAD_R = isCompactMobile ? 8 : isMobile ? 10 : 14
+  const PAD_T = isCompactMobile ? 14 : isMobile ? 16 : 22
+  const PAD_B = isCompactMobile ? 20 : isMobile ? 22 : 28
   const innerW = width - PAD_L - PAD_R
   const innerH = height - PAD_T - PAD_B
 
   if (total <= 0) return { rects, bands }
 
   // ── Column geometry ─────────────────────────────────────────────────────────
-  const w0 = Math.min(108, innerW * 0.17)
-  const w1 = Math.min(124, innerW * 0.19)
-  const gap01 = Math.max(22, innerW * 0.045)
-  const gap12 = Math.max(26, innerW * 0.05)
+  const w0 = isMobile ? Math.max(isCompactMobile ? 48 : 50, Math.min(isWideMobile ? 86 : 82, innerW * 0.17)) : Math.min(108, innerW * 0.17)
+  const w1 = isMobile ? Math.max(isCompactMobile ? 54 : 56, Math.min(isWideMobile ? 96 : 92, innerW * 0.19)) : Math.min(124, innerW * 0.19)
+  const gap01 = isMobile ? Math.max(isCompactMobile ? 8 : 10, innerW * (isCompactMobile ? 0.018 : 0.02)) : Math.max(22, innerW * 0.045)
+  const gap12 = isMobile ? Math.max(isCompactMobile ? 10 : 12, innerW * (isCompactMobile ? 0.024 : 0.028)) : Math.max(26, innerW * 0.05)
   const x0 = PAD_L
   const x1 = x0 + w0 + gap01
   const x2 = x1 + w1 + gap12
-  const w2 = Math.max(110, width - PAD_R - x2)
+  const w2 = Math.max(isMobile ? (isWideMobile ? 128 : 120) : 110, width - PAD_R - x2)
+  const nodeH = isCompactMobile ? 20 : isMobile ? 22 : 24
+  const nodeGap = isCompactMobile ? 6 : isMobile ? 7 : 9
+  const groupGap = isCompactMobile ? 18 : isMobile ? 20 : 28
 
   // ── Right column: fixed-height nodes ────────────────────────────────────────
-  const pipelineH = pipeline.length * NODE_H + Math.max(0, pipeline.length - 1) * NODE_GAP
-  const archiveH = archive.length * NODE_H + Math.max(0, archive.length - 1) * NODE_GAP
-  const totalRightH = pipelineH + GROUP_GAP + archiveH
+  const pipelineH = pipeline.length * nodeH + Math.max(0, pipeline.length - 1) * nodeGap
+  const archiveH = archive.length * nodeH + Math.max(0, archive.length - 1) * nodeGap
+  const totalRightH = pipelineH + groupGap + archiveH
   const yRightStart = PAD_T + Math.max(0, (innerH - totalRightH) / 2)
   const yPipeStart = yRightStart
-  const yArchStart = yRightStart + pipelineH + GROUP_GAP
+  const yArchStart = yRightStart + pipelineH + groupGap
 
   // Group centers (used for fan link origins)
   const pipeCenterY = yPipeStart + pipelineH / 2
   const archCenterY = yArchStart + archiveH / 2
 
   // ── Group boxes (col 1) ──────────────────────────────────────────────────────
-  const hPipeBox = Math.max(48, pipelineH * 0.72)
+  const hPipeBox = Math.max(isCompactMobile ? 40 : isMobile ? 44 : 48, pipelineH * 0.72)
   const yPipeBox = pipeCenterY - hPipeBox / 2
 
-  const hArchBox = Math.max(36, archiveH * 0.72)
+  const hArchBox = Math.max(isCompactMobile ? 30 : isMobile ? 32 : 36, archiveH * 0.72)
   const yArchBox = archCenterY - hArchBox / 2
 
   rects.push({
@@ -156,7 +165,7 @@ export function buildApplicationSankeyLayout(
 
   // ── "All" box (col 0) — centered between both group centers ─────────────────
   const allCenterY = (pipeCenterY + archCenterY) / 2
-  const hAllBox = Math.min(innerH * 0.72, Math.max(72, totalRightH * 0.68))
+  const hAllBox = Math.min(innerH * 0.72, Math.max(isCompactMobile ? 56 : isMobile ? 62 : 72, totalRightH * 0.68))
   const yAllBox = Math.max(PAD_T, allCenterY - hAllBox / 2)
 
   rects.push({
@@ -178,6 +187,7 @@ export function buildApplicationSankeyLayout(
   const yExitPipe = yAllBox + hAllBox * 0.36
   const yExitArch = yAllBox + hAllBox * 0.66
   const maxV = Math.max(total, 1)
+  const maxStroke = isCompactMobile ? 6.1 : isMobile ? 6.8 : 9
 
   bands.push({
     id: 'band-all-pipe',
@@ -192,8 +202,8 @@ export function buildApplicationSankeyLayout(
     x1: x1,
     y1: pipeCenterY,
     stroke: '#0d9488',
-    strokeWidth: strokeW(activeInPipeline, maxV),
-    opacity: activeInPipeline > 0 ? 0.55 : 0.1,
+    strokeWidth: strokeW(activeInPipeline, maxV, maxStroke),
+    opacity: bandOpacity(activeInPipeline, total, activeInPipeline === 0),
     muted: activeInPipeline === 0,
   })
 
@@ -210,8 +220,8 @@ export function buildApplicationSankeyLayout(
     x1: x1,
     y1: archCenterY,
     stroke: '#94a3b8',
-    strokeWidth: strokeW(inArchive, maxV),
-    opacity: inArchive > 0 ? 0.52 : 0.1,
+    strokeWidth: strokeW(inArchive, maxV, maxStroke),
+    opacity: bandOpacity(inArchive, total, inArchive === 0),
     muted: inArchive === 0,
   })
 
@@ -220,8 +230,8 @@ export function buildApplicationSankeyLayout(
 
   for (let i = 0; i < pipeline.length; i++) {
     const p = pipeline[i]
-    const yTop = yPipeStart + i * (NODE_H + NODE_GAP)
-    const nodeCenterY = yTop + NODE_H / 2
+    const yTop = yPipeStart + i * (nodeH + nodeGap)
+    const nodeCenterY = yTop + nodeH / 2
     const muted = p.count === 0
     const accentColor = SANKEY_PIPELINE_FILL[p.status] ?? '#94a3b8'
 
@@ -235,7 +245,7 @@ export function buildApplicationSankeyLayout(
       x: x2,
       y: yTop,
       w: w2,
-      h: NODE_H,
+      h: nodeH,
       fill: muted ? MUTED_FILL : BASE_FILL,
       stroke: muted ? MUTED_STROKE : accentColor,
       muted,
@@ -254,8 +264,8 @@ export function buildApplicationSankeyLayout(
       x1: x2,
       y1: nodeCenterY,
       stroke: accentColor,
-      strokeWidth: strokeW(p.count, maxV),
-      opacity: muted ? 0.1 : 0.55,
+      strokeWidth: strokeW(p.count, maxV, maxStroke),
+      opacity: bandOpacity(p.count, total, muted),
       muted,
     })
   }
@@ -265,8 +275,8 @@ export function buildApplicationSankeyLayout(
 
   for (let i = 0; i < archive.length; i++) {
     const p = archive[i]
-    const yTop = yArchStart + i * (NODE_H + NODE_GAP)
-    const nodeCenterY = yTop + NODE_H / 2
+    const yTop = yArchStart + i * (nodeH + nodeGap)
+    const nodeCenterY = yTop + nodeH / 2
     const muted = p.count === 0
     const accentColor = SANKEY_PIPELINE_FILL[p.status] ?? '#94a3b8'
 
@@ -280,7 +290,7 @@ export function buildApplicationSankeyLayout(
       x: x2,
       y: yTop,
       w: w2,
-      h: NODE_H,
+      h: nodeH,
       fill: muted ? MUTED_FILL : BASE_FILL,
       stroke: muted ? MUTED_STROKE : accentColor,
       muted,
@@ -299,8 +309,8 @@ export function buildApplicationSankeyLayout(
       x1: x2,
       y1: nodeCenterY,
       stroke: accentColor,
-      strokeWidth: strokeW(p.count, maxV),
-      opacity: muted ? 0.1 : 0.52,
+      strokeWidth: strokeW(p.count, maxV, maxStroke),
+      opacity: bandOpacity(p.count, total, muted),
       muted,
     })
   }

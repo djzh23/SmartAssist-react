@@ -11,6 +11,16 @@ const DEFAULT_W = 720
 const BOX_BG = 'rgb(238, 233, 226)'
 
 // ── Node renderer ─────────────────────────────────────────────────────────────
+function withAlpha(hex: string, alpha: number): string {
+  const h = hex.replace('#', '')
+  if (h.length !== 6) return hex
+  const n = Number.parseInt(h, 16)
+  if (Number.isNaN(n)) return hex
+  const r = (n >> 16) & 255
+  const g = (n >> 8) & 255
+  const b = n & 255
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
 
 function nodeAccentColor(rect: SankeyRect): string {
   if (rect.status) return SANKEY_PIPELINE_FILL[rect.status] ?? '#94a3b8'
@@ -19,24 +29,44 @@ function nodeAccentColor(rect: SankeyRect): string {
   return '#7c3aed'
 }
 
+function compactNodeLabel(rect: SankeyRect): string {
+  if (rect.id === 'all') return 'Alle'
+  if (rect.id === 'pipe') return 'Aktiv'
+  if (rect.id === 'arch') return 'Archiv'
+  if (rect.status === 'phoneScreen') return 'Gespräch'
+  if (rect.status === 'assessment') return 'Test'
+  if (rect.status === 'withdrawn') return 'Zurück'
+  return rect.label
+}
+
 function NodeRect({
   rect,
+  viewportWidth,
   isHovered,
   onEnter,
   onLeave,
 }: {
   rect: SankeyRect
+  viewportWidth: number
   isHovered: boolean
   onEnter: (r: SankeyRect, e: React.MouseEvent) => void
   onLeave: () => void
 }) {
+  const isMobile = viewportWidth <= 768
+  const isCompact = viewportWidth <= 360
+  const isWideMobile = viewportWidth >= 390 && viewportWidth < 768
   const accent = nodeAccentColor(rect)
   const isMuted = Boolean(rect.muted)
   const isLeaf = Boolean(rect.status)
-  const rx = isLeaf ? 4 : 7
+  const rx = isLeaf ? (isCompact ? 4 : isMobile ? 5 : 6) : (isCompact ? 7 : isMobile ? 8 : 10)
+  const textColor = isMuted
+    ? '#94a3b8'
+    : isLeaf
+      ? '#1f2937'
+      : '#ffffff'
 
-  // Group / "All" boxes get a left accent bar
-  const accentBarW = isLeaf ? 0 : 3
+  // Mobile compact labels only affect rendered text, not underlying data.
+  const displayLabel = isMobile ? compactNodeLabel(rect) : rect.label
 
   return (
     <g
@@ -51,8 +81,9 @@ function NodeRect({
         width={rect.w}
         height={rect.h}
         rx={rx}
-        fill={isMuted ? 'rgb(245,243,240)' : BOX_BG}
-        stroke="none"
+        fill={isMuted ? 'rgb(245,243,240)' : isLeaf ? withAlpha(accent, 0.12) : withAlpha(accent, 0.72)}
+        stroke={isMuted ? 'rgba(148,163,184,0.24)' : withAlpha(accent, isLeaf ? 0.28 : 0.55)}
+        strokeWidth={isLeaf ? 0.8 : 1}
         style={{
           transition: 'filter 160ms ease, opacity 160ms ease',
           filter: isHovered
@@ -62,47 +93,33 @@ function NodeRect({
         }}
       />
 
-      {/* Left accent bar (group/all nodes only) */}
-      {accentBarW > 0 && !isMuted && (
-        <rect
-          x={rect.x}
-          y={rect.y + rx}
-          width={accentBarW}
-          height={rect.h - rx * 2}
-          rx={1}
-          fill={accent}
-          fillOpacity={isHovered ? 0.8 : 0.55}
-          style={{ transition: 'fill-opacity 150ms ease' }}
-        />
-      )}
-
       {/* Label */}
       {isLeaf ? (
         // Status node: colored dot + label + count inline
         <>
           <circle
-            cx={rect.x + 8}
+            cx={rect.x + (isCompact ? 6 : isMobile ? 7 : 8)}
             cy={rect.y + rect.h / 2}
-            r={3.5}
+            r={isCompact ? 2.6 : isMobile ? 3 : 3.5}
             fill={isMuted ? '#cbd5e1' : accent}
             fillOpacity={isMuted ? 0.5 : 1}
           />
           <text
-            x={rect.x + 16}
+            x={rect.x + (isCompact ? 11 : isMobile ? 13 : 16)}
             y={rect.y + rect.h / 2}
             dominantBaseline="middle"
-            fill={isMuted ? '#94a3b8' : '#292524'}
-            style={{ fontSize: 11, fontWeight: isMuted ? 400 : 500 }}
+            fill={textColor}
+            style={{ fontSize: isCompact ? 9 : isWideMobile ? 10.5 : isMobile ? 10 : 11, fontWeight: isMuted ? 400 : 500 }}
           >
-            {rect.label}
+            {displayLabel}
           </text>
           <text
-            x={rect.x + rect.w - 6}
+            x={rect.x + rect.w - (isCompact ? 4 : isMobile ? 5 : 6)}
             y={rect.y + rect.h / 2}
             dominantBaseline="middle"
             textAnchor="end"
-            fill={isMuted ? '#cbd5e1' : accent}
-            style={{ fontSize: 11, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}
+            fill={isMuted ? '#cbd5e1' : withAlpha(accent, 0.96)}
+            style={{ fontSize: isCompact ? 9 : isWideMobile ? 10.5 : isMobile ? 10 : 11, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}
           >
             {rect.count}
           </text>
@@ -111,22 +128,22 @@ function NodeRect({
         // Group / "All" box: stacked label + count
         <>
           <text
-            x={rect.x + (accentBarW > 0 ? accentBarW + 8 : rect.w / 2)}
-            y={rect.y + rect.h / 2 - 7}
-            textAnchor={accentBarW > 0 ? 'start' : 'middle'}
+            x={rect.x + rect.w / 2}
+            y={rect.y + rect.h / 2 - (isCompact ? 6 : 7)}
+            textAnchor="middle"
             dominantBaseline="middle"
-            fill={isMuted ? '#94a3b8' : '#44403c'}
-            style={{ fontSize: 10, fontWeight: 500, letterSpacing: '0.01em' }}
+            fill={textColor}
+            style={{ fontSize: isCompact ? 9 : isMobile ? 10 : 11, fontWeight: 600, letterSpacing: '0.01em' }}
           >
-            {rect.label}
+            {displayLabel}
           </text>
           <text
-            x={rect.x + (accentBarW > 0 ? accentBarW + 8 : rect.w / 2)}
-            y={rect.y + rect.h / 2 + 7}
-            textAnchor={accentBarW > 0 ? 'start' : 'middle'}
+            x={rect.x + rect.w / 2}
+            y={rect.y + rect.h / 2 + (isCompact ? 6 : 7)}
+            textAnchor="middle"
             dominantBaseline="middle"
-            fill={isMuted ? '#cbd5e1' : accent}
-            style={{ fontSize: 14, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}
+            fill={isMuted ? '#cbd5e1' : '#ffffff'}
+            style={{ fontSize: isCompact ? 13 : isMobile ? 14 : 15, fontWeight: 800, fontVariantNumeric: 'tabular-nums' }}
           >
             {rect.sub ?? rect.count}
           </text>
@@ -224,8 +241,15 @@ export default function ApplicationFlowSankey({ overview }: Props) {
   const [w, setW] = useState(DEFAULT_W)
   const [tooltip, setTooltip] = useState<TooltipInfo | null>(null)
   const [activeBandId, setActiveBandId] = useState<string | null>(null)
+  const isMobile = w <= 768
+  const isCompactMobile = w <= 360
+  const isWideMobile = w >= 390 && w < 768
 
   const viewH = useMemo(() => {
+    if (w <= 360) return 470
+    if (w <= 375) return 485
+    if (w <= 414) return 500
+    if (w <= 520) return 520
     if (w >= 1040) return 620
     if (w >= 860) return 560
     if (w >= 700) return 520
@@ -288,8 +312,14 @@ export default function ApplicationFlowSankey({ overview }: Props) {
   return (
     <div
       ref={wrapRef}
-      className="relative h-full min-h-[460px] w-full overflow-x-auto rounded-2xl bg-white/70 px-3 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.55),0_0_0_1px_rgba(245,158,11,0.18),0_16px_30px_-20px_rgba(15,23,42,0.6)] md:min-h-[520px] xl:min-h-[560px] xl:px-4 xl:py-4"
-      style={{ backgroundColor: BOX_BG }}
+      className="relative h-full min-h-[460px] w-full overflow-hidden rounded-2xl bg-white/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.55),0_0_0_1px_rgba(245,158,11,0.18),0_16px_30px_-20px_rgba(15,23,42,0.6)] md:min-h-[520px] md:px-3 md:py-3 xl:min-h-[560px] xl:px-4 xl:py-4"
+      style={{
+        backgroundColor: BOX_BG,
+        paddingLeft: isCompactMobile ? 6 : isMobile ? 8 : 12,
+        paddingRight: isCompactMobile ? 6 : isMobile ? 8 : 12,
+        paddingTop: isCompactMobile ? 6 : isMobile ? 8 : 12,
+        paddingBottom: isCompactMobile ? 6 : isMobile ? 8 : 12,
+      }}
     >
       <svg
         viewBox={`0 0 ${w} ${viewH}`}
@@ -316,6 +346,7 @@ export default function ApplicationFlowSankey({ overview }: Props) {
           <NodeRect
             key={r.id}
             rect={r}
+            viewportWidth={w}
             isHovered={tooltip?.isNode === true && tooltip.title === r.label}
             onEnter={handleNodeEnter}
             onLeave={handleLeave}
@@ -325,7 +356,7 @@ export default function ApplicationFlowSankey({ overview }: Props) {
 
       {tooltip && <SankeyTooltip info={tooltip} />}
 
-      <p className="px-1 pb-0.5 pt-2 text-center text-[10px] text-stone-500">
+      <p className="px-1 pb-0.5 text-center text-stone-500/80 md:text-[10px]" style={{ paddingTop: isCompactMobile ? 4 : isWideMobile ? 6 : 5, fontSize: isCompactMobile ? 8.5 : 9 }}>
         Momentaufnahme · Linienstärke nach Anteil · kein chronologischer Ablauf
       </p>
     </div>
