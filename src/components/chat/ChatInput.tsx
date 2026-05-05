@@ -43,7 +43,7 @@ export default function ChatInput({ toolType, isLoading, noActiveSession = false
   }
 
   return (
-    <div className="sticky bottom-[calc(56px+env(safe-area-inset-bottom))] z-20 flex-shrink-0 border-t border-stone-700/40 bg-app-muted/94 px-2.5 pb-2 pt-1.5 backdrop-blur-sm min-[391px]:px-3 min-[391px]:pt-2 min-[769px]:bottom-0 min-[769px]:px-4 min-[769px]:py-3">
+    <div className="sticky bottom-[calc(56px+env(safe-area-inset-bottom))] z-20 flex-shrink-0 border-t border-stone-700/40 bg-app-muted/94 px-2.5 pb-0 pt-1.5 backdrop-blur-sm min-[391px]:px-3 min-[391px]:pt-2 min-[769px]:bottom-0 min-[769px]:px-4 min-[769px]:py-3">
       <div className="mx-auto max-w-3xl">
         <div
           className={[
