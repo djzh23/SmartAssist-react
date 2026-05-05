@@ -61,6 +61,7 @@ const LS_CONTEXT = 'smartassist_context_by_tool_and_session'
 const LS_CONTEXT_DISMISSED = 'smartassist_context_modal_dismissed'
 const LS_KONTEXT_HINT_DISMISSED = 'privateprep_kontext_hint_dismissed'
 const LS_ACTIVE_CONTEXT_INFO_VISIBLE = 'privateprep_active_context_info_visible'
+const LS_MOBILE_CONTEXT_MODULE_OPEN = 'privateprep_mobile_context_module_open'
 
 function readActiveContextInfoVisible(): boolean {
   try {
@@ -73,6 +74,22 @@ function readActiveContextInfoVisible(): boolean {
 function writeActiveContextInfoVisible(visible: boolean) {
   try {
     localStorage.setItem(LS_ACTIVE_CONTEXT_INFO_VISIBLE, visible ? '1' : '0')
+  } catch {
+    /* ignore */
+  }
+}
+
+function readMobileContextModuleOpen(): boolean {
+  try {
+    return localStorage.getItem(LS_MOBILE_CONTEXT_MODULE_OPEN) === '1'
+  } catch {
+    return false
+  }
+}
+
+function writeMobileContextModuleOpen(open: boolean) {
+  try {
+    localStorage.setItem(LS_MOBILE_CONTEXT_MODULE_OPEN, open ? '1' : '0')
   } catch {
     /* ignore */
   }
@@ -581,6 +598,7 @@ export default function ChatPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [showContextModal, setShowContextModal] = useState(false)
   const [showActiveContextInfo, setShowActiveContextInfo] = useState(readActiveContextInfoVisible)
+  const [mobileContextModuleOpen, setMobileContextModuleOpen] = useState(readMobileContextModuleOpen)
   const [dismissedContextKeys, setDismissedContextKeys] = useState<DismissedContextMap>(() => loadDismissedContextMap())
   const [contextBySessionKey, setContextBySessionKey] = useState<SessionContextMap>(() => loadContextMap())
   const [linkedJobApplicationBySession, setLinkedJobApplicationBySession] = useState<
@@ -1326,6 +1344,12 @@ export default function ChatPage() {
   } as const
 
   const activeContextInfo = activeContextTool ? contextInfo[activeContextTool] : null
+  const showProfileContextBar =
+    isSignedIn
+    && !careerProfileLoading
+    && store.currentToolType !== 'language'
+    && store.currentToolType !== 'general'
+  const showMobileContextModule = !keyboardLikelyOpen && (Boolean(activeContextInfo) || showProfileContextBar)
   const activeModalInitialData = useMemo(() => {
     const profileCvRaw = careerProfile?.cvRawText?.trim()
     const profileCv = profileCvRaw
@@ -1530,7 +1554,7 @@ export default function ChatPage() {
         )}
 
         {activeContextInfo && (
-          <div className="flex-shrink-0 px-3 pb-0 pt-1.5 min-[769px]:px-4 min-[769px]:pt-2">
+          <div className="hidden flex-shrink-0 px-3 pb-0 pt-1.5 min-[769px]:block min-[769px]:px-4 min-[769px]:pt-2">
             <div className="mx-auto max-w-3xl">
               <button
                 type="button"
@@ -1643,9 +1667,7 @@ export default function ChatPage() {
           && store.currentToolType !== 'general' && (
           <div
             className={[
-              'flex-shrink-0 border-b border-stone-700/35 bg-app-muted/80 px-3 py-1.5 backdrop-blur-sm min-[769px]:px-4 min-[769px]:py-2',
-              'max-[768px]:fixed max-[768px]:left-0 max-[768px]:right-0 max-[768px]:bottom-[calc(56px+env(safe-area-inset-bottom)+72px)] max-[768px]:z-20',
-              keyboardLikelyOpen ? 'max-[768px]:hidden' : '',
+              'hidden flex-shrink-0 border-b border-stone-700/35 bg-app-muted/80 px-3 py-1.5 backdrop-blur-sm min-[769px]:block min-[769px]:px-4 min-[769px]:py-2',
             ].join(' ')}
           >
             <ChatContextBar
@@ -1658,6 +1680,60 @@ export default function ChatPage() {
               kontextHintOpen={kontextHintOpen}
               dismissKontextHint={dismissKontextHint}
             />
+          </div>
+        )}
+
+        {showMobileContextModule && (
+          <div className="fixed bottom-[calc(56px+env(safe-area-inset-bottom)+72px)] left-0 right-0 z-20 border-y border-stone-700/35 bg-app-muted/80 px-3 py-1.5 backdrop-blur-sm min-[769px]:hidden">
+            <div className="mx-auto max-w-3xl">
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileContextModuleOpen(prev => {
+                    const next = !prev
+                    writeMobileContextModuleOpen(next)
+                    return next
+                  })
+                }}
+                className="inline-flex items-center gap-1 rounded-full border border-stone-600/45 bg-app-raised/80 px-2.5 py-1 text-[10px] font-medium text-stone-300 transition-colors hover:bg-white/8"
+              >
+                {mobileContextModuleOpen ? <ChevronUp size={13} aria-hidden /> : <ChevronDown size={13} aria-hidden />}
+                {showActiveContextInfo ? 'Stellendetails & Profil-Kontext' : 'Details & Profil-Kontext'}
+              </button>
+
+              {mobileContextModuleOpen && (
+                <div className="mt-1.5 space-y-1.5">
+                  {activeContextInfo && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowActiveContextInfo(prev => {
+                          const next = !prev
+                          writeActiveContextInfoVisible(next)
+                          return next
+                        })
+                      }}
+                      className="w-full rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-1.5 text-left text-xs font-medium text-amber-100"
+                    >
+                      {showActiveContextInfo ? activeContextInfo : 'Stellendetails anzeigen'}
+                    </button>
+                  )}
+                  {showProfileContextBar && (
+                    <ChatContextBar
+                      compact
+                      careerProfile={careerProfile}
+                      profileCompletenessPct={profileCompletenessPct}
+                      profileGapHint={profileGapHint}
+                      profileToggles={profileToggles}
+                      updateToggles={updateToggles}
+                      kontextPillLabels={kontextPillLabels}
+                      kontextHintOpen={kontextHintOpen}
+                      dismissKontextHint={dismissKontextHint}
+                    />
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         )}
 
