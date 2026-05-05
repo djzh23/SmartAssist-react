@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
-import { AlertCircle, Briefcase, ChevronDown, CheckCircle2, Code2, Globe2, MessageCircle, Plus, RefreshCw, Target, X, type LucideIcon } from 'lucide-react'
+import { AlertCircle, Briefcase, ChevronDown, ChevronUp, CheckCircle2, Code2, Globe2, MessageCircle, Plus, RefreshCw, Target, X, type LucideIcon } from 'lucide-react'
 import type { CareerToolSetup, ToolType } from '../types'
 import { PROGRAMMING_LANGUAGES } from '../types'
 import { UsageLimitError, askAgentStream, linkJobApplicationSession } from '../api/client'
@@ -59,6 +59,23 @@ const JOB_ANALYZER_PROMPT_LIMIT = 3900
 const LS_CONTEXT = 'smartassist_context_by_tool_and_session'
 const LS_CONTEXT_DISMISSED = 'smartassist_context_modal_dismissed'
 const LS_KONTEXT_HINT_DISMISSED = 'privateprep_kontext_hint_dismissed'
+const LS_ACTIVE_CONTEXT_INFO_VISIBLE = 'privateprep_active_context_info_visible'
+
+function readActiveContextInfoVisible(): boolean {
+  try {
+    return localStorage.getItem(LS_ACTIVE_CONTEXT_INFO_VISIBLE) !== '0'
+  } catch {
+    return true
+  }
+}
+
+function writeActiveContextInfoVisible(visible: boolean) {
+  try {
+    localStorage.setItem(LS_ACTIVE_CONTEXT_INFO_VISIBLE, visible ? '1' : '0')
+  } catch {
+    /* ignore */
+  }
+}
 
 type ContextToolType = 'jobanalyzer' | 'interview' | 'programming'
 
@@ -561,6 +578,7 @@ export default function ChatPage() {
   const [error, setError] = useState<string | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [showContextModal, setShowContextModal] = useState(false)
+  const [showActiveContextInfo, setShowActiveContextInfo] = useState(readActiveContextInfoVisible)
   const [dismissedContextKeys, setDismissedContextKeys] = useState<DismissedContextMap>(() => loadDismissedContextMap())
   const [contextBySessionKey, setContextBySessionKey] = useState<SessionContextMap>(() => loadContextMap())
   const [linkedJobApplicationBySession, setLinkedJobApplicationBySession] = useState<
@@ -1510,11 +1528,37 @@ export default function ChatPage() {
         )}
 
         {activeContextInfo && (
-          <div className="context-indicator hidden min-[769px]:flex">
-            <span>{activeContextInfo}</span>
-            <button onClick={() => setShowContextModal(true)} className="context-edit-btn">
-              Bearbeiten
-            </button>
+          <div className="flex-shrink-0 px-3 pb-0 pt-1.5 min-[769px]:px-4 min-[769px]:pt-2">
+            <div className="mx-auto max-w-3xl">
+              <div className="flex items-center justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowActiveContextInfo(prev => {
+                      const next = !prev
+                      writeActiveContextInfoVisible(next)
+                      return next
+                    })
+                  }}
+                  className="inline-flex items-center gap-1 rounded-full border border-stone-600/45 bg-app-raised/80 px-2.5 py-1 text-[10px] font-medium text-stone-300 transition-colors hover:bg-white/8"
+                >
+                  {showActiveContextInfo ? <ChevronUp size={13} aria-hidden /> : <ChevronDown size={13} aria-hidden />}
+                  {showActiveContextInfo ? 'Details ausblenden' : 'Details anzeigen'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowContextModal(true)}
+                  className="rounded-full px-2 py-1 text-[11px] font-medium text-amber-300/90 transition hover:bg-amber-500/10 hover:text-amber-200"
+                >
+                  Bearbeiten
+                </button>
+              </div>
+              {showActiveContextInfo && (
+                <div className="mt-1.5 rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-1.5 text-xs font-medium text-amber-100">
+                  {activeContextInfo}
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -1565,7 +1609,7 @@ export default function ChatPage() {
 
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <div ref={chatScrollRef} className="min-h-0 flex-1 overflow-y-auto">
-            <div className="mx-auto max-w-3xl px-2.5 py-2 min-[391px]:px-3 min-[391px]:py-2.5 min-[769px]:py-4 desktop:px-4">
+            <div className="mx-auto max-w-3xl px-2.5 py-2 pb-24 min-[391px]:px-3 min-[391px]:py-2.5 min-[391px]:pb-24 min-[769px]:py-4 min-[769px]:pb-4 desktop:px-4">
               <MessageList
                 messages={store.activeMessages}
                 viewSessionId={activeId}
