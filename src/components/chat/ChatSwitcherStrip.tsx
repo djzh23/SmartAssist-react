@@ -62,14 +62,44 @@ function isSkillActive(skill: SkillSummary, toolFromUrl: string): boolean {
 }
 
 function flattenSkillsInNavOrder(skills: SkillSummary[]): SkillSummary[] {
-  const order = ['career', 'productivity', 'learning'] as const
-  const map = new Map<string, SkillSummary[]>()
-  for (const s of skills) {
-    const list = map.get(s.category) ?? []
-    list.push(s)
-    map.set(s.category, list)
+  const normalizedTool = (skill: SkillSummary): string => {
+    const t = skill.apiToolType.toLowerCase()
+    if (t === 'interview') return 'interviewprep'
+    return t
   }
-  return order.flatMap(c => map.get(c) ?? [])
+  const order: string[] = [
+    'jobanalyzer',
+    'interviewprep',
+    'general',
+    'programming',
+    'language',
+    'linkedin',
+    'salary',
+    'salarycoach',
+    'gehalt',
+  ]
+  const rank = (skill: SkillSummary): number => {
+    const t = normalizedTool(skill)
+    const idx = order.indexOf(t)
+    if (idx >= 0) return idx
+    const n = skill.name.toLowerCase()
+    if (n.includes('linkedin')) return 5
+    if (n.includes('gehalt') || n.includes('salary')) return 6
+    return 99
+  }
+  return [...skills].sort((a, b) => rank(a) - rank(b))
+}
+
+function activeAccentClasses(skill: SkillSummary): string {
+  const t = skill.apiToolType.toLowerCase()
+  if (t === 'jobanalyzer') return 'border-amber-300/55 bg-amber-500/90 text-amber-50'
+  if (t === 'interview' || t === 'interviewprep') return 'border-sky-300/55 bg-sky-500/85 text-sky-50'
+  if (t === 'general') return 'border-violet-300/55 bg-violet-500/85 text-violet-50'
+  if (t === 'programming') return 'border-emerald-300/55 bg-emerald-500/85 text-emerald-50'
+  if (t === 'language') return 'border-fuchsia-300/55 bg-fuchsia-500/85 text-fuchsia-50'
+  if (t === 'linkedin') return 'border-cyan-300/55 bg-cyan-500/85 text-cyan-50'
+  if (t.includes('salary') || t.includes('gehalt')) return 'border-lime-300/55 bg-lime-500/85 text-lime-950'
+  return 'border-amber-400/40 bg-amber-500/85 text-white'
 }
 
 function ChatSwitcherStripInner() {
@@ -104,7 +134,7 @@ function ChatSwitcherStripInner() {
   if (loading && !orderedSkills.length) {
     return (
       <div
-        className="flex h-11 flex-shrink-0 items-center justify-center border-b border-stone-600/35 bg-app-muted/90 px-3 backdrop-blur-sm min-[769px]:hidden"
+        className="flex h-9 flex-shrink-0 items-center justify-center border-b border-stone-700/35 bg-app-muted/92 px-3 backdrop-blur-sm min-[391px]:h-10 min-[769px]:hidden"
         aria-hidden
       >
         <Loader2 size={16} className="animate-spin text-stone-500" />
@@ -116,10 +146,10 @@ function ChatSwitcherStripInner() {
 
   return (
     <nav
-      className="h-11 min-h-[44px] flex-shrink-0 overflow-x-auto overflow-y-hidden border-b border-stone-600/35 bg-app-muted/90 px-3 py-1 backdrop-blur-sm [-ms-overflow-style:none] [scrollbar-width:none] [-webkit-overflow-scrolling:touch] snap-x snap-mandatory min-[769px]:hidden [&::-webkit-scrollbar]:hidden"
+      className="h-9 min-h-[36px] flex-shrink-0 overflow-x-auto overflow-y-hidden border-b border-stone-700/35 bg-app-muted/92 px-2 py-0.5 backdrop-blur-sm [-ms-overflow-style:none] [scrollbar-width:none] [-webkit-overflow-scrolling:touch] snap-x snap-mandatory min-[391px]:h-10 min-[391px]:min-h-[40px] min-[391px]:px-2.5 min-[391px]:py-1 min-[769px]:hidden [&::-webkit-scrollbar]:hidden"
       aria-label="Chat-Werkzeuge wechseln"
     >
-      <div className="flex w-max items-center gap-2 py-0.5">
+      <div className="flex w-max items-center gap-1 py-0.5 pr-2 min-[391px]:gap-1.5">
         {orderedSkills.map(skill => {
           const locked = !skill.isEnabled || !skill.isAccessible
           const active = isSkillActive(skill, toolFromUrl)
@@ -127,12 +157,11 @@ function ChatSwitcherStripInner() {
           const Icon = iconForSkill(skill.icon)
 
           const basePill =
-            'relative flex shrink-0 snap-start items-center gap-1.5 rounded-2xl border px-3.5 py-1.5 text-[13px] font-medium whitespace-nowrap transition-colors'
+            'relative flex h-6 shrink-0 snap-start items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium whitespace-nowrap transition-colors min-[391px]:h-7 min-[391px]:px-2.5 min-[391px]:py-1 min-[391px]:text-[11px]'
 
-          const activeClasses =
-            'border-amber-400/40 bg-amber-500 font-medium text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]'
+          const activeClasses = `${activeAccentClasses(skill)} shadow-[inset_0_1px_0_rgba(255,255,255,0.16),0_6px_14px_-10px_rgba(0,0,0,0.7)]`
           const idleClasses =
-            'border border-white/15 bg-transparent text-white/75 hover:border-white/25 hover:bg-white/6 hover:text-white/90'
+            'border border-white/12 bg-transparent text-white/65 hover:border-white/20 hover:bg-white/6 hover:text-white/85'
           const lockedVisual = locked ? 'opacity-40' : ''
 
           return (
@@ -155,9 +184,9 @@ function ChatSwitcherStripInner() {
                 navigate(href)
               }}
             >
-              <Icon size={14} className="shrink-0 opacity-90" aria-hidden />
-              <span>{stripLabel(skill)}</span>
-              {locked ? <Lock size={12} className="shrink-0 opacity-80" aria-hidden /> : null}
+              <Icon size={11} className="shrink-0 opacity-90 min-[391px]:h-3 min-[391px]:w-3" aria-hidden />
+              <span className="leading-none">{stripLabel(skill)}</span>
+              {locked ? <Lock size={10} className="shrink-0 opacity-80" aria-hidden /> : null}
             </button>
           )
         })}

@@ -1510,7 +1510,7 @@ export default function ChatPage() {
         )}
 
         {activeContextInfo && (
-          <div className="context-indicator">
+          <div className="context-indicator hidden min-[769px]:flex">
             <span>{activeContextInfo}</span>
             <button onClick={() => setShowContextModal(true)} className="context-edit-btn">
               Bearbeiten
@@ -1565,7 +1565,7 @@ export default function ChatPage() {
 
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <div ref={chatScrollRef} className="min-h-0 flex-1 overflow-y-auto">
-            <div className="mx-auto max-w-3xl px-3 py-4 desktop:px-4">
+            <div className="mx-auto max-w-3xl px-2.5 py-2 min-[391px]:px-3 min-[391px]:py-2.5 min-[769px]:py-4 desktop:px-4">
               <MessageList
                 messages={store.activeMessages}
                 viewSessionId={activeId}
@@ -1604,7 +1604,7 @@ export default function ChatPage() {
           && !careerProfileLoading
           && store.currentToolType !== 'language'
           && store.currentToolType !== 'general' && (
-          <div className="flex-shrink-0 border-b border-stone-600/35 bg-app-muted/85 px-4 py-2 backdrop-blur-sm">
+          <div className="flex-shrink-0 border-b border-stone-700/35 bg-app-muted/80 px-3 py-1.5 backdrop-blur-sm min-[769px]:px-4 min-[769px]:py-2">
             <ChatContextBar
               careerProfile={careerProfile}
               profileCompletenessPct={profileCompletenessPct}

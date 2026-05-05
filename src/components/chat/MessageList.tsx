@@ -106,7 +106,7 @@ export default function MessageList({
   }
 
   return (
-    <div className="flex w-full flex-col gap-4 py-2">
+    <div className="flex w-full flex-col gap-3 py-1.5 min-[391px]:gap-3.5 min-[391px]:py-2">
       {(() => {
         let userSeen = false
 

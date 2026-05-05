@@ -163,19 +163,19 @@ export default function MessageBubble({
 
   if (!msg.isUser) {
     return (
-      <div className="self-start flex max-w-[85%] animate-slide-up flex-col gap-1">
-        <div className="break-words rounded-[4px_18px_18px_18px] border border-stone-400/55 bg-app-parchment px-3.5 py-2.5 text-sm leading-relaxed text-stone-900 shadow-[0_10px_28px_-6px_rgba(0,0,0,0.45)]">
+      <div className="self-start flex max-w-[87%] animate-slide-up flex-col gap-0.5 min-[391px]:max-w-[85%] min-[391px]:gap-1">
+        <div className="break-words rounded-[4px_16px_16px_16px] border border-stone-400/55 bg-app-parchment px-3 py-2 text-[14px] leading-relaxed text-stone-900 shadow-[0_10px_24px_-10px_rgba(0,0,0,0.45)] min-[391px]:rounded-[4px_18px_18px_18px] min-[391px]:px-3.5 min-[391px]:py-2.5 min-[391px]:text-sm min-[391px]:shadow-[0_10px_28px_-6px_rgba(0,0,0,0.45)]">
           <RenderedMarkdown content={msg.text} variant="assistant" />
           {showStreamCursor ? <StreamingTextCursor /> : null}
         </div>
-        <div className="flex items-center gap-2 px-1">
+        <div className="flex items-center gap-1.5 px-1 min-[391px]:gap-2">
           {msg.toolUsed && msg.toolUsed !== 'analyze_job' && (
-            <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/45 bg-amber-100/95 px-2.5 py-0.5 text-[11px] font-medium text-amber-950">
+            <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/45 bg-amber-100/95 px-2 py-0.5 text-[10px] font-medium text-amber-950 min-[391px]:px-2.5 min-[391px]:text-[11px]">
               <Settings2 size={11} />
               <span>{msg.toolUsed.replace(/_/g, ' ')}</span>
             </span>
           )}
-          <span className="text-[11px] text-stone-500">{time}</span>
+          <span className="text-[10px] text-stone-500 min-[391px]:text-[11px]">{time}</span>
         </div>
         <AssistantNoteSaveButton msg={msg} toolType={toolType} activeSessionId={activeSessionId} />
       </div>
@@ -183,11 +183,11 @@ export default function MessageBubble({
   }
 
   return (
-    <div className="flex max-w-[72%] animate-slide-up flex-col items-end gap-1 self-end">
-      <div className="break-words whitespace-pre-wrap rounded-[18px_18px_4px_18px] bg-primary px-3.5 py-2.5 text-sm leading-relaxed text-white shadow-[0_8px_22px_-4px_rgba(0,0,0,0.4)]">
+    <div className="flex max-w-[76%] animate-slide-up flex-col items-end gap-0.5 self-end min-[391px]:max-w-[72%] min-[391px]:gap-1">
+      <div className="break-words whitespace-pre-wrap rounded-[16px_16px_4px_16px] bg-primary px-3 py-2 text-[14px] leading-relaxed text-white shadow-[0_8px_18px_-8px_rgba(0,0,0,0.45)] min-[391px]:rounded-[18px_18px_4px_18px] min-[391px]:px-3.5 min-[391px]:py-2.5 min-[391px]:text-sm min-[391px]:shadow-[0_8px_22px_-4px_rgba(0,0,0,0.4)]">
         {msg.text}
       </div>
-      <span className="px-1 text-[11px] text-stone-500">{time}</span>
+      <span className="px-1 text-[10px] text-stone-500 min-[391px]:text-[11px]">{time}</span>
     </div>
   )
 }

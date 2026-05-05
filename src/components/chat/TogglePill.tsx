@@ -13,10 +13,10 @@ export default function TogglePill({ active, label, title, onClick }: Props) {
       title={title ?? label}
       onClick={onClick}
       className={[
-        'max-w-[min(100%,260px)] truncate rounded-full px-3 py-1 text-left text-xs font-medium transition-colors',
+        'max-w-[min(100%,220px)] truncate rounded-full border px-2.5 py-1 text-left text-[10px] font-medium leading-none transition-colors',
         active
-          ? 'bg-teal-600 text-white hover:bg-teal-700'
-          : 'bg-stone-800/90 text-stone-400 hover:bg-stone-700/90 hover:text-stone-200',
+          ? 'border-teal-400/60 bg-teal-500/22 text-teal-100'
+          : 'border-white/10 bg-stone-900/65 text-stone-400 hover:border-white/20 hover:bg-stone-800/80 hover:text-stone-200',
       ].join(' ')}
     >
       {label}
