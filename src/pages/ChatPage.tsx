@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
-import { AlertCircle, Briefcase, ChevronDown, ChevronUp, CheckCircle2, Code2, Globe2, MessageCircle, Plus, RefreshCw, Target, X, type LucideIcon } from 'lucide-react'
+import { AlertCircle, Briefcase, ChevronDown, ChevronUp, CheckCircle2, Code2, Globe2, MessageCircle, RefreshCw, Target, X, type LucideIcon } from 'lucide-react'
 import type { CareerToolSetup, ToolType } from '../types'
 import { PROGRAMMING_LANGUAGES } from '../types'
 import { UsageLimitError, askAgentStream, linkJobApplicationSession } from '../api/client'
@@ -21,7 +21,6 @@ import { useDeliberateStream } from '../hooks/useDeliberateStream'
 import { useChatSessions } from '../hooks/useChatSessions'
 import { useCareerProfile } from '../hooks/useCareerProfile'
 import { useUserPlan, dispatchServerUsage } from '../hooks/useUserPlan'
-import { useLayoutChrome } from '../context/LayoutChromeContext'
 import { sanitizeTechnicalContext } from '../utils/cvTechnicalContext'
 import { applyStreamText } from '../chat/streamTextBridge'
 import { buildProfileStatsLine, getProfileCompleteness, getProfileCompletenessGapHint } from '../utils/profileCompleteness'
@@ -61,7 +60,6 @@ const LS_CONTEXT = 'smartassist_context_by_tool_and_session'
 const LS_CONTEXT_DISMISSED = 'smartassist_context_modal_dismissed'
 const LS_KONTEXT_HINT_DISMISSED = 'privateprep_kontext_hint_dismissed'
 const LS_ACTIVE_CONTEXT_INFO_VISIBLE = 'privateprep_active_context_info_visible'
-const LS_MOBILE_CONTEXT_MODULE_OPEN = 'privateprep_mobile_context_module_open'
 
 function readActiveContextInfoVisible(): boolean {
   try {
@@ -74,22 +72,6 @@ function readActiveContextInfoVisible(): boolean {
 function writeActiveContextInfoVisible(visible: boolean) {
   try {
     localStorage.setItem(LS_ACTIVE_CONTEXT_INFO_VISIBLE, visible ? '1' : '0')
-  } catch {
-    /* ignore */
-  }
-}
-
-function readMobileContextModuleOpen(): boolean {
-  try {
-    return localStorage.getItem(LS_MOBILE_CONTEXT_MODULE_OPEN) === '1'
-  } catch {
-    return false
-  }
-}
-
-function writeMobileContextModuleOpen(open: boolean) {
-  try {
-    localStorage.setItem(LS_MOBILE_CONTEXT_MODULE_OPEN, open ? '1' : '0')
   } catch {
     /* ignore */
   }
@@ -591,14 +573,13 @@ export default function ChatPage() {
   const modalToolType = modalToolTypeFromParam(rawToolParam, toolParam)
 
   const store = useChatSessions()
-  const { keyboardLikelyOpen } = useLayoutChrome()
   const { requestConfirm } = useAppUi()
   const applicationSeedKey = useRef<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [showContextModal, setShowContextModal] = useState(false)
+  const [showMobileDetailsModal, setShowMobileDetailsModal] = useState(false)
   const [showActiveContextInfo, setShowActiveContextInfo] = useState(readActiveContextInfoVisible)
-  const [mobileContextModuleOpen, setMobileContextModuleOpen] = useState(readMobileContextModuleOpen)
   const [dismissedContextKeys, setDismissedContextKeys] = useState<DismissedContextMap>(() => loadDismissedContextMap())
   const [contextBySessionKey, setContextBySessionKey] = useState<SessionContextMap>(() => loadContextMap())
   const [linkedJobApplicationBySession, setLinkedJobApplicationBySession] = useState<
@@ -1349,7 +1330,6 @@ export default function ChatPage() {
     && !careerProfileLoading
     && store.currentToolType !== 'language'
     && store.currentToolType !== 'general'
-  const showMobileContextModule = !keyboardLikelyOpen && (Boolean(activeContextInfo) || showProfileContextBar)
   const activeModalInitialData = useMemo(() => {
     const profileCvRaw = careerProfile?.cvRawText?.trim()
     const profileCv = profileCvRaw
@@ -1471,6 +1451,13 @@ export default function ChatPage() {
 
         {/* Mobile (≤768px): compact unified session + status bar */}
         <div className="flex min-[769px]:hidden flex-shrink-0 items-center gap-1 border-b border-stone-600/35 bg-app-muted/90 px-1.5 py-0.5 backdrop-blur-sm">
+          <button
+            type="button"
+            onClick={() => setShowMobileDetailsModal(true)}
+            className="inline-flex h-8 shrink-0 items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 text-[10px] font-medium text-amber-200 transition hover:bg-amber-500/15"
+          >
+            Details
+          </button>
           {/* Session toggle - tap to open sessions panel */}
           <button
             onClick={() => setSidebarOpen(true)}
@@ -1494,25 +1481,16 @@ export default function ChatPage() {
                 {targetDisplay.slice(0, 3)}
               </span>
             )}
-            <ChevronDown size={11} className="shrink-0 text-stone-500" />
           </button>
-          {/* Interview: quick setup access */}
-          {isInterview && (
-            <button
-              type="button"
-              onClick={() => setShowContextModal(true)}
-              className="flex h-8 shrink-0 items-center gap-1 rounded-lg px-2 text-[10px] font-medium text-sky-400 transition-colors hover:bg-sky-900/30 active:bg-sky-900/50"
-            >
-              Setup
-            </button>
-          )}
-          {/* New chat */}
+
           <button
-            onClick={handleNewSession}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-stone-400 transition-colors hover:bg-white/8 active:bg-white/15"
-            aria-label="Neues Gespräch starten"
+            type="button"
+            onClick={() => setSidebarOpen(true)}
+            className="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg px-2 text-[10px] font-medium text-stone-300 transition-colors hover:bg-white/8 active:bg-white/15"
+            aria-label="Chat-Liste öffnen"
           >
-            <Plus size={16} />
+            <MessageCircle size={13} className="shrink-0" />
+            Chats
           </button>
         </div>
 
@@ -1683,42 +1661,51 @@ export default function ChatPage() {
           </div>
         )}
 
-        {showMobileContextModule && (
-          <div className="fixed bottom-[calc(56px+env(safe-area-inset-bottom)+72px)] left-0 right-0 z-20 border-y border-stone-700/35 bg-app-muted/80 px-3 py-1.5 backdrop-blur-sm min-[769px]:hidden">
-            <div className="mx-auto max-w-3xl">
-              <button
-                type="button"
-                onClick={() => {
-                  setMobileContextModuleOpen(prev => {
-                    const next = !prev
-                    writeMobileContextModuleOpen(next)
-                    return next
-                  })
-                }}
-                className="inline-flex items-center gap-1 rounded-full border border-stone-600/45 bg-app-raised/80 px-2.5 py-1 text-[10px] font-medium text-stone-300 transition-colors hover:bg-white/8"
-              >
-                {mobileContextModuleOpen ? <ChevronUp size={13} aria-hidden /> : <ChevronDown size={13} aria-hidden />}
-                {showActiveContextInfo ? 'Stellendetails & Profil-Kontext' : 'Details & Profil-Kontext'}
-              </button>
+        <ChatInput
+          toolType={store.currentToolType}
+          isLoading={inputBlocked}
+          noActiveSession={!activeId}
+          onSend={handleSend}
+        />
 
-              {mobileContextModuleOpen && (
-                <div className="mt-1.5 space-y-1.5">
-                  {activeContextInfo && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowActiveContextInfo(prev => {
-                          const next = !prev
-                          writeActiveContextInfoVisible(next)
-                          return next
-                        })
-                      }}
-                      className="w-full rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-1.5 text-left text-xs font-medium text-amber-100"
-                    >
-                      {showActiveContextInfo ? activeContextInfo : 'Stellendetails anzeigen'}
-                    </button>
-                  )}
-                  {showProfileContextBar && (
+        {showMobileDetailsModal && (
+          <div className="fixed inset-0 z-[95] flex items-end justify-center min-[769px]:hidden" role="dialog" aria-modal="true" aria-label="Details und Profil-Kontext">
+            <button
+              type="button"
+              className="absolute inset-0 bg-black/55"
+              onClick={() => setShowMobileDetailsModal(false)}
+              aria-label="Details schließen"
+            />
+            <div className="relative z-10 flex max-h-[72vh] w-full flex-col overflow-hidden rounded-t-2xl border border-white/10 bg-[#17110c] shadow-2xl">
+              <div className="flex items-center justify-between border-b border-white/10 px-3 py-2.5">
+                <h3 className="text-sm font-semibold text-stone-100">Details & Profil-Kontext</h3>
+                <button
+                  type="button"
+                  onClick={() => setShowMobileDetailsModal(false)}
+                  className="rounded-full px-2 py-1 text-xs font-medium text-stone-300 hover:bg-white/10"
+                >
+                  Schließen
+                </button>
+              </div>
+              <div className="space-y-2 overflow-y-auto px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2">
+                {activeContextInfo ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowActiveContextInfo(prev => {
+                        const next = !prev
+                        writeActiveContextInfoVisible(next)
+                        return next
+                      })
+                    }}
+                    className="w-full rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-left text-xs font-medium text-amber-100"
+                  >
+                    {showActiveContextInfo ? activeContextInfo : 'Stellendetails anzeigen'}
+                  </button>
+                ) : null}
+
+                {showProfileContextBar && (
+                  <div className="rounded-lg border border-white/10 bg-app-muted/50 px-2 py-2">
                     <ChatContextBar
                       compact
                       careerProfile={careerProfile}
@@ -1730,19 +1717,23 @@ export default function ChatPage() {
                       kontextHintOpen={kontextHintOpen}
                       dismissKontextHint={dismissKontextHint}
                     />
-                  )}
-                </div>
-              )}
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowMobileDetailsModal(false)
+                    setShowContextModal(true)
+                  }}
+                  className="w-full rounded-lg border border-amber-500/25 bg-amber-500/12 px-3 py-2 text-sm font-medium text-amber-100 transition hover:bg-amber-500/18"
+                >
+                  Bearbeiten
+                </button>
+              </div>
             </div>
           </div>
         )}
-
-        <ChatInput
-          toolType={store.currentToolType}
-          isLoading={inputBlocked}
-          noActiveSession={!activeId}
-          onSend={handleSend}
-        />
       </div>
 
       {showContextModal && store.activeSessionId && modalToolType && (
