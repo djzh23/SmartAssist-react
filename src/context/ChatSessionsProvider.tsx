@@ -21,7 +21,7 @@ import {
   putSessionTranscript,
 } from '../api/client'
 import { reorderSessionOrderForTool } from '../utils/sessionOrder'
-import { suggestSessionTitle } from '../utils/sessionTitle'
+import { isPlaceholderSessionTitle, suggestSessionTitle } from '../utils/sessionTitle'
 import type { ChatSession, ChatMessage, ToolType } from '../types'
 
 function lsKeys(scopeId: string) {
@@ -143,6 +143,17 @@ function welcomeMessages(tool: ToolType): ChatMessage[] {
   return w
     ? [{ id: uid(), text: w, isUser: false, timestamp: new Date().toISOString() }]
     : []
+}
+
+function resolveAutoSessionTitle(
+  existingTitle: string | undefined,
+  toolType: ToolType,
+  messages: ChatMessage[],
+): string | undefined {
+  if (existingTitle?.trim() && !isPlaceholderSessionTitle(existingTitle)) return existingTitle
+  const firstUserMessage = messages.find(message => message.isUser)?.text ?? ''
+  const suggested = suggestSessionTitle(toolType, firstUserMessage)
+  return isPlaceholderSessionTitle(suggested) ? existingTitle : suggested
 }
 
 export interface AnswerReadyToast {
@@ -415,6 +426,7 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
           return
         const nextSessions: Record<string, ChatSession> = {}
         const order: string[] = []
+        const queuedAutoTitles: Array<{ sessionId: string; title: string }> = []
         for (let i = 0; i < records.length; i++) {
           const m = records[i]
           const tr = transcripts[i]
@@ -423,12 +435,15 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
           let messages = parsedMessages
           if (messages.length === 0)
             messages = welcomeMessages(tool)
+          const autoTitle = resolveAutoSessionTitle(m.title, tool, parsedMessages)
+          if (autoTitle && autoTitle !== m.title && !isPlaceholderSessionTitle(autoTitle))
+            queuedAutoTitles.push({ sessionId: m.id, title: autoTitle })
           nextSessions[m.id] = {
             id: m.id,
             toolType: tool,
             messages,
             createdAt: m.createdAt,
-            title: m.title,
+            title: autoTitle,
           }
           order.push(m.id)
         }
@@ -450,6 +465,8 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
 
         setSessions(nextSessions)
         setSessionOrder(order)
+        for (const row of queuedAutoTitles)
+          scheduleAutoTitle(row.sessionId, row.title)
         setSessionsLoadError(null)
         setSessionsStaleHint(null)
         setSessionsLastSyncedAt(new Date().toISOString())
@@ -486,7 +503,7 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
           setSessionsRemoteLoading(false)
       }
     },
-    [scopeId, getToken],
+    [scopeId, getToken, scheduleAutoTitle],
   )
 
   const retrySessionsRemoteLoad = useCallback(() => {
@@ -756,7 +773,7 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
       setSessions(prev => {
         const session = prev[sessionId]
         if (!session) return prev
-        const shouldSetTitle = full.isUser && !(session.title?.trim())
+        const shouldSetTitle = full.isUser && (!session.title?.trim() || isPlaceholderSessionTitle(session.title))
         const title = shouldSetTitle ? suggestSessionTitle(session.toolType, full.text) : session.title
         if (shouldSetTitle && title) autoTitle = title
         return {

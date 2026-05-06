@@ -1,6 +1,12 @@
 import type { ChatSession, ToolType } from '../types'
 
 const DEFAULT_MAX = 34
+const PLACEHOLDER_TITLES = new Set([
+  'neues gespräch',
+  'new chat',
+  'new conversation',
+  'untitled',
+])
 
 function firstLine(raw: string): string {
   return raw.replace(/\r\n?/g, '\n').split('\n')[0]?.trim().replace(/\s+/g, ' ') ?? ''
@@ -9,6 +15,11 @@ function firstLine(raw: string): string {
 function trimMax(s: string, max: number): string {
   if (s.length <= max) return s
   return `${s.slice(0, Math.max(1, max - 1))}…`
+}
+
+export function isPlaceholderSessionTitle(title: string | null | undefined): boolean {
+  const normalized = (title ?? '').trim().toLowerCase()
+  return normalized.length > 0 && PLACEHOLDER_TITLES.has(normalized)
 }
 
 /**
@@ -46,7 +57,7 @@ function compactTitle(text: string, max = DEFAULT_MAX): string {
  */
 export function sessionListLabel(session: ChatSession, maxLen = DEFAULT_MAX): string {
   const persisted = session.title?.trim()
-  if (persisted) return trimMax(persisted, maxLen)
+  if (persisted && !isPlaceholderSessionTitle(persisted)) return trimMax(persisted, maxLen)
 
   const firstUser = session.messages.find(m => m.isUser)?.text
   const line = firstUser ? firstLine(firstUser) : ''
