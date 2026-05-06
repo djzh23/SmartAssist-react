@@ -130,6 +130,15 @@ export interface TokenDaily {
   costUsd: number
 }
 
+export interface RagSummary {
+  turnsWithRag: number
+  turnsWithoutRag: number
+  avgChunksRetrieved: number
+  avgTopScore: number
+  avgRagLatencyMs: number
+  ragAdoptionPercent: number
+}
+
 export async function fetchDashboard(token: string): Promise<AdminDashboardData> {
   const res = await fetch(`${API_BASE}/api/admin/dashboard`, {
     headers: { Authorization: `Bearer ${token}` },
@@ -241,4 +250,12 @@ export async function fetchTokensRecent(token: string, limit = 20): Promise<Rece
   })
   if (!res.ok) throw new Error(`API error: ${res.status}`)
   return res.json() as Promise<RecentUsageRecord[]>
+}
+
+export async function fetchRagSummary(token: string, from: string, to: string): Promise<RagSummary> {
+  const res = await fetch(`${API_BASE}/api/admin/rag/summary?from=${from}&to=${to}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok) throw new Error(`API error: ${res.status}`)
+  return res.json() as Promise<RagSummary>
 }

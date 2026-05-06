@@ -31,6 +31,7 @@ import {
   fetchDashboard,
   fetchRecentUsage,
   fetchTokenSummary,
+  fetchRagSummary,
   fetchTokensByModel,
   fetchTokensByTool,
   fetchTokensDaily,
@@ -44,6 +45,7 @@ import {
   type TokenByTool,
   type TokenDaily,
   type TokenSummary,
+  type RagSummary,
   type RecentUsageRecord,
   type UserUsageSummary,
 } from '../api/adminClient'
@@ -229,6 +231,7 @@ export default function AdminDashboardPage() {
   const [tokensByModel, setTokensByModel] = useState<TokenByModel[]>([])
   const [tokensDaily, setTokensDaily] = useState<TokenDaily[]>([])
   const [tokensRecent, setTokensRecent] = useState<RecentUsageRecord[]>([])
+  const [ragSummary, setRagSummary] = useState<RagSummary | null>(null)
   const [recentSortKey, setRecentSortKey] = useState<'createdAt' | 'inputTokens' | 'outputTokens' | 'estimatedCostUsd' | 'responseTimeMs'>('createdAt')
   const [recentSortDesc, setRecentSortDesc] = useState(true)
 
@@ -319,6 +322,8 @@ export default function AdminDashboardPage() {
       if (byModelRes.status === 'fulfilled') setTokensByModel(byModelRes.value)
       if (dailyRes.status === 'fulfilled') setTokensDaily(dailyRes.value)
       if (recentTokenRes.status === 'fulfilled') setTokensRecent(recentTokenRes.value)
+      const ragRes = await Promise.allSettled([fetchRagSummary(token, tokenRange.from, tokenRange.to)])
+      if (ragRes[0].status === 'fulfilled') setRagSummary(ragRes[0].value)
       if (dashResult.status === 'rejected' && statsResult.status === 'rejected') {
         throw dashResult.reason instanceof Error ? dashResult.reason : new Error('Admin data unavailable')
       }
@@ -839,6 +844,38 @@ export default function AdminDashboardPage() {
             </div>
           </section>
         )}
+
+        <section className="rounded-xl border border-slate-700/70 bg-slate-900/50 p-4 shadow-lg shadow-black/20">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-400">RAG-Monitoring</h2>
+          {!ragSummary || ragSummary.turnsWithRag <= 0 ? (
+            <div className="mt-3 rounded-lg border border-slate-700/60 bg-slate-950/40 p-4 text-sm text-slate-300">
+              <p className="font-medium text-slate-200">Status: Nicht aktiv</p>
+              <p className="mt-2 text-slate-400">
+                Sobald RAG aktiviert ist, erscheinen hier:
+                Chunks retrieved pro Turn, Top Relevanz-Score, RAG-Latenz und der Anteil der Turns mit RAG-Kontext.
+              </p>
+            </div>
+          ) : (
+            <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
+              <div className="rounded-xl border border-slate-700/50 bg-slate-900/40 p-3">
+                <p className="text-xs text-slate-500">Turns mit RAG</p>
+                <p className="mt-1 text-xl font-semibold tabular-nums text-indigo-300">{ragSummary.turnsWithRag}</p>
+              </div>
+              <div className="rounded-xl border border-slate-700/50 bg-slate-900/40 p-3">
+                <p className="text-xs text-slate-500">Ø Chunks</p>
+                <p className="mt-1 text-xl font-semibold tabular-nums text-indigo-300">{ragSummary.avgChunksRetrieved.toFixed(2)}</p>
+              </div>
+              <div className="rounded-xl border border-slate-700/50 bg-slate-900/40 p-3">
+                <p className="text-xs text-slate-500">Ø Top-Score</p>
+                <p className="mt-1 text-xl font-semibold tabular-nums text-teal-300">{ragSummary.avgTopScore.toFixed(3)}</p>
+              </div>
+              <div className="rounded-xl border border-slate-700/50 bg-slate-900/40 p-3">
+                <p className="text-xs text-slate-500">Ø RAG-Latenz</p>
+                <p className="mt-1 text-xl font-semibold tabular-nums text-indigo-300">{Math.round(ragSummary.avgRagLatencyMs)}ms</p>
+              </div>
+            </div>
+          )}
+        </section>
 
         {/* Hero + small metrics */}
         {initialLoad ? (
