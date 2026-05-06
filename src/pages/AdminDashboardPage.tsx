@@ -26,10 +26,16 @@ import {
   YAxis,
 } from 'recharts'
 import {
+  fetchActiveUsers,
+  fetchAdminStats,
   fetchDashboard,
+  fetchRecentUsage,
   fetchTopUsers,
   fetchUserUsage,
+  type ActiveUserUsage,
+  type AdminStats,
   type AdminDashboardData,
+  type RecentUsageRecord,
   type UserUsageSummary,
 } from '../api/adminClient'
 
@@ -182,6 +188,9 @@ function ChartSkeleton({ tall }: { tall?: boolean }) {
 export default function AdminDashboardPage() {
   const { getToken } = useAuth()
   const [data, setData] = useState<AdminDashboardData | null>(null)
+  const [phase1Stats, setPhase1Stats] = useState<AdminStats | null>(null)
+  const [recentUsage, setRecentUsage] = useState<RecentUsageRecord[]>([])
+  const [activeUsers, setActiveUsers] = useState<ActiveUserUsage[]>([])
   const [initialLoad, setInitialLoad] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -256,8 +265,19 @@ export default function AdminDashboardPage() {
         setError('Nicht angemeldet.')
         return
       }
-      const dash = await fetchDashboard(token)
-      setData(dash)
+      const [dashResult, statsResult, recentResult, activeResult] = await Promise.allSettled([
+        fetchDashboard(token),
+        fetchAdminStats(token),
+        fetchRecentUsage(token, 50),
+        fetchActiveUsers(token, 7, 50),
+      ])
+      if (dashResult.status === 'fulfilled') setData(dashResult.value)
+      if (statsResult.status === 'fulfilled') setPhase1Stats(statsResult.value)
+      if (recentResult.status === 'fulfilled') setRecentUsage(recentResult.value)
+      if (activeResult.status === 'fulfilled') setActiveUsers(activeResult.value)
+      if (dashResult.status === 'rejected' && statsResult.status === 'rejected') {
+        throw dashResult.reason instanceof Error ? dashResult.reason : new Error('Admin data unavailable')
+      }
       setLastSyncedAt(new Date().toISOString())
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Unbekannter Fehler'
@@ -500,6 +520,93 @@ export default function AdminDashboardPage() {
           <div className="rounded-xl border border-orange-500/40 bg-orange-950/50 px-4 py-3 text-sm text-orange-200">
             {error}
           </div>
+        )}
+
+        {phase1Stats && (
+          <section className="rounded-xl border border-slate-700/70 bg-slate-900/50 p-4 shadow-lg shadow-black/20">
+            <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
+              Basis-Usage (PostgreSQL)
+            </h2>
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+              <div className="rounded-xl border border-slate-700/50 bg-slate-900/40 p-3">
+                <p className="text-xs text-slate-500">Turns heute</p>
+                <p className="mt-1 text-xl font-semibold tabular-nums text-indigo-300">{phase1Stats.turnsToday}</p>
+              </div>
+              <div className="rounded-xl border border-slate-700/50 bg-slate-900/40 p-3">
+                <p className="text-xs text-slate-500">Turns diese Woche</p>
+                <p className="mt-1 text-xl font-semibold tabular-nums text-indigo-300">{phase1Stats.turnsThisWeek}</p>
+              </div>
+              <div className="rounded-xl border border-slate-700/50 bg-slate-900/40 p-3">
+                <p className="text-xs text-slate-500">Turns diesen Monat</p>
+                <p className="mt-1 text-xl font-semibold tabular-nums text-indigo-300">{phase1Stats.turnsThisMonth}</p>
+              </div>
+              <div className="rounded-xl border border-slate-700/50 bg-slate-900/40 p-3">
+                <p className="text-xs text-slate-500">Aktive User (7d)</p>
+                <p className="mt-1 text-xl font-semibold tabular-nums text-indigo-300">{phase1Stats.activeUsers7d}</p>
+              </div>
+              <div className="rounded-xl border border-slate-700/50 bg-slate-900/40 p-3">
+                <p className="text-xs text-slate-500">Aktivität (24h)</p>
+                <p className="mt-1 text-xl font-semibold tabular-nums text-indigo-300">{phase1Stats.recentRecordsCount}</p>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {(activeUsers.length > 0 || recentUsage.length > 0) && (
+          <section className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+            <div className="overflow-hidden rounded-xl border border-slate-700/70 bg-slate-900/50 shadow-lg shadow-black/20">
+              <div className="border-b border-slate-700/60 px-4 py-3">
+                <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-400">Aktive User (7 Tage)</h2>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[420px] text-left text-sm">
+                  <thead className="border-b border-slate-700/80 text-xs font-semibold text-slate-400">
+                    <tr>
+                      <th className="px-4 py-2">User</th>
+                      <th className="px-4 py-2 text-right">Turns</th>
+                      <th className="px-4 py-2 text-right">Letzte Aktivität</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-700/50">
+                    {activeUsers.slice(0, 10).map(row => (
+                      <tr key={row.userId}>
+                        <td className="px-4 py-2 font-mono text-xs text-slate-300">{row.userId}</td>
+                        <td className="px-4 py-2 text-right tabular-nums text-slate-200">{row.turnsCount}</td>
+                        <td className="px-4 py-2 text-right text-xs text-slate-400">{new Date(row.lastSeenAt).toLocaleString('de-DE')}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div className="overflow-hidden rounded-xl border border-slate-700/70 bg-slate-900/50 shadow-lg shadow-black/20">
+              <div className="border-b border-slate-700/60 px-4 py-3">
+                <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-400">Letzte Aktivitäten</h2>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[520px] text-left text-sm">
+                  <thead className="border-b border-slate-700/80 text-xs font-semibold text-slate-400">
+                    <tr>
+                      <th className="px-4 py-2">Zeit</th>
+                      <th className="px-4 py-2">User</th>
+                      <th className="px-4 py-2">Tool</th>
+                      <th className="px-4 py-2 text-right">Tokens</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-700/50">
+                    {recentUsage.slice(0, 10).map(row => (
+                      <tr key={row.id}>
+                        <td className="px-4 py-2 text-xs text-slate-400">{new Date(row.createdAt).toLocaleTimeString('de-DE')}</td>
+                        <td className="px-4 py-2 font-mono text-xs text-slate-300">{row.userId}</td>
+                        <td className="px-4 py-2 text-slate-200">{row.toolType}</td>
+                        <td className="px-4 py-2 text-right tabular-nums text-slate-200">{(row.inputTokens + row.outputTokens).toLocaleString('de-DE')}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
         )}
 
         {/* Hero + small metrics */}

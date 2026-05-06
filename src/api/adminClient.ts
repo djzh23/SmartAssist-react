@@ -65,6 +65,36 @@ export interface AdminDashboardData {
   llmCostPolicyNote?: string
 }
 
+export interface AdminStats {
+  turnsToday: number
+  turnsThisWeek: number
+  turnsThisMonth: number
+  activeUsers7d: number
+  recentRecordsCount: number
+}
+
+export interface RecentUsageRecord {
+  id: string
+  userId: string
+  toolType: string
+  sessionId: string
+  createdAt: string
+  inputTokens: number
+  outputTokens: number
+  cacheCreationTokens: number
+  cacheReadTokens: number
+  model?: string | null
+  responseTimeMs?: number | null
+  estimatedCostUsd?: number | null
+}
+
+export interface ActiveUserUsage {
+  userId: string
+  turnsCount: number
+  lastSeenAt: string
+  totalEstimatedCostUsd: number
+}
+
 export async function fetchDashboard(token: string): Promise<AdminDashboardData> {
   const res = await fetch(`${API_BASE}/api/admin/dashboard`, {
     headers: { Authorization: `Bearer ${token}` },
@@ -112,4 +142,28 @@ export async function fetchDailyStats(token: string, days = 30): Promise<DailyUs
   })
   if (!res.ok) throw new Error(`API error: ${res.status}`)
   return res.json() as Promise<DailyUsage[]>
+}
+
+export async function fetchAdminStats(token: string): Promise<AdminStats> {
+  const res = await fetch(`${API_BASE}/api/admin/stats`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok) throw new Error(`API error: ${res.status}`)
+  return res.json() as Promise<AdminStats>
+}
+
+export async function fetchRecentUsage(token: string, limit = 50): Promise<RecentUsageRecord[]> {
+  const res = await fetch(`${API_BASE}/api/admin/usage/recent?limit=${limit}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok) throw new Error(`API error: ${res.status}`)
+  return res.json() as Promise<RecentUsageRecord[]>
+}
+
+export async function fetchActiveUsers(token: string, days = 7, limit = 50): Promise<ActiveUserUsage[]> {
+  const res = await fetch(`${API_BASE}/api/admin/users/active?days=${days}&limit=${limit}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok) throw new Error(`API error: ${res.status}`)
+  return res.json() as Promise<ActiveUserUsage[]>
 }
