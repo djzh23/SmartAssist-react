@@ -95,6 +95,41 @@ export interface ActiveUserUsage {
   totalEstimatedCostUsd: number
 }
 
+export interface TokenSummary {
+  totalInputTokens: number
+  totalOutputTokens: number
+  totalCacheReadTokens: number
+  totalCacheCreationTokens: number
+  cacheHitRate: number
+  totalEstimatedCostUsd: number
+  totalTurns: number
+  avgInputTokensPerTurn: number
+  avgOutputTokensPerTurn: number
+  avgResponseTimeMs: number
+  groqTurnPercent: number
+}
+
+export interface TokenByTool {
+  toolType: string
+  turns: number
+  inputTokens: number
+  outputTokens: number
+  costUsd: number
+}
+
+export interface TokenByModel {
+  model: string
+  turns: number
+  costUsd: number
+}
+
+export interface TokenDaily {
+  date: string
+  turns: number
+  inputTokens: number
+  costUsd: number
+}
+
 export async function fetchDashboard(token: string): Promise<AdminDashboardData> {
   const res = await fetch(`${API_BASE}/api/admin/dashboard`, {
     headers: { Authorization: `Bearer ${token}` },
@@ -166,4 +201,44 @@ export async function fetchActiveUsers(token: string, days = 7, limit = 50): Pro
   })
   if (!res.ok) throw new Error(`API error: ${res.status}`)
   return res.json() as Promise<ActiveUserUsage[]>
+}
+
+export async function fetchTokenSummary(token: string, from: string, to: string): Promise<TokenSummary> {
+  const res = await fetch(`${API_BASE}/api/admin/tokens/summary?from=${from}&to=${to}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok) throw new Error(`API error: ${res.status}`)
+  return res.json() as Promise<TokenSummary>
+}
+
+export async function fetchTokensByTool(token: string, from: string, to: string): Promise<TokenByTool[]> {
+  const res = await fetch(`${API_BASE}/api/admin/tokens/by-tool?from=${from}&to=${to}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok) throw new Error(`API error: ${res.status}`)
+  return res.json() as Promise<TokenByTool[]>
+}
+
+export async function fetchTokensByModel(token: string, from: string, to: string): Promise<TokenByModel[]> {
+  const res = await fetch(`${API_BASE}/api/admin/tokens/by-model?from=${from}&to=${to}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok) throw new Error(`API error: ${res.status}`)
+  return res.json() as Promise<TokenByModel[]>
+}
+
+export async function fetchTokensDaily(token: string, days = 30): Promise<TokenDaily[]> {
+  const res = await fetch(`${API_BASE}/api/admin/tokens/daily?days=${days}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok) throw new Error(`API error: ${res.status}`)
+  return res.json() as Promise<TokenDaily[]>
+}
+
+export async function fetchTokensRecent(token: string, limit = 20): Promise<RecentUsageRecord[]> {
+  const res = await fetch(`${API_BASE}/api/admin/tokens/recent?limit=${limit}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!res.ok) throw new Error(`API error: ${res.status}`)
+  return res.json() as Promise<RecentUsageRecord[]>
 }

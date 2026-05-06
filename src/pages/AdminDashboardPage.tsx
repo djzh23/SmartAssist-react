@@ -30,11 +30,20 @@ import {
   fetchAdminStats,
   fetchDashboard,
   fetchRecentUsage,
+  fetchTokenSummary,
+  fetchTokensByModel,
+  fetchTokensByTool,
+  fetchTokensDaily,
+  fetchTokensRecent,
   fetchTopUsers,
   fetchUserUsage,
   type ActiveUserUsage,
   type AdminStats,
   type AdminDashboardData,
+  type TokenByModel,
+  type TokenByTool,
+  type TokenDaily,
+  type TokenSummary,
   type RecentUsageRecord,
   type UserUsageSummary,
 } from '../api/adminClient'
@@ -58,6 +67,7 @@ const chartGrid = '#334155'
 const chartTick = '#94a3b8'
 
 type TopUserRangePreset = 'retention' | '30d' | '7d' | 'today'
+type TokenRangePreset = 'today' | '7d' | '30d' | 'month'
 
 type PieModelRow = {
   name: string
@@ -144,6 +154,12 @@ function todayIso(): string {
   return new Date().toISOString().slice(0, 10)
 }
 
+function startOfMonthIso(): string {
+  const d = new Date()
+  d.setUTCDate(1)
+  return d.toISOString().slice(0, 10)
+}
+
 function truncateEmail(email: string, max = 20): string {
   const t = email.trim()
   if (t.length <= max) return t
@@ -207,6 +223,14 @@ export default function AdminDashboardPage() {
   const [planFilter, setPlanFilter] = useState<'all' | 'free' | 'starter' | 'pro'>('all')
   const [detailRangeLabel, setDetailRangeLabel] = useState('')
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null)
+  const [tokenRangePreset, setTokenRangePreset] = useState<TokenRangePreset>('7d')
+  const [tokenSummary, setTokenSummary] = useState<TokenSummary | null>(null)
+  const [tokensByTool, setTokensByTool] = useState<TokenByTool[]>([])
+  const [tokensByModel, setTokensByModel] = useState<TokenByModel[]>([])
+  const [tokensDaily, setTokensDaily] = useState<TokenDaily[]>([])
+  const [tokensRecent, setTokensRecent] = useState<RecentUsageRecord[]>([])
+  const [recentSortKey, setRecentSortKey] = useState<'createdAt' | 'inputTokens' | 'outputTokens' | 'estimatedCostUsd' | 'responseTimeMs'>('createdAt')
+  const [recentSortDesc, setRecentSortDesc] = useState(true)
 
   const fixedMonthlyCosts = useMemo(() => {
     const raw = import.meta.env.VITE_ADMIN_FIXED_COSTS_USD_MONTHLY
@@ -234,6 +258,14 @@ export default function AdminDashboardPage() {
         return USAGE_RETENTION_DAYS - 1
     }
   }, [])
+
+  const tokenRange = useMemo(() => {
+    const to = todayIso()
+    if (tokenRangePreset === 'today') return { from: to, to, days: 1 }
+    if (tokenRangePreset === '7d') return { from: isoDateDaysAgo(6), to, days: 7 }
+    if (tokenRangePreset === '30d') return { from: isoDateDaysAgo(29), to, days: 30 }
+    return { from: startOfMonthIso(), to, days: 30 }
+  }, [tokenRangePreset])
 
   const loadTopUsers = useCallback(async () => {
     try {
@@ -275,6 +307,18 @@ export default function AdminDashboardPage() {
       if (statsResult.status === 'fulfilled') setPhase1Stats(statsResult.value)
       if (recentResult.status === 'fulfilled') setRecentUsage(recentResult.value)
       if (activeResult.status === 'fulfilled') setActiveUsers(activeResult.value)
+      const [tokenSummaryRes, byToolRes, byModelRes, dailyRes, recentTokenRes] = await Promise.allSettled([
+        fetchTokenSummary(token, tokenRange.from, tokenRange.to),
+        fetchTokensByTool(token, tokenRange.from, tokenRange.to),
+        fetchTokensByModel(token, tokenRange.from, tokenRange.to),
+        fetchTokensDaily(token, tokenRange.days),
+        fetchTokensRecent(token, 20),
+      ])
+      if (tokenSummaryRes.status === 'fulfilled') setTokenSummary(tokenSummaryRes.value)
+      if (byToolRes.status === 'fulfilled') setTokensByTool(byToolRes.value)
+      if (byModelRes.status === 'fulfilled') setTokensByModel(byModelRes.value)
+      if (dailyRes.status === 'fulfilled') setTokensDaily(dailyRes.value)
+      if (recentTokenRes.status === 'fulfilled') setTokensRecent(recentTokenRes.value)
       if (dashResult.status === 'rejected' && statsResult.status === 'rejected') {
         throw dashResult.reason instanceof Error ? dashResult.reason : new Error('Admin data unavailable')
       }
@@ -290,7 +334,7 @@ export default function AdminDashboardPage() {
       setInitialLoad(false)
       setRefreshing(false)
     }
-  }, [getToken])
+  }, [getToken, tokenRange.days, tokenRange.from, tokenRange.to])
 
   useEffect(() => {
     void load(true)
@@ -299,6 +343,14 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     void loadTopUsers()
   }, [loadTopUsers])
+
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      void load(false)
+      void loadTopUsers()
+    }, 30_000)
+    return () => window.clearInterval(id)
+  }, [load, loadTopUsers])
 
   const openUserDetail = async (userId: string) => {
     setDetailError(null)
@@ -327,6 +379,22 @@ export default function AdminDashboardPage() {
       label: d.date.slice(5),
     }))
   }, [data])
+
+  const sortedTokenRecent = useMemo(() => {
+    const rows = [...tokensRecent]
+    rows.sort((a, b) => {
+      const av =
+        recentSortKey === 'createdAt'
+          ? new Date(a.createdAt).getTime()
+          : Number(a[recentSortKey] ?? 0)
+      const bv =
+        recentSortKey === 'createdAt'
+          ? new Date(b.createdAt).getTime()
+          : Number(b[recentSortKey] ?? 0)
+      return recentSortDesc ? bv - av : av - bv
+    })
+    return rows
+  }, [tokensRecent, recentSortDesc, recentSortKey])
 
   const yesterdayCompare = useMemo(() => {
     if (lineData.length < 2) return null
@@ -522,6 +590,58 @@ export default function AdminDashboardPage() {
           </div>
         )}
 
+        <section className="rounded-xl border border-slate-700/70 bg-slate-900/50 p-4 shadow-lg shadow-black/20">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-400">Token Monitoring</h2>
+            <div className="flex flex-wrap gap-2">
+              {([
+                ['today', 'Heute'],
+                ['7d', '7 Tage'],
+                ['30d', '30 Tage'],
+                ['month', 'Diesen Monat'],
+              ] as const).map(([id, label]) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setTokenRangePreset(id)}
+                  className={`rounded-md px-2.5 py-1 text-xs ${
+                    tokenRangePreset === id
+                      ? 'bg-orange-500/20 text-orange-200 ring-1 ring-orange-400/40'
+                      : 'bg-slate-800 text-slate-300 ring-1 ring-slate-600'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+          {tokenSummary ? (
+            <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
+              <div className="rounded-xl border border-slate-700/50 bg-slate-900/40 p-3">
+                <p className="text-xs text-slate-500">Turns</p>
+                <p className="mt-1 text-xl font-semibold tabular-nums text-indigo-300">{tokenSummary.totalTurns}</p>
+              </div>
+              <div className="rounded-xl border border-slate-700/50 bg-slate-900/40 p-3">
+                <p className="text-xs text-slate-500">Kosten</p>
+                <p className="mt-1 text-xl font-semibold tabular-nums text-orange-400">{fmt(tokenSummary.totalEstimatedCostUsd, 'usd')}</p>
+              </div>
+              <div className="rounded-xl border border-slate-700/50 bg-slate-900/40 p-3">
+                <p className="text-xs text-slate-500">Cache-Hit</p>
+                <p className="mt-1 text-xl font-semibold tabular-nums text-teal-300">{fmt(tokenSummary.cacheHitRate * 100, 'pct')}</p>
+              </div>
+              <div className="rounded-xl border border-slate-700/50 bg-slate-900/40 p-3">
+                <p className="text-xs text-slate-500">Ø Latenz</p>
+                <p className="mt-1 text-xl font-semibold tabular-nums text-indigo-300">{Math.round(tokenSummary.avgResponseTimeMs)}ms</p>
+              </div>
+            </div>
+          ) : null}
+          {tokensDaily.length > 0 ? (
+            <p className="mt-2 text-xs text-slate-500">
+              Tagesverlauf geladen: {tokensDaily.length} Tage · letzte Kosten {fmt(tokensDaily[tokensDaily.length - 1]?.costUsd ?? 0, 'usd')}
+            </p>
+          ) : null}
+        </section>
+
         {phase1Stats && (
           <section className="rounded-xl border border-slate-700/70 bg-slate-900/50 p-4 shadow-lg shadow-black/20">
             <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
@@ -605,6 +725,117 @@ export default function AdminDashboardPage() {
                   </tbody>
                 </table>
               </div>
+            </div>
+          </section>
+        )}
+
+        {(tokensByTool.length > 0 || tokensByModel.length > 0) && (
+          <section className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+            <div className="overflow-hidden rounded-xl border border-slate-700/70 bg-slate-900/50 shadow-lg shadow-black/20">
+              <div className="border-b border-slate-700/60 px-4 py-3">
+                <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-400">Tokens nach Tool</h2>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[480px] text-left text-sm">
+                  <thead className="border-b border-slate-700/80 text-xs font-semibold text-slate-400">
+                    <tr>
+                      <th className="px-4 py-2">Tool</th>
+                      <th className="px-4 py-2 text-right">Turns</th>
+                      <th className="px-4 py-2 text-right">Input</th>
+                      <th className="px-4 py-2 text-right">Kosten</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-700/50">
+                    {tokensByTool.map(row => (
+                      <tr key={row.toolType}>
+                        <td className="px-4 py-2 text-slate-200">{toolLabel(row.toolType)}</td>
+                        <td className="px-4 py-2 text-right tabular-nums text-slate-200">{row.turns}</td>
+                        <td className="px-4 py-2 text-right tabular-nums text-slate-300">{fmt(row.inputTokens, 'tokens')}</td>
+                        <td className="px-4 py-2 text-right tabular-nums text-orange-400">{fmt(row.costUsd, 'usd')}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div className="overflow-hidden rounded-xl border border-slate-700/70 bg-slate-900/50 shadow-lg shadow-black/20">
+              <div className="border-b border-slate-700/60 px-4 py-3">
+                <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-400">Model Split</h2>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[420px] text-left text-sm">
+                  <thead className="border-b border-slate-700/80 text-xs font-semibold text-slate-400">
+                    <tr>
+                      <th className="px-4 py-2">Model</th>
+                      <th className="px-4 py-2 text-right">Turns</th>
+                      <th className="px-4 py-2 text-right">Kosten</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-700/50">
+                    {tokensByModel.map(row => (
+                      <tr key={row.model}>
+                        <td className="px-4 py-2 text-slate-200">{shortModelLabel(row.model)}</td>
+                        <td className="px-4 py-2 text-right tabular-nums text-slate-200">{row.turns}</td>
+                        <td className="px-4 py-2 text-right tabular-nums text-orange-400">{fmt(row.costUsd, 'usd')}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {sortedTokenRecent.length > 0 && (
+          <section className="overflow-hidden rounded-xl border border-slate-700/70 bg-slate-900/50 shadow-lg shadow-black/20">
+            <div className="border-b border-slate-700/60 px-4 py-3">
+              <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-400">Recent Turns</h2>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[920px] text-left text-sm">
+                <thead className="border-b border-slate-700/80 text-xs font-semibold text-slate-400">
+                  <tr>
+                    <th className="px-4 py-2">
+                      <button type="button" onClick={() => { setRecentSortKey('createdAt'); setRecentSortDesc(d => !d) }}>Zeit</button>
+                    </th>
+                    <th className="px-4 py-2">User</th>
+                    <th className="px-4 py-2">Tool</th>
+                    <th className="px-4 py-2">Model</th>
+                    <th className="px-4 py-2 text-right">
+                      <button type="button" onClick={() => { setRecentSortKey('inputTokens'); setRecentSortDesc(d => !d) }}>Input</button>
+                    </th>
+                    <th className="px-4 py-2 text-right">
+                      <button type="button" onClick={() => { setRecentSortKey('outputTokens'); setRecentSortDesc(d => !d) }}>Output</button>
+                    </th>
+                    <th className="px-4 py-2 text-right">Cache</th>
+                    <th className="px-4 py-2 text-right">
+                      <button type="button" onClick={() => { setRecentSortKey('estimatedCostUsd'); setRecentSortDesc(d => !d) }}>Kosten</button>
+                    </th>
+                    <th className="px-4 py-2 text-right">
+                      <button type="button" onClick={() => { setRecentSortKey('responseTimeMs'); setRecentSortDesc(d => !d) }}>Latenz</button>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-700/50">
+                  {sortedTokenRecent.map(row => {
+                    const cacheDen = row.cacheReadTokens + row.inputTokens
+                    const cachePct = cacheDen <= 0 ? 0 : (row.cacheReadTokens / cacheDen) * 100
+                    return (
+                      <tr key={row.id}>
+                        <td className="px-4 py-2 text-xs text-slate-400">{new Date(row.createdAt).toLocaleTimeString('de-DE')}</td>
+                        <td className="px-4 py-2 font-mono text-xs text-slate-300">{row.userId}</td>
+                        <td className="px-4 py-2 text-slate-200">{row.toolType}</td>
+                        <td className="px-4 py-2 text-slate-300">{shortModelLabel(row.model ?? 'unknown')}</td>
+                        <td className="px-4 py-2 text-right tabular-nums text-slate-200">{row.inputTokens.toLocaleString('de-DE')}</td>
+                        <td className="px-4 py-2 text-right tabular-nums text-slate-200">{row.outputTokens.toLocaleString('de-DE')}</td>
+                        <td className="px-4 py-2 text-right tabular-nums text-slate-300">{fmt(cachePct, 'pct')}</td>
+                        <td className="px-4 py-2 text-right tabular-nums text-orange-400">{fmt(row.estimatedCostUsd ?? 0, 'usd')}</td>
+                        <td className="px-4 py-2 text-right tabular-nums text-slate-300">{row.responseTimeMs ?? 0}ms</td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
             </div>
           </section>
         )}
