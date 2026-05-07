@@ -352,10 +352,9 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     const id = window.setInterval(() => {
       void load(false)
-      void loadTopUsers()
-    }, 30_000)
+    }, 60_000)
     return () => window.clearInterval(id)
-  }, [load, loadTopUsers])
+  }, [load])
 
   const openUserDetail = async (userId: string) => {
     setDetailError(null)
@@ -1449,7 +1448,7 @@ export default function AdminDashboardPage() {
               </table>
             </div>
             <p className="border-t border-slate-700/60 px-4 py-2 text-[11px] text-slate-500">
-              Zeile anklicken: Nutzungsdetails (gleicher Zeitraum wie oben) · Dashboard &amp; Tabelle alle 60s
+              Zeile anklicken: Nutzungsdetails (gleicher Zeitraum wie oben) · Dashboard auto-refresh alle 60s
             </p>
           </div>
         ) : null}
