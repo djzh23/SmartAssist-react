@@ -1,15 +1,16 @@
 import type { ToolType } from '../types'
 
+/** Warm sepia/brown accents — aligned with dark shell (#120c08), no rainbow primaries. */
 export const CHAT_FEATURE_COLORS: Record<string, string> = {
-  general: '#0D9488',
-  jobanalyzer: '#6366F1',
-  interviewprep: '#EC4899',
-  interview: '#EC4899',
-  cover_letter: '#F59E0B',
-  salary_coach: '#8B5CF6',
-  linkedin: '#64748B',
-  programming: '#06B6D4',
-  language: '#10B981',
+  general: '#B45309',
+  jobanalyzer: '#92400E',
+  interviewprep: '#A16207',
+  interview: '#A16207',
+  cover_letter: '#C2410C',
+  salary_coach: '#854D0E',
+  linkedin: '#57534E',
+  programming: '#713F12',
+  language: '#78716C',
 }
 
 function normalizeFeatureKey(tool: string | ToolType | undefined | null): string {

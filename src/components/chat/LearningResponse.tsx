@@ -177,9 +177,9 @@ export default function LearningResponse({
 
   return (
     <div className="flex max-w-[520px] animate-slide-up flex-col gap-1.5">
-      <div className="learning-card-target group rounded-xl border-l-[3px] border-l-[#D97706] bg-[#FFFBEB] px-4 py-3.5 transition-transform duration-100 hover:translate-x-0.5">
+      <div className="learning-card-target group rounded-xl border-y border-r border-stone-600/40 border-l-[3px] border-l-amber-600 bg-app-raised px-4 py-3.5 shadow-[inset_0_1px_0_0_rgba(255,251,235,0.04)] transition-transform duration-100 hover:translate-x-0.5">
         <div className="mb-2 flex items-center justify-between">
-          <span className="text-[10px] font-bold uppercase tracking-[1.2px] text-slate-500">
+          <span className="text-[10px] font-bold uppercase tracking-[1.2px] text-stone-500">
             {targetLang}
           </span>
           <div className="flex flex-col items-end gap-1">
@@ -191,7 +191,7 @@ export default function LearningResponse({
                 'flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-sm transition-all duration-150',
                 'bg-[rgba(180,100,0,0.1)] text-[#D97706] hover:bg-[rgba(180,100,0,0.2)]',
                 isPlaying ? 'bg-[#D97706] text-white motion-safe:animate-pulse' : '',
-                audioError ? 'bg-red-100 text-red-600' : '',
+                audioError ? 'bg-red-950/50 text-red-300' : '',
               ].join(' ')}
             >
               {isPlaying
@@ -207,18 +207,18 @@ export default function LearningResponse({
             )}
           </div>
         </div>
-        <p className="font-serif text-lg font-medium leading-relaxed text-[#2D1B69]">
+        <p className="font-serif text-lg font-medium leading-relaxed text-amber-50/95">
           {data.targetLanguageText}
           {showStreamCursor ? <StreamingTextCursor /> : null}
         </p>
       </div>
 
       {data.nativeLanguageText && (
-        <div className="learning-card-translation rounded-xl border-l-[3px] border-l-slate-300 bg-[#F9FAFB] px-4 py-3.5 transition-transform duration-100 hover:translate-x-0.5">
-          <div className="mb-2 text-[10px] font-bold uppercase tracking-[1.2px] text-slate-500">
+        <div className="learning-card-translation rounded-xl border border-stone-600/35 border-l-[3px] border-l-stone-500 bg-[#181410] px-4 py-3.5 transition-transform duration-100 hover:translate-x-0.5">
+          <div className="mb-2 text-[10px] font-bold uppercase tracking-[1.2px] text-stone-500">
             {nativeLang}
           </div>
-          <p className="text-sm italic leading-relaxed text-slate-500">
+          <p className="text-sm italic leading-relaxed text-stone-400">
             {data.nativeLanguageText}
           </p>
         </div>
@@ -234,24 +234,24 @@ export default function LearningResponse({
       )}
 
       {data.learnVariants && (
-        <div className="rounded-xl border-l-[3px] border-l-violet-400 bg-violet-50/80 px-4 py-3">
-          <div className="mb-1.5 text-[10px] font-bold uppercase tracking-[1.2px] text-violet-800">
+        <div className="rounded-xl border border-stone-600/35 border-l-[3px] border-l-stone-500 bg-stone-900/40 px-4 py-3">
+          <div className="mb-1.5 text-[10px] font-bold uppercase tracking-[1.2px] text-stone-300">
             Varianten
           </div>
-          <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-700">{data.learnVariants}</p>
+          <p className="whitespace-pre-wrap text-sm leading-relaxed text-stone-400">{data.learnVariants}</p>
         </div>
       )}
 
       {data.learnTip && (
-        <div className="learning-card-tip rounded-xl border-l-[3px] border-l-amber-500 bg-[#FFFBEB] px-3.5 py-2 transition-transform duration-100 hover:translate-x-0.5">
-          <p className="font-mono text-[13px] leading-snug text-amber-900">
+        <div className="learning-card-tip rounded-xl border border-amber-900/35 border-l-[3px] border-l-amber-600 bg-amber-950/35 px-3.5 py-2 transition-transform duration-100 hover:translate-x-0.5">
+          <p className="font-mono text-[13px] leading-snug text-amber-100/95">
             <span className="mr-1" aria-hidden>💡</span>
             {data.learnTip}
           </p>
         </div>
       )}
 
-      <span className="pl-1 text-[11px] text-slate-400">{time}</span>
+      <span className="pl-1 text-[11px] text-stone-500">{time}</span>
     </div>
   )
 }

@@ -34,19 +34,19 @@ const ICON_BY_TONE: Record<JobSectionTone, LucideIcon> = {
 
 function scorePillClasses(score?: number): string {
   if (typeof score !== 'number') {
-    return 'border-slate-200 bg-slate-100 text-slate-600'
+    return 'border-stone-600/50 bg-stone-800/70 text-stone-400'
   }
 
-  if (score >= 75) return 'border-emerald-200 bg-emerald-100 text-emerald-700'
-  if (score >= 50) return 'border-amber-200 bg-amber-100 text-amber-700'
-  return 'border-rose-200 bg-rose-100 text-rose-700'
+  if (score >= 75) return 'border-amber-600/45 bg-amber-950/55 text-amber-100'
+  if (score >= 50) return 'border-stone-600/50 bg-stone-800/80 text-stone-200'
+  return 'border-orange-900/45 bg-orange-950/40 text-orange-100'
 }
 
 function scoreBarClasses(score?: number): string {
-  if (typeof score !== 'number') return 'bg-slate-300'
-  if (score >= 75) return 'bg-emerald-500'
-  if (score >= 50) return 'bg-amber-500'
-  return 'bg-rose-500'
+  if (typeof score !== 'number') return 'bg-stone-700'
+  if (score >= 75) return 'bg-amber-500'
+  if (score >= 50) return 'bg-amber-700'
+  return 'bg-orange-800'
 }
 
 export default function JobAnalysisCard({ text, showStreamCursor = false, accentColor }: Props) {
@@ -57,7 +57,7 @@ export default function JobAnalysisCard({ text, showStreamCursor = false, accent
 
   if (visibleSections.length === 0) {
     return (
-      <p className="whitespace-pre-wrap text-sm text-slate-700">
+      <p className="whitespace-pre-wrap text-sm text-stone-300">
         {text}
         {showStreamCursor ? <StreamingTextCursor /> : null}
       </p>
@@ -69,21 +69,21 @@ export default function JobAnalysisCard({ text, showStreamCursor = false, accent
   return (
     <div className="w-full space-y-3">
       <div
-        className="rounded-xl border bg-gradient-to-r from-white to-white px-4 py-3 shadow-sm"
+        className="rounded-xl border bg-app-raised px-4 py-3 shadow-[inset_0_1px_0_0_rgba(255,251,235,0.04)]"
         style={{
-          borderColor: hexToRgba(featureColor, 0.3),
-          backgroundImage: `linear-gradient(90deg, ${hexToRgba(featureColor, 0.1)} 0%, rgba(255,255,255,1) 68%)`,
+          borderColor: hexToRgba(featureColor, 0.35),
+          backgroundImage: `linear-gradient(90deg, ${hexToRgba(featureColor, 0.14)} 0%, #1f1a16 72%)`,
         }}
       >
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <p
               className="text-[11px] font-semibold uppercase tracking-[0.14em]"
-              style={{ color: hexToRgba(featureColor, 0.78) }}
+              style={{ color: hexToRgba(featureColor, 0.88) }}
             >
               Job Analyzer
             </p>
-            <p className="text-sm font-semibold text-slate-800">
+            <p className="text-sm font-semibold text-stone-100">
               Strukturierte Match Analyse
             </p>
           </div>
@@ -94,11 +94,11 @@ export default function JobAnalysisCard({ text, showStreamCursor = false, accent
 
         {typeof overallScore === 'number' && (
           <div className="mt-3">
-            <div className="mb-1 flex items-center justify-between text-[11px] text-slate-500">
+            <div className="mb-1 flex items-center justify-between text-[11px] text-stone-500">
               <span>Uebereinstimmung</span>
               <span>{overallScore}%</span>
             </div>
-            <div className="h-2 overflow-hidden rounded-full bg-slate-200">
+            <div className="h-2 overflow-hidden rounded-full bg-stone-800">
               <div
                 className={`h-full rounded-full transition-all duration-500 ${scoreBarClasses(overallScore)}`}
                 style={{ width: `${Math.max(3, overallScore)}%` }}
@@ -140,7 +140,7 @@ export default function JobAnalysisCard({ text, showStreamCursor = false, accent
               </header>
 
               <div
-                className="job-analysis-body text-[0.89rem] leading-relaxed text-slate-700"
+                className="job-analysis-body text-[0.89rem] leading-relaxed text-stone-300 [&_a]:text-amber-400 [&_strong]:text-stone-100"
                 dangerouslySetInnerHTML={{ __html: bodyToHtml(section.body) }}
               />
             </article>

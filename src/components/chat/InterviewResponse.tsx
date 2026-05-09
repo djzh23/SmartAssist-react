@@ -16,12 +16,12 @@ function renderInline(text: string): ReactNode[] {
     if (match.index > last) nodes.push(text.slice(last, match.index))
     const token = match[0]
     if (token.startsWith('**')) {
-      nodes.push(<strong key={key++} className="font-semibold text-slate-900">{token.slice(2, -2)}</strong>)
+      nodes.push(<strong key={key++} className="font-semibold text-stone-100">{token.slice(2, -2)}</strong>)
     } else if (token.startsWith('*')) {
-      nodes.push(<em key={key++} className="italic text-slate-700">{token.slice(1, -1)}</em>)
+      nodes.push(<em key={key++} className="italic text-stone-400">{token.slice(1, -1)}</em>)
     } else {
       nodes.push(
-        <code key={key++} className="rounded border border-sky-200 bg-sky-50 px-1 py-0.5 font-mono text-[0.78em] text-sky-700">
+        <code key={key++} className="rounded border border-stone-600/70 bg-stone-900/90 px-1 py-0.5 font-mono text-[0.78em] text-amber-100/90">
           {token.slice(1, -1)}
         </code>,
       )
@@ -46,58 +46,58 @@ function detectKind(heading: string): SectionKind {
 
 const STYLES: Record<SectionKind, { wrap: string; h2: string; h3: string; dot: string; nb: string; nt: string; q: string }> = {
   tip: {
-    wrap: 'rounded-xl border border-amber-200 bg-amber-50 px-4 py-3',
-    h2: 'text-sm font-bold text-amber-800',
-    h3: 'text-sm font-semibold text-amber-700',
-    dot: 'bg-amber-400',
-    nb: 'bg-amber-100',
-    nt: 'text-amber-700',
-    q: 'border-l-4 border-amber-300 bg-amber-50/60 pl-3 italic text-amber-900',
+    wrap: 'rounded-xl border border-amber-800/45 bg-amber-950/35 px-4 py-3',
+    h2: 'text-sm font-bold text-amber-100',
+    h3: 'text-sm font-semibold text-amber-200/95',
+    dot: 'bg-amber-500',
+    nb: 'bg-amber-900/85 text-amber-50',
+    nt: 'text-amber-50',
+    q: 'border-l-4 border-amber-700/55 bg-amber-950/25 pl-3 italic text-stone-300',
   },
   question: {
-    wrap: 'rounded-xl border border-blue-200 bg-blue-50 px-4 py-3',
-    h2: 'text-sm font-bold text-blue-800',
-    h3: 'text-sm font-semibold text-blue-700',
-    dot: 'bg-blue-400',
-    nb: 'bg-blue-100',
-    nt: 'text-blue-700',
-    q: 'border-l-4 border-blue-300 bg-blue-50/60 pl-3 italic text-blue-900',
+    wrap: 'rounded-xl border border-stone-600/50 bg-stone-900/45 px-4 py-3',
+    h2: 'text-sm font-bold text-stone-100',
+    h3: 'text-sm font-semibold text-stone-300',
+    dot: 'bg-stone-500',
+    nb: 'bg-stone-800 text-stone-200',
+    nt: 'text-stone-200',
+    q: 'border-l-4 border-stone-600 bg-stone-950/40 pl-3 italic text-stone-400',
   },
   warning: {
-    wrap: 'rounded-xl border border-red-200 bg-red-50 px-4 py-3',
-    h2: 'text-sm font-bold text-red-800',
-    h3: 'text-sm font-semibold text-red-700',
-    dot: 'bg-red-400',
-    nb: 'bg-red-100',
-    nt: 'text-red-700',
-    q: 'border-l-4 border-red-300 bg-red-50/60 pl-3 italic text-red-900',
+    wrap: 'rounded-xl border border-red-900/45 bg-red-950/30 px-4 py-3',
+    h2: 'text-sm font-bold text-red-200',
+    h3: 'text-sm font-semibold text-red-300/95',
+    dot: 'bg-red-500',
+    nb: 'bg-red-950/80 text-red-100',
+    nt: 'text-red-100',
+    q: 'border-l-4 border-red-800/60 bg-red-950/35 pl-3 italic text-red-200/95',
   },
   star: {
-    wrap: 'rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3',
-    h2: 'text-sm font-bold text-emerald-800',
-    h3: 'text-sm font-semibold text-emerald-700',
-    dot: 'bg-emerald-400',
-    nb: 'bg-emerald-100',
-    nt: 'text-emerald-700',
-    q: 'border-l-4 border-emerald-300 bg-emerald-50/60 pl-3 italic text-emerald-900',
+    wrap: 'rounded-xl border border-amber-700/40 bg-amber-950/28 px-4 py-3',
+    h2: 'text-sm font-bold text-amber-100',
+    h3: 'text-sm font-semibold text-amber-200/90',
+    dot: 'bg-amber-600',
+    nb: 'bg-amber-900/80 text-amber-50',
+    nt: 'text-amber-50',
+    q: 'border-l-4 border-amber-700/50 bg-amber-950/22 pl-3 italic text-stone-300',
   },
   job: {
-    wrap: 'rounded-xl border border-amber-200 bg-amber-50 px-4 py-3',
-    h2: 'text-sm font-bold text-amber-800',
-    h3: 'text-sm font-semibold text-amber-700',
-    dot: 'bg-amber-400',
-    nb: 'bg-amber-100',
-    nt: 'text-amber-700',
-    q: 'border-l-4 border-amber-300 bg-amber-50/60 pl-3 italic text-amber-900',
+    wrap: 'rounded-xl border border-amber-800/40 bg-amber-950/32 px-4 py-3',
+    h2: 'text-sm font-bold text-amber-100',
+    h3: 'text-sm font-semibold text-amber-200/95',
+    dot: 'bg-amber-500',
+    nb: 'bg-amber-900/85 text-amber-50',
+    nt: 'text-amber-50',
+    q: 'border-l-4 border-amber-700/55 bg-amber-950/25 pl-3 italic text-stone-300',
   },
   default: {
     wrap: '',
-    h2: 'border-b border-sky-100 pb-1 text-sm font-bold text-sky-700',
-    h3: 'text-sm font-semibold text-slate-700',
-    dot: 'bg-sky-400',
-    nb: 'bg-sky-100',
-    nt: 'text-sky-700',
-    q: 'border-l-4 border-sky-300 bg-sky-50/60 pl-3 italic text-sky-900',
+    h2: 'border-b border-stone-600/70 pb-1 text-sm font-bold text-amber-100',
+    h3: 'text-sm font-semibold text-stone-300',
+    dot: 'bg-amber-600',
+    nb: 'bg-stone-800 text-stone-200',
+    nt: 'text-stone-200',
+    q: 'border-l-4 border-stone-600 bg-stone-900/45 pl-3 italic text-stone-400',
   },
 }
 
@@ -132,7 +132,7 @@ function renderBlock(block: Block, style: typeof STYLES[SectionKind], index: num
       return (
         <ul key={index} className="mb-1.5 mt-1.5 flex flex-col gap-1">
           {block.items.map((item, i) => (
-            <li key={i} className="flex items-start gap-2 text-sm text-slate-700">
+            <li key={i} className="flex items-start gap-2 text-sm text-stone-300">
               <span className={`mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full ${style.dot}`} />
               <span className="leading-relaxed">{renderInline(item)}</span>
             </li>
@@ -143,7 +143,7 @@ function renderBlock(block: Block, style: typeof STYLES[SectionKind], index: num
       return (
         <ol key={index} className="mb-1.5 mt-1.5 flex flex-col gap-1.5">
           {block.items.map((item, i) => (
-            <li key={i} className="flex items-start gap-2 text-sm text-slate-700">
+            <li key={i} className="flex items-start gap-2 text-sm text-stone-300">
               <span className={`mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${style.nb} ${style.nt}`}>{i + 1}</span>
               <span className="leading-relaxed">{renderInline(item)}</span>
             </li>
@@ -157,9 +157,9 @@ function renderBlock(block: Block, style: typeof STYLES[SectionKind], index: num
         </div>
       )
     case 'hr':
-      return <hr key={index} className="my-2 border-slate-200" />
+      return <hr key={index} className="my-2 border-stone-700/70" />
     default:
-      return <p key={index} className="text-sm leading-relaxed text-slate-700">{renderInline((block as { content: string }).content)}</p>
+        return <p key={index} className="text-sm leading-relaxed text-stone-300">{renderInline((block as { content: string }).content)}</p>
   }
 }
 
@@ -176,8 +176,8 @@ export default function InterviewResponse({ text, timestamp, showStreamCursor = 
 
   return (
     <div className="self-start flex w-full animate-slide-up flex-col gap-1">
-      <div className="overflow-hidden rounded-[4px_18px_18px_18px] border border-slate-200 bg-white shadow-sm">
-        <div className="h-1 bg-gradient-to-r from-sky-500 via-blue-400 to-sky-300" />
+      <div className="overflow-hidden rounded-[4px_18px_18px_18px] border border-stone-600/45 bg-app-raised shadow-[inset_0_1px_0_0_rgba(255,251,235,0.04)]">
+        <div className="h-1 bg-gradient-to-r from-amber-900 via-amber-700 to-amber-900" />
         <div className={`flex flex-col px-4 pb-4 pt-3 ${hasStructure ? 'gap-3' : 'gap-1'}`}>
           {segments.map((seg, segIndex) =>
             seg.type === 'code' ? (
@@ -206,11 +206,11 @@ export default function InterviewResponse({ text, timestamp, showStreamCursor = 
       </div>
 
       <div className="flex items-center gap-2 pl-1">
-        <span className="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[10px] font-medium text-sky-500">
+        <span className="inline-flex items-center gap-1 rounded-full border border-amber-800/45 bg-amber-950/40 px-2 py-0.5 text-[10px] font-medium text-amber-100/95">
           <MessageCircleMore size={11} />
           <span>Interview Coach</span>
         </span>
-        <span className="text-[11px] text-slate-400">{time}</span>
+        <span className="text-[11px] text-stone-500">{time}</span>
       </div>
     </div>
   )

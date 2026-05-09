@@ -176,7 +176,7 @@ export default function MessageBubble({
   if (!msg.isUser) {
     return (
       <div className="self-start flex max-w-[87%] animate-slide-up flex-col gap-0.5 min-[391px]:max-w-[85%] min-[391px]:gap-1">
-        <div className="break-words rounded-[4px_16px_16px_16px] border border-stone-400/55 bg-app-parchment px-3 py-2 text-[14px] leading-relaxed text-stone-900 shadow-[0_10px_24px_-10px_rgba(0,0,0,0.45)] min-[391px]:rounded-[4px_18px_18px_18px] min-[391px]:px-3.5 min-[391px]:py-2.5 min-[391px]:text-sm min-[391px]:shadow-[0_10px_28px_-6px_rgba(0,0,0,0.45)]">
+        <div className="break-words rounded-[4px_16px_16px_16px] border border-stone-600/45 bg-app-raised px-3 py-2 text-[14px] leading-relaxed text-stone-200 shadow-[inset_0_1px_0_0_rgba(255,251,235,0.05),0_10px_28px_-12px_rgba(0,0,0,0.55)] min-[391px]:rounded-[4px_18px_18px_18px] min-[391px]:px-3.5 min-[391px]:py-2.5 min-[391px]:text-sm">
           <RenderedMarkdown content={msg.text} variant="assistant" />
           {showStreamCursor ? <StreamingTextCursor /> : null}
         </div>

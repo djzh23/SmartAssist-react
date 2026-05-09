@@ -17,12 +17,12 @@ function renderInline(text: string): ReactNode[] {
     if (m.index > last) nodes.push(text.slice(last, m.index))
     const tok = m[0]
     if (tok.startsWith('**')) {
-      nodes.push(<strong key={k++} className="font-semibold text-slate-900">{tok.slice(2, -2)}</strong>)
+      nodes.push(<strong key={k++} className="font-semibold text-stone-100">{tok.slice(2, -2)}</strong>)
     } else if (tok.startsWith('*')) {
-      nodes.push(<em key={k++} className="italic text-slate-700">{tok.slice(1, -1)}</em>)
+      nodes.push(<em key={k++} className="italic text-stone-400">{tok.slice(1, -1)}</em>)
     } else {
       nodes.push(
-        <code key={k++} className="bg-amber-50 text-amber-700 border border-amber-200 text-[0.78em] font-mono rounded px-1 py-0.5">
+        <code key={k++} className="border border-stone-600/70 bg-stone-900/90 text-amber-100/90 text-[0.78em] font-mono rounded px-1 py-0.5">
           {tok.slice(1, -1)}
         </code>
       )
@@ -38,17 +38,17 @@ function renderBlocks(blocks: Block[]): ReactNode[] {
   return blocks.map((b, i) => {
     switch (b.type) {
       case 'h1':
-        return <h2 key={i} className="text-base font-bold text-amber-700 mt-3 mb-1 first:mt-0">{renderInline(b.content)}</h2>
+        return <h2 key={i} className="text-base font-bold text-amber-200/95 mt-3 mb-1 first:mt-0">{renderInline(b.content)}</h2>
       case 'h2':
-        return <h3 key={i} className="text-sm font-bold text-slate-800 mt-3 mb-1 first:mt-0 border-b border-slate-200 pb-0.5">{renderInline(b.content)}</h3>
+        return <h3 key={i} className="text-sm font-bold text-stone-200 mt-3 mb-1 first:mt-0 border-b border-stone-600/60 pb-0.5">{renderInline(b.content)}</h3>
       case 'h3':
-        return <h4 key={i} className="text-sm font-semibold text-emerald-700 mt-2 mb-0.5 first:mt-0">{renderInline(b.content)}</h4>
+        return <h4 key={i} className="text-sm font-semibold text-amber-100/90 mt-2 mb-0.5 first:mt-0">{renderInline(b.content)}</h4>
       case 'ul':
         return (
           <ul key={i} className="mt-1.5 mb-1.5 flex flex-col gap-0.5 pl-0">
             {b.items.map((item, j) => (
-              <li key={j} className="flex items-start gap-2 text-sm text-slate-700">
-                <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0" />
+              <li key={j} className="flex items-start gap-2 text-sm text-stone-300">
+                <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-amber-600 flex-shrink-0" />
                 <span>{renderInline(item)}</span>
               </li>
             ))}
@@ -58,8 +58,8 @@ function renderBlocks(blocks: Block[]): ReactNode[] {
         return (
           <ol key={i} className="mt-1.5 mb-1.5 flex flex-col gap-0.5 pl-0">
             {b.items.map((item, j) => (
-              <li key={j} className="flex items-start gap-2 text-sm text-slate-700">
-                <span className="flex-shrink-0 w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold flex items-center justify-center mt-0.5">{j + 1}</span>
+              <li key={j} className="flex items-start gap-2 text-sm text-stone-300">
+                <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-stone-800 text-[10px] font-bold text-amber-100/95 mt-0.5">{j + 1}</span>
                 <span>{renderInline(item)}</span>
               </li>
             ))}
@@ -67,14 +67,14 @@ function renderBlocks(blocks: Block[]): ReactNode[] {
         )
       case 'blockquote':
         return (
-          <div key={i} className="my-2 border-l-4 border-amber-300 bg-amber-50/60 pl-3 rounded-r-lg py-2 pr-3 text-sm italic text-amber-900">
+          <div key={i} className="my-2 rounded-r-lg border-l-4 border-amber-700/55 bg-amber-950/28 py-2 pl-3 pr-3 text-sm italic text-stone-400">
             {b.content.split('\n').map((ln, j) => <p key={j}>{renderInline(ln)}</p>)}
           </div>
         )
       case 'hr':
         return <hr key={i} className="border-slate-200 my-2" />
       default:
-        return <p key={i} className="text-sm text-slate-700 leading-relaxed">{renderInline((b as { content: string }).content)}</p>
+        return <p key={i} className="text-sm leading-relaxed text-stone-300">{renderInline((b as { content: string }).content)}</p>
     }
   })
 }
@@ -111,7 +111,7 @@ export default function ProgrammingResponse({ text, progLang, timestamp, showStr
           </div>
         ) : null}
       </div>
-      <span className="text-[11px] text-slate-400 pl-1">{time}</span>
+      <span className="pl-1 text-[11px] text-stone-500">{time}</span>
     </div>
   )
 }

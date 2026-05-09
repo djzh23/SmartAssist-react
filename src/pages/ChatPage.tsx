@@ -1649,7 +1649,7 @@ export default function ChatPage() {
         {isLanguage && (
           <div className="hidden min-[769px]:block flex-shrink-0 px-4 pb-0 pt-3">
             <div className="mx-auto max-w-3xl">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-light px-3 py-1 text-xs font-medium text-primary">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-800/40 bg-amber-950/35 px-3 py-1 text-xs font-medium text-amber-100/95">
                 Lernen: {targetDisplay}
               </span>
             </div>
@@ -1659,7 +1659,7 @@ export default function ChatPage() {
         {isProgramming && (
           <div className="hidden min-[769px]:block flex-shrink-0 px-4 pb-0 pt-3">
             <div className="mx-auto max-w-3xl">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-stone-600/45 bg-stone-900/55 px-3 py-1 text-xs font-medium text-stone-200">
                 Programmierung: {progMeta?.label ?? progLang}
               </span>
             </div>
@@ -1669,19 +1669,19 @@ export default function ChatPage() {
         {isInterview && (
           <div className="hidden min-[769px]:flex flex-shrink-0 px-4 pb-0 pt-3">
             <div className="mx-auto flex max-w-3xl flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-50 px-3 py-1 text-xs font-medium text-sky-700">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-stone-600/45 bg-stone-900/55 px-3 py-1 text-xs font-medium text-stone-200">
                 Vorstellungsgespräch
               </span>
 
               {activeContext?.hasCv && (
-                <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
+                <span className="inline-flex items-center gap-1 rounded-full border border-amber-800/35 bg-amber-950/35 px-3 py-1 text-xs font-medium text-amber-100/95">
                   Lebenslauf Kontext aktiv
                 </span>
               )}
 
               <button
                 onClick={() => setShowContextModal(true)}
-                className="text-xs text-sky-600 hover:text-sky-800 hover:underline"
+                className="text-xs text-amber-400/95 hover:text-amber-300 hover:underline"
               >
                 Setup öffnen
               </button>

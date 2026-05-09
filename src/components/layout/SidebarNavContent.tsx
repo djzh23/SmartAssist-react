@@ -69,9 +69,9 @@ function badgeColorClass(color: string): string {
     case 'orange':
       return 'bg-amber-500/18 text-amber-200'
     case 'teal':
-      return 'bg-teal-500/18 text-teal-200'
+      return 'bg-stone-500/20 text-stone-200'
     case 'blue':
-      return 'bg-sky-500/18 text-sky-200'
+      return 'bg-amber-900/30 text-amber-100/90'
     default:
       return 'bg-stone-500/15 text-stone-300'
   }

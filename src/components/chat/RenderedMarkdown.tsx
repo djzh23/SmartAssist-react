@@ -28,7 +28,7 @@ function makeMarkdownComponents(variant: MarkdownVariant): Components {
             <h2
               className={
                 assistant
-                  ? 'mt-5 border-b border-stone-300 pb-1 text-base font-semibold text-stone-900 first:mt-0'
+                  ? 'mt-5 border-b border-stone-600/60 pb-1 text-base font-semibold text-amber-100/95 first:mt-0'
                   : 'mt-5 border-b border-slate-200 pb-1 text-base font-semibold first:mt-0'
               }
             >
@@ -47,7 +47,7 @@ function makeMarkdownComponents(variant: MarkdownVariant): Components {
             <h2
               className={
                 assistant
-                  ? 'mt-5 border-b border-stone-300 pb-1 text-base font-semibold text-stone-900 first:mt-0'
+                  ? 'mt-5 border-b border-stone-600/60 pb-1 text-base font-semibold text-amber-100/95 first:mt-0'
                   : 'mt-5 border-b border-slate-200 pb-1 text-base font-semibold first:mt-0'
               }
             >
@@ -64,19 +64,19 @@ function makeMarkdownComponents(variant: MarkdownVariant): Components {
             </h3>
           )
         : (
-            <h3 className={`mt-4 text-sm font-semibold ${assistant ? 'text-stone-900' : ''}`}>{children}</h3>
+            <h3 className={`mt-4 text-sm font-semibold ${assistant ? 'text-stone-100' : ''}`}>{children}</h3>
           )
     ),
     h4: ({ children }) => (
       reader
         ? <h4 className="mt-4 text-sm font-semibold uppercase tracking-wide text-primary">{children}</h4>
-        : <h4 className={`mt-3 text-sm font-semibold ${assistant ? 'text-stone-900' : ''}`}>{children}</h4>
+        : <h4 className={`mt-3 text-sm font-semibold ${assistant ? 'text-stone-200' : ''}`}>{children}</h4>
     ),
     p: ({ children }) => (
       reader
         ? <p className="mb-3 text-[15px] leading-relaxed text-slate-700 last:mb-0 sm:text-base">{children}</p>
         : (
-            <p className={assistant ? 'mb-2.5 leading-relaxed text-stone-800 last:mb-0' : 'mb-2.5 leading-relaxed last:mb-0'}>
+            <p className={assistant ? 'mb-2.5 leading-relaxed text-stone-300 last:mb-0' : 'mb-2.5 leading-relaxed last:mb-0'}>
               {children}
             </p>
           )
@@ -88,7 +88,7 @@ function makeMarkdownComponents(variant: MarkdownVariant): Components {
             <ul
               className={
                 assistant
-                  ? 'mb-3 list-disc space-y-1 pl-4 marker:text-stone-500'
+                  ? 'mb-3 list-disc space-y-1 pl-4 marker:text-amber-700/75'
                   : 'mb-3 list-disc space-y-1 pl-4 marker:text-slate-400'
               }
             >
@@ -103,7 +103,7 @@ function makeMarkdownComponents(variant: MarkdownVariant): Components {
             <ol
               className={
                 assistant
-                  ? 'mb-3 list-decimal space-y-1 pl-4 marker:font-semibold marker:text-stone-500'
+                  ? 'mb-3 list-decimal space-y-1 pl-4 marker:font-semibold marker:text-amber-700/75'
                   : 'mb-3 list-decimal space-y-1 pl-4 marker:text-slate-400'
               }
             >
@@ -114,13 +114,13 @@ function makeMarkdownComponents(variant: MarkdownVariant): Components {
     li: ({ children }) => (
       reader
         ? <li className="text-[15px] leading-relaxed text-slate-700 sm:text-base [&>p]:mb-1">{children}</li>
-        : <li className={assistant ? 'text-sm leading-relaxed text-stone-800' : 'text-sm leading-relaxed'}>{children}</li>
+        : <li className={assistant ? 'text-sm leading-relaxed text-stone-300' : 'text-sm leading-relaxed'}>{children}</li>
     ),
     table: ({ children }) => (
       <div
         className={
           assistant
-            ? 'my-4 overflow-x-auto rounded-xl border border-stone-300/90 bg-white/95 shadow-sm'
+            ? 'my-4 overflow-x-auto rounded-xl border border-stone-600/50 bg-[#14110e] shadow-sm'
             : 'my-4 overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm'
         }
       >
@@ -143,7 +143,7 @@ function makeMarkdownComponents(variant: MarkdownVariant): Components {
             <th
               className={
                 assistant
-                  ? 'border-b border-stone-300 px-3 py-2 text-left text-xs font-medium text-stone-700'
+                  ? 'border-b border-stone-600 px-3 py-2 text-left text-xs font-medium text-stone-200'
                   : 'border-b border-slate-200 px-3 py-2 text-left text-xs font-medium text-slate-500'
               }
             >
@@ -173,7 +173,7 @@ function makeMarkdownComponents(variant: MarkdownVariant): Components {
             <blockquote
               className={
                 assistant
-                  ? 'my-3 rounded-r-lg border-l-4 border-amber-600/80 bg-amber-50/90 px-4 py-2.5 text-sm italic text-stone-800'
+                  ? 'my-3 rounded-r-lg border-l-4 border-amber-700/70 bg-amber-950/30 px-4 py-2.5 text-sm italic text-stone-400'
                   : 'my-3 rounded-r-lg border-l-4 border-teal-600 bg-slate-50 px-4 py-2.5 text-sm italic text-slate-600'
               }
             >
@@ -184,17 +184,17 @@ function makeMarkdownComponents(variant: MarkdownVariant): Components {
     strong: ({ children }) => (
       reader
         ? <strong className="font-semibold text-amber-950">{children}</strong>
-        : <strong className={assistant ? 'font-semibold text-stone-950' : 'font-semibold text-slate-900'}>{children}</strong>
+        : <strong className={assistant ? 'font-semibold text-stone-100' : 'font-semibold text-slate-900'}>{children}</strong>
     ),
     em: ({ children }) => (
       reader
         ? <em className="italic text-slate-800">{children}</em>
-        : <em className={assistant ? 'italic text-stone-800' : 'italic text-slate-700'}>{children}</em>
+        : <em className={assistant ? 'italic text-stone-400' : 'italic text-slate-700'}>{children}</em>
     ),
     hr: () => (
       reader
         ? <hr className="my-8 h-px border-0 bg-gradient-to-r from-transparent via-amber-300/70 to-transparent" />
-        : <hr className={assistant ? 'my-4 border-stone-300' : 'my-4 border-slate-200'} />
+        : <hr className={assistant ? 'my-4 border-stone-600/70' : 'my-4 border-slate-200'} />
     ),
     a: ({ href, children }) => (
       <a
@@ -216,7 +216,7 @@ function makeMarkdownComponents(variant: MarkdownVariant): Components {
               reader
                 ? 'rounded-md border border-amber-200/90 bg-amber-100/90 px-1.5 py-0.5 font-mono text-[13px] text-amber-950'
                 : assistant
-                  ? 'rounded border border-stone-300/80 bg-stone-200/70 px-1.5 py-0.5 font-mono text-[13px] text-stone-900'
+                  ? 'rounded border border-stone-600/70 bg-stone-900/95 px-1.5 py-0.5 font-mono text-[13px] text-amber-100/95'
                   : 'rounded bg-slate-200/80 px-1.5 py-0.5 font-mono text-[13px] text-slate-800'
             }
             {...props}
@@ -237,7 +237,7 @@ export function RenderedMarkdown({ content, variant = 'compact' }: Props) {
   const wrapClass = variant === 'reader'
     ? 'reader-markdown max-w-none text-left'
     : variant === 'assistant'
-      ? 'rendered-md text-left text-stone-900'
+      ? 'rendered-md text-left text-stone-200'
       : 'rendered-md text-left'
 
   return (
