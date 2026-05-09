@@ -1483,17 +1483,7 @@ export default function ChatPage() {
         showInterviewPanel={isInterview}
       />
 
-      <div
-        className="flex min-w-0 flex-1 flex-col overflow-hidden"
-        onMouseDown={(e) => {
-          if (!isDesktopBp || !desktopChatHistoryOpen)
-            return
-          const el = e.target as HTMLElement
-          if (el.closest('input, textarea, select, button, a, [role="dialog"], label'))
-            return
-          setDesktopChatHistoryOpen(false)
-        }}
-      >
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         {store.sessionsLoadError && (
           <div className="flex-shrink-0 border-b border-red-500/35 bg-red-950/40 px-3 py-2.5 text-sm text-red-100 sm:px-4" role="alert">
             <div className="mx-auto flex max-w-3xl flex-wrap items-center justify-between gap-2">

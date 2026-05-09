@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { motion } from 'framer-motion'
 import { Outlet } from 'react-router-dom'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { ChatSessionsProvider } from '../../hooks/useChatSessions'
@@ -23,6 +24,9 @@ function MainLayoutShell() {
     setTabletSidebarExpanded,
     drawerTriggerRef,
     desktopChatHistoryOpen,
+    setDesktopChatHistoryOpen,
+    collapseDesktopRail,
+    registerDesktopRailCollapse,
   } = useLayoutChrome()
   const mainRef = useRef<HTMLElement>(null)
 
@@ -51,8 +55,9 @@ function MainLayoutShell() {
   const railLeaveCollapseTimerRef = useRef<number>()
 
   const onDesktopRailEnter = () => {
+    /** Hover rail wins over chat history: one desktop overlay at a time. */
     if (desktopChatHistoryOpen)
-      return
+      setDesktopChatHistoryOpen(false)
     if (railLeaveCollapseTimerRef.current) {
       window.clearTimeout(railLeaveCollapseTimerRef.current)
       railLeaveCollapseTimerRef.current = undefined
@@ -65,7 +70,13 @@ function MainLayoutShell() {
     }, 80)
   }
 
-  const onDesktopRailLeave = () => {
+  const onDesktopRailLeave = (e: React.MouseEvent) => {
+    const rel = e.relatedTarget as Node | null
+    if (rel) {
+      const hist = document.querySelector('[data-desktop-history-panel]')
+      if (hist?.contains(rel))
+        return
+    }
     if (railEnterTimerRef.current) {
       window.clearTimeout(railEnterTimerRef.current)
       railEnterTimerRef.current = undefined
@@ -77,9 +88,7 @@ function MainLayoutShell() {
     }, 120)
   }
 
-  useEffect(() => {
-    if (!desktopChatHistoryOpen)
-      return
+  const collapseRailTimersAndWidth = useCallback(() => {
     if (railEnterTimerRef.current) {
       window.clearTimeout(railEnterTimerRef.current)
       railEnterTimerRef.current = undefined
@@ -90,7 +99,49 @@ function MainLayoutShell() {
     }
     setRailLabelsShown(false)
     setRailWide(false)
-  }, [desktopChatHistoryOpen])
+  }, [])
+
+  useEffect(() => {
+    registerDesktopRailCollapse(collapseRailTimersAndWidth)
+    return () => registerDesktopRailCollapse(null)
+  }, [collapseRailTimersAndWidth, registerDesktopRailCollapse])
+
+  useEffect(() => {
+    if (!desktopChatHistoryOpen)
+      return
+    collapseRailTimersAndWidth()
+  }, [desktopChatHistoryOpen, collapseRailTimersAndWidth])
+
+  /** Desktop: click/tap outside rail + history panel closes both (smooth CSS transitions). */
+  useEffect(() => {
+    if (bp !== 'desktop')
+      return
+    const panelsOpen = railWide || railLabelsShown || desktopChatHistoryOpen
+    if (!panelsOpen)
+      return
+
+    const onPointerDown = (e: PointerEvent) => {
+      const t = e.target as Node
+      if (document.querySelector('[data-desktop-sidebar-hover]')?.contains(t))
+        return
+      if (document.querySelector('[data-desktop-history-panel]')?.contains(t))
+        return
+      const el = e.target as HTMLElement
+      if (el.closest?.('[role="dialog"]'))
+        return
+      setDesktopChatHistoryOpen(false)
+      collapseDesktopRail()
+    }
+    document.addEventListener('pointerdown', onPointerDown, true)
+    return () => document.removeEventListener('pointerdown', onPointerDown, true)
+  }, [
+    bp,
+    railWide,
+    railLabelsShown,
+    desktopChatHistoryOpen,
+    setDesktopChatHistoryOpen,
+    collapseDesktopRail,
+  ])
 
   useEffect(() => {
     return () => {
@@ -123,14 +174,24 @@ function MainLayoutShell() {
         )}
 
         {showTabletDesktopSidebar && bp === 'desktop' && (
-          <aside className="relative z-30 hidden min-[1025px]:flex h-full w-12 shrink-0 flex-col border-r border-sidebar-border bg-sidebar/90 backdrop-blur">
-            <div
-              className={[
-                'absolute left-0 top-0 z-10 flex h-full flex-col overflow-hidden border-r border-sidebar-border bg-sidebar/95 backdrop-blur transition-[width,box-shadow,opacity] duration-[280ms] ease-[cubic-bezier(0.22,1,0.36,1)]',
-                railWide && !desktopChatHistoryOpen
-                  ? 'w-[200px] shadow-[8px_0_28px_rgba(0,0,0,0.32)] opacity-100'
-                  : 'w-12 shadow-none opacity-100',
-              ].join(' ')}
+          <aside
+            data-desktop-sidebar-hover
+            className="relative z-30 hidden min-[1025px]:flex h-full w-12 shrink-0 flex-col border-r border-sidebar-border bg-sidebar/90 backdrop-blur"
+          >
+            <motion.div
+              className="absolute left-0 top-0 z-10 flex h-full flex-col overflow-hidden border-r border-sidebar-border bg-sidebar/95 backdrop-blur"
+              initial={false}
+              animate={{
+                width: railWide && !desktopChatHistoryOpen ? 200 : 48,
+                boxShadow:
+                  railWide && !desktopChatHistoryOpen
+                    ? '8px 0 28px rgba(0,0,0,0.32)'
+                    : '0 0 0 rgba(0,0,0,0)',
+              }}
+              transition={{
+                width: { duration: 0.38, ease: [0.22, 1, 0.36, 1] },
+                boxShadow: { duration: 0.32, ease: [0.22, 1, 0.36, 1] },
+              }}
               onMouseEnter={onDesktopRailEnter}
               onMouseLeave={onDesktopRailLeave}
             >
@@ -138,9 +199,10 @@ function MainLayoutShell() {
                 <SidebarNavContent
                   density="full"
                   desktopRail={{ wide: railWide, labelsShown: railLabelsShown }}
+                  desktopHistoryOpen={desktopChatHistoryOpen}
                 />
               </div>
-            </div>
+            </motion.div>
           </aside>
         )}
 

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useLayoutChrome } from '../../context/LayoutChromeContext'
 import { Briefcase, Check, Code2, Globe2, GripVertical, Loader2, MessageCircle, Pencil, Plus, Target, Trash2, X } from 'lucide-react'
 import AppCtaButton from '../ui/AppCtaButton'
 import type { LucideIcon } from 'lucide-react'
@@ -107,6 +108,7 @@ export default function ChatSidebar({
   onProgLangChange,
   showInterviewPanel,
 }: Props) {
+  const { setDesktopChatHistoryOpen } = useLayoutChrome()
   const isDesktopInline = layout === 'desktop-inline'
   const featureHue = getChatFeatureColor(currentToolType)
   const featureHeading = FEATURE_HEADING[currentToolType] ?? 'Chat'
@@ -170,6 +172,20 @@ export default function ChatSidebar({
       )}
 
       <aside
+        {...(isDesktopInline ? { 'data-desktop-history-panel': true as const } : {})}
+        onMouseLeave={
+          isDesktopInline && desktopExpanded
+            ? e => {
+                const rel = e.relatedTarget as Node | null
+                if (rel) {
+                  const rail = document.querySelector('[data-desktop-sidebar-hover]')
+                  if (rail?.contains(rel))
+                    return
+                }
+                setDesktopChatHistoryOpen(false)
+              }
+            : undefined
+        }
         className={
           isDesktopInline
             ? [

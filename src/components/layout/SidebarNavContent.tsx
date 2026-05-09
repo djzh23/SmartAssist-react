@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { motion } from 'framer-motion'
 import { useLocation, useNavigate } from 'react-router-dom'
 import {
   Loader2,
@@ -43,6 +44,8 @@ interface Props {
   onNavClick?: () => void
   /** Desktop icon rail: colored dots, labels fade with parent width + delay. */
   desktopRail?: DesktopRailState
+  /** Desktop: chat history column open — collapses „Weitere Werkzeuge“ accordion manual state. */
+  desktopHistoryOpen?: boolean
 }
 
 function iconForSkill(icon: string): LucideIcon {
@@ -133,15 +136,25 @@ function SkillSidebarRow({
   }
 
   if (desktopRail) {
-    const labelCls = [
-      'min-w-0 flex-1 truncate text-[13px] transition-[opacity,transform] ease-out',
-      desktopRail.labelsShown
-        ? 'translate-x-0 opacity-100 delay-100 duration-220'
-        : '-translate-x-1.5 opacity-0 duration-150 delay-0',
-    ].join(' ')
     const dotPx = isActive && !locked ? 12 : 10
+    const labelMotion = {
+      opacity: desktopRail.labelsShown ? 1 : 0,
+      x: desktopRail.labelsShown ? 0 : -8,
+    }
+    const labelTransition = {
+      opacity: {
+        duration: desktopRail.labelsShown ? 0.24 : 0.14,
+        ease: [0.22, 1, 0.36, 1] as const,
+        delay: desktopRail.labelsShown ? 0.07 : 0,
+      },
+      x: {
+        duration: desktopRail.labelsShown ? 0.26 : 0.15,
+        ease: [0.22, 1, 0.36, 1] as const,
+        delay: desktopRail.labelsShown ? 0.05 : 0,
+      },
+    }
     return (
-      <a
+      <motion.a
         href={href}
         title={skill.name}
         onClick={handleClick}
@@ -154,6 +167,9 @@ function SkillSidebarRow({
           borderLeftColor: featureColor,
           backgroundColor: isActive && !locked ? activeBg : undefined,
         }}
+        whileHover={locked ? undefined : { x: 3 }}
+        whileTap={locked ? undefined : { scale: 0.985 }}
+        transition={{ type: 'spring', stiffness: 480, damping: 34, mass: 0.72 }}
         onMouseEnter={(e) => {
           if (!isActive && !locked) e.currentTarget.style.backgroundColor = hexToRgba(featureColor, 0.1)
         }}
@@ -186,20 +202,28 @@ function SkillSidebarRow({
             aria-hidden
           />
         </span>
-        <span className={labelCls}>{skill.name}</span>
+        <motion.span
+          className="min-w-0 flex-1 truncate text-[13px]"
+          animate={labelMotion}
+          transition={labelTransition}
+        >
+          {skill.name}
+        </motion.span>
         {skill.badge && desktopRail.labelsShown ? (
-          <span
+          <motion.span
             className={[
-              'flex-shrink-0 rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide transition-[opacity,transform] duration-200',
+              'flex-shrink-0 rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide',
               badgeColorClass(skill.badgeColor),
-              desktopRail.labelsShown ? 'translate-x-0 opacity-100 delay-100' : '-translate-x-1 opacity-0',
             ].join(' ')}
+            initial={false}
+            animate={labelMotion}
+            transition={labelTransition}
           >
             {skill.badge}
-          </span>
+          </motion.span>
         ) : null}
         {locked ? <span className="flex-shrink-0 text-[10px] opacity-80" aria-hidden>🔒</span> : null}
-      </a>
+      </motion.a>
     )
   }
 
@@ -340,7 +364,12 @@ function recentSessionsList(
     .map(r => r.s)
 }
 
-export default function SidebarNavContent({ density = 'full', onNavClick, desktopRail }: Props) {
+export default function SidebarNavContent({
+  density = 'full',
+  onNavClick,
+  desktopRail,
+  desktopHistoryOpen = false,
+}: Props) {
   const navigate = useNavigate()
   const { plan } = useUserPlan()
   const { skills, loading: skillsLoading } = useSkills()
@@ -349,6 +378,19 @@ export default function SidebarNavContent({ density = 'full', onNavClick, deskto
   const iconsOnly = density === 'icons'
   const [recentVisible, setRecentVisible] = useState(RECENT_PAGE_SIZE)
   const [secondaryOpen, setSecondaryOpen] = useState(false)
+
+  useEffect(() => {
+    if (desktopHistoryOpen)
+      setSecondaryOpen(false)
+  }, [desktopHistoryOpen])
+
+  /** Depends on wide only — parent passes a new desktopRail object each render. */
+  useEffect(() => {
+    if (!desktopRail)
+      return
+    if (!desktopRail.wide)
+      setSecondaryOpen(false)
+  }, [desktopRail?.wide])
 
   const orderedSkills = useMemo(() => {
     if (!skills?.length) return { primary: [], secondary: [], leftover: [] } as {
@@ -412,37 +454,58 @@ export default function SidebarNavContent({ density = 'full', onNavClick, deskto
                 <div className="pt-1.5">
                   {desktopRail ? (
                     <>
-                      <button
+                      <motion.button
                         type="button"
                         title="Weitere Werkzeuge"
                         onClick={() => setSecondaryOpen(v => !v)}
                         className={[
-                          'mb-1 flex w-full items-center gap-2 rounded-r-md border border-transparent border-l-[4px] border-l-slate-500 py-3 pl-2 pr-2 text-sm font-medium text-stone-300 transition hover:bg-white/[0.06]',
+                          'mb-1 flex w-full items-center gap-2 rounded-r-md border border-transparent border-l-[4px] border-l-slate-500 py-3 pl-2 pr-2 text-sm font-medium text-stone-300 hover:bg-white/[0.06]',
                           desktopRail.labelsShown ? 'justify-start' : 'justify-center',
                         ].join(' ')}
+                        whileHover={{ x: 2 }}
+                        whileTap={{ scale: 0.98 }}
+                        transition={{ type: 'spring', stiffness: 460, damping: 34 }}
                       >
                         <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center">
                           <MoreHorizontal size={18} className="text-slate-400" aria-hidden />
                         </span>
-                        <span
-                          className={[
-                            'min-w-0 flex-1 truncate text-left text-[13px] font-semibold tracking-wide transition-[opacity,transform] ease-out',
-                            desktopRail.labelsShown
-                              ? 'translate-x-0 opacity-100 delay-100 duration-220'
-                              : '-translate-x-1.5 opacity-0 duration-150 delay-0',
-                          ].join(' ')}
+                        <motion.span
+                          className="min-w-0 flex-1 truncate text-left text-[13px] font-semibold tracking-wide"
+                          initial={false}
+                          animate={{
+                            opacity: desktopRail.labelsShown ? 1 : 0,
+                            x: desktopRail.labelsShown ? 0 : -8,
+                          }}
+                          transition={{
+                            opacity: {
+                              duration: desktopRail.labelsShown ? 0.24 : 0.14,
+                              ease: [0.22, 1, 0.36, 1],
+                              delay: desktopRail.labelsShown ? 0.07 : 0,
+                            },
+                            x: {
+                              duration: desktopRail.labelsShown ? 0.26 : 0.15,
+                              ease: [0.22, 1, 0.36, 1],
+                              delay: desktopRail.labelsShown ? 0.05 : 0,
+                            },
+                          }}
                         >
                           Weitere Werkzeuge
-                        </span>
-                        <span
-                          className={[
-                            'flex-shrink-0 transition-[opacity,transform] duration-200',
-                            desktopRail.labelsShown ? 'translate-x-0 opacity-100 delay-100' : '-translate-x-1 opacity-0 duration-150',
-                          ].join(' ')}
+                        </motion.span>
+                        <motion.span
+                          className="flex-shrink-0"
+                          initial={false}
+                          animate={{
+                            opacity: desktopRail.labelsShown ? 1 : 0,
+                            x: desktopRail.labelsShown ? 0 : -6,
+                          }}
+                          transition={{
+                            opacity: { duration: desktopRail.labelsShown ? 0.22 : 0.12, ease: [0.22, 1, 0.36, 1] },
+                            x: { duration: desktopRail.labelsShown ? 0.22 : 0.12, ease: [0.22, 1, 0.36, 1] },
+                          }}
                         >
                           {(secondaryOpen || secondaryHasActive) ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                        </span>
-                      </button>
+                        </motion.span>
+                      </motion.button>
                       {(secondaryOpen || secondaryHasActive) && (
                         <div className="ml-0 border-l border-stone-700/60 pl-1.5">
                           {orderedSkills.secondary.map(skill => (

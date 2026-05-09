@@ -25,6 +25,9 @@ export interface LayoutChromeState {
   /** Desktop chat: session history column open (feature click). */
   desktopChatHistoryOpen: boolean
   setDesktopChatHistoryOpen: (v: boolean | ((p: boolean) => boolean)) => void
+  /** Registered by MainLayout: collapses desktop hover rail (timers + width). */
+  collapseDesktopRail: () => void
+  registerDesktopRailCollapse: (fn: (() => void) | null) => void
 }
 
 const LayoutChromeContext = createContext<LayoutChromeState | null>(null)
@@ -49,6 +52,15 @@ export function LayoutChromeProvider({ children }: { children: ReactNode }) {
   })
   const drawerTriggerRef = useRef<HTMLButtonElement | null>(null)
   const [desktopChatHistoryOpen, setDesktopChatHistoryOpen] = useState(false)
+  const desktopRailCollapseRef = useRef<(() => void) | null>(null)
+
+  const registerDesktopRailCollapse = useCallback((fn: (() => void) | null) => {
+    desktopRailCollapseRef.current = fn
+  }, [])
+
+  const collapseDesktopRail = useCallback(() => {
+    desktopRailCollapseRef.current?.()
+  }, [])
 
   useEffect(() => {
     const vv = typeof window !== 'undefined' ? window.visualViewport : null
@@ -105,6 +117,8 @@ export function LayoutChromeProvider({ children }: { children: ReactNode }) {
       setNotesTheme: persistNotesTheme,
       desktopChatHistoryOpen,
       setDesktopChatHistoryOpen,
+      collapseDesktopRail,
+      registerDesktopRailCollapse,
     }),
     [
       drawerOpen,
@@ -115,6 +129,8 @@ export function LayoutChromeProvider({ children }: { children: ReactNode }) {
       notesTheme,
       persistNotesTheme,
       desktopChatHistoryOpen,
+      collapseDesktopRail,
+      registerDesktopRailCollapse,
     ],
   )
 
