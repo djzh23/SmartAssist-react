@@ -22,6 +22,9 @@ export interface LayoutChromeState {
   drawerTriggerRef: React.RefObject<HTMLButtonElement | null>
   notesTheme: 'dark' | 'light'
   setNotesTheme: (v: 'dark' | 'light' | ((p: 'dark' | 'light') => 'dark' | 'light')) => void
+  /** Desktop chat: session history column open (feature click). */
+  desktopChatHistoryOpen: boolean
+  setDesktopChatHistoryOpen: (v: boolean | ((p: boolean) => boolean)) => void
 }
 
 const LayoutChromeContext = createContext<LayoutChromeState | null>(null)
@@ -45,6 +48,7 @@ export function LayoutChromeProvider({ children }: { children: ReactNode }) {
     }
   })
   const drawerTriggerRef = useRef<HTMLButtonElement | null>(null)
+  const [desktopChatHistoryOpen, setDesktopChatHistoryOpen] = useState(false)
 
   useEffect(() => {
     const vv = typeof window !== 'undefined' ? window.visualViewport : null
@@ -99,8 +103,19 @@ export function LayoutChromeProvider({ children }: { children: ReactNode }) {
       drawerTriggerRef,
       notesTheme,
       setNotesTheme: persistNotesTheme,
+      desktopChatHistoryOpen,
+      setDesktopChatHistoryOpen,
     }),
-    [drawerOpen, moreSheetOpen, tabletSidebarExpanded, persistTablet, keyboardLikelyOpen, notesTheme, persistNotesTheme],
+    [
+      drawerOpen,
+      moreSheetOpen,
+      tabletSidebarExpanded,
+      persistTablet,
+      keyboardLikelyOpen,
+      notesTheme,
+      persistNotesTheme,
+      desktopChatHistoryOpen,
+    ],
   )
 
   return <LayoutChromeContext.Provider value={value}>{children}</LayoutChromeContext.Provider>
