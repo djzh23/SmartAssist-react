@@ -2,19 +2,13 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { SignInButton, SignUpButton, useUser } from '@clerk/clerk-react'
 import { Check, ChevronRight, Loader2, Menu, Play, RotateCcw, Send, X } from 'lucide-react'
-import { askAgentDemo, fetchDemoTtsAudio } from '../api/client'
-import LearningResponse from '../components/chat/LearningResponse'
+import { askAgentDemo } from '../api/client'
 import AppCtaButton from '../components/ui/AppCtaButton'
 import { IconHubIcon, type IconHubName } from '../components/ui/IconHubIcon'
-import { parseLearningResponse } from '../utils/parseLearningResponse'
 import '../styles/landing.css'
 
-/** Sichtbare Knappheit; optional in `.env` als `VITE_REMAINING_FREE_SLOTS` überschreiben */
-const REMAINING_FREE_SLOTS =
-  (import.meta.env.VITE_REMAINING_FREE_SLOTS as string | undefined)?.trim() || '42'
-
 /** Hero ChatMockup: Typewriter-Zeile nach der Denk-Animation */
-const CHAT_MOCKUP_ANSWER_LINE = 'Fertig in unter 10 Sekunden, inkl. Interview-Hinweisen.'
+const CHAT_MOCKUP_ANSWER_LINE = 'Analyse fertig. Interview-Fragen werden vorbereitet.'
 
 // ── Section Divider: nur Wellen & Kurven (keine Raster/Hex/Balken/Punkte) ─────
 
@@ -175,44 +169,6 @@ function SectionDivider({
   )
 }
 
-// ── Kleines Werkzeuge-Ornament (Karriere · KI · Wachstum) ────────────────────
-
-function FeaturesHeadingOrnament() {
-  return (
-    <div className="mb-6 flex justify-center" aria-hidden="true">
-      <svg viewBox="0 0 400 40" className="h-10 w-full max-w-[min(22rem,100%)] text-white/18" xmlns="http://www.w3.org/2000/svg">
-        <path
-          d="M20 28 L20 14 L28 14 L28 8 L36 8 L36 28 Z M24 18 L32 18"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.2"
-          strokeLinecap="round"
-        />
-        <circle cx="68" cy="20" r="3" fill="none" stroke="currentColor" strokeWidth="1" />
-        <circle cx="88" cy="16" r="3" fill="none" stroke="currentColor" strokeWidth="1" />
-        <circle cx="108" cy="22" r="3" fill="none" stroke="currentColor" strokeWidth="1" />
-        <path d="M72 20 L85 16 M85 16 L105 22 M105 22 L72 20" fill="none" stroke="currentColor" strokeWidth="0.5" opacity={0.6} />
-        <path
-          d="M140 30 L155 12 L170 28 L185 14 L200 30"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <path d="M230 28 L250 10 L270 28 L290 10 L310 28" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" opacity={0.5} />
-        <path
-          d="M340 28 L350 18 L360 24 L370 14 L380 22"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.1"
-          strokeLinecap="round"
-        />
-      </svg>
-    </div>
-  )
-}
-
 // ── Navbar ───────────────────────────────────────────────────────────────────
 
 function scrollTo(id: string) {
@@ -306,7 +262,7 @@ function LandingNav() {
       >
         <button
           type="button"
-          aria-label="PrivatePrep: zum Seitenanfang"
+          aria-label="Applikum: zum Seitenanfang"
           onClick={() => {
             window.scrollTo({ top: 0, behavior: 'smooth' })
             closeMobile()
@@ -323,7 +279,7 @@ function LandingNav() {
             className="h-8 w-8 flex-shrink-0 rounded-xl ring-1 ring-amber-500/20 sm:h-9 sm:w-9"
           />
           <span className="bg-gradient-to-r from-amber-200 via-amber-100 to-amber-50/90 bg-clip-text text-[15px] font-bold tracking-tight text-transparent sm:text-[17px]">
-            PrivatePrep
+            Applikum
           </span>
         </button>
 
@@ -478,7 +434,7 @@ function ChatMockup() {
         <div className="flex items-center justify-between bg-gradient-to-r from-[#78350f] via-amber-800 to-[#92400e] px-4 py-3">
           <span className="flex items-center gap-1.5 text-sm font-bold tracking-tight text-amber-50">
             <IconHubIcon name="lightning" tone="inverse" className="h-4 w-4 shrink-0 opacity-95" />
-            PrivatePrep
+            Applikum
           </span>
           <div className="flex items-center gap-1.5">
             <span className="h-2 w-2 rounded-full bg-teal-400 shadow-[0_0_8px_rgba(45,212,191,0.45)]" />
@@ -491,14 +447,14 @@ function ChatMockup() {
               {avatar}
               <div className="max-w-[220px] rounded-[12px_12px_12px_4px] border border-stone-500/30 bg-[#151210] px-3 py-2 text-xs shadow-[inset_0_1px_0_0_rgba(255,251,235,0.04)]">
                 <span className="font-semibold text-teal-400/95">Stellenanalyse</span>
-                <p className="mt-1 leading-snug text-stone-400">Top-Keywords: React, TypeScript, agile …</p>
+                <p className="mt-1 leading-snug text-stone-400">8 von 12 Keywords passen. 3 Lücken gefunden.</p>
               </div>
             </div>
           )}
           {vis.user && (
             <div className="chat-mockup-bubble-in flex justify-end">
               <div className="max-w-[220px] rounded-[12px_12px_4px_12px] border border-amber-600/35 bg-gradient-to-br from-amber-600 to-amber-800 px-3 py-2 text-xs font-medium text-amber-50 shadow-md shadow-black/25 ring-1 ring-inset ring-white/10">
-                Analysiere diese Junior-Entwickler-Stelle …
+                Analysiere: Junior Frontend bei CHECK24, München
               </div>
             </div>
           )}
@@ -506,9 +462,8 @@ function ChatMockup() {
             <div className="chat-mockup-bubble-in flex gap-2">
               {avatar}
               <div className="max-w-[220px] rounded-[12px_12px_12px_4px] border border-stone-500/30 border-l-[3px] border-l-teal-600/55 bg-[#151210] px-3 py-2 text-xs shadow-[inset_0_1px_0_0_rgba(255,251,235,0.04)]">
-                <p className="font-semibold text-stone-100">Match & Lücken</p>
-                <p className="text-stone-400">12 Keywords · 3 Muss-Anforderungen</p>
-                <p className="mt-1 text-[10px] font-medium text-teal-400/90">Nächster Schritt: Anschreiben</p>
+                <p className="font-semibold text-stone-100">Ergebnis: MÖGLICH.</p>
+                <p className="text-stone-400">Nächster Schritt: Anschreiben.</p>
               </div>
             </div>
           )}
@@ -576,75 +531,31 @@ function HeroSection() {
         <svg className="absolute bottom-0 left-0 right-0 h-[38vh] min-h-[220px] max-h-[380px] w-full text-white/[0.04]" viewBox="0 0 1440 200" preserveAspectRatio="none" aria-hidden="true">
           <path d="M0,110 Q360,70 720,110 T1440,95 L1440,200 L0,200 Z" fill="currentColor" />
         </svg>
-        <svg
-          className="pointer-events-none absolute left-[5%] top-[24%] h-28 w-28 text-[rgb(255_248_237)] opacity-[0.055]"
-          viewBox="0 0 100 100"
-          fill="none"
-          aria-hidden
-        >
-          <polygon
-            points="50,10 90,88 10,88"
-            stroke="currentColor"
-            strokeWidth={0.55}
-            vectorEffect="nonScalingStroke"
-            strokeLinejoin="round"
-          />
-        </svg>
-        <div className="landing-geo-hairline-sm absolute bottom-[24%] right-[7%] h-24 w-24 rotate-45 rounded-xl" />
-        <div className="landing-geo-hairline-md absolute right-[14%] top-[16%] h-20 w-20 rounded-full" />
-        <div className="landing-geo-hairline absolute left-[8%] bottom-[30%] h-36 w-36 rounded-full" />
-        <svg
-          className="pointer-events-none absolute left-[14%] bottom-[14%] h-24 w-24 text-[rgb(255_248_237)] opacity-[0.048]"
-          viewBox="0 0 100 100"
-          fill="none"
-          aria-hidden
-        >
-          <polygon
-            points="50,4 88,25 88,75 50,96 12,75 12,25"
-            stroke="currentColor"
-            strokeWidth={0.55}
-            vectorEffect="nonScalingStroke"
-            strokeLinejoin="round"
-          />
-        </svg>
-        <div className="landing-geo-hairline-sm absolute right-[26%] top-[30%] h-16 w-16 rotate-45 rounded-md" />
       </div>
 
       <div className="relative z-10 w-full px-3 sm:px-5">
         <div className="mx-auto grid max-w-[1120px] grid-cols-1 items-center gap-10 px-3 pb-16 pt-16 sm:grid-cols-2 sm:gap-10 sm:px-5 md:gap-12 md:min-h-[calc(100vh-64px)]">
         <div>
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-amber-500/22 bg-amber-950/30 px-4 py-1.5 text-xs font-semibold text-amber-100/90">
-            KI-gestützt für deine Bewerbung
+            Für Bewerbungen in Deutschland
           </div>
 
-          <h1 className="mb-6 text-[clamp(32px,4.8vw,56px)] font-bold leading-[1.15]">
-            <span className="mb-4 block text-stone-100 sm:mb-5">Bewerbung vorbereiten</span>
-            <span className="mb-4 block text-stone-100 sm:mb-5">Stelle analysieren</span>
-            <span className="block text-stone-100">
-              Interview{' '}
-              <span className="bg-gradient-to-r from-amber-500/75 via-amber-400/80 to-amber-600/70 bg-clip-text text-transparent">
-                meistern
-              </span>
-            </span>
+          <h1 className="font-serif mb-6 text-[clamp(32px,4.8vw,56px)] font-bold leading-[1.15] text-stone-100">
+            <span className="mb-3 block sm:mb-4">Wissen, ob die Stelle passt.</span>
+            <span className="block">Bevor du dich bewirbst.</span>
           </h1>
 
-          <p className="mb-8 max-w-[520px] text-base font-medium leading-snug text-stone-300 sm:text-lg">
-            Stellenanzeige verstehen, schneller antworten.
-          </p>
-
-          <p className="mb-8 max-w-[520px] text-lg leading-relaxed text-stone-300">
-            Kopier einfach die Stellenanzeige rein. Innerhalb von zehn Sekunden siehst du, welche Keywords wirklich zählen,
-            wo dein Lebenslauf noch Lücken hat und welche Interviewfragen sehr wahrscheinlich auf dich zukommen.
+          <p className="mb-8 max-w-[520px] text-lg leading-relaxed text-stone-400">
+            Kopier die Stellenanzeige rein. In 10 Sekunden siehst du, welche Keywords zählen, wo dein Lebenslauf Lücken hat und welche Interviewfragen auf dich zukommen.
           </p>
 
           <div className="mb-8 flex flex-col gap-4 sm:mb-7 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
             <SignUpButton mode="modal" fallbackRedirectUrl="/overview">
               <button
                 type="button"
-                className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-amber-400 to-amber-500 px-7 text-base font-bold text-amber-950 shadow-lg shadow-black/35 ring-1 ring-inset ring-white/20 transition-all hover:scale-[1.02] hover:from-amber-300 hover:to-amber-400 hover:shadow-xl sm:w-auto sm:justify-start"
+                className="flex h-12 w-full items-center justify-center rounded-2xl bg-gradient-to-r from-amber-400 to-amber-500 px-7 text-base font-bold text-amber-950 shadow-lg shadow-black/35 ring-1 ring-inset ring-white/20 transition-all hover:scale-[1.02] hover:from-amber-300 hover:to-amber-400 hover:shadow-xl sm:w-auto sm:justify-start"
               >
-                Kostenlos ausprobieren
-                <span className="opacity-80">→</span>
+                Kostenlos starten
               </button>
             </SignUpButton>
             <button
@@ -653,31 +564,13 @@ function HeroSection() {
               className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-stone-600/45 bg-white/[0.055] px-6 text-base font-medium text-stone-100 shadow-landing backdrop-blur-sm transition-all hover:border-amber-500/40 hover:bg-amber-950/20 sm:w-auto"
             >
               <Play size={15} className="text-amber-400" fill="currentColor" />
-              Live Demo ansehen
+              Live Demo
             </button>
           </div>
 
-          <div className="flex max-w-[520px] flex-col gap-2 text-sm text-stone-400 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-3 sm:gap-y-1">
-            <span className="inline-flex items-center gap-1.5">
-              <Check size={14} className="shrink-0 text-emerald-500" aria-hidden />
-              Keine Kreditkarte
-            </span>
-            <span className="hidden text-stone-700 sm:inline" aria-hidden>
-              ·
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <Check size={14} className="shrink-0 text-emerald-500" aria-hidden />
-              In 30 Sekunden startklar
-            </span>
-            <span className="hidden text-stone-700 sm:inline" aria-hidden>
-              ·
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <Check size={14} className="shrink-0 text-emerald-500" aria-hidden />
-              Kostenloser Einstieg: aktuell{' '}
-              <span className="font-semibold text-stone-300">{REMAINING_FREE_SLOTS}</span> Plätze frei
-            </span>
-          </div>
+          <p className="max-w-[520px] text-sm text-stone-400">
+            Keine Kreditkarte. In 30 Sekunden startklar.
+          </p>
         </div>
 
         {/* Chat mockup: sichtbar ab sm (Tablet), leicht skaliert für schmalere Spalte */}
@@ -714,28 +607,32 @@ function ProblemSolutionSection() {
           Das Problem
         </div>
         <h2 className="mb-5 text-[clamp(26px,3.8vw,40px)] font-bold leading-tight text-stone-50">
-          Bewerben kostet Zeit. Viel Zeit.
+          Bewerben dauert. Und meistens blind.
         </h2>
         <p className="mb-12 max-w-[720px] text-lg leading-relaxed text-stone-400">
-          Viele investieren rund 45 Minuten in ein Anschreiben und mehrere Stunden in die Interviewvorbereitung, und fragen sich trotzdem: Passe ich überhaupt zu dieser Stelle?
-          PrivatePrep liest die Anzeige für dich in Sekunden statt in Stunden ein. Du erkennst schnell, worauf es ankommt,
-          und gehst vorbereitet ins Gespräch statt ins Blaue zu raten.
+          Die meisten lesen eine Stellenanzeige, schreiben ein Anschreiben und hoffen. Ob sie wirklich passen, wissen sie erst im Gespräch. Oder nach der Absage.
         </p>
 
         <div className="grid gap-6 sm:grid-cols-3">
           <div className="rounded-2xl border border-stone-600/45 bg-[#1a1512]/90 p-6 shadow-landing-md backdrop-blur-sm">
-            <p className="mb-1 text-2xl font-bold tabular-nums text-stone-50 sm:text-3xl">
+            <p className="mb-2 text-2xl font-bold tabular-nums text-stone-50 sm:text-3xl">
               45 Min <span className="text-amber-400">→</span> 10 Sek
             </p>
-            <p className="text-sm font-medium text-stone-400">Stellenanalyse statt manuelles Lesen</p>
+            <p className="text-sm font-medium leading-relaxed text-stone-400">
+              Stellenanalyse statt manuelles Lesen. Du weißt sofort, ob sich die Bewerbung lohnt.
+            </p>
           </div>
           <div className="rounded-2xl border border-stone-600/45 bg-[#1a1512]/90 p-6 shadow-landing-md backdrop-blur-sm">
-            <p className="mb-1 text-2xl font-bold tabular-nums text-stone-50 sm:text-3xl">12 Keywords</p>
-            <p className="text-sm font-medium text-stone-400">Durchschnittlich erkannte Schlüsselbegriffe pro Stelle</p>
+            <p className="mb-2 text-2xl font-bold tabular-nums text-stone-50 sm:text-3xl">Bis zu 12 Keywords</p>
+            <p className="text-sm font-medium leading-relaxed text-stone-400">
+              Automatisch erkannt und mit deinem Profil abgeglichen. Fehlende Keywords siehst du direkt.
+            </p>
           </div>
           <div className="rounded-2xl border border-stone-600/45 bg-[#1a1512]/90 p-6 shadow-landing-md backdrop-blur-sm">
-            <p className="mb-1 text-2xl font-bold tabular-nums text-stone-50 sm:text-3xl">5 Werkzeuge</p>
-            <p className="text-sm font-medium text-stone-400">Alles in einer Oberfläche</p>
+            <p className="mb-2 text-2xl font-bold tabular-nums text-stone-50 sm:text-3xl">5 Werkzeuge, ein Ort</p>
+            <p className="text-sm font-medium leading-relaxed text-stone-400">
+              Analyse, Interview, Anschreiben, Lebenslauf und Karriere-Chat. Kein Wechsel zwischen Apps.
+            </p>
           </div>
         </div>
       </div>
@@ -762,8 +659,9 @@ const FEATURES: Array<{
     color: '#10B981',
     iconBg: 'bg-emerald-500/12 ring-1 ring-emerald-500/20',
     title: 'Stellenanalyse',
-    desc: 'Füg die Stellenanzeige ein und sieh direkt, welche Keywords zählen, wo dein Profil passt und welche Lücken du im Anschreiben sinnvoll erwähnen kannst.',
-    chip: '„Analysiere diese Stelle: [Text einfügen]"',
+    desc:
+      'Stellenanzeige einfügen, Ergebnis in Sekunden. Du siehst, welche Anforderungen du erfüllst, welche Keywords fehlen und ob sich die Bewerbung lohnt.',
+    chip: '„Passt diese Stelle zu meinem Profil?"',
     highlight: true,
     badge: 'Karriere',
     cardClass: 'bg-gradient-to-br from-[#14201c]/95 via-[#121816]/98 to-[#0f1412]/95',
@@ -774,46 +672,50 @@ const FEATURES: Array<{
     color: '#06B6D4',
     iconBg: 'bg-cyan-500/12 ring-1 ring-cyan-500/20',
     title: 'Interview Coach',
-    desc: 'Realistische Fragen basierend auf der Stelle und deinem Profil. Mit Antwortstruktur nach der STAR-Methode und konkretem Feedback.',
-    chip: '„Gib mir 5 Fragen für diese Stelle"',
-    highlight: true,
+    desc:
+      'Realistische Fragen, zugeschnitten auf die Stelle und dein Profil. Jede Antwort bekommt Feedback nach Struktur, Inhalt und Überzeugungskraft.',
+    chip: '„Stell mir 5 Fragen für diese Stelle"',
+    highlight: false,
     badge: 'Karriere',
     cardClass: 'bg-gradient-to-br from-[#121c22]/95 via-[#101820]/98 to-[#0e1618]/95',
     chipClass: 'border border-stone-600/45 bg-cyan-950/32 text-cyan-100/90',
   },
   {
     icon: 'chat',
-    color: '#64748B',
+    color: '#A855F7',
     iconBg: 'bg-violet-500/12 ring-1 ring-violet-500/20',
-    title: 'KI-Chat',
-    desc: 'Texte schärfen, Fragen klären, Ideen entwickeln. Dein offener Arbeitsbereich für alles, was keine feste Kategorie braucht.',
-    chip: '„Wie formuliere ich das professioneller?"',
+    title: 'Anschreiben',
+    desc:
+      'Ein Anschreiben, das auf die Stelle und deine Erfahrung eingeht. Keine Floskeln, kein „hiermit bewerbe ich mich“. Direkt verwendbar.',
+    chip: '„Schreib ein Anschreiben für diese Stelle"',
     highlight: false,
-    badge: 'Flex',
+    badge: 'Karriere',
     cardClass: 'bg-gradient-to-br from-[#18141f]/95 via-[#14121a]/98 to-[#100e16]/95',
     chipClass: 'border border-stone-600/45 bg-violet-950/30 text-violet-100/88',
   },
   {
-    icon: 'laptop',
+    icon: 'star',
     color: '#3B82F6',
     iconBg: 'bg-sky-500/12 ring-1 ring-sky-500/20',
-    title: 'Code-Assistent',
-    desc: 'Code reviewen, Bugs finden, Algorithmen verstehen. Für alle Sprachen, von JavaScript bis Python, von Anfänger bis Senior.',
-    chip: '„Was ist falsch in meinem Code?"',
+    title: 'Lebenslauf',
+    desc:
+      'Lebenslauf erstellen, versionieren und als PDF oder Word exportieren. Verschiedene Designs, ATS-optimiert, auf jede Bewerbung anpassbar.',
+    chip: '„Erstelle einen Lebenslauf für diese Stelle"',
     highlight: false,
-    badge: 'Tech',
+    badge: 'Karriere',
     cardClass: 'bg-gradient-to-br from-[#121a24]/95 via-[#101820]/98 to-[#0e141c]/95',
     chipClass: 'border border-stone-600/45 bg-sky-950/32 text-sky-100/90',
   },
   {
-    icon: 'world',
+    icon: 'lightning',
     color: '#F59E0B',
     iconBg: 'bg-amber-500/14 ring-1 ring-amber-500/22',
-    title: 'Sprachtraining',
-    desc: 'Übe mit echten Gesprächen inklusive Übersetzung, Grammatik und Aussprache. Ideal für internationale Bewerbungen und für den normalen Arbeitsalltag.',
-    chip: '„Wie sage ich ‚Ich suche einen neuen Job‘ auf Spanisch?"',
+    title: 'Karriere-Chat',
+    desc:
+      'Dein offener Kanal für alles rund um die Bewerbung. Formulierungen schärfen, Strategien besprechen, Gehalt einordnen.',
+    chip: '„Wie formuliere ich eine Gehaltsvorstellung?"',
     highlight: false,
-    badge: 'Sprache',
+    badge: 'Flex',
     cardClass: 'bg-gradient-to-br from-[#221a12]/95 via-[#1a140e]/98 to-[#161008]/95',
     chipClass: 'border border-stone-600/45 bg-amber-950/35 text-amber-100/90',
   },
@@ -847,23 +749,18 @@ function FeaturesSection() {
         <svg className="absolute bottom-0 left-0 right-0 h-[36vh] min-h-[200px] max-h-[380px] w-full text-white/[0.04]" viewBox="0 0 1440 220" preserveAspectRatio="none" aria-hidden="true">
           <path d="M0,120 Q420,75 840,125 T1440,100 L1440,220 L0,220 Z" fill="currentColor" />
         </svg>
-        <div className="absolute right-[5%] top-[20%] h-28 w-28 border border-white/8" style={{ clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' }} />
-        <div className="absolute right-[12%] bottom-[14%] h-28 w-28 rounded-full border border-white/10" />
-        <div className="absolute left-[8%] top-[26%] h-16 w-16 rounded-full border border-white/10" />
-        <div className="absolute left-[18%] bottom-[8%] h-20 w-20 rotate-45 rounded-lg border border-white/8" />
       </div>
 
       <div className="relative z-10 mx-auto w-full max-w-[1100px]">
         <div className="mb-14 text-center">
-          <FeaturesHeadingOrnament />
           <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-amber-500/25 bg-amber-950/35 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.15em] text-amber-200/85">
             Werkzeuge
           </div>
           <h2 className="mb-3 text-[clamp(28px,4vw,44px)] font-bold text-stone-50">
-            Alles, was du für die Bewerbung brauchst
+            Fünf Werkzeuge. Eine Oberfläche.
           </h2>
           <p className="text-lg text-stone-400">
-            Fünf spezialisierte KI-Werkzeuge. Eine Oberfläche. Kein Tool-Hopping.
+            Jedes Werkzeug ist auf einen Schritt im Bewerbungsprozess spezialisiert.
           </p>
         </div>
 
@@ -924,7 +821,7 @@ interface DemoMessage {
   ts?: string
 }
 
-type DemoTool = 'language' | 'job' | 'interview' | 'programming' | 'general'
+type DemoTool = 'job' | 'interview' | 'cover' | 'resume' | 'general'
 
 interface DemoToolConfig {
   icon: IconHubName
@@ -937,61 +834,49 @@ const DEMO_TOOL_CONFIG: Record<DemoTool, DemoToolConfig> = {
   job: {
     icon: 'work',
     label: 'Stellenanalyse',
-    placeholder: 'Stellenanzeige oder Anforderungen einfügen…',
-    chip: 'Analysiere diese Stelle: Junior Softwareentwickler (m/w/d), React, TypeScript, agile Methoden',
+    placeholder: 'Stellenanzeige hier einfügen oder Link eingeben...',
+    chip: 'Analysiere: Junior .NET Entwickler bei CHECK24, München',
   },
   interview: {
     icon: 'target',
     label: 'Interview',
-    placeholder: 'Zielposition eingeben…',
-    chip: 'Gib mir 5 Fragen für diese Stelle',
+    placeholder: 'Für welche Stelle willst du üben?',
+    chip: 'Stell mir 3 Fragen für ein Frontend-Interview',
   },
-  programming: {
-    icon: 'laptop',
-    label: 'Code',
-    placeholder: 'Code oder Frage eingeben…',
-    chip: 'Was ist der Unterschied zwischen async/await und Promises?',
+  cover: {
+    icon: 'chat',
+    label: 'Anschreiben',
+    placeholder: 'Stelle und Unternehmen eingeben...',
+    chip: 'Anschreiben für eine Marketing-Stelle bei Siemens',
   },
-  language: {
-    icon: 'world',
-    label: 'Sprachen',
-    placeholder: 'Schreib auf Deutsch…',
-    chip: 'Wie sage ich „Ich suche einen neuen Job“ auf Spanisch?',
+  resume: {
+    icon: 'star',
+    label: 'Lebenslauf',
+    placeholder: 'Welche Rolle und Branche?',
+    chip: 'Lebenslauf für Softwareentwickler, 2 Jahre Erfahrung',
   },
   general: {
-    icon: 'chat',
+    icon: 'lightning',
     label: 'Chat',
-    placeholder: 'Stell eine Frage…',
-    chip: 'Wie formuliere ich das professioneller?',
+    placeholder: 'Was möchtest du wissen?',
+    chip: "Wie antworte ich auf 'Was sind Ihre Schwächen?'",
   },
 }
 
-const TOOL_ORDER: DemoTool[] = ['job', 'interview', 'programming', 'language', 'general']
+const TOOL_ORDER: DemoTool[] = ['job', 'interview', 'cover', 'resume', 'general']
 const PER_TOOL_LIMIT = 2 // each tool gets 2 independent messages
 
 function buildAskParams(tool: DemoTool, msg: string, sessionId: string) {
   const base = { message: msg, sessionId }
   switch (tool) {
-    case 'language':
-      return {
-        ...base,
-        toolType: 'language' as const,
-        languageLearningMode: true,
-        nativeLanguage: 'Deutsch',
-        targetLanguage: 'Spanisch',
-        nativeLanguageCode: 'de',
-        targetLanguageCode: 'es',
-        level: 'adaptive',
-        learningGoal: 'Kurze Sätze, Zielsprache und Übersetzung',
-      }
     case 'job':
       return { ...base, toolType: 'jobanalyzer' as const }
     case 'interview':
       return { ...base, toolType: 'interviewprep' as const }
-    case 'programming':
-      return { ...base, toolType: 'programming' as const }
-    default:
-      return { ...base, toolType: undefined }
+    case 'cover':
+    case 'resume':
+    case 'general':
+      return { ...base, toolType: 'general' as const }
   }
 }
 
@@ -1043,21 +928,6 @@ function RichText({ text, dotColor, numColor }: RichTextProps) {
   )
 }
 
-function parseCodeBlocks(text: string): Array<{ type: 'text' | 'code'; content: string }> {
-  const parts: Array<{ type: 'text' | 'code'; content: string }> = []
-  const regex = /```(?:\w+)?\n?([\s\S]*?)```/g
-  let last = 0
-  let m: RegExpExecArray | null
-  // eslint-disable-next-line no-cond-assign
-  while ((m = regex.exec(text)) !== null) {
-    if (m.index > last) parts.push({ type: 'text', content: text.slice(last, m.index) })
-    parts.push({ type: 'code', content: m[1].trim() })
-    last = m.index + m[0].length
-  }
-  if (last < text.length) parts.push({ type: 'text', content: text.slice(last) })
-  return parts
-}
-
 // ── Tool-specific response cards ──────────────────────────────────────────────
 
 function JobResponseBubble({ text }: { text: string }) {
@@ -1065,7 +935,7 @@ function JobResponseBubble({ text }: { text: string }) {
     <div className="w-full overflow-hidden rounded-xl border border-stone-600/45 bg-gradient-to-br from-emerald-950/32 to-[#120c08] shadow-landing">
       <div className="flex items-center gap-1.5 border-b border-stone-600/35 px-4 py-2">
         <IconHubIcon name="work" className="h-4 w-4 shrink-0" tone="onDark" />
-        <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-emerald-300">Job-Analyse</span>
+        <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-emerald-300">Stellenanalyse</span>
       </div>
       <div className="px-4 py-3">
         <RichText text={text} dotColor="bg-emerald-400" numColor="text-emerald-400" />
@@ -1088,37 +958,12 @@ function InterviewResponseBubble({ text }: { text: string }) {
   )
 }
 
-function CodeResponseBubble({ text }: { text: string }) {
-  const parts = parseCodeBlocks(text)
-  return (
-    <div className="w-full overflow-hidden rounded-xl border border-stone-600/45 bg-gradient-to-br from-slate-900/45 to-[#120c08] shadow-landing">
-      <div className="flex items-center gap-1.5 border-b border-stone-600/35 px-4 py-2">
-        <IconHubIcon name="laptop" className="h-4 w-4 shrink-0" tone="onDark" />
-        <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-stone-400">Code-Assistent</span>
-      </div>
-      <div className="space-y-2 px-4 py-3">
-        {parts.map((p, i) =>
-          p.type === 'code'
-            ? (
-              <pre key={i} className="overflow-x-auto rounded-lg border border-stone-600/40 bg-slate-950/90 px-3 py-2.5 text-xs leading-relaxed text-emerald-400">
-                <code>{p.content}</code>
-              </pre>
-            )
-            : p.content.trim()
-              ? <RichText key={i} text={p.content.trim()} dotColor="bg-slate-500" numColor="text-slate-400" />
-              : null
-        )}
-      </div>
-    </div>
-  )
-}
-
 function GeneralResponseBubble({ text }: { text: string }) {
   return (
     <div className="w-full overflow-hidden rounded-xl border border-stone-600/45 bg-gradient-to-br from-amber-950/28 to-[#120c08] shadow-landing">
       <div className="flex items-center gap-1.5 border-b border-stone-600/35 px-4 py-2">
         <IconHubIcon name="chat" className="h-4 w-4 shrink-0" tone="onDark" />
-        <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-amber-300">PrivatePrep</span>
+        <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-amber-300">Applikum</span>
       </div>
       <div className="px-4 py-3">
         <RichText text={text} dotColor="bg-amber-400" numColor="text-amber-400" />
@@ -1128,49 +973,29 @@ function GeneralResponseBubble({ text }: { text: string }) {
 }
 
 function DemoAssistantBubble({ text, tool }: { text: string; tool: DemoTool }) {
-  if (tool === 'language') {
-    const parsed = parseLearningResponse(text)
-    if (parsed?.isStructured) {
-      return (
-        <LearningResponse
-          data={{
-            targetLanguageText: parsed.targetText,
-            nativeLanguageText: parsed.translationText,
-            learnTip: parsed.tipText ?? undefined,
-          }}
-          targetLang="Spanisch"
-          nativeLang="Deutsch"
-          targetLangCode="es"
-          timestamp={new Date().toISOString()}
-          fetchAudio={fetchDemoTtsAudio}
-        />
-      )
-    }
-  }
-  if (tool === 'job')         return <JobResponseBubble text={text} />
-  if (tool === 'interview')   return <InterviewResponseBubble text={text} />
-  if (tool === 'programming') return <CodeResponseBubble text={text} />
+  if (tool === 'job') return <JobResponseBubble text={text} />
+  if (tool === 'interview') return <InterviewResponseBubble text={text} />
   return <GeneralResponseBubble text={text} />
 }
 
 function LiveDemoSection() {
   const [activeTool, setActiveTool] = useState<DemoTool>('job')
   const [msgByTool, setMsgByTool] = useState<Record<DemoTool, DemoMessage[]>>({
-    language: [], job: [], interview: [], programming: [], general: [],
+    job: [], interview: [], cover: [], resume: [], general: [],
   })
   // per-tool independent message count (each tool has PER_TOOL_LIMIT messages)
   const [countByTool, setCountByTool] = useState<Record<DemoTool, number>>({
-    language: 0, job: 0, interview: 0, programming: 0, general: 0,
+    job: 0, interview: 0, cover: 0, resume: 0, general: 0,
   })
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
 
   const sessionIds = useRef<Record<DemoTool, string>>({
-    language:    `demo_${Math.random().toString(36).slice(2, 9)}`,
-    job:         `demo_${Math.random().toString(36).slice(2, 9)}`,
-    interview:   `demo_${Math.random().toString(36).slice(2, 9)}`,
-    programming: `demo_${Math.random().toString(36).slice(2, 9)}`,
-    general:     `demo_${Math.random().toString(36).slice(2, 9)}`,
+    job: `demo_${Math.random().toString(36).slice(2, 9)}`,
+    interview: `demo_${Math.random().toString(36).slice(2, 9)}`,
+    cover: `demo_${Math.random().toString(36).slice(2, 9)}`,
+    resume: `demo_${Math.random().toString(36).slice(2, 9)}`,
+    general: `demo_${Math.random().toString(36).slice(2, 9)}`,
   })
   const messagesScrollRef = useRef<HTMLDivElement>(null)
 
@@ -1236,18 +1061,13 @@ function LiveDemoSection() {
         <svg className="absolute bottom-0 left-0 right-0 h-[34vh] min-h-[200px] max-h-[360px] w-full text-white/[0.04]" viewBox="0 0 1440 200" preserveAspectRatio="none" aria-hidden="true">
           <path d="M0,105 Q380,65 760,110 T1440,95 L1440,200 L0,200 Z" fill="currentColor" />
         </svg>
-        <div className="absolute right-[4%] top-[12%] h-24 w-24 rotate-45 rounded-xl border border-white/10" />
-        <div className="absolute left-[3%] bottom-[18%] h-28 w-28 border border-white/8" style={{ clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' }} />
       </div>
       <div className="relative z-10 mx-auto w-full max-w-[640px]">
         <div className="mb-8 text-center">
-          <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-amber-400">Probier es aus</p>
-          <h2 className="mb-3 text-3xl font-bold text-stone-50">In 10 Sekunden verstehen, was PrivatePrep kann</h2>
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-amber-400">Ausprobieren</p>
+          <h2 className="mb-3 text-3xl font-bold text-stone-50">Probier es aus. Ohne Anmeldung.</h2>
           <p className="text-stone-400">
-            Keine Anmeldung nötig. Wähle ein Werkzeug und stelle eine Frage.
-          </p>
-          <p className="mt-2 text-sm text-stone-500">
-            Pro Werkzeug zwei kostenlose Nachrichten, ohne Account und ohne Kleingedrucktes.
+            Wähle ein Werkzeug und stell eine Frage. Zwei Nachrichten pro Werkzeug, ohne Account.
           </p>
         </div>
 
@@ -1353,7 +1173,7 @@ function LiveDemoSection() {
                 <IconHubIcon name={cfg.icon} className="h-4 w-4 shrink-0" tone="onDark" />
                 <span className="truncate">{cfg.chip}</span>
                 <span className="ml-auto flex-shrink-0 rounded-full bg-amber-400/95 px-2 py-0.5 text-[10px] font-bold text-stone-950">
-                  Ausprobieren →
+                  Ausprobieren
                 </span>
               </button>
             </div>
@@ -1485,24 +1305,24 @@ const STEPS: Array<{
   {
     num: '1',
     icon: 'key',
-    title: 'Kostenloses Konto erstellen',
-    text: 'Melde dich mit einem Klick über Google an. Keine Kreditkarte nötig.',
+    title: 'Konto erstellen',
+    text: 'Google-Login, fertig. Kein Fragebogen, keine Einrichtung.',
     color: 'from-amber-400 to-amber-300',
     glow: 'bg-amber-400/50',
   },
   {
     num: '2',
     icon: 'target',
-    title: 'Werkzeug wählen',
-    text: 'Stellenanalyse, Interview-Vorbereitung, Code-Hilfe, Sprachtraining oder freier Chat.',
+    title: 'Stellenanzeige einfügen',
+    text: 'Kopiere den Text oder den Link. Die Analyse startet automatisch.',
     color: 'from-amber-500 to-amber-400',
     glow: 'bg-amber-500/50',
   },
   {
     num: '3',
     icon: 'lightning',
-    title: 'Sofort loslegen',
-    text: 'Du schreibst, was du brauchst, und die KI antwortet mit einer klaren, umsetzbaren Struktur. In der Regel in Sekunden, nicht nach langem Hin und Her.',
+    title: 'Ergebnis lesen, entscheiden, handeln',
+    text: 'Du siehst sofort: passt die Stelle, was fehlt, was du tun kannst.',
     color: 'from-amber-600 to-amber-500',
     glow: 'bg-amber-600/50',
   },
@@ -1528,12 +1348,6 @@ function HowItWorksSection() {
         <svg className="absolute bottom-0 left-0 right-0 h-[30vh] min-h-[180px] max-h-[300px] w-full text-white/[0.035]" viewBox="0 0 1440 200" preserveAspectRatio="none" aria-hidden="true">
           <path d="M0,110 Q360,70 720,110 T1440,95 L1440,200 L0,200 Z" fill="currentColor" />
         </svg>
-        <div className="absolute right-[7%] top-[20%] h-28 w-28 border border-white/8" style={{ clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)' }} />
-        <div className="absolute left-[5%] bottom-[18%] h-24 w-24 border border-white/8" style={{ clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)' }} />
-        <div className="absolute left-[14%] top-[26%] h-40 w-40 rounded-full border border-white/10" />
-        <div className="absolute right-[18%] bottom-[14%] h-32 w-32 rounded-full border border-white/8" />
-        <div className="absolute right-[4%] bottom-[36%] h-20 w-20 rotate-45 border border-white/10" />
-        <div className="absolute left-[26%] top-[12%] h-24 w-24 rotate-45 rounded-lg border border-white/8" />
       </div>
 
       <div className="relative z-10 mx-auto w-full max-w-[900px]">
@@ -1542,7 +1356,7 @@ function HowItWorksSection() {
             So funktioniert es
           </div>
           <h2 className="text-[clamp(28px,4vw,44px)] font-bold text-white">
-            In 30 Sekunden startklar
+            Drei Schritte. Kein Onboarding.
           </h2>
         </div>
 
@@ -1575,19 +1389,15 @@ function HowItWorksSection() {
 const AUDIENCE = [
   {
     title: 'Jobsuchende',
-    text: 'Wenn du dich aktiv bewirbst, hilft dir PrivatePrep bei jeder Stellenanzeige und bringt dich gezielt auf das Interview ein. Weniger Raten, mehr konkrete Fakten.',
+    text: 'Du bewirbst dich aktiv und willst bei jeder Stelle wissen: Passt das? Lohnt sich die Mühe? Wie bereite ich mich vor?',
   },
   {
     title: 'Karrierewechsler',
-    text: 'Neues Feld, neue Anforderungen. Die KI zeigt dir genau, welche Kompetenzen du hervorheben solltest und wo du Lücken ansprechen musst.',
+    text: 'Neues Feld, neue Anforderungen. Du siehst genau, welche Kompetenzen du mitbringst und wo du nachziehen musst.',
   },
   {
-    title: 'Studierende & Berufseinsteiger',
-    text: 'Erster Job, erste Bewerbung. PrivatePrep gibt dir die Struktur und die Sicherheit, die du für den Einstieg brauchst.',
-  },
-  {
-    title: 'Entwickler',
-    text: 'Von Code-Reviews und Debugging bis zur Vorbereitung auf technische Vorstellungsgespräche: ein Assistent, der sich anfühlt, als würde er deine Sprache sprechen.',
+    title: 'Berufseinsteiger',
+    text: 'Erster Job, erste Bewerbung. Du bekommst Struktur, Formulierungen und die Sicherheit, die dir noch fehlt.',
   },
 ] as const
 
@@ -1612,10 +1422,10 @@ function FuerWenSection() {
             Für wen
           </div>
           <h2 className="text-[clamp(26px,3.8vw,40px)] font-bold text-stone-50">
-            Egal, wo du gerade stehst: PrivatePrep hilft dir beim nächsten Schritt
+            Egal ob erste Bewerbung oder Jobwechsel.
           </h2>
         </div>
-        <div className="grid gap-5 sm:grid-cols-2">
+        <div className="grid gap-5 sm:grid-cols-3">
           {AUDIENCE.map(a => (
             <div
               key={a.title}
@@ -1635,32 +1445,32 @@ function FuerWenSection() {
 
 const FAQ_ITEMS = [
   {
+    q: 'Was unterscheidet das hier von ChatGPT?',
+    a: 'ChatGPT ist ein allgemeiner Chatbot. Hier bekommt jedes Werkzeug einen eigenen Prompt, der auf Bewerbungen spezialisiert ist. Die Stellenanalyse prüft Keywords gegen dein Profil. Der Interview-Coach stellt Fragen nach STAR-Methode. Das Anschreiben wird auf die konkrete Stelle zugeschnitten. ChatGPT kann das nicht, weil es deinen Lebenslauf und die Stelle nicht kennt.',
+  },
+  {
     q: 'Brauche ich technische Kenntnisse?',
-    a: 'Nein. Du schreibst einfach auf Deutsch, was du brauchst. Die KI versteht dein Anliegen und antwortet strukturiert.',
+    a: 'Nein. Du kopierst eine Stellenanzeige rein und bekommst ein Ergebnis. Kein Setup, keine Konfiguration.',
   },
   {
     q: 'Welche KI steckt dahinter?',
-    a: 'PrivatePrep nutzt aktuelle Sprachmodelle von Anthropic (Claude). So bekommst du verlässliche, kontextsensitive Hilfe bei Texten, Analysen und Interviewvorbereitung, ohne selbst Prompt-Experte zu sein.',
-  },
-  {
-    q: 'Was unterscheidet PrivatePrep von ChatGPT?',
-    a: 'PrivatePrep ist auf Bewerbung und Karriere ausgerichtet. Stellenanalyse und Interview Coach sind dafür gebaut, nicht als generischer Chat, sondern mit Blick auf deinen Lebenslauf und die konkrete Stelle.',
+    a: 'Wir nutzen verschiedene Sprachmodelle, je nachdem welches Werkzeug du verwendest. Die Modelle werden so ausgewählt, dass du die beste Qualität bei akzeptabler Geschwindigkeit bekommst. Die Details ändern sich regelmäßig, weil wir laufend optimieren.',
   },
   {
     q: 'Sind meine Daten sicher?',
-    a: 'Ja. Deine Gespräche werden nicht zum Trainieren von KI-Modellen verwendet. Die Datenverarbeitung erfolgt über verschlüsselte Verbindungen.',
+    a: 'Dein Lebenslauf und deine Stellenanalysen werden verschlüsselt gespeichert. Wir geben keine Daten an Dritte weiter. Du kannst dein Konto und alle Daten jederzeit löschen.',
   },
   {
-    q: 'Kann ich jederzeit kündigen?',
-    a: 'Ja, mit einem Klick. Keine Mindestlaufzeit, keine versteckten Gebühren.',
+    q: 'Wie funktioniert die Zahlung?',
+    a: 'Einmalzahlung per Kreditkarte oder PayPal. Kein Abo, keine automatische Verlängerung. Nach Ablauf des Zeitraums kannst du einen neuen Zugang kaufen. Deine Daten bleiben erhalten.',
   },
   {
-    q: 'In welchen Sprachen funktioniert PrivatePrep?',
-    a: 'Die Oberfläche ist auf Deutsch. Die KI versteht und antwortet in über 50 Sprachen, etwa wenn du dich international bewirbst oder fremdsprachige Texte brauchst.',
+    q: 'In welchen Sprachen funktioniert es?',
+    a: 'Deutsch und Englisch. Die Werkzeuge erkennen automatisch, in welcher Sprache du schreibst, und antworten in derselben Sprache.',
   },
   {
-    q: 'Was passiert nach den kostenlosen Nachrichten?',
-    a: 'Du kannst warten (das Limit setzt um Mitternacht zurück) oder auf Starter upgraden, um sofort weiterzumachen und Zugang zur Stellenanalyse zu bekommen.',
+    q: 'Was passiert nach Ablauf meines Zugangs?',
+    a: 'Du kannst deine gespeicherten Lebensläufe und Bewerbungen weiterhin einsehen und als PDF exportieren. Die KI-Werkzeuge sind bis zum nächsten Kauf pausiert.',
   },
 ] as const
 
@@ -1716,6 +1526,7 @@ const PREVIEW_PLANS: Array<{
   headerBg: string
   badge?: string
   features: PlanFeature[]
+  footnote?: string
   cta: string
   ctaClass: string
   useSignUp: boolean
@@ -1723,67 +1534,53 @@ const PREVIEW_PLANS: Array<{
   scale: boolean
 }> = [
   {
-    id: 'free',
-    name: 'Free',
-    price: '0 €',
-    period: '',
-    icon: 'lightning',
+    id: 'starter',
+    name: 'Starter',
+    price: '14,90€',
+    period: '30 Tage Zugang. Einmalzahlung.',
+    icon: 'star',
     borderClass: 'border-stone-600/45 bg-[#181310]/98 shadow-landing-md',
     headerBg: 'bg-[#1c1612]/95',
     features: [
-      { text: '20 Nachrichten pro Tag (nach Anmeldung)', included: true },
-      { text: 'KI-Chat, Sprachtraining und Code-Assistent', included: true },
-      { text: 'Sitzungsspeicher im Browser', included: true },
-      { text: 'Stellenanalyse', included: false },
-      { text: 'Interview Coach', included: false },
-      { text: 'Gesprächsverlauf', included: false },
+      { text: '3 Lebensläufe mit PDF und Word-Export', included: true },
+      { text: 'Stellenanalyse mit Keyword-Abgleich', included: true },
+      { text: 'Karriere-Chat', included: true },
+      { text: '10 Bewerbungen in der Pipeline', included: true },
+      { text: '30 KI-Gespräche pro Tag', included: true },
     ],
-    cta: 'Kostenlos starten',
+    cta: 'Starter wählen',
     ctaClass:
       'border border-stone-600/45 bg-white/[0.05] text-stone-200 shadow-landing hover:border-amber-500/40 hover:bg-amber-950/25 hover:text-amber-100',
-    useSignUp: true,
+    useSignUp: false,
+    href: '/pricing',
     scale: false,
   },
   {
-    id: 'starter',
-    name: 'Starter',
-    price: '6,90 €',
-    period: '/ Monat',
-    icon: 'star',
+    id: 'komplett',
+    name: 'Komplett',
+    price: '39,90€',
+    period: '90 Tage Zugang. Einmalzahlung.',
+    icon: 'trophy-award',
     borderClass: 'border-amber-500/45 bg-[#1a140f]/98 shadow-landing-promo',
     headerBg: 'bg-gradient-to-br from-amber-950/50 to-[#1f1810]/95',
     badge: 'Empfohlen',
     features: [
-      { text: '50 Nachrichten pro Tag', included: true },
-      { text: 'Alle 5 Werkzeuge inkl. Stellenanalyse & Interview Coach', included: true },
-      { text: 'Audio-Aussprache', included: true },
-      { text: '14 Tage Gesprächsverlauf', included: true },
+      { text: 'Unbegrenzte Lebensläufe', included: true },
+      { text: 'Stellenanalyse mit Keyword-Abgleich', included: true },
+      { text: 'Karriere-Chat', included: true },
+      { text: 'Unbegrenzte Bewerbungen', included: true },
+      { text: '50 KI-Gespräche pro Tag', included: true },
+      { text: 'Interview-Coach mit STAR-Feedback', included: true },
+      { text: 'Anschreiben-Generator', included: true },
+      { text: 'Gehalts-Coach und LinkedIn-Tipps', included: true },
+      { text: 'KI-Gedächtnis (lernt aus deinen Sessions)', included: true },
     ],
-    cta: 'Starter wählen',
+    footnote: '13,30€ pro Monat. 33% günstiger als Starter.',
+    cta: 'Komplett wählen',
     ctaClass: 'bg-gradient-to-r from-amber-600 to-amber-700 text-white shadow-md shadow-amber-200 hover:shadow-lg',
     useSignUp: false,
     href: '/pricing',
     scale: true,
-  },
-  {
-    id: 'pro',
-    name: 'Pro',
-    price: '14,90 €',
-    period: '/ Monat',
-    icon: 'trophy-award',
-    borderClass: 'border-stone-600/45 bg-[#181310]/98 shadow-landing-md ring-1 ring-orange-500/15',
-    headerBg: 'bg-gradient-to-br from-orange-950/35 to-[#1c1410]/95',
-    features: [
-      { text: '200 Nachrichten pro Tag', included: true },
-      { text: 'Alle Werkzeuge + Priorität', included: true },
-      { text: 'Vollständiger Gesprächsverlauf', included: true },
-      { text: 'API-Zugang (demnächst)', included: true },
-    ],
-    cta: 'Pro werden',
-    ctaClass: 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md shadow-amber-200 hover:shadow-lg',
-    useSignUp: false,
-    href: '/pricing',
-    scale: false,
   },
 ]
 
@@ -1806,32 +1603,26 @@ function PricingPreviewSection() {
         <svg className="absolute top-0 left-0 right-0 h-[20vh] min-h-[110px] max-h-[180px] w-full text-white/[0.03]" viewBox="0 0 1440 150" preserveAspectRatio="none" aria-hidden="true">
           <path d="M0,0 L1440,0 L1440,42 Q720,88 0,58 L0,0 Z" fill="currentColor" />
         </svg>
-        <div className="absolute right-[9%] top-[20%] h-28 w-28 rotate-45 rounded-xl border border-white/8" />
-        <div className="absolute left-[6%] top-[36%] h-20 w-20 rotate-45 rounded-lg border border-white/8" />
-        <div className="absolute right-[16%] bottom-[18%] h-24 w-24 rotate-45 rounded-xl border border-white/10" />
-        <div className="absolute left-[12%] top-[12%] h-24 w-24 border border-white/8" style={{ clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)' }} />
-        <div className="absolute right-[5%] bottom-[26%] h-36 w-36 rounded-full border border-white/10" />
-        <div className="absolute left-[28%] bottom-[10%] h-28 w-28 border border-white/6" style={{ clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)' }} />
       </div>
 
-      <div className="relative z-10 mx-auto w-full max-w-[1000px]">
+      <div className="relative z-10 mx-auto w-full max-w-[920px]">
         <div className="mb-12 text-center">
           <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-amber-500/25 bg-amber-950/35 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.15em] text-amber-200/85">
             Preise
           </div>
           <h2 className="mb-3 text-[clamp(28px,4vw,44px)] font-bold text-stone-50">
-            Einfach. Transparent. Fair.
+            Kein Abo. Kein Kleingedrucktes.
           </h2>
           <p className="text-lg text-stone-400">
-            Starte kostenlos und upgrade, wenn du bereit bist. Kein Abo-Trick, keine versteckten Kosten. Jederzeit kündbar.
+            Einmalzahlung, voller Zugang, fertig. Wähle den Zeitraum der zu deiner Jobsuche passt.
           </p>
         </div>
 
-        {/* Mobile: horizontal snap-scroll  |  md+: 3-column grid */}
+        {/* Mobile: horizontal snap-scroll  |  md+: 2-column grid */}
         <div className={[
           'flex items-stretch gap-4 overflow-x-auto pb-3 snap-x snap-mandatory scrollbar-hide',
           '-mx-6 px-6',
-          'md:mx-0 md:grid md:grid-cols-3 md:items-center md:gap-6 md:overflow-x-visible md:pb-0 md:snap-none',
+          'md:mx-0 md:grid md:grid-cols-2 md:items-stretch md:gap-6 md:overflow-x-visible md:pb-0 md:snap-none',
         ].join(' ')}>
           {PREVIEW_PLANS.map(plan => (
             <div
@@ -1854,10 +1645,8 @@ function PricingPreviewSection() {
                   <IconHubIcon name={plan.icon} className="h-6 w-6 shrink-0" tone="onDark" />
                   <h3 className="text-lg font-bold text-stone-100">{plan.name}</h3>
                 </div>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-3xl font-bold text-stone-50">{plan.price}</span>
-                  <span className="text-xs text-stone-500">{plan.period}</span>
-                </div>
+                <div className="text-3xl font-bold text-stone-50">{plan.price}</div>
+                <p className="mt-1 text-xs leading-relaxed text-stone-500">{plan.period}</p>
               </div>
               <div className="relative space-y-2.5 px-5 py-4 before:pointer-events-none before:absolute before:inset-x-5 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-amber-800/35 before:to-transparent">
                 {plan.features.map(f => (
@@ -1871,6 +1660,9 @@ function PricingPreviewSection() {
                   </div>
                 ))}
               </div>
+              {plan.footnote && (
+                <p className="px-5 pb-3 text-xs leading-relaxed text-stone-400">{plan.footnote}</p>
+              )}
               <div className="px-5 pb-5">
                 {plan.useSignUp ? (
                   <SignUpButton mode="modal" fallbackRedirectUrl="/overview">
@@ -1887,7 +1679,7 @@ function PricingPreviewSection() {
         </div>
 
         <p className="mt-8 text-center text-sm text-stone-500">
-          Alle Pläne enthalten alle kostenlosen Werkzeuge. Jederzeit kündbar.
+          Beide Pläne starten sofort nach der Zahlung. Keine automatische Verlängerung.
         </p>
       </div>
     </section>
@@ -1905,58 +1697,32 @@ function FinalCtaSection() {
     >
       <div className="landing-dot-grid pointer-events-none absolute inset-0 opacity-80" />
 
-      {/* Große Glows, konzentrische Wellen, weiche Formen */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -left-32 top-1/2 h-[min(110vw,720px)] w-[min(110vw,720px)] -translate-y-1/2 rounded-full bg-white/6 blur-[100px]" />
         <div className="absolute -right-28 top-1/2 h-[min(100vw,640px)] w-[min(100vw,640px)] -translate-y-1/2 rounded-full bg-amber-300/12 blur-[95px]" />
-        <div className="landing-geo-hairline absolute left-1/2 top-1/2 h-[min(120vw,780px)] w-[min(120vw,780px)] -translate-x-1/2 -translate-y-1/2 rounded-full" />
-        <div className="landing-geo-hairline-sm absolute left-1/2 top-1/2 h-[min(95vw,620px)] w-[min(95vw,620px)] -translate-x-1/2 -translate-y-1/2 rounded-full" />
-        <div className="landing-geo-hairline-amber absolute left-1/2 top-1/2 h-[min(70vw,480px)] w-[min(70vw,480px)] -translate-x-1/2 -translate-y-1/2 rounded-full" />
         <svg className="absolute bottom-0 left-0 right-0 h-[38vh] min-h-[220px] max-h-[400px] w-full text-white/[0.05]" viewBox="0 0 1440 240" preserveAspectRatio="none" aria-hidden="true">
           <path d="M0,130 Q420,85 840,125 T1440,105 L1440,240 L0,240 Z" fill="currentColor" />
         </svg>
         <svg className="absolute top-0 left-0 right-0 h-[28vh] min-h-[160px] max-h-[280px] w-full text-amber-400/[0.06]" viewBox="0 0 1440 200" preserveAspectRatio="none" aria-hidden="true">
           <path d="M0,0 L1440,0 L1440,55 Q720,115 0,75 L0,0 Z" fill="currentColor" />
         </svg>
-        <div className="landing-geo-hairline-md absolute left-[8%] bottom-[24%] h-32 w-32 rotate-45 rounded-2xl" />
-        <div className="landing-geo-hairline-sm absolute right-[8%] top-[26%] h-28 w-28 rotate-45 rounded-xl" />
-        <svg
-          className="pointer-events-none absolute right-[12%] bottom-[16%] h-40 w-40 text-[rgb(255_248_237)] opacity-[0.055]"
-          viewBox="0 0 100 100"
-          fill="none"
-          aria-hidden
-        >
-          <polygon
-            points="50,3 88,24.5 88,75.5 50,97 12,75.5 12,24.5"
-            stroke="currentColor"
-            strokeWidth={0.55}
-            vectorEffect="nonScalingStroke"
-            strokeLinejoin="round"
-          />
-        </svg>
       </div>
 
       <div className="relative z-10 mx-auto w-full max-w-[640px] px-4">
         <div className="relative py-4 sm:py-8">
-          <div
-            className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
-            aria-hidden
-          >
-            <div className="landing-geo-hairline-cta-ring aspect-square w-[min(92vw,520px)] rounded-full" />
-          </div>
           <div className="relative z-10 flex flex-col items-center text-center">
             <div className="mb-6 flex justify-center">
               <IconHubIcon name="lightning" tone="onDark" className="h-16 w-16 sm:h-20 sm:w-20" />
             </div>
             <h2 className="mb-4 text-[clamp(28px,4vw,44px)] font-bold text-stone-50">
-              Deine nächste Bewerbung: besser vorbereitet als je zuvor.
+              Deine nächste Bewerbung. Vorbereitet.
             </h2>
             <p className="mb-10 max-w-[480px] text-lg text-stone-400">
-              Mach mit bei Menschen, die ihre Bewerbungen bewusst vorbereiten und nicht nur aufs Glück hoffen.
+              Starte jetzt und finde heraus, ob die Stelle zu dir passt.
             </p>
             <SignUpButton mode="modal" fallbackRedirectUrl="/overview">
               <button className="rounded-2xl bg-gradient-to-r from-amber-400 to-amber-500 px-10 py-4 text-base font-bold text-amber-950 shadow-2xl shadow-black/50 transition-all hover:scale-[1.02] hover:from-amber-300 hover:to-amber-400">
-                Kostenlos starten →
+                Kostenlos starten
               </button>
             </SignUpButton>
             <p className="mt-4 text-sm text-stone-600">Keine Kreditkarte erforderlich</p>
@@ -1990,18 +1756,19 @@ function FooterSection() {
                 loading="lazy"
                 className="h-7 w-7 rounded-lg"
               />
-              <span className="bg-gradient-to-r from-amber-400 to-amber-300 bg-clip-text text-lg font-bold text-transparent">PrivatePrep</span>
+              <span className="bg-gradient-to-r from-amber-400 to-amber-300 bg-clip-text text-lg font-bold text-transparent">Applikum</span>
             </div>
             <p className="text-sm text-stone-500">KI-Werkzeuge für deine Karriere</p>
           </div>
-          <div className="flex items-center gap-6 text-sm text-stone-500">
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-stone-500 md:justify-end">
             <a href="#" className="transition-colors hover:text-white">Datenschutz</a>
             <a href="#" className="transition-colors hover:text-white">Nutzungsbedingungen</a>
+            <a href="#" className="transition-colors hover:text-white">Impressum</a>
             <a href="#" className="transition-colors hover:text-white">Kontakt</a>
           </div>
         </div>
         <div className="border-t border-white/5 pt-6 text-center">
-          <p className="text-xs text-stone-700">© 2026 PrivatePrep. Alle Rechte vorbehalten.</p>
+          <p className="text-xs text-stone-700">© 2026 Applikum. Alle Rechte vorbehalten.</p>
         </div>
       </div>
     </footer>
