@@ -17,9 +17,11 @@ import ChatSwitcherStrip from '../components/chat/ChatSwitcherStrip'
 import OnboardingPromptModal, { ONBOARDING_CHAT_PROMPT_DISMISS_KEY } from '../components/chat/OnboardingPromptModal'
 import UsageLimitModal from '../components/ui/UsageLimitModal'
 import { useAppUi } from '../context/AppUiContext'
+import { useLayoutChrome } from '../context/LayoutChromeContext'
 import { useDeliberateStream } from '../hooks/useDeliberateStream'
 import { useChatSessions } from '../hooks/useChatSessions'
 import { useCareerProfile } from '../hooks/useCareerProfile'
+import { useBreakpoint } from '../hooks/useBreakpoint'
 import { useUserPlan, dispatchServerUsage } from '../hooks/useUserPlan'
 import { sanitizeTechnicalContext } from '../utils/cvTechnicalContext'
 import { applyStreamText } from '../chat/streamTextBridge'
@@ -580,10 +582,15 @@ export default function ChatPage() {
   const modalToolType = modalToolTypeFromParam(rawToolParam, toolParam)
 
   const store = useChatSessions()
+  const bp = useBreakpoint()
+  const isDesktopBp = bp === 'desktop'
+  const { desktopChatHistoryOpen, setDesktopChatHistoryOpen } = useLayoutChrome()
   const { requestConfirm } = useAppUi()
   const applicationSeedKey = useRef<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const desktopHistoryOpenRef = useRef(desktopChatHistoryOpen)
+  desktopHistoryOpenRef.current = desktopChatHistoryOpen
   const [showContextModal, setShowContextModal] = useState(false)
   const [showMobileDetailsModal, setShowMobileDetailsModal] = useState(false)
   const [showActiveContextInfo, setShowActiveContextInfo] = useState(readActiveContextInfoVisible)
@@ -1046,6 +1053,56 @@ export default function ChatPage() {
     void store.newSession(store.currentToolType)
   }
 
+  useEffect(() => {
+    if (!isDesktopBp)
+      setDesktopChatHistoryOpen(false)
+  }, [isDesktopBp, setDesktopChatHistoryOpen])
+
+  useEffect(() => {
+    if (!isDesktopBp || location.pathname !== '/chat')
+      return
+
+    const onKey = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement | null
+      if (el?.closest('input, textarea, select, [contenteditable="true"]'))
+        return
+
+      if (e.key === 'Escape') {
+        if (desktopHistoryOpenRef.current) {
+          e.preventDefault()
+          setDesktopChatHistoryOpen(false)
+        }
+        return
+      }
+
+      if (!e.altKey || e.repeat || e.ctrlKey || e.metaKey)
+        return
+
+      if (e.code === 'KeyN') {
+        e.preventDefault()
+        void store.newSession(store.currentToolType)
+        return
+      }
+
+      const digitMap: Record<string, string> = {
+        Digit1: '/chat',
+        Digit2: '/chat?tool=jobanalyzer',
+        Digit3: '/chat?tool=interviewprep',
+        Digit4: '/chat?tool=cover_letter',
+        Digit5: '/chat?tool=salary_coach',
+      }
+      const path = digitMap[e.code]
+      if (!path)
+        return
+      e.preventDefault()
+      navigate(path)
+      setDesktopChatHistoryOpen(true)
+    }
+
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [isDesktopBp, location.pathname, navigate, setDesktopChatHistoryOpen, store])
+
   const handleDeleteSession = (id: string) => {
     void store.deleteSession(id)
 
@@ -1395,6 +1452,8 @@ export default function ChatPage() {
   return (
     <div className="relative flex min-h-0 flex-1 overflow-hidden">
       <ChatSidebar
+        layout={isDesktopBp ? 'desktop-inline' : 'standard'}
+        desktopExpanded={isDesktopBp && desktopChatHistoryOpen}
         sessions={store.visibleSessions}
         activeSessionId={store.activeSessionId}
         currentToolType={store.currentToolType}
@@ -1424,7 +1483,17 @@ export default function ChatPage() {
         showInterviewPanel={isInterview}
       />
 
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+      <div
+        className="flex min-w-0 flex-1 flex-col overflow-hidden"
+        onMouseDown={(e) => {
+          if (!isDesktopBp || !desktopChatHistoryOpen)
+            return
+          const el = e.target as HTMLElement
+          if (el.closest('input, textarea, select, button, a, [role="dialog"], label'))
+            return
+          setDesktopChatHistoryOpen(false)
+        }}
+      >
         {store.sessionsLoadError && (
           <div className="flex-shrink-0 border-b border-red-500/35 bg-red-950/40 px-3 py-2.5 text-sm text-red-100 sm:px-4" role="alert">
             <div className="mx-auto flex max-w-3xl flex-wrap items-center justify-between gap-2">
