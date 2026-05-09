@@ -134,8 +134,10 @@ function SkillSidebarRow({
 
   if (desktopRail) {
     const labelCls = [
-      'min-w-0 flex-1 truncate text-[13px] transition-[opacity] ease-out',
-      desktopRail.labelsShown ? 'opacity-100 delay-100 duration-200' : 'opacity-0 duration-150 delay-0',
+      'min-w-0 flex-1 truncate text-[13px] transition-[opacity,transform] ease-out',
+      desktopRail.labelsShown
+        ? 'translate-x-0 opacity-100 delay-100 duration-220'
+        : '-translate-x-1.5 opacity-0 duration-150 delay-0',
     ].join(' ')
     const dotPx = isActive && !locked ? 12 : 10
     return (
@@ -188,9 +190,9 @@ function SkillSidebarRow({
         {skill.badge && desktopRail.labelsShown ? (
           <span
             className={[
-              'flex-shrink-0 rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide transition-opacity duration-200',
+              'flex-shrink-0 rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide transition-[opacity,transform] duration-200',
               badgeColorClass(skill.badgeColor),
-              desktopRail.labelsShown ? 'opacity-100 delay-100' : 'opacity-0',
+              desktopRail.labelsShown ? 'translate-x-0 opacity-100 delay-100' : '-translate-x-1 opacity-0',
             ].join(' ')}
           >
             {skill.badge}
@@ -424,16 +426,18 @@ export default function SidebarNavContent({ density = 'full', onNavClick, deskto
                         </span>
                         <span
                           className={[
-                            'min-w-0 flex-1 truncate text-left text-[13px] font-semibold tracking-wide transition-[opacity] ease-out',
-                            desktopRail.labelsShown ? 'opacity-100 delay-100 duration-200' : 'opacity-0 duration-150 delay-0',
+                            'min-w-0 flex-1 truncate text-left text-[13px] font-semibold tracking-wide transition-[opacity,transform] ease-out',
+                            desktopRail.labelsShown
+                              ? 'translate-x-0 opacity-100 delay-100 duration-220'
+                              : '-translate-x-1.5 opacity-0 duration-150 delay-0',
                           ].join(' ')}
                         >
                           Weitere Werkzeuge
                         </span>
                         <span
                           className={[
-                            'flex-shrink-0 transition-[opacity] duration-200',
-                            desktopRail.labelsShown ? 'opacity-100 delay-100' : 'opacity-0 duration-150',
+                            'flex-shrink-0 transition-[opacity,transform] duration-200',
+                            desktopRail.labelsShown ? 'translate-x-0 opacity-100 delay-100' : '-translate-x-1 opacity-0 duration-150',
                           ].join(' ')}
                         >
                           {(secondaryOpen || secondaryHasActive) ? <ChevronDown size={14} /> : <ChevronRight size={14} />}

@@ -22,6 +22,7 @@ function MainLayoutShell() {
     tabletSidebarExpanded,
     setTabletSidebarExpanded,
     drawerTriggerRef,
+    desktopChatHistoryOpen,
   } = useLayoutChrome()
   const mainRef = useRef<HTMLElement>(null)
 
@@ -50,6 +51,8 @@ function MainLayoutShell() {
   const railLeaveCollapseTimerRef = useRef<number>()
 
   const onDesktopRailEnter = () => {
+    if (desktopChatHistoryOpen)
+      return
     if (railLeaveCollapseTimerRef.current) {
       window.clearTimeout(railLeaveCollapseTimerRef.current)
       railLeaveCollapseTimerRef.current = undefined
@@ -71,8 +74,23 @@ function MainLayoutShell() {
     railLeaveCollapseTimerRef.current = window.setTimeout(() => {
       setRailWide(false)
       railLeaveCollapseTimerRef.current = undefined
-    }, 150)
+    }, 120)
   }
+
+  useEffect(() => {
+    if (!desktopChatHistoryOpen)
+      return
+    if (railEnterTimerRef.current) {
+      window.clearTimeout(railEnterTimerRef.current)
+      railEnterTimerRef.current = undefined
+    }
+    if (railLeaveCollapseTimerRef.current) {
+      window.clearTimeout(railLeaveCollapseTimerRef.current)
+      railLeaveCollapseTimerRef.current = undefined
+    }
+    setRailLabelsShown(false)
+    setRailWide(false)
+  }, [desktopChatHistoryOpen])
 
   useEffect(() => {
     return () => {
@@ -108,8 +126,10 @@ function MainLayoutShell() {
           <aside className="relative z-30 hidden min-[1025px]:flex h-full w-12 shrink-0 flex-col border-r border-sidebar-border bg-sidebar/90 backdrop-blur">
             <div
               className={[
-                'absolute left-0 top-0 z-10 flex h-full flex-col overflow-hidden border-r border-sidebar-border bg-sidebar/95 backdrop-blur transition-[width,box-shadow] duration-[250ms] ease-[cubic-bezier(0.4,0,0.2,1)]',
-                railWide ? 'w-[200px] shadow-[4px_0_24px_rgba(0,0,0,0.28)]' : 'w-12 shadow-none',
+                'absolute left-0 top-0 z-10 flex h-full flex-col overflow-hidden border-r border-sidebar-border bg-sidebar/95 backdrop-blur transition-[width,box-shadow,opacity] duration-[280ms] ease-[cubic-bezier(0.22,1,0.36,1)]',
+                railWide && !desktopChatHistoryOpen
+                  ? 'w-[200px] shadow-[8px_0_28px_rgba(0,0,0,0.32)] opacity-100'
+                  : 'w-12 shadow-none opacity-100',
               ].join(' ')}
               onMouseEnter={onDesktopRailEnter}
               onMouseLeave={onDesktopRailLeave}
