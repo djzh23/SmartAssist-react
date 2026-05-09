@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { Briefcase, Check, Code2, Globe2, GripVertical, Loader2, MessageCircle, Pencil, Plus, Target, Trash2, X } from 'lucide-react'
 import AppCtaButton from '../ui/AppCtaButton'
-import { ServerSyncControl } from '../ui/ServerSyncControl'
 import type { LucideIcon } from 'lucide-react'
 import type { ChatSession, ToolType } from '../../types'
 import { NATIVE_LANGS, PROGRAMMING_LANGUAGES, TARGET_LANGS } from '../../types'
 import { sessionListLabel } from '../../utils/sessionTitle'
+import { getChatFeatureColor, hexToRgba } from '../../utils/chatFeatureColors'
 
 const TOOL_ICON: Record<ToolType, LucideIcon> = {
   general:     MessageCircle,
@@ -16,26 +16,6 @@ const TOOL_ICON: Record<ToolType, LucideIcon> = {
 }
 
 
-const TOOL_BADGE: Record<ToolType, string> = {
-  general: 'CHAT',
-  jobanalyzer: 'JOB',
-  language: 'LANG',
-  programming: 'CODE',
-  interview: 'INTV',
-}
-
-// 8 distinct color themes for session tabs (dark shell)
-const SESSION_THEMES = [
-  { bg: 'bg-amber-950/45', border: 'border-l-amber-400', icon: 'text-amber-300', dot: 'bg-amber-400', shape1: 'bg-amber-500/12', shape2: 'border-amber-500/35' },
-  { bg: 'bg-amber-950/40', border: 'border-l-amber-300', icon: 'text-amber-300', dot: 'bg-amber-400', shape1: 'bg-amber-500/10', shape2: 'border-amber-400/30' },
-  { bg: 'bg-emerald-950/40', border: 'border-l-emerald-400', icon: 'text-emerald-300', dot: 'bg-emerald-400', shape1: 'bg-emerald-500/12', shape2: 'border-emerald-500/35' },
-  { bg: 'bg-amber-950/40', border: 'border-l-amber-400', icon: 'text-amber-300', dot: 'bg-amber-400', shape1: 'bg-amber-500/12', shape2: 'border-amber-500/35' },
-  { bg: 'bg-rose-950/40', border: 'border-l-rose-400', icon: 'text-rose-300', dot: 'bg-rose-400', shape1: 'bg-rose-500/12', shape2: 'border-rose-500/35' },
-  { bg: 'bg-blue-950/40', border: 'border-l-blue-400', icon: 'text-blue-300', dot: 'bg-blue-400', shape1: 'bg-blue-500/12', shape2: 'border-blue-500/35' },
-  { bg: 'bg-orange-950/40', border: 'border-l-orange-400', icon: 'text-orange-300', dot: 'bg-orange-400', shape1: 'bg-orange-500/12', shape2: 'border-orange-500/35' },
-  { bg: 'bg-teal-950/40', border: 'border-l-teal-400', icon: 'text-teal-300', dot: 'bg-teal-400', shape1: 'bg-teal-500/12', shape2: 'border-teal-500/35' },
-] as const
-
 // Geometric shape variants - cycles through for visual variety
 const SHAPES = [
   { type: 'circle',  cls: 'rounded-full' },
@@ -44,8 +24,15 @@ const SHAPES = [
   { type: 'squircle',cls: 'rounded-2xl -rotate-6' },
 ] as const
 
-function getTheme(index: number) {
-  return SESSION_THEMES[index % SESSION_THEMES.length]
+function getTheme(tool: ToolType) {
+  const color = getChatFeatureColor(tool)
+  return {
+    color,
+    activeBg: hexToRgba(color, 0.14),
+    iconBg: hexToRgba(color, 0.1),
+    shape1: hexToRgba(color, 0.12),
+    shape2: hexToRgba(color, 0.35),
+  }
 }
 function getShape(index: number) {
   return SHAPES[index % SHAPES.length]
@@ -78,10 +65,6 @@ interface Props {
   progLang: string
   onProgLangChange: (v: string) => void
   showInterviewPanel: boolean
-  /** Signed-in: pull session list + transcripts from server on demand. */
-  onSyncFromServer?: () => void
-  sessionsRemoteSyncing?: boolean
-  sessionsLastSyncedAt?: string | null
 }
 
 export default function ChatSidebar({
@@ -107,15 +90,17 @@ export default function ChatSidebar({
   progLang,
   onProgLangChange,
   showInterviewPanel,
-  onSyncFromServer,
-  sessionsRemoteSyncing = false,
-  sessionsLastSyncedAt = null,
 }: Props) {
   const [dragFrom, setDragFrom] = useState<number | null>(null)
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
+  const [touchDragFrom, setTouchDragFrom] = useState<number | null>(null)
+  const [touchDragOver, setTouchDragOver] = useState<number | null>(null)
   const [renamingId, setRenamingId] = useState<string | null>(null)
   const [renameDraft, setRenameDraft] = useState('')
   const renameInputRef = useRef<HTMLInputElement>(null)
+  const touchPointerIdRef = useRef<number | null>(null)
+  const touchMovedRef = useRef(false)
+  const suppressNextClickRef = useRef(false)
   const canReorder = Boolean(onReorderSessions) && sessions.length > 1
 
   useEffect(() => {
@@ -148,6 +133,13 @@ export default function ChatSidebar({
     cancelRename()
   }
 
+  const resetTouchDrag = () => {
+    touchPointerIdRef.current = null
+    touchMovedRef.current = false
+    setTouchDragFrom(null)
+    setTouchDragOver(null)
+  }
+
   return (
     <>
       {isOpen && (
@@ -166,10 +158,13 @@ export default function ChatSidebar({
             : 'hidden',
         ].join(' ')}
       >
-        <div className="flex flex-shrink-0 items-center justify-between px-3 pb-1 pt-3">
-          <AppCtaButton size="sm" onClick={onNew} className="flex-1">
-            <Plus size={15} />
-            Neues Gespräch
+        <div className="flex flex-shrink-0 items-center justify-between gap-2 border-b border-stone-600/35 px-3 pb-2 pt-2.5">
+          <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-stone-500">
+            Gespräche
+          </span>
+          <AppCtaButton size="sm" onClick={onNew} className="h-8 px-3 py-0 text-xs">
+            <Plus size={13} />
+            + Neu
           </AppCtaButton>
 
           <button
@@ -180,18 +175,6 @@ export default function ChatSidebar({
             <X size={16} />
           </button>
         </div>
-
-        {onSyncFromServer && (
-          <div className="flex-shrink-0 border-b border-stone-600/35 px-3 py-2">
-            <ServerSyncControl
-              variant="dark"
-              onSync={onSyncFromServer}
-              syncing={sessionsRemoteSyncing}
-              lastSyncedAt={sessionsLastSyncedAt}
-              className="w-full [&_button]:w-full"
-            />
-          </div>
-        )}
 
         {showLLPanel && (
           <div className="flex-shrink-0 border-t border-stone-600/35 px-3 py-2.5">
@@ -257,14 +240,14 @@ export default function ChatSidebar({
           </div>
         )}
 
-        <div className="min-h-0 flex-1 overflow-y-auto py-1">
+        <div className="min-h-0 flex-1 overflow-y-auto py-1.5">
           {sessions.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center gap-2 py-10 text-stone-500">
-              <span className="text-xl font-semibold opacity-40">{TOOL_BADGE[currentToolType] ?? 'CHAT'}</span>
+              <span className="text-xl font-semibold opacity-40">{(currentToolType ?? 'general').toUpperCase()}</span>
               <p className="px-6 text-center text-xs">Noch keine Gespräche. Starte einen neuen Chat!</p>
             </div>
           ) : (
-            <ul className="px-2">
+            <ul className="space-y-0.5 px-2">
               {sessions.map((session, idx) => {
                 const label = sessionListLabel(session, 30)
                 const time = new Date(session.messages[session.messages.length - 1]?.timestamp ?? session.createdAt)
@@ -273,23 +256,31 @@ export default function ChatSidebar({
                 const isStreaming = sessionIsStreaming?.(session.id) ?? false
 
                 const Icon = TOOL_ICON[session.toolType]
-                const theme = getTheme(idx)
+                const theme = getTheme(session.toolType)
                 const shape = getShape(idx)
                 const isDragging = dragFrom === idx
-                const isDropTarget = dragOverIndex === idx && dragFrom !== null && dragFrom !== idx
+                const isTouchDragging = touchDragFrom === idx
+                const htmlDropTarget = dragOverIndex === idx && dragFrom !== null && dragFrom !== idx
+                const touchDropTarget = touchDragOver === idx && touchDragFrom !== null && touchDragFrom !== idx
+                const isDropTarget = htmlDropTarget || touchDropTarget
 
                 return (
                   <li
                     key={session.id}
+                    data-session-index={idx}
                     className={[
-                      'group relative mb-1 flex cursor-pointer items-center overflow-hidden rounded-xl border-l-[3px] py-2.5 transition-all duration-150',
+                      'group relative flex cursor-pointer items-center overflow-hidden rounded-xl border-l-[3px] py-2 transition-all duration-150',
                       canReorder ? 'gap-1 pl-1 pr-2.5' : 'gap-2 px-2.5',
                       isActive
-                        ? `${theme.border} ${theme.bg} shadow-sm`
-                        : `border-transparent hover:${theme.bg} hover:border-l-stone-500`,
-                      isDragging ? 'opacity-50' : '',
+                        ? 'shadow-sm'
+                        : 'border-transparent hover:border-l-stone-400 hover:bg-white/[0.04]',
+                      (isDragging || isTouchDragging) ? 'opacity-50' : '',
                       isDropTarget ? 'ring-2 ring-primary/35 ring-offset-1' : '',
                     ].join(' ')}
+                    style={{
+                      borderLeftColor: isActive ? theme.color : undefined,
+                      backgroundColor: isActive ? theme.activeBg : undefined,
+                    }}
                     onDragOver={canReorder ? e => {
                       e.preventDefault()
                       e.dataTransfer.dropEffect = 'move'
@@ -308,6 +299,10 @@ export default function ChatSidebar({
                       setDragOverIndex(null)
                     } : undefined}
                     onClick={() => {
+                      if (suppressNextClickRef.current) {
+                        suppressNextClickRef.current = false
+                        return
+                      }
                       if (renamingId) return
                       onSelect(session.id)
                       onClose()
@@ -328,7 +323,41 @@ export default function ChatSidebar({
                           setDragFrom(null)
                           setDragOverIndex(null)
                         }}
-                        className="flex h-8 w-6 flex-shrink-0 cursor-grab touch-none items-center justify-center rounded-md text-stone-500 active:cursor-grabbing hover:bg-white/10 hover:text-stone-200"
+                        onPointerDown={(e) => {
+                          if (e.pointerType === 'mouse')
+                            return
+                          e.stopPropagation()
+                          touchPointerIdRef.current = e.pointerId
+                          touchMovedRef.current = false
+                          setTouchDragFrom(idx)
+                          setTouchDragOver(idx)
+                          e.currentTarget.setPointerCapture(e.pointerId)
+                        }}
+                        onPointerMove={(e) => {
+                          if (touchPointerIdRef.current !== e.pointerId || touchDragFrom === null)
+                            return
+                          const el = document.elementFromPoint(e.clientX, e.clientY)
+                          const target = el?.closest('[data-session-index]') as HTMLElement | null
+                          const raw = target?.dataset.sessionIndex
+                          const nextIndex = raw ? Number.parseInt(raw, 10) : NaN
+                          if (!Number.isNaN(nextIndex) && nextIndex !== touchDragOver) {
+                            touchMovedRef.current = true
+                            setTouchDragOver(nextIndex)
+                          }
+                        }}
+                        onPointerUp={(e) => {
+                          if (touchPointerIdRef.current !== e.pointerId || touchDragFrom === null)
+                            return
+                          if (touchMovedRef.current && touchDragOver !== null && touchDragOver !== touchDragFrom && onReorderSessions) {
+                            onReorderSessions(touchDragFrom, touchDragOver)
+                            suppressNextClickRef.current = true
+                          }
+                          resetTouchDrag()
+                        }}
+                        onPointerCancel={() => {
+                          resetTouchDrag()
+                        }}
+                        className="flex h-8 w-6 flex-shrink-0 cursor-grab touch-none items-center justify-center rounded-md text-stone-400 active:cursor-grabbing hover:bg-white/10 hover:text-stone-100"
                         aria-label="Reihenfolge ändern"
                         title="Ziehen zum Sortieren"
                       >
@@ -336,12 +365,21 @@ export default function ChatSidebar({
                       </button>
                     )}
                     {/* Decorative geometric shapes in tab background */}
-                    <div className={`pointer-events-none absolute right-1 top-1/2 h-10 w-10 -translate-y-1/2 translate-x-2 opacity-60 ${theme.shape1} ${shape.cls}`} />
-                    <div className={`pointer-events-none absolute right-5 top-0.5 h-5 w-5 border ${theme.shape2} ${SHAPES[(idx + 2) % SHAPES.length].cls} opacity-50`} />
+                    <div
+                      className={`pointer-events-none absolute right-1 top-1/2 h-10 w-10 -translate-y-1/2 translate-x-2 opacity-60 ${shape.cls}`}
+                      style={{ backgroundColor: theme.shape1 }}
+                    />
+                    <div
+                      className={`pointer-events-none absolute right-5 top-0.5 h-5 w-5 border ${SHAPES[(idx + 2) % SHAPES.length].cls} opacity-50`}
+                      style={{ borderColor: theme.shape2 }}
+                    />
 
                     {/* Colored icon dot */}
-                    <div className={`relative flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-lg ${isActive ? theme.bg : 'bg-stone-800/90'} border border-stone-600/50 shadow-sm`}>
-                      <Icon size={12} className={theme.icon} />
+                    <div
+                      className="relative flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-lg border border-stone-600/50 bg-stone-800/90 shadow-sm"
+                      style={{ backgroundColor: isActive ? theme.iconBg : undefined }}
+                    >
+                      <Icon size={12} style={{ color: theme.color }} />
                     </div>
 
                     <div className="relative min-w-0 flex-1">
@@ -369,7 +407,8 @@ export default function ChatSidebar({
                             <button
                               type="button"
                               onClick={() => void commitRename()}
-                              className="inline-flex items-center gap-0.5 rounded-md bg-primary px-2 py-0.5 text-[11px] font-medium text-white hover:bg-primary-hover"
+                              className="inline-flex items-center gap-0.5 rounded-md px-2 py-0.5 text-[11px] font-medium text-white transition hover:brightness-110"
+                              style={{ backgroundColor: theme.color }}
                             >
                               <Check size={12} aria-hidden />
                               Speichern
@@ -384,13 +423,13 @@ export default function ChatSidebar({
                           </div>
                         </div>
                       ) : (
-                        <p className={`truncate text-[12px] font-medium ${isActive ? 'text-stone-100' : 'text-stone-400'}`}>
+                        <p className={`truncate text-[12px] font-medium ${isActive ? 'text-stone-100' : 'text-stone-300'}`}>
                           {label}
                         </p>
                       )}
                       <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
-                        <span className={`h-1.5 w-1.5 flex-shrink-0 rounded-full ${theme.dot} opacity-70`} />
-                        <p className="text-[10px] text-stone-500">{time}</p>
+                        <span className="h-1.5 w-1.5 flex-shrink-0 rounded-full opacity-70" style={{ backgroundColor: theme.color }} />
+                        <p className="text-[10px] text-stone-400">{time}</p>
                         {isStreaming && (
                           <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-amber-400">
                             <Loader2 size={10} className="animate-spin" />
@@ -405,7 +444,7 @@ export default function ChatSidebar({
                         type="button"
                         onClick={e => beginRename(session, e)}
                         disabled={isStreaming}
-                        className="relative flex h-5 w-5 flex-shrink-0 items-center justify-center rounded text-stone-500 opacity-0 transition-all group-hover:opacity-100 hover:bg-white/10 hover:text-stone-100 disabled:cursor-not-allowed disabled:opacity-30"
+                        className="relative flex h-5 w-5 flex-shrink-0 items-center justify-center rounded text-stone-400 opacity-0 transition-all group-hover:opacity-100 hover:bg-white/10 hover:text-stone-100 disabled:cursor-not-allowed disabled:opacity-30"
                         title={isStreaming ? 'Während Antwort nicht umbenennen' : 'Umbenennen'}
                         aria-label="Chat umbenennen"
                       >
@@ -417,7 +456,7 @@ export default function ChatSidebar({
                         e.stopPropagation()
                         onDelete(session.id)
                       }}
-                      className="relative flex h-5 w-5 flex-shrink-0 items-center justify-center rounded text-stone-500 opacity-0 transition-all group-hover:opacity-100 hover:bg-red-950/50 hover:text-red-400"
+                      className="relative flex h-5 w-5 flex-shrink-0 items-center justify-center rounded text-stone-400 opacity-0 transition-all group-hover:opacity-100 hover:bg-red-950/55 hover:text-red-300"
                       title="Löschen"
                     >
                       <X size={12} />

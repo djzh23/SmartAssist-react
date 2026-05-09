@@ -17,6 +17,11 @@ function trimMax(s: string, max: number): string {
   return `${s.slice(0, Math.max(1, max - 1))}…`
 }
 
+function stripDisplayPrefixes(raw: string): string {
+  const stripped = raw.replace(/^job:\s*/i, '').trim()
+  return stripped
+}
+
 export function isPlaceholderSessionTitle(title: string | null | undefined): boolean {
   const normalized = (title ?? '').trim().toLowerCase()
   return normalized.length > 0 && PLACEHOLDER_TITLES.has(normalized)
@@ -57,7 +62,15 @@ function compactTitle(text: string, max = DEFAULT_MAX): string {
  */
 export function sessionListLabel(session: ChatSession, maxLen = DEFAULT_MAX): string {
   const persisted = session.title?.trim()
-  if (persisted && !isPlaceholderSessionTitle(persisted)) return trimMax(persisted, maxLen)
+  if (persisted && !isPlaceholderSessionTitle(persisted)) {
+    const cleaned = stripDisplayPrefixes(persisted)
+    if (cleaned) return trimMax(cleaned, maxLen)
+    if (session.toolType === 'jobanalyzer') return 'Stellenanalyse'
+    if (session.toolType === 'interview') return 'Interview-Vorbereitung'
+    if (session.toolType === 'programming') return 'Code-Assistent'
+    if (session.toolType === 'language') return 'Sprachtraining'
+    return 'Karriere-Chat'
+  }
 
   const firstUser = session.messages.find(m => m.isUser)?.text
   const line = firstUser ? firstLine(firstUser) : ''

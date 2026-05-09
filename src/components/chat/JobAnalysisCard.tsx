@@ -11,11 +11,13 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { bodyToHtml, parseJobAnalysis, pickOverallScore, type JobSectionTone } from '../../utils/jobMarkdown'
+import { getChatFeatureColor, hexToRgba } from '../../utils/chatFeatureColors'
 import StreamingTextCursor from './StreamingTextCursor'
 
 interface Props {
   text: string
   showStreamCursor?: boolean
+  accentColor?: string
 }
 
 const ICON_BY_TONE: Record<JobSectionTone, LucideIcon> = {
@@ -47,10 +49,11 @@ function scoreBarClasses(score?: number): string {
   return 'bg-rose-500'
 }
 
-export default function JobAnalysisCard({ text, showStreamCursor = false }: Props) {
+export default function JobAnalysisCard({ text, showStreamCursor = false, accentColor }: Props) {
   const sections = parseJobAnalysis(text)
   const nonEmptySections = sections.filter(section => section.body.trim().length > 0)
   const visibleSections = nonEmptySections.length > 0 ? nonEmptySections : sections
+  const featureColor = accentColor ?? getChatFeatureColor('jobanalyzer')
 
   if (visibleSections.length === 0) {
     return (
@@ -65,10 +68,19 @@ export default function JobAnalysisCard({ text, showStreamCursor = false }: Prop
 
   return (
     <div className="w-full space-y-3">
-      <div className="rounded-xl border border-sky-100 bg-gradient-to-r from-white via-sky-50/50 to-white px-4 py-3 shadow-sm">
+      <div
+        className="rounded-xl border bg-gradient-to-r from-white to-white px-4 py-3 shadow-sm"
+        style={{
+          borderColor: hexToRgba(featureColor, 0.3),
+          backgroundImage: `linear-gradient(90deg, ${hexToRgba(featureColor, 0.1)} 0%, rgba(255,255,255,1) 68%)`,
+        }}
+      >
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+            <p
+              className="text-[11px] font-semibold uppercase tracking-[0.14em]"
+              style={{ color: hexToRgba(featureColor, 0.78) }}
+            >
               Job Analyzer
             </p>
             <p className="text-sm font-semibold text-slate-800">

@@ -561,7 +561,7 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     }
   }, [scopeId, loadSessionsFromApi])
 
-  /** Mehrere Browser-Tabs: andere Tabs informieren - kein automatischer Refetch. */
+  /** Mehrere Browser-Tabs: andere Tabs informieren; Pull erfolgt automatisch. */
   useEffect(() => {
     if (scopeId === '_loading' || scopeId === 'guest') {
       broadcastRef.current = null
@@ -579,7 +579,7 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     broadcastRef.current = ch
     ch.onmessage = () => {
       setSessionsStaleHint(
-        'In einem anderen Tab wurden Chats geändert - tippe auf „Synchronisieren“, um den Serverstand zu laden.',
+        'Chats wurden in einem anderen Tab geändert. Wir gleichen im Hintergrund automatisch ab.',
       )
     }
     return () => {
@@ -588,6 +588,29 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
         broadcastRef.current = null
     }
   }, [scopeId])
+
+  useEffect(() => {
+    if (scopeId === '_loading' || scopeId === 'guest')
+      return
+
+    const maybeSync = () => {
+      if (document.visibilityState !== 'visible')
+        return
+      if (sessionsRemoteSyncing)
+        return
+      void syncSessionsRemote()
+    }
+
+    const intervalId = window.setInterval(maybeSync, 45_000)
+    window.addEventListener('focus', maybeSync)
+    document.addEventListener('visibilitychange', maybeSync)
+
+    return () => {
+      window.clearInterval(intervalId)
+      window.removeEventListener('focus', maybeSync)
+      document.removeEventListener('visibilitychange', maybeSync)
+    }
+  }, [scopeId, sessionsRemoteSyncing, syncSessionsRemote])
 
   /** Remember open tab per browser profile so refresh does not jump to another device’s “latest” tab order. */
   useEffect(() => {

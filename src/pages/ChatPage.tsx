@@ -25,6 +25,7 @@ import { sanitizeTechnicalContext } from '../utils/cvTechnicalContext'
 import { applyStreamText } from '../chat/streamTextBridge'
 import { buildProfileStatsLine, getProfileCompleteness, getProfileCompletenessGapHint } from '../utils/profileCompleteness'
 import { sessionListLabel } from '../utils/sessionTitle'
+import { getChatFeatureColor, hexToRgba } from '../utils/chatFeatureColors'
 
 /** German UI labels shown in sidebar / header chips */
 const LANG_DISPLAY: Record<string, string> = {
@@ -1362,6 +1363,14 @@ export default function ChatPage() {
   } as const
 
   const activeContextInfo = activeContextTool ? contextInfo[activeContextTool] : null
+  const featureColor = getChatFeatureColor(store.currentToolType)
+  const featureLabel: Record<ToolType, string> = {
+    general: 'Karriere-Chat',
+    jobanalyzer: 'Stellenanalyse',
+    interview: 'Interview Coach',
+    programming: 'Code-Assistent',
+    language: 'Sprachtraining',
+  }
   const activeModalInitialData = useMemo(() => {
     const profileCvRaw = careerProfile?.cvRawText?.trim()
     const profileCv = profileCvRaw
@@ -1403,9 +1412,6 @@ export default function ChatPage() {
         onRenameSession={(id, title) => {
           void store.renameSession(id, title)
         }}
-        onSyncFromServer={isSignedIn ? () => void store.syncSessionsRemote() : undefined}
-        sessionsRemoteSyncing={store.sessionsRemoteSyncing}
-        sessionsLastSyncedAt={store.sessionsLastSyncedAt}
         showLLPanel={isLanguage}
         languageLearningMode={llMode}
         nativeLangCode={nativeLang}
@@ -1442,24 +1448,13 @@ export default function ChatPage() {
           <div className="flex-shrink-0 border-b border-amber-500/35 bg-amber-950/35 px-3 py-2.5 text-sm text-amber-50 sm:px-4" role="status">
             <div className="mx-auto flex max-w-3xl flex-wrap items-center justify-between gap-2">
               <span className="min-w-0 leading-snug">{store.sessionsStaleHint}</span>
-              <div className="flex shrink-0 flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => void store.syncSessionsRemote()}
-                  disabled={store.sessionsRemoteSyncing}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-amber-500/40 bg-amber-950/45 px-3 py-1.5 text-xs font-semibold text-amber-100 shadow-sm transition hover:bg-amber-950/65 disabled:opacity-50"
-                >
-                  <RefreshCw size={14} className={store.sessionsRemoteSyncing ? 'animate-spin' : ''} aria-hidden />
-                  Synchronisieren
-                </button>
-                <button
-                  type="button"
-                  onClick={() => store.dismissSessionsStaleHint()}
-                  className="rounded-lg px-2 py-1 text-xs font-medium text-amber-200/90 hover:bg-amber-500/15"
-                >
-                  Ausblenden
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => store.dismissSessionsStaleHint()}
+                className="shrink-0 rounded-lg px-2 py-1 text-xs font-medium text-amber-200/90 hover:bg-amber-500/15"
+              >
+                Ausblenden
+              </button>
             </div>
           </div>
         )}
@@ -1636,6 +1631,27 @@ export default function ChatPage() {
         )}
 
         <ChatAnswerReadyBanner />
+
+        <div className="hidden min-[769px]:block flex-shrink-0 px-4 pb-0 pt-2">
+          <div className="mx-auto flex max-w-3xl items-center gap-2 text-xs">
+            <span className="h-2 w-2 rounded-full" style={{ backgroundColor: featureColor }} />
+            <span className="font-semibold" style={{ color: hexToRgba(featureColor, 0.95) }}>
+              {featureLabel[store.currentToolType]}
+            </span>
+            {store.activeSessionId && (
+              <span
+                className="rounded-full border px-2 py-0.5 text-[10px]"
+                style={{
+                  borderColor: hexToRgba(featureColor, 0.45),
+                  backgroundColor: hexToRgba(featureColor, 0.12),
+                  color: featureColor,
+                }}
+              >
+                Aktiv
+              </span>
+            )}
+          </div>
+        </div>
 
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <div ref={chatScrollRef} className="min-h-0 flex-1 overflow-y-auto">

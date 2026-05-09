@@ -1,4 +1,5 @@
 import type { ToolType } from '../types'
+import { getChatFeatureColor } from './chatFeatureColors'
 
 /** Stable accent dot for a tool type (Tailwind bg-*), for nav “Letzte Gespräche”. */
 export function toolSessionDotClass(tool: ToolType): string {
@@ -16,4 +17,9 @@ export function toolSessionDotClass(tool: ToolType): string {
     default:
       return 'bg-slate-400'
   }
+}
+
+/** Inline style helper for feature-colored dots. */
+export function toolSessionDotStyle(tool: ToolType): { backgroundColor: string } {
+  return { backgroundColor: getChatFeatureColor(tool) }
 }
