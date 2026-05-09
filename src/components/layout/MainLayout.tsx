@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { ChatSessionsProvider } from '../../hooks/useChatSessions'
@@ -41,11 +41,47 @@ function MainLayoutShell() {
   const showTabletDesktopSidebar = bp === 'tablet' || bp === 'desktop'
   const sidebarDensity = bp === 'desktop' || (bp === 'tablet' && tabletSidebarExpanded) ? 'full' : 'icons'
   const asideWidthClass =
-    bp === 'desktop'
-      ? 'w-60'
-      : tabletSidebarExpanded
-        ? 'w-60'
-        : 'w-14'
+    tabletSidebarExpanded ? 'w-60' : 'w-14'
+
+  /** Desktop (≥1025px): icon rail + hover overlay expand — chat column stays full width (overlay). */
+  const [railWide, setRailWide] = useState(false)
+  const [railLabelsShown, setRailLabelsShown] = useState(false)
+  const railEnterTimerRef = useRef<number>()
+  const railLeaveCollapseTimerRef = useRef<number>()
+
+  const onDesktopRailEnter = () => {
+    if (railLeaveCollapseTimerRef.current) {
+      window.clearTimeout(railLeaveCollapseTimerRef.current)
+      railLeaveCollapseTimerRef.current = undefined
+    }
+    if (railEnterTimerRef.current)
+      window.clearTimeout(railEnterTimerRef.current)
+    railEnterTimerRef.current = window.setTimeout(() => {
+      setRailWide(true)
+      setRailLabelsShown(true)
+    }, 80)
+  }
+
+  const onDesktopRailLeave = () => {
+    if (railEnterTimerRef.current) {
+      window.clearTimeout(railEnterTimerRef.current)
+      railEnterTimerRef.current = undefined
+    }
+    setRailLabelsShown(false)
+    railLeaveCollapseTimerRef.current = window.setTimeout(() => {
+      setRailWide(false)
+      railLeaveCollapseTimerRef.current = undefined
+    }, 150)
+  }
+
+  useEffect(() => {
+    return () => {
+      if (railEnterTimerRef.current)
+        window.clearTimeout(railEnterTimerRef.current)
+      if (railLeaveCollapseTimerRef.current)
+        window.clearTimeout(railLeaveCollapseTimerRef.current)
+    }
+  }, [])
 
   return (
     <div className="app-main-shell relative flex h-screen flex-col overflow-hidden bg-app-canvas text-stone-100">
@@ -68,7 +104,27 @@ function MainLayoutShell() {
           />
         )}
 
-        {showTabletDesktopSidebar && (
+        {showTabletDesktopSidebar && bp === 'desktop' && (
+          <aside className="relative z-30 hidden min-[1025px]:flex h-full w-12 shrink-0 flex-col border-r border-sidebar-border bg-sidebar/90 backdrop-blur">
+            <div
+              className={[
+                'absolute left-0 top-0 z-10 flex h-full flex-col overflow-hidden border-r border-sidebar-border bg-sidebar/95 backdrop-blur transition-[width,box-shadow] duration-[250ms] ease-[cubic-bezier(0.4,0,0.2,1)]',
+                railWide ? 'w-[200px] shadow-[4px_0_24px_rgba(0,0,0,0.28)]' : 'w-12 shadow-none',
+              ].join(' ')}
+              onMouseEnter={onDesktopRailEnter}
+              onMouseLeave={onDesktopRailLeave}
+            >
+              <div className="min-h-0 flex-1 overflow-hidden">
+                <SidebarNavContent
+                  density="full"
+                  desktopRail={{ wide: railWide, labelsShown: railLabelsShown }}
+                />
+              </div>
+            </div>
+          </aside>
+        )}
+
+        {showTabletDesktopSidebar && bp !== 'desktop' && (
           <aside
             className={[
               'hidden flex-shrink-0 flex-col overflow-hidden border-r border-sidebar-border bg-sidebar/90 backdrop-blur transition-[width] duration-200 ease-out min-[769px]:flex',
