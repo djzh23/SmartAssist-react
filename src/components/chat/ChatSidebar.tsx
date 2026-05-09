@@ -38,10 +38,24 @@ function getShape(index: number) {
   return SHAPES[index % SHAPES.length]
 }
 
+const FEATURE_HEADING: Record<ToolType, string> = {
+  general: 'Karriere-Chat',
+  jobanalyzer: 'Stellenanalyse',
+  interview: 'Interview Coach',
+  programming: 'Code-Assistent',
+  language: 'Sprachtraining',
+}
+
+export type ChatSidebarLayout = 'standard' | 'desktop-inline'
+
 interface Props {
   sessions: ChatSession[]
   activeSessionId: string | null
   currentToolType: ToolType
+  /** Mobile/tablet drawer vs desktop inline history column (≥1025px). */
+  layout?: ChatSidebarLayout
+  /** When layout is desktop-inline: panel visible and 200px wide. */
+  desktopExpanded?: boolean
   isOpen: boolean
   onOpen?: () => void
   onClose: () => void
@@ -71,6 +85,8 @@ export default function ChatSidebar({
   sessions,
   activeSessionId,
   currentToolType,
+  layout = 'standard',
+  desktopExpanded = false,
   isOpen,
   onClose,
   onSelect,
@@ -91,6 +107,10 @@ export default function ChatSidebar({
   onProgLangChange,
   showInterviewPanel,
 }: Props) {
+  const isDesktopInline = layout === 'desktop-inline'
+  const featureHue = getChatFeatureColor(currentToolType)
+  const featureHeading = FEATURE_HEADING[currentToolType] ?? 'Chat'
+
   const [dragFrom, setDragFrom] = useState<number | null>(null)
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
   const [touchDragFrom, setTouchDragFrom] = useState<number | null>(null)
@@ -142,7 +162,7 @@ export default function ChatSidebar({
 
   return (
     <>
-      {isOpen && (
+      {!isDesktopInline && isOpen && (
         <div
           className="fixed inset-x-0 top-11 bottom-0 z-10 bg-black/30 animate-fade-in md:hidden"
           onClick={onClose}
@@ -150,31 +170,73 @@ export default function ChatSidebar({
       )}
 
       <aside
-        className={[
-          'flex flex-col overflow-hidden border-r border-stone-600/35 bg-app-muted transition-all duration-200',
-          'md:relative md:flex md:w-64 md:translate-x-0',
-          isOpen
-            ? 'fixed top-11 bottom-0 left-0 z-20 flex w-64 animate-slide-in'
-            : 'hidden',
-        ].join(' ')}
+        className={
+          isDesktopInline
+            ? [
+                'hidden min-h-0 shrink-0 flex-col overflow-hidden bg-app-muted transition-[width,opacity] duration-[250ms] ease-[cubic-bezier(0.4,0,0.2,1)] min-[1025px]:flex min-[1025px]:flex-col',
+                desktopExpanded
+                  ? 'w-[200px] border-r border-stone-600/35 opacity-100'
+                  : 'w-0 min-w-0 border-0 opacity-0 pointer-events-none overflow-hidden',
+              ].join(' ')
+            : [
+                'flex flex-col overflow-hidden border-r border-stone-600/35 bg-app-muted transition-all duration-200',
+                'md:relative md:flex md:w-64 md:translate-x-0',
+                isOpen
+                  ? 'fixed top-11 bottom-0 left-0 z-20 flex w-64 animate-slide-in'
+                  : 'hidden',
+              ].join(' ')
+        }
+        aria-hidden={isDesktopInline ? !desktopExpanded : undefined}
       >
-        <div className="flex flex-shrink-0 items-center justify-between gap-2 border-b border-stone-600/35 px-3 pb-2 pt-2.5">
-          <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-stone-500">
-            Gespräche
-          </span>
-          <AppCtaButton size="sm" onClick={onNew} className="h-8 px-3 py-0 text-xs">
-            <Plus size={13} />
-            + Neu
-          </AppCtaButton>
+        {isDesktopInline ? (
+          <div className="flex flex-shrink-0 items-center justify-between gap-2 border-b border-stone-600/35 px-3 pb-2 pt-2.5">
+            <span className="flex min-w-0 items-center gap-2">
+              <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: featureHue }} aria-hidden />
+              <span className="truncate text-sm font-semibold text-stone-200">{featureHeading}</span>
+            </span>
+            <button
+              type="button"
+              onClick={onNew}
+              className="shrink-0 rounded text-xs font-semibold transition-colors"
+              style={{
+                borderWidth: 1,
+                borderStyle: 'solid',
+                borderColor: featureHue,
+                color: featureHue,
+                backgroundColor: 'transparent',
+                padding: '4px 12px',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = featureHue
+                e.currentTarget.style.color = '#ffffff'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent'
+                e.currentTarget.style.color = featureHue
+              }}
+            >
+              Neu
+            </button>
+          </div>
+        ) : (
+          <div className="flex flex-shrink-0 items-center justify-between gap-2 border-b border-stone-600/35 px-3 pb-2 pt-2.5">
+            <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-stone-500">
+              Gespräche
+            </span>
+            <AppCtaButton size="sm" onClick={onNew} className="h-8 px-3 py-0 text-xs">
+              <Plus size={13} />
+              + Neu
+            </AppCtaButton>
 
-          <button
-            onClick={onClose}
-            className="ml-2 flex h-8 w-8 items-center justify-center rounded-lg text-stone-400 transition-colors hover:bg-white/10 hover:text-stone-100 md:hidden"
-            title="Schließen"
-          >
-            <X size={16} />
-          </button>
-        </div>
+            <button
+              onClick={onClose}
+              className="ml-2 flex h-8 w-8 items-center justify-center rounded-lg text-stone-400 transition-colors hover:bg-white/10 hover:text-stone-100 md:hidden"
+              title="Schließen"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        )}
 
         {showLLPanel && (
           <div className="flex-shrink-0 border-t border-stone-600/35 px-3 py-2.5">
@@ -305,7 +367,8 @@ export default function ChatSidebar({
                       }
                       if (renamingId) return
                       onSelect(session.id)
-                      onClose()
+                      if (!isDesktopInline)
+                        onClose()
                     }}
                   >
                     {canReorder && (
