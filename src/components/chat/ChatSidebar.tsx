@@ -6,7 +6,7 @@ import type { LucideIcon } from 'lucide-react'
 import type { ChatSession, ToolType } from '../../types'
 import { NATIVE_LANGS, PROGRAMMING_LANGUAGES, TARGET_LANGS } from '../../types'
 import { sessionListLabel } from '../../utils/sessionTitle'
-import { getChatFeatureColor, hexToRgba } from '../../utils/chatFeatureColors'
+import { CHAT_FEATURE_ACTIVE_BG_ALPHA, getChatFeatureColor, hexToRgba } from '../../utils/chatFeatureColors'
 
 const TOOL_ICON: Record<ToolType, LucideIcon> = {
   general:     MessageCircle,
@@ -29,9 +29,9 @@ function getTheme(tool: ToolType) {
   const color = getChatFeatureColor(tool)
   return {
     color,
-    activeBg: hexToRgba(color, 0.14),
-    iconBg: hexToRgba(color, 0.1),
-    shape1: hexToRgba(color, 0.12),
+    activeBg: hexToRgba(color, CHAT_FEATURE_ACTIVE_BG_ALPHA),
+    iconBg: hexToRgba(color, CHAT_FEATURE_ACTIVE_BG_ALPHA),
+    shape1: hexToRgba(color, CHAT_FEATURE_ACTIVE_BG_ALPHA),
     shape2: hexToRgba(color, 0.35),
   }
 }

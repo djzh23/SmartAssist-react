@@ -30,7 +30,7 @@ import type { ChatSession } from '../../types'
 import { sessionListLabel } from '../../utils/sessionTitle'
 import { formatRecentChatTime } from '../../utils/recentChatTime'
 import { toolSessionDotStyle } from '../../utils/toolSessionDot'
-import { getChatFeatureColor, hexToRgba } from '../../utils/chatFeatureColors'
+import { CHAT_FEATURE_ACTIVE_BG_ALPHA, getChatFeatureColor, hexToRgba } from '../../utils/chatFeatureColors'
 
 export type SidebarDensity = 'full' | 'icons'
 
@@ -114,7 +114,11 @@ function SkillSidebarRow({
   const inactive = 'text-sidebar-muted hover:border-white/10 hover:text-stone-100'
   const locked = !skill.isEnabled || !skill.isAccessible
   const featureColor = getChatFeatureColor(skill.apiToolType)
-  const activeBg = hexToRgba(featureColor, 0.12)
+  const activeBg = hexToRgba(featureColor, CHAT_FEATURE_ACTIVE_BG_ALPHA)
+  const lockedOpacity =
+    locked
+      ? (skill.apiToolType.toLowerCase() === 'linkedin' ? 'opacity-50' : 'opacity-55')
+      : ''
 
   const Icon = iconForSkill(skill.icon)
 
@@ -161,7 +165,7 @@ function SkillSidebarRow({
         className={[
           'mb-1 flex items-center gap-2 rounded-r-md border border-transparent border-l-[4px] border-l-transparent py-3 pl-2 pr-2 text-sm font-medium no-underline transition-colors duration-150',
           inactive,
-          locked ? 'opacity-55' : '',
+          lockedOpacity,
         ].join(' ')}
         style={{
           borderLeftColor: featureColor,
@@ -184,7 +188,7 @@ function SkillSidebarRow({
               style={{
                 width: 24,
                 height: 24,
-                backgroundColor: hexToRgba(featureColor, 0.08),
+                backgroundColor: hexToRgba(featureColor, CHAT_FEATURE_ACTIVE_BG_ALPHA),
               }}
               aria-hidden
             />
@@ -235,7 +239,7 @@ function SkillSidebarRow({
       className={[
         base,
         inactive,
-        locked ? 'opacity-55' : '',
+        lockedOpacity,
       ].join(' ')}
       style={{
         borderLeftColor: featureColor,

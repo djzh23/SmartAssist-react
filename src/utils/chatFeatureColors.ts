@@ -1,27 +1,49 @@
 import type { ToolType } from '../types'
 
-/** Warm sepia/brown accents — aligned with dark shell (#120c08), no rainbow primaries. */
+/**
+ * Muted Tailwind 300/400 accents for dark UI (#1C1917 / app canvas) — bright 500s are meant for light surfaces.
+ * Active row/card tint: use {@link CHAT_FEATURE_ACTIVE_BG_ALPHA} with {@link hexToRgba}.
+ */
+export const CHAT_FEATURE_ACTIVE_BG_ALPHA = 0.08
+
 export const CHAT_FEATURE_COLORS: Record<string, string> = {
-  general: '#B45309',
-  jobanalyzer: '#92400E',
-  interviewprep: '#A16207',
-  interview: '#A16207',
-  cover_letter: '#C2410C',
-  salary_coach: '#854D0E',
-  linkedin: '#57534E',
-  programming: '#713F12',
-  language: '#78716C',
+  general: '#5EEAD4', // Teal 300 — Karriere-Chat
+  jobanalyzer: '#818CF8', // Indigo 400 — Stellenanalyse
+  interviewprep: '#F9A8D4', // Pink 300 — Interview
+  interview: '#F9A8D4',
+  cover_letter: '#FCD34D', // Amber 300 — Anschreiben
+  salary_coach: '#C4B5FD', // Violet 300 — Gehalt
+  linkedin: '#94A3B8', // Slate 400 — LinkedIn (dim when unavailable)
+  /** Distinct from general teal; keeps tool language elsewhere */
+  programming: '#7DD3FC', // Sky 300
+  language: '#6EE7B7', // Emerald 300
 }
 
 function normalizeFeatureKey(tool: string | ToolType | undefined | null): string {
   if (!tool) return 'general'
-  if (tool === 'interview') return 'interviewprep'
-  return String(tool).toLowerCase()
+  const s = String(tool).toLowerCase()
+  if (s === 'interview') return 'interviewprep'
+  if (s === 'salarycoach' || s === 'salary' || s === 'gehalt') return 'salary_coach'
+  return s
 }
 
 export function getChatFeatureColor(tool: string | ToolType | undefined | null): string {
   const key = normalizeFeatureKey(tool)
   return CHAT_FEATURE_COLORS[key] ?? CHAT_FEATURE_COLORS.general
+}
+
+/** Solid fills (user bubble, send): Slate accent needs a darker surface + light text for contrast. */
+export function getChatFeatureSolidFill(tool: string | ToolType | undefined | null): string {
+  const key = normalizeFeatureKey(tool)
+  if (key === 'linkedin') return '#475569'
+  return getChatFeatureColor(tool)
+}
+
+/** Foreground on solid fills — dark ink on pastels; light on LinkedIn slate button. */
+export function getChatFeatureOnAccentFg(tool: string | ToolType | undefined | null): string {
+  const key = normalizeFeatureKey(tool)
+  if (key === 'linkedin') return '#fafaf9'
+  return '#1c1917'
 }
 
 export function hexToRgba(hex: string, alpha: number): string {

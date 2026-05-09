@@ -11,7 +11,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { bodyToHtml, parseJobAnalysis, pickOverallScore, type JobSectionTone } from '../../utils/jobMarkdown'
-import { getChatFeatureColor, hexToRgba } from '../../utils/chatFeatureColors'
+import { CHAT_FEATURE_ACTIVE_BG_ALPHA, getChatFeatureColor, hexToRgba } from '../../utils/chatFeatureColors'
 import StreamingTextCursor from './StreamingTextCursor'
 
 interface Props {
@@ -72,7 +72,7 @@ export default function JobAnalysisCard({ text, showStreamCursor = false, accent
         className="rounded-xl border bg-app-raised px-4 py-3 shadow-[inset_0_1px_0_0_rgba(255,251,235,0.04)]"
         style={{
           borderColor: hexToRgba(featureColor, 0.35),
-          backgroundImage: `linear-gradient(90deg, ${hexToRgba(featureColor, 0.14)} 0%, #1f1a16 72%)`,
+          backgroundImage: `linear-gradient(90deg, ${hexToRgba(featureColor, CHAT_FEATURE_ACTIVE_BG_ALPHA)} 0%, #1f1a16 72%)`,
         }}
       >
         <div className="flex flex-wrap items-center justify-between gap-2">

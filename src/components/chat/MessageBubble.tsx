@@ -8,7 +8,13 @@ import InterviewResponse from './InterviewResponse'
 import { RenderedMarkdown } from './RenderedMarkdown'
 import { normalizeLearningResponseMarkers, parseLearningResponse } from '../../utils/parseLearningResponse'
 import StreamingTextCursor from './StreamingTextCursor'
-import { getChatFeatureColor, hexToRgba } from '../../utils/chatFeatureColors'
+import {
+  CHAT_FEATURE_ACTIVE_BG_ALPHA,
+  getChatFeatureColor,
+  getChatFeatureOnAccentFg,
+  getChatFeatureSolidFill,
+  hexToRgba,
+} from '../../utils/chatFeatureColors'
 
 interface Props {
   msg: ChatMessage
@@ -36,7 +42,6 @@ export default function MessageBubble({
 }: Props) {
   const time = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   const isJobAnalyzerReply = !msg.isUser && (toolType === 'jobanalyzer' || msg.toolUsed === 'analyze_job')
-  const activeFeatureColor = getChatFeatureColor(toolType)
 
   if (!msg.isUser && toolType === 'language' && useLanguageCard) {
     // 1. New structured ---ZIELSPRACHE--- format (preferred)
@@ -132,7 +137,7 @@ export default function MessageBubble({
             className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium"
             style={{
               borderColor: hexToRgba(jobColor, 0.45),
-              backgroundColor: hexToRgba(jobColor, 0.14),
+              backgroundColor: hexToRgba(jobColor, CHAT_FEATURE_ACTIVE_BG_ALPHA),
               color: jobColor,
             }}
           >
@@ -204,8 +209,11 @@ export default function MessageBubble({
   return (
     <div className="flex max-w-[76%] animate-slide-up flex-col items-end gap-0.5 self-end min-[391px]:max-w-[72%] min-[391px]:gap-1">
       <div
-        className="break-words whitespace-pre-wrap rounded-[16px_16px_4px_16px] px-3 py-2 text-[14px] leading-relaxed text-white shadow-[0_8px_18px_-8px_rgba(0,0,0,0.45)] min-[391px]:rounded-[18px_18px_4px_18px] min-[391px]:px-3.5 min-[391px]:py-2.5 min-[391px]:text-sm min-[391px]:shadow-[0_8px_22px_-4px_rgba(0,0,0,0.4)]"
-        style={{ backgroundColor: activeFeatureColor }}
+        className="break-words whitespace-pre-wrap rounded-[16px_16px_4px_16px] px-3 py-2 text-[14px] leading-relaxed shadow-[0_8px_18px_-8px_rgba(0,0,0,0.45)] min-[391px]:rounded-[18px_18px_4px_18px] min-[391px]:px-3.5 min-[391px]:py-2.5 min-[391px]:text-sm min-[391px]:shadow-[0_8px_22px_-4px_rgba(0,0,0,0.4)]"
+        style={{
+          backgroundColor: getChatFeatureSolidFill(toolType),
+          color: getChatFeatureOnAccentFg(toolType),
+        }}
       >
         {msg.text}
       </div>

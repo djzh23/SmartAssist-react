@@ -20,6 +20,7 @@ import { useAppUi } from '../../context/AppUiContext'
 import { useBreakpoint } from '../../hooks/useBreakpoint'
 import { useSkills } from '../../hooks/useSkills'
 import type { SkillSummary } from '../../types'
+import { getChatFeatureColor, hexToRgba } from '../../utils/chatFeatureColors'
 
 function iconForSkill(icon: string): LucideIcon {
   const map: Record<string, LucideIcon> = {
@@ -90,18 +91,6 @@ function flattenSkillsInNavOrder(skills: SkillSummary[]): SkillSummary[] {
   return [...skills].sort((a, b) => rank(a) - rank(b))
 }
 
-function activeAccentClasses(skill: SkillSummary): string {
-  const t = skill.apiToolType.toLowerCase()
-  if (t === 'jobanalyzer') return 'border-amber-300/55 bg-amber-500/90 text-amber-50'
-  if (t === 'interview' || t === 'interviewprep') return 'border-sky-300/55 bg-sky-500/85 text-sky-50'
-  if (t === 'general') return 'border-violet-300/55 bg-violet-500/85 text-violet-50'
-  if (t === 'programming') return 'border-emerald-300/55 bg-emerald-500/85 text-emerald-50'
-  if (t === 'language') return 'border-fuchsia-300/55 bg-fuchsia-500/85 text-fuchsia-50'
-  if (t === 'linkedin') return 'border-cyan-300/55 bg-cyan-500/85 text-cyan-50'
-  if (t.includes('salary') || t.includes('gehalt')) return 'border-lime-300/55 bg-lime-500/85 text-lime-950'
-  return 'border-amber-400/40 bg-amber-500/85 text-white'
-}
-
 function ChatSwitcherStripInner() {
   const bp = useBreakpoint()
   const location = useLocation()
@@ -159,10 +148,20 @@ function ChatSwitcherStripInner() {
           const basePill =
             'relative flex h-6 shrink-0 snap-start items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium whitespace-nowrap transition-colors min-[391px]:h-7 min-[391px]:px-2.5 min-[391px]:py-1 min-[391px]:text-[11px]'
 
-          const activeClasses = `${activeAccentClasses(skill)} shadow-[inset_0_1px_0_rgba(255,255,255,0.16),0_6px_14px_-10px_rgba(0,0,0,0.7)]`
           const idleClasses =
             'border border-white/12 bg-transparent text-white/65 hover:border-white/20 hover:bg-white/6 hover:text-white/85'
-          const lockedVisual = locked ? 'opacity-40' : ''
+          const accent = getChatFeatureColor(skill.apiToolType)
+          const activeStyle = active
+            ? {
+                borderColor: hexToRgba(accent, 0.5),
+                backgroundColor: hexToRgba(accent, 0.22),
+                color: '#1c1917',
+                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.14), 0 6px 14px -10px rgba(0,0,0,0.7)',
+              }
+            : undefined
+          const lockedVisual = locked
+            ? (skill.apiToolType.toLowerCase() === 'linkedin' ? 'opacity-50' : 'opacity-40')
+            : ''
 
           return (
             <button
@@ -170,7 +169,8 @@ function ChatSwitcherStripInner() {
               type="button"
               ref={active ? activeBtnRef : undefined}
               aria-current={active ? 'true' : undefined}
-              className={[basePill, active ? activeClasses : idleClasses, lockedVisual].join(' ')}
+              className={[basePill, active ? 'border' : idleClasses, lockedVisual].join(' ')}
+              style={active ? activeStyle : undefined}
               onClick={() => {
                 if (active) return
                 if (!skill.isEnabled) {

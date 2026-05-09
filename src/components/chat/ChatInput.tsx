@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Send, Loader2, Square } from 'lucide-react'
 import type { ToolType } from '../../types'
 import { useLayoutChrome } from '../../context/LayoutChromeContext'
-import { getChatFeatureColor } from '../../utils/chatFeatureColors'
+import { getChatFeatureOnAccentFg, getChatFeatureSolidFill } from '../../utils/chatFeatureColors'
 
 const PLACEHOLDERS: Record<ToolType, string> = {
   general: 'Nachricht schreiben…',
@@ -26,7 +26,9 @@ export default function ChatInput({ toolType, isLoading, noActiveSession = false
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const near = text.length > 3500
   const { keyboardLikelyOpen } = useLayoutChrome()
-  const featureColor = getChatFeatureColor(toolType)
+  const sendFill = getChatFeatureSolidFill(toolType)
+  const sendFg = getChatFeatureOnAccentFg(toolType)
+  const sendDisabled = !isLoading && (noActiveSession || !text.trim())
   const mobileBottom = keyboardLikelyOpen
     ? '0px'
     : 'calc(56px + env(safe-area-inset-bottom))'
@@ -85,8 +87,8 @@ export default function ChatInput({ toolType, isLoading, noActiveSession = false
           <button
             onClick={isLoading ? onStop : handleSend}
             disabled={isLoading ? !onStop : (noActiveSession || !text.trim())}
-            className="absolute bottom-2 right-2 inline-flex h-8 w-8 items-center justify-center rounded-full text-white transition-all duration-150 hover:brightness-110 active:scale-95 disabled:bg-stone-700/60 disabled:text-stone-400 min-[391px]:bottom-2.5 min-[391px]:right-2.5 min-[391px]:h-9 min-[391px]:w-9 min-[769px]:h-10 min-[769px]:w-10"
-            style={{ backgroundColor: featureColor }}
+            className="absolute bottom-2 right-2 inline-flex h-8 w-8 items-center justify-center rounded-full transition-all duration-150 hover:brightness-110 active:scale-95 disabled:bg-stone-700/60 disabled:text-stone-400 min-[391px]:bottom-2.5 min-[391px]:right-2.5 min-[391px]:h-9 min-[391px]:w-9 min-[769px]:h-10 min-[769px]:w-10"
+            style={sendDisabled ? undefined : { backgroundColor: sendFill, color: sendFg }}
             aria-label={isLoading ? 'Antwort stoppen' : 'Nachricht senden'}
             title={isLoading ? 'Antwort stoppen' : 'Nachricht senden'}
           >

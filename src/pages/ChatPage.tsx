@@ -27,7 +27,7 @@ import { sanitizeTechnicalContext } from '../utils/cvTechnicalContext'
 import { applyStreamText } from '../chat/streamTextBridge'
 import { buildProfileStatsLine, getProfileCompleteness, getProfileCompletenessGapHint } from '../utils/profileCompleteness'
 import { sessionListLabel } from '../utils/sessionTitle'
-import { getChatFeatureColor, hexToRgba } from '../utils/chatFeatureColors'
+import { CHAT_FEATURE_ACTIVE_BG_ALPHA, getChatFeatureColor, hexToRgba } from '../utils/chatFeatureColors'
 
 /** German UI labels shown in sidebar / header chips */
 const LANG_DISPLAY: Record<string, string> = {
@@ -1702,7 +1702,7 @@ export default function ChatPage() {
                 className="rounded-full border px-2 py-0.5 text-[10px]"
                 style={{
                   borderColor: hexToRgba(featureColor, 0.45),
-                  backgroundColor: hexToRgba(featureColor, 0.12),
+                  backgroundColor: hexToRgba(featureColor, CHAT_FEATURE_ACTIVE_BG_ALPHA),
                   color: featureColor,
                 }}
               >
