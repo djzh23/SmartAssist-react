@@ -65,6 +65,7 @@ export async function askAgentStream(
   request: AgentRequest,
   token: string | null | undefined,
   onChunk: (text: string) => void,
+  signal?: AbortSignal,
 ): Promise<{ toolUsed: string; serverUsageToday?: number }> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
   if (token) headers['Authorization'] = `Bearer ${token}`
@@ -73,6 +74,7 @@ export async function askAgentStream(
     method: 'POST',
     headers,
     body: JSON.stringify(request),
+    signal,
   })
 
   if (res.status === 429) {

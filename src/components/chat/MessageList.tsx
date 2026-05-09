@@ -59,6 +59,8 @@ export default function MessageList({
   activeSessionId = null,
 }: Props) {
   const prevSeqRef = useRef(0)
+  const autoFollowRef = useRef(true)
+  const lastScrollTopRef = useRef(0)
 
   const typingOnThisSession =
     streamingPlaceholder !== null
@@ -69,11 +71,37 @@ export default function MessageList({
     const el = scrollContainerRef?.current
     if (!el) return
 
+    const onScroll = () => {
+      const distance = el.scrollHeight - el.scrollTop - el.clientHeight
+      const scrollingUp = el.scrollTop < lastScrollTopRef.current
+      lastScrollTopRef.current = el.scrollTop
+      if (distance <= STICK_THRESHOLD_PX) {
+        autoFollowRef.current = true
+        return
+      }
+      if (scrollingUp) {
+        autoFollowRef.current = false
+      }
+    }
+
+    lastScrollTopRef.current = el.scrollTop
+    el.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      el.removeEventListener('scroll', onScroll)
+    }
+  }, [scrollContainerRef])
+
+  useEffect(() => {
+    const el = scrollContainerRef?.current
+    if (!el) return
+
     const forced = scrollToBottomSeq > prevSeqRef.current
     prevSeqRef.current = scrollToBottomSeq
+    if (forced) autoFollowRef.current = true
 
     const distance = el.scrollHeight - el.scrollTop - el.clientHeight
-    if (forced || distance <= STICK_THRESHOLD_PX) {
+    const shouldFollow = forced || autoFollowRef.current || distance <= STICK_THRESHOLD_PX
+    if (shouldFollow) {
       el.scrollTo({
         top: el.scrollHeight,
         behavior: forced ? 'smooth' : 'auto',

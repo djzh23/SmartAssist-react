@@ -46,10 +46,25 @@ export function useDeliberateStream(options: DeliberateStreamOptions) {
     setIsRevealing(false)
   }, [clearTimers])
 
+  const flushToLatest = useCallback(() => {
+    const buf = bufferRef.current
+    displayEndRef.current = buf.length
+    onDisplayUpdate(buf)
+    if (networkCompleteRef.current && !revealCompleteFiredRef.current) {
+      revealCompleteFiredRef.current = true
+      clearTimers()
+      setIsRevealing(false)
+      onRevealComplete(buf)
+    }
+  }, [clearTimers, onDisplayUpdate, onRevealComplete])
+
   const appendFromNetwork = useCallback((text: string) => {
     if (!text) return
     bufferRef.current += text
-  }, [])
+    if (revealStartedRef.current && typeof document !== 'undefined' && document.visibilityState === 'hidden') {
+      flushToLatest()
+    }
+  }, [flushToLatest])
 
   const markNetworkComplete = useCallback(() => {
     networkCompleteRef.current = true
@@ -96,6 +111,19 @@ export function useDeliberateStream(options: DeliberateStreamOptions) {
   useEffect(() => () => {
     clearTimers()
   }, [clearTimers])
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return
+    const onVisibility = () => {
+      if (document.visibilityState === 'hidden' && revealStartedRef.current) {
+        flushToLatest()
+      }
+    }
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility)
+    }
+  }, [flushToLatest])
 
   return {
     appendFromNetwork,

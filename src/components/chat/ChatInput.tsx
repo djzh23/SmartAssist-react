@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Send, Loader2 } from 'lucide-react'
+import { Send, Loader2, Square } from 'lucide-react'
 import type { ToolType } from '../../types'
 import { useLayoutChrome } from '../../context/LayoutChromeContext'
 
@@ -17,9 +17,10 @@ interface Props {
   /** Kein aktiver Chat - Eingabe gesperrt (z. B. nach Tool-Wechsel ohne neue Session). */
   noActiveSession?: boolean
   onSend: (text: string) => void
+  onStop?: () => void
 }
 
-export default function ChatInput({ toolType, isLoading, noActiveSession = false, onSend }: Props) {
+export default function ChatInput({ toolType, isLoading, noActiveSession = false, onSend, onStop }: Props) {
   const [text, setText] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const near = text.length > 3500
@@ -80,13 +81,18 @@ export default function ChatInput({ toolType, isLoading, noActiveSession = false
           />
 
           <button
-            onClick={handleSend}
-            disabled={isLoading || noActiveSession || !text.trim()}
+            onClick={isLoading ? onStop : handleSend}
+            disabled={isLoading ? !onStop : (noActiveSession || !text.trim())}
             className="absolute bottom-2 right-2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary text-white transition-all duration-150 hover:bg-primary-hover active:scale-95 disabled:bg-stone-700/60 disabled:text-stone-400 min-[391px]:bottom-2.5 min-[391px]:right-2.5 min-[391px]:h-9 min-[391px]:w-9 min-[769px]:h-10 min-[769px]:w-10"
-            aria-label="Nachricht senden"
+            aria-label={isLoading ? 'Antwort stoppen' : 'Nachricht senden'}
+            title={isLoading ? 'Antwort stoppen' : 'Nachricht senden'}
           >
             {isLoading
-              ? <Loader2 size={15} className="animate-spin min-[391px]:h-4 min-[391px]:w-4" />
+              ? (
+                onStop
+                  ? <Square size={14} className="fill-current min-[391px]:h-4 min-[391px]:w-4" />
+                  : <Loader2 size={15} className="animate-spin min-[391px]:h-4 min-[391px]:w-4" />
+              )
               : <Send size={15} className="min-[391px]:h-4 min-[391px]:w-4" />
             }
           </button>

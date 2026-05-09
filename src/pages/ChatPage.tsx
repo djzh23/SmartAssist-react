@@ -127,6 +127,12 @@ interface HandleSendOptions {
   contextOverride?: SessionContextData | null
 }
 
+function isAbortError(error: unknown): boolean {
+  if (typeof error !== 'object' || error === null) return false
+  const name = 'name' in error ? String((error as { name?: unknown }).name ?? '') : ''
+  return name === 'AbortError'
+}
+
 function isToolType(value: string): value is ToolType {
   return value === 'general' || value === 'jobanalyzer' || value === 'language' || value === 'programming' || value === 'interview'
 }
@@ -625,6 +631,7 @@ export default function ChatPage() {
     sessionToolType: ToolType
   } | null>(null)
   const streamResultRef = useRef<{ toolUsed: string; serverUsageToday?: number } | null>(null)
+  const streamAbortRef = useRef<AbortController | null>(null)
   const incrementUsageRef = useRef(incrementUsage)
   incrementUsageRef.current = incrementUsage
 
@@ -671,6 +678,18 @@ export default function ChatPage() {
     const cps = c ? STREAM_CHARS_PER_SECOND[c.sessionToolType] ?? 80 : 80
     deliberate.startReveal(cps)
   }, [deliberate])
+
+  const stopStreaming = useCallback(() => {
+    streamAbortRef.current?.abort()
+    streamAbortRef.current = null
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      streamAbortRef.current?.abort()
+      streamAbortRef.current = null
+    }
+  }, [])
 
   useEffect(() => {
     if (!isSignedIn || careerProfileLoading || careerProfileError || !needsOnboarding) {
@@ -1141,11 +1160,15 @@ export default function ChatPage() {
     })
     setScrollToBottomSeq(s => s + 1)
 
-    const skipThinkingUi = shouldSkipThinkingUi(outgoingText, sessionToolType)
+    const skipThinkingUi =
+      shouldSkipThinkingUi(outgoingText, sessionToolType)
+      || (typeof document !== 'undefined' && document.visibilityState === 'hidden')
     let usedDeliberatePath = false
 
     try {
       const token = await getToken()
+      const abortController = new AbortController()
+      streamAbortRef.current = abortController
 
       if (skipThinkingUi) {
         let accumulated = ''
@@ -1175,6 +1198,7 @@ export default function ChatPage() {
             accumulated += chunk
             applyStreamText(sessionId, streamingMsgId, accumulated)
           },
+          abortController.signal,
         )
 
         flushSync(() => {
@@ -1228,6 +1252,7 @@ export default function ChatPage() {
           (chunk) => {
             deliberate.appendFromNetwork(chunk)
           },
+          abortController.signal,
         )
 
         streamResultRef.current = {
@@ -1237,6 +1262,22 @@ export default function ChatPage() {
         deliberate.markNetworkComplete()
       }
     } catch (sendError) {
+      if (isAbortError(sendError)) {
+        if (usedDeliberatePath) {
+          deliberate.reset()
+          setThinkingSession(null)
+          streamCtxRef.current = null
+          streamResultRef.current = null
+        }
+        const currentText = (store.sessions[sessionId]?.messages ?? []).find(m => m.id === streamingMsgId)?.text ?? ''
+        if (!currentText.trim()) {
+          store.deleteMessage(sessionId, streamingMsgId)
+        } else {
+          store.finalizeMessage(sessionId, streamingMsgId, {})
+        }
+        store.setSessionStreaming(sessionId, false)
+        return
+      }
       store.deleteMessage(sessionId, streamingMsgId)
       if (usedDeliberatePath) {
         deliberate.reset()
@@ -1270,6 +1311,7 @@ export default function ChatPage() {
         setError(sendError instanceof Error ? sendError.message : 'Etwas ist schiefgelaufen. Bitte versuche es erneut.')
       }
     } finally {
+      streamAbortRef.current = null
       if (!usedDeliberatePath) {
         store.setSessionStreaming(sessionId, false)
       }
@@ -1659,6 +1701,7 @@ export default function ChatPage() {
           isLoading={inputBlocked}
           noActiveSession={!activeId}
           onSend={handleSend}
+          onStop={stopStreaming}
         />
 
         {showMobileDetailsModal && (
