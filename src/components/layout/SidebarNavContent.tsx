@@ -6,6 +6,7 @@ import {
   ArrowRight,
   ChevronRight,
   ChevronDown,
+  MoreHorizontal,
   Briefcase,
   Mic,
   MessageCircle,
@@ -19,6 +20,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { useAppUi } from '../../context/AppUiContext'
+import { useLayoutChrome } from '../../context/LayoutChromeContext'
 import { useUserPlan } from '../../hooks/useUserPlan'
 import { useSkills } from '../../hooks/useSkills'
 import { useChatSessions, TOOL_TO_QUERY } from '../../hooks/useChatSessions'
@@ -31,9 +33,16 @@ import { getChatFeatureColor, hexToRgba } from '../../utils/chatFeatureColors'
 
 export type SidebarDensity = 'full' | 'icons'
 
+export interface DesktopRailState {
+  wide: boolean
+  labelsShown: boolean
+}
+
 interface Props {
   density?: SidebarDensity
   onNavClick?: () => void
+  /** Desktop icon rail: colored dots, labels fade with parent width + delay. */
+  desktopRail?: DesktopRailState
 }
 
 function iconForSkill(icon: string): LucideIcon {
@@ -69,10 +78,15 @@ function SkillSidebarRow({
   skill,
   onNavClick,
   density,
+  desktopRail,
+  onActivateFeature,
 }: {
   skill: SkillSummary
   onNavClick?: () => void
   density: SidebarDensity
+  desktopRail?: DesktopRailState
+  /** Desktop rail: open chat history column after navigating to this tool. */
+  onActivateFeature?: () => void
 }) {
   const { showToast } = useAppUi()
   const navigate = useNavigate()
@@ -115,6 +129,76 @@ function SkillSidebarRow({
     }
     navigate(href)
     onNavClick?.()
+    onActivateFeature?.()
+  }
+
+  if (desktopRail) {
+    const labelCls = [
+      'min-w-0 flex-1 truncate text-[13px] transition-[opacity] ease-out',
+      desktopRail.labelsShown ? 'opacity-100 delay-100 duration-200' : 'opacity-0 duration-150 delay-0',
+    ].join(' ')
+    const dotPx = isActive && !locked ? 12 : 10
+    return (
+      <a
+        href={href}
+        title={skill.name}
+        onClick={handleClick}
+        className={[
+          'mb-1 flex items-center gap-2 rounded-r-md border border-transparent border-l-[4px] border-l-transparent py-3 pl-2 pr-2 text-sm font-medium no-underline transition-colors duration-150',
+          inactive,
+          locked ? 'opacity-55' : '',
+        ].join(' ')}
+        style={{
+          borderLeftColor: featureColor,
+          backgroundColor: isActive && !locked ? activeBg : undefined,
+        }}
+        onMouseEnter={(e) => {
+          if (!isActive && !locked) e.currentTarget.style.backgroundColor = hexToRgba(featureColor, 0.1)
+        }}
+        onMouseLeave={(e) => {
+          if (!isActive) e.currentTarget.style.backgroundColor = ''
+        }}
+      >
+        <span className="relative flex h-6 w-6 flex-shrink-0 items-center justify-center">
+          {isActive && !locked ? (
+            <span
+              className="absolute rounded-full"
+              style={{
+                width: 24,
+                height: 24,
+                backgroundColor: hexToRgba(featureColor, 0.08),
+              }}
+              aria-hidden
+            />
+          ) : null}
+          <span
+            className="relative rounded-full"
+            style={{
+              width: dotPx,
+              height: dotPx,
+              backgroundColor: locked ? '#64748b' : featureColor,
+              boxShadow: isActive && !locked
+                ? `0 0 0 1px ${hexToRgba(featureColor, 0.35)}, 0 0 12px ${hexToRgba(featureColor, 0.28)}`
+                : undefined,
+            }}
+            aria-hidden
+          />
+        </span>
+        <span className={labelCls}>{skill.name}</span>
+        {skill.badge && desktopRail.labelsShown ? (
+          <span
+            className={[
+              'flex-shrink-0 rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide transition-opacity duration-200',
+              badgeColorClass(skill.badgeColor),
+              desktopRail.labelsShown ? 'opacity-100 delay-100' : 'opacity-0',
+            ].join(' ')}
+          >
+            {skill.badge}
+          </span>
+        ) : null}
+        {locked ? <span className="flex-shrink-0 text-[10px] opacity-80" aria-hidden>🔒</span> : null}
+      </a>
+    )
   }
 
   return (
@@ -221,6 +305,20 @@ function UsageBar() {
   )
 }
 
+/** One-line usage for 48px desktop rail */
+function UsageBarRail() {
+  const { plan, usageToday, dailyLimit } = useUserPlan()
+  if (plan === 'pro') return null
+  const limitLabel = dailyLimit === Infinity ? '∞' : String(dailyLimit)
+  return (
+    <div className="border-t border-white/6 px-2 py-2">
+      <p className="text-center text-[10px] tabular-nums leading-tight text-slate-400">
+        {usageToday}/{limitLabel}
+      </p>
+    </div>
+  )
+}
+
 const RECENT_PAGE_SIZE = 3
 const PRIMARY_TOOL_ORDER = ['general', 'jobanalyzer', 'interviewprep', 'cover_letter', 'salary_coach', 'linkedin']
 const SECONDARY_TOOL_ORDER = ['programming', 'language']
@@ -240,11 +338,12 @@ function recentSessionsList(
     .map(r => r.s)
 }
 
-export default function SidebarNavContent({ density = 'full', onNavClick }: Props) {
+export default function SidebarNavContent({ density = 'full', onNavClick, desktopRail }: Props) {
   const navigate = useNavigate()
   const { plan } = useUserPlan()
   const { skills, loading: skillsLoading } = useSkills()
   const store = useChatSessions()
+  const { setDesktopChatHistoryOpen } = useLayoutChrome()
   const iconsOnly = density === 'icons'
   const [recentVisible, setRecentVisible] = useState(RECENT_PAGE_SIZE)
   const [secondaryOpen, setSecondaryOpen] = useState(false)
@@ -281,11 +380,13 @@ export default function SidebarNavContent({ density = 'full', onNavClick }: Prop
     onNavClick?.()
   }
 
+  const activateDesktopHistory = desktopRail ? () => setDesktopChatHistoryOpen(true) : undefined
+
   return (
     <div className="flex h-full min-h-0 flex-col overflow-x-hidden">
-      {plan !== 'pro' && <UsageBanner compact={iconsOnly} />}
+      {plan !== 'pro' && <UsageBanner compact={iconsOnly || Boolean(desktopRail)} />}
 
-      <div className="flex min-h-0 flex-1 flex-col px-2 pb-1 pt-2.5">
+      <div className={`flex min-h-0 flex-1 flex-col px-2 pb-1 ${desktopRail ? 'pt-2' : 'pt-2.5'}`}>
         <div className="min-h-0 flex-1 overflow-y-auto">
           {skillsLoading && (
             <div className="flex items-center gap-2 px-4 py-2 text-xs text-slate-500">
@@ -300,35 +401,87 @@ export default function SidebarNavContent({ density = 'full', onNavClick }: Prop
                   key={skill.id}
                   skill={skill}
                   density={density}
+                  desktopRail={desktopRail}
+                  onActivateFeature={activateDesktopHistory}
                   onNavClick={onNavClick}
                 />
               ))}
               {orderedSkills.secondary.length > 0 && (
                 <div className="pt-1.5">
-                  <button
-                    type="button"
-                    onClick={() => setSecondaryOpen(v => !v)}
-                    className="mb-1 flex w-full items-center justify-between rounded-r-md border border-stone-600/35 border-l-4 border-l-stone-500/60 px-3 py-2 text-[11px] font-semibold tracking-wide text-stone-200 transition hover:border-stone-500/60 hover:bg-white/[0.06]"
-                  >
-                    <span className="inline-flex items-center gap-1.5">
-                      Weitere Werkzeuge
-                      <span className="rounded-full border border-stone-500/50 bg-stone-700/40 px-1.5 py-0 text-[10px] text-stone-300">
-                        {orderedSkills.secondary.length}
-                      </span>
-                    </span>
-                    {(secondaryOpen || secondaryHasActive) ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                  </button>
-                  {(secondaryOpen || secondaryHasActive) && (
-                    <div className="ml-1 border-l border-stone-700/60 pl-1.5">
-                      {orderedSkills.secondary.map(skill => (
-                        <SkillSidebarRow
-                          key={skill.id}
-                          skill={skill}
-                          density={density}
-                          onNavClick={onNavClick}
-                        />
-                      ))}
-                    </div>
+                  {desktopRail ? (
+                    <>
+                      <button
+                        type="button"
+                        title="Weitere Werkzeuge"
+                        onClick={() => setSecondaryOpen(v => !v)}
+                        className={[
+                          'mb-1 flex w-full items-center gap-2 rounded-r-md border border-transparent border-l-[4px] border-l-slate-500 py-3 pl-2 pr-2 text-sm font-medium text-stone-300 transition hover:bg-white/[0.06]',
+                          desktopRail.labelsShown ? 'justify-start' : 'justify-center',
+                        ].join(' ')}
+                      >
+                        <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center">
+                          <MoreHorizontal size={18} className="text-slate-400" aria-hidden />
+                        </span>
+                        <span
+                          className={[
+                            'min-w-0 flex-1 truncate text-left text-[13px] font-semibold tracking-wide transition-[opacity] ease-out',
+                            desktopRail.labelsShown ? 'opacity-100 delay-100 duration-200' : 'opacity-0 duration-150 delay-0',
+                          ].join(' ')}
+                        >
+                          Weitere Werkzeuge
+                        </span>
+                        <span
+                          className={[
+                            'flex-shrink-0 transition-[opacity] duration-200',
+                            desktopRail.labelsShown ? 'opacity-100 delay-100' : 'opacity-0 duration-150',
+                          ].join(' ')}
+                        >
+                          {(secondaryOpen || secondaryHasActive) ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                        </span>
+                      </button>
+                      {(secondaryOpen || secondaryHasActive) && (
+                        <div className="ml-0 border-l border-stone-700/60 pl-1.5">
+                          {orderedSkills.secondary.map(skill => (
+                            <SkillSidebarRow
+                              key={skill.id}
+                              skill={skill}
+                              density={density}
+                              desktopRail={desktopRail}
+                              onActivateFeature={activateDesktopHistory}
+                              onNavClick={onNavClick}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => setSecondaryOpen(v => !v)}
+                        className="mb-1 flex w-full items-center justify-between rounded-r-md border border-stone-600/35 border-l-4 border-l-stone-500/60 px-3 py-2 text-[11px] font-semibold tracking-wide text-stone-200 transition hover:border-stone-500/60 hover:bg-white/[0.06]"
+                      >
+                        <span className="inline-flex items-center gap-1.5">
+                          Weitere Werkzeuge
+                          <span className="rounded-full border border-stone-500/50 bg-stone-700/40 px-1.5 py-0 text-[10px] text-stone-300">
+                            {orderedSkills.secondary.length}
+                          </span>
+                        </span>
+                        {(secondaryOpen || secondaryHasActive) ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                      </button>
+                      {(secondaryOpen || secondaryHasActive) && (
+                        <div className="ml-1 border-l border-stone-700/60 pl-1.5">
+                          {orderedSkills.secondary.map(skill => (
+                            <SkillSidebarRow
+                              key={skill.id}
+                              skill={skill}
+                              density={density}
+                              onNavClick={onNavClick}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               )}
@@ -337,6 +490,8 @@ export default function SidebarNavContent({ density = 'full', onNavClick }: Prop
                   key={skill.id}
                   skill={skill}
                   density={density}
+                  desktopRail={desktopRail}
+                  onActivateFeature={activateDesktopHistory}
                   onNavClick={onNavClick}
                 />
               ))}
@@ -344,7 +499,7 @@ export default function SidebarNavContent({ density = 'full', onNavClick }: Prop
           )}
         </div>
 
-        {!iconsOnly && (
+        {!iconsOnly && !desktopRail && (
           <div className="mt-2 flex max-h-[min(170px,24vh)] min-h-0 flex-shrink-0 flex-col border-t border-white/6 pt-2">
             <p className="flex-shrink-0 px-3 pb-1 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500/90">
               Letzte Gespräche
@@ -396,7 +551,7 @@ export default function SidebarNavContent({ density = 'full', onNavClick }: Prop
       </div>
 
       <div className="flex-shrink-0">
-        {!iconsOnly && <UsageBar />}
+        {desktopRail ? <UsageBarRail /> : !iconsOnly ? <UsageBar /> : null}
       </div>
     </div>
   )
