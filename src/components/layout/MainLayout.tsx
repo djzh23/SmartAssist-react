@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Outlet } from 'react-router-dom'
+import { Outlet, useLocation } from 'react-router-dom'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { ChatSessionsProvider } from '../../hooks/useChatSessions'
 import { ChatNotesProvider } from '../../hooks/useChatNotes'
@@ -17,6 +17,7 @@ import '../../styles/landing.css'
 
 function MainLayoutShell() {
   const bp = useBreakpoint()
+  const location = useLocation()
   const {
     drawerOpen,
     setDrawerOpen,
@@ -53,11 +54,9 @@ function MainLayoutShell() {
   const [railLabelsShown, setRailLabelsShown] = useState(false)
   const railEnterTimerRef = useRef<number>()
   const railLeaveCollapseTimerRef = useRef<number>()
+  const isChatRoute = location.pathname === '/chat'
 
   const onDesktopRailEnter = () => {
-    /** Hover rail wins over chat history: one desktop overlay at a time. */
-    if (desktopChatHistoryOpen)
-      setDesktopChatHistoryOpen(false)
     if (railLeaveCollapseTimerRef.current) {
       window.clearTimeout(railLeaveCollapseTimerRef.current)
       railLeaveCollapseTimerRef.current = undefined
@@ -65,6 +64,14 @@ function MainLayoutShell() {
     if (railEnterTimerRef.current)
       window.clearTimeout(railEnterTimerRef.current)
     railEnterTimerRef.current = window.setTimeout(() => {
+      if (isChatRoute) {
+        setRailWide(false)
+        setRailLabelsShown(false)
+        setDesktopChatHistoryOpen(true)
+        return
+      }
+      if (desktopChatHistoryOpen)
+        setDesktopChatHistoryOpen(false)
       setRailWide(true)
       setRailLabelsShown(true)
     }, 80)
@@ -81,6 +88,8 @@ function MainLayoutShell() {
       window.clearTimeout(railEnterTimerRef.current)
       railEnterTimerRef.current = undefined
     }
+    if (desktopChatHistoryOpen)
+      setDesktopChatHistoryOpen(false)
     setRailLabelsShown(false)
     railLeaveCollapseTimerRef.current = window.setTimeout(() => {
       setRailWide(false)
@@ -111,6 +120,12 @@ function MainLayoutShell() {
       return
     collapseRailTimersAndWidth()
   }, [desktopChatHistoryOpen, collapseRailTimersAndWidth])
+
+  useEffect(() => {
+    if (isChatRoute)
+      return
+    setDesktopChatHistoryOpen(false)
+  }, [isChatRoute, setDesktopChatHistoryOpen])
 
   /** Desktop: click/tap outside rail + history panel closes both (smooth CSS transitions). */
   useEffect(() => {
