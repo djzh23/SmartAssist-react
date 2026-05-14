@@ -64,16 +64,14 @@ function MainLayoutShell() {
     if (railEnterTimerRef.current)
       window.clearTimeout(railEnterTimerRef.current)
     railEnterTimerRef.current = window.setTimeout(() => {
+      setRailWide(true)
+      setRailLabelsShown(true)
       if (isChatRoute) {
-        setRailWide(false)
-        setRailLabelsShown(false)
         setDesktopChatHistoryOpen(true)
         return
       }
       if (desktopChatHistoryOpen)
         setDesktopChatHistoryOpen(false)
-      setRailWide(true)
-      setRailLabelsShown(true)
     }, 80)
   }
 
@@ -114,12 +112,6 @@ function MainLayoutShell() {
     registerDesktopRailCollapse(collapseRailTimersAndWidth)
     return () => registerDesktopRailCollapse(null)
   }, [collapseRailTimersAndWidth, registerDesktopRailCollapse])
-
-  useEffect(() => {
-    if (!desktopChatHistoryOpen)
-      return
-    collapseRailTimersAndWidth()
-  }, [desktopChatHistoryOpen, collapseRailTimersAndWidth])
 
   useEffect(() => {
     if (isChatRoute)
@@ -197,9 +189,9 @@ function MainLayoutShell() {
               className="absolute left-0 top-0 z-10 flex h-full flex-col overflow-hidden border-r border-sidebar-border bg-sidebar/95 backdrop-blur"
               initial={false}
               animate={{
-                width: railWide && !desktopChatHistoryOpen ? 200 : 48,
+                width: railWide ? 200 : 48,
                 boxShadow:
-                  railWide && !desktopChatHistoryOpen
+                  railWide
                     ? '8px 0 28px rgba(0,0,0,0.32)'
                     : '0 0 0 rgba(0,0,0,0)',
               }}

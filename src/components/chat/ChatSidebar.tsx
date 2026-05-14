@@ -108,7 +108,7 @@ export default function ChatSidebar({
   onProgLangChange,
   showInterviewPanel,
 }: Props) {
-  const { setDesktopChatHistoryOpen } = useLayoutChrome()
+  const { setDesktopChatHistoryOpen, collapseDesktopRail } = useLayoutChrome()
   const isDesktopInline = layout === 'desktop-inline'
   const featureHue = getChatFeatureColor(currentToolType)
   const featureHeading = FEATURE_HEADING[currentToolType] ?? 'Chat'
@@ -183,6 +183,7 @@ export default function ChatSidebar({
                     return
                 }
                 setDesktopChatHistoryOpen(false)
+                collapseDesktopRail()
               }
             : undefined
         }
