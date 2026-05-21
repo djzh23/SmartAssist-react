@@ -157,6 +157,33 @@ export async function fetchJobPreview(token: string, input: string): Promise<Job
   return (await res.json()) as JobPreviewResponse
 }
 
+/** Body for POST /api/agent/context — see ContextModal for the merged CV/job block. */
+export interface SetAgentContextRequest {
+  sessionId: string
+  toolType: 'jobanalyzer' | 'interviewprep' | 'programming'
+  cvText: string | null
+  jobText: string | null
+  jobTitle: string | null
+  companyName: string | null
+  programmingLanguage: string | null
+  userId: string | null
+}
+
+/** Persists per-session agent context (CV / job / language). Throws on non-2xx. */
+export async function setAgentContext(
+  body: SetAgentContextRequest,
+  token?: string,
+): Promise<void> {
+  const res = await fetch(`${BASE}/api/agent/context`, {
+    method: 'POST',
+    headers: authHeaders(token),
+    body: JSON.stringify(body),
+  })
+
+  if (!res.ok)
+    throw new Error(await readApiError(res, `Kontext konnte nicht gespeichert werden (${res.status})`))
+}
+
 export async function askAgent(
   request: AgentRequest,
   token?: string,

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAuth, useUser } from '@clerk/clerk-react'
 import { ChevronLeft, ChevronRight, FileText, Link2 } from 'lucide-react'
 import AppCtaButton from '../ui/AppCtaButton'
-import { fetchJobPreview, UsageLimitError } from '../../api/client'
+import { fetchJobPreview, setAgentContext, UsageLimitError } from '../../api/client'
 import { PROGRAMMING_LANGUAGES } from '../../types'
 import { sanitizeTechnicalContext } from '../../utils/cvTechnicalContext'
 
@@ -34,7 +34,6 @@ interface Props {
   onContextSet: (payload: ContextPayload) => void
 }
 
-const API_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || ''
 const JOB_TEXT_MAX = 7000
 const CV_TEXT_MAX = 4200
 const TITLE_MAX = 180
@@ -45,15 +44,6 @@ const WIZARD_LABELS = ['Stelle', 'Nur für diesen Chat', 'Überprüfen'] as cons
 
 function trimTo(value: string, max: number): string {
   return value.trim().slice(0, max)
-}
-
-async function readErrorMessage(response: Response, fallback: string): Promise<string> {
-  try {
-    const data = await response.json() as { error?: string; message?: string }
-    return data.error ?? data.message ?? fallback
-  } catch {
-    return fallback
-  }
 }
 
 function mapToolType(toolType: ContextModalToolType): 'jobanalyzer' | 'interviewprep' | 'programming' {
@@ -264,27 +254,16 @@ export default function ContextModal({
         extraExperienceNotes: payload.extraExperienceNotes,
       })
 
-      const response = await fetch(`${API_URL}/api/agent/context`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({
-          sessionId,
-          toolType: effectiveToolType,
-          cvText: mergedCvForServer || null,
-          jobText: payload.jobText.trim() || null,
-          jobTitle: payload.jobTitle.trim() || null,
-          companyName: payload.companyName.trim() || null,
-          programmingLanguage: selectedLanguageLabel,
-          userId: user?.id ?? null,
-        }),
-      })
-
-      if (!response.ok) {
-        throw new Error(await readErrorMessage(response, `Kontext konnte nicht gespeichert werden (${response.status})`))
-      }
+      await setAgentContext({
+        sessionId,
+        toolType: effectiveToolType,
+        cvText: mergedCvForServer || null,
+        jobText: payload.jobText.trim() || null,
+        jobTitle: payload.jobTitle.trim() || null,
+        companyName: payload.companyName.trim() || null,
+        programmingLanguage: selectedLanguageLabel,
+        userId: user?.id ?? null,
+      }, token ?? undefined)
 
       onContextSet(payload)
     } catch (submitError) {
