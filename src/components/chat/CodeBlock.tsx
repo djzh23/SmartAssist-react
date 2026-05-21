@@ -20,10 +20,12 @@ export default function CodeBlock({ code, language }: Props) {
       <div className="flex items-center justify-between px-4 py-1.5 bg-[#1e1e2e]">
         <span className="text-[11px] text-slate-400 font-mono">{language}</span>
         <button
+          type="button"
           onClick={handleCopy}
+          aria-label={copied ? 'Code kopiert' : 'Code kopieren'}
           className="flex items-center gap-1 text-[11px] text-slate-400 hover:text-white transition-colors"
         >
-          {copied ? <Check size={11} /> : <Copy size={11} />}
+          {copied ? <Check size={11} aria-hidden /> : <Copy size={11} aria-hidden />}
           {copied ? 'Copied!' : 'Copy'}
         </button>
       </div>
