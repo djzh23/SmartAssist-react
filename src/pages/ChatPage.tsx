@@ -805,23 +805,24 @@ export default function ChatPage() {
     }
 
     void store.switchToTool(toolParam)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [toolParam, location.state])
+  }, [toolParam, location.state, store.switchToTool, store.newSession, store.setActiveSession, navigate, getToken, updateToggles])
+
+  // Narrow to the specific session entry so this effect only re-runs when the
+  // target session appears or changes, not on every stream token (finding #28).
+  const activateSessionId = (location.state as { activateSessionId?: string } | null)?.activateSessionId
+  const activateTargetSession = activateSessionId ? store.sessions[activateSessionId] : undefined
 
   /** Deep-link from app sidebar “Letzte Gespräche” (switchToTool alone picks first tab per tool). */
   useEffect(() => {
-    const st = location.state as { activateSessionId?: string } | null
-    const sessionId = st?.activateSessionId
-    if (!sessionId) return
-    const session = store.sessions[sessionId]
-    if (!session) return
-    if (session.toolType !== toolParam) {
+    if (!activateSessionId) return
+    if (!activateTargetSession) return
+    if (activateTargetSession.toolType !== toolParam) {
       navigate(`${location.pathname}${location.search}`, { replace: true, state: {} })
       return
     }
-    store.setActiveSession(sessionId)
+    store.setActiveSession(activateSessionId)
     navigate(`${location.pathname}${location.search}`, { replace: true, state: {} })
-  }, [location.state, location.pathname, location.search, toolParam, navigate, store.sessions, store.setActiveSession])
+  }, [activateSessionId, activateTargetSession, location.pathname, location.search, toolParam, navigate, store.setActiveSession])
 
   useEffect(() => {
     const upgraded = (searchParams.get('upgraded') ?? '').toLowerCase() === 'true'

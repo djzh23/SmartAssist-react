@@ -640,10 +640,10 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  const activeSessionToolType = activeId ? sessions[activeId]?.toolType : undefined
   useEffect(() => {
-    if (activeId && sessions[activeId])
-      setCurrentTool(sessions[activeId].toolType)
-  }, [activeId, sessions])
+    if (activeSessionToolType) setCurrentTool(activeSessionToolType)
+  }, [activeSessionToolType])
 
   const createSessionRemote = useCallback(
     async (tool: ToolType): Promise<string> => {
