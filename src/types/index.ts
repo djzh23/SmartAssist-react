@@ -7,7 +7,7 @@ export type ProgrammingLanguage = 'csharp' | 'java' | 'html' | 'react' | 'design
 export interface ProgrammingLanguageMeta {
   id: ProgrammingLanguage
   label: string
-  syntaxLang: string  // language id for react-syntax-highlighter
+  syntaxLang: string  // language id passed through to CodeBlock for future highlighter wiring
 }
 
 export const PROGRAMMING_LANGUAGES: ProgrammingLanguageMeta[] = [
