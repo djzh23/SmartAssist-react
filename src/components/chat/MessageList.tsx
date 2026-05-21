@@ -1,4 +1,5 @@
-import { useEffect, useRef, type ReactNode, type RefObject } from 'react'
+import { useEffect, useMemo, useRef, type ReactNode, type RefObject } from 'react'
+import { useVirtualizer } from '@tanstack/react-virtual'
 import type { ChatMessage, ToolType } from '../../types'
 import type { StreamingPlaceholder } from '../../context/ChatSessionsProvider'
 import MessageBubble from './MessageBubble'
@@ -116,6 +117,34 @@ export default function MessageList({
     scrollContainerRef,
   ])
 
+  // Precompute the "previous user message has been seen" flag once per render so the
+  // virtualised row renderer below can stay pure (no shared state during iteration).
+  const useLanguageCardByIndex = useMemo(() => {
+    const flags = new Array<boolean>(messages.length)
+    let userSeen = false
+    for (let i = 0; i < messages.length; i++) {
+      const msg = messages[i]
+      flags[i] = toolType === 'language' && !msg.isUser && userSeen
+      if (msg.isUser) userSeen = true
+    }
+    return flags
+  }, [messages, toolType])
+
+  // Render the message list as a row-virtualised column inside the same scroll container
+  // the page already manages. The scroll-stick effects above keep working because the
+  // virtualiser exposes the same scrollHeight via the spacer it sizes to totalSize.
+  const virtualizer = useVirtualizer({
+    count: messages.length,
+    getScrollElement: () => scrollContainerRef?.current ?? null,
+    // Rough first guess; dynamic measurement below corrects it once each row mounts.
+    estimateSize: () => 96,
+    overscan: 6,
+    measureElement: typeof window === 'undefined'
+      ? undefined
+      : element => element?.getBoundingClientRect().height ?? 0,
+    getItemKey: index => messages[index].id,
+  })
+
   if (messages.length === 0 && !typingOnThisSession) {
     const noActiveSession = viewSessionId === null
     return (
@@ -133,54 +162,57 @@ export default function MessageList({
     )
   }
 
+  const items = virtualizer.getVirtualItems()
+
   return (
-    <div className="flex w-full flex-col gap-3 py-1.5 min-[391px]:gap-3.5 min-[391px]:py-2">
-      {(() => {
-        let userSeen = false
+    <div
+      className="relative w-full"
+      style={{ height: `${virtualizer.getTotalSize()}px` }}
+    >
+      {items.map(virtualRow => {
+        const msg = messages[virtualRow.index]
+        const useLanguageCard = useLanguageCardByIndex[virtualRow.index]
 
-        return messages.map(msg => {
-          const useLanguageCard = toolType === 'language' && !msg.isUser && userSeen
-          if (msg.isUser) userSeen = true
+        const isPlaceholderTyping =
+          typingOnThisSession
+          && streamingPlaceholder!.messageId === msg.id
+          && !msg.isUser
+          && msg.text.trim() === ''
 
-          const isPlaceholderTyping =
-            typingOnThisSession
-            && streamingPlaceholder!.messageId === msg.id
-            && !msg.isUser
-            && msg.text.trim() === ''
+        const showStreamCursor =
+          streamCursorActive
+          && streamCursorMessageId !== null
+          && streamCursorMessageId === msg.id
+          && !msg.isUser
 
-          if (isPlaceholderTyping) {
-            if (thinkingSlot) {
-              return (
-                <div key={msg.id} className="self-start">
-                  {thinkingSlot}
-                </div>
-              )
-            }
-            return <TypingDots key={msg.id} />
-          }
-
-          const showStreamCursor =
-            streamCursorActive
-            && streamCursorMessageId !== null
-            && streamCursorMessageId === msg.id
-            && !msg.isUser
-
-          return (
-            <MessageBubble
-              key={msg.id}
-              msg={msg}
-              toolType={toolType}
-              targetLang={targetLang}
-              nativeLang={nativeLang}
-              targetLangCode={targetLangCode}
-              progLang={progLang}
-              useLanguageCard={useLanguageCard}
-              showStreamCursor={showStreamCursor}
-              activeSessionId={activeSessionId}
-            />
-          )
-        })
-      })()}
+        return (
+          <div
+            key={virtualRow.key}
+            data-index={virtualRow.index}
+            ref={virtualizer.measureElement}
+            className="absolute left-0 top-0 w-full px-0 pb-3 min-[391px]:pb-3.5"
+            style={{ transform: `translateY(${virtualRow.start}px)` }}
+          >
+            {isPlaceholderTyping
+              ? (thinkingSlot
+                ? <div className="self-start">{thinkingSlot}</div>
+                : <TypingDots />)
+              : (
+                <MessageBubble
+                  msg={msg}
+                  toolType={toolType}
+                  targetLang={targetLang}
+                  nativeLang={nativeLang}
+                  targetLangCode={targetLangCode}
+                  progLang={progLang}
+                  useLanguageCard={useLanguageCard}
+                  showStreamCursor={showStreamCursor}
+                  activeSessionId={activeSessionId}
+                />
+              )}
+          </div>
+        )
+      })}
     </div>
   )
 }
