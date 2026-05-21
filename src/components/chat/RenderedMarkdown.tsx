@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { memo, useMemo } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import type { Components } from 'react-markdown'
@@ -11,6 +11,9 @@ interface Props {
   /** `reader`: Notizen / lange Texte. `assistant`: helle Blase auf dunklem Sepia-Chat. */
   variant?: MarkdownVariant
 }
+
+// Stable identity so react-markdown's internal memo doesn't see a new array on every render.
+const REMARK_PLUGINS = [remarkGfm]
 
 function makeMarkdownComponents(variant: MarkdownVariant): Components {
   const reader = variant === 'reader'
@@ -232,7 +235,7 @@ function makeMarkdownComponents(variant: MarkdownVariant): Components {
   }
 }
 
-export function RenderedMarkdown({ content, variant = 'compact' }: Props) {
+function RenderedMarkdownInner({ content, variant = 'compact' }: Props) {
   const components = useMemo(() => makeMarkdownComponents(variant), [variant])
   const wrapClass = variant === 'reader'
     ? 'reader-markdown max-w-none text-left'
@@ -242,9 +245,13 @@ export function RenderedMarkdown({ content, variant = 'compact' }: Props) {
 
   return (
     <div className={wrapClass}>
-      <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
+      <ReactMarkdown remarkPlugins={REMARK_PLUGINS} components={components}>
         {content}
       </ReactMarkdown>
     </div>
   )
 }
+
+// Memo prevents the streaming context from re-parsing every assistant bubble on each token:
+// only bubbles whose `content`/`variant` actually change re-render.
+export const RenderedMarkdown = memo(RenderedMarkdownInner)
