@@ -1,8 +1,17 @@
 import type { ReactNode } from 'react'
-import { MessageCircleMore } from 'lucide-react'
+import {
+  AlertTriangle,
+  Briefcase,
+  HelpCircle,
+  Lightbulb,
+  MessageCircleMore,
+  Star,
+  type LucideIcon,
+} from 'lucide-react'
 import CodeBlock from './CodeBlock'
 import { parseBlocks, parseSegments } from '../../utils/markdownRenderer'
 import type { Block } from '../../utils/markdownRenderer'
+import { CHAT_FEATURE_ACTIVE_BG_ALPHA, getChatFeatureColor, hexToRgba } from '../../utils/chatFeatureColors'
 import StreamingTextCursor from './StreamingTextCursor'
 
 function renderInline(text: string): ReactNode[] {
@@ -21,7 +30,7 @@ function renderInline(text: string): ReactNode[] {
       nodes.push(<em key={key++} className="italic text-stone-400">{token.slice(1, -1)}</em>)
     } else {
       nodes.push(
-        <code key={key++} className="rounded border border-stone-600/70 bg-stone-900/90 px-1 py-0.5 font-mono text-[0.78em] text-amber-100/90">
+        <code key={key++} className="rounded border border-stone-600/70 bg-stone-900/90 px-1 py-0.5 font-mono text-[0.78em] text-pink-100/90">
           {token.slice(1, -1)}
         </code>,
       )
@@ -44,60 +53,79 @@ function detectKind(heading: string): SectionKind {
   return 'default'
 }
 
-const STYLES: Record<SectionKind, { wrap: string; h2: string; h3: string; dot: string; nb: string; nt: string; q: string }> = {
+const SECTION_ICON: Record<SectionKind, LucideIcon> = {
+  tip: Lightbulb,
+  question: HelpCircle,
+  warning: AlertTriangle,
+  star: Star,
+  job: Briefcase,
+  default: MessageCircleMore,
+}
+
+interface SectionStyle {
+  accent: string
+  h2: string
+  h3: string
+  dot: string
+  nb: string
+  nt: string
+  q: string
+}
+
+const STYLES: Record<SectionKind, SectionStyle> = {
   tip: {
-    wrap: 'rounded-xl border border-amber-800/45 bg-amber-950/35 px-4 py-3',
-    h2: 'text-sm font-bold text-amber-100',
-    h3: 'text-sm font-semibold text-amber-200/95',
-    dot: 'bg-amber-500',
+    accent: '#fbbf24',
+    h2: 'text-sm font-semibold text-stone-100',
+    h3: 'text-sm font-semibold text-stone-300',
+    dot: 'bg-amber-400',
     nb: 'bg-amber-900/85 text-amber-50',
     nt: 'text-amber-50',
-    q: 'border-l-4 border-amber-700/55 bg-amber-950/25 pl-3 italic text-stone-300',
+    q: 'border-l-2 border-amber-500/50 pl-3 italic text-stone-400',
   },
   question: {
-    wrap: 'rounded-xl border border-stone-600/50 bg-stone-900/45 px-4 py-3',
-    h2: 'text-sm font-bold text-stone-100',
+    accent: '#f9a8d4',
+    h2: 'text-sm font-semibold text-stone-100',
     h3: 'text-sm font-semibold text-stone-300',
-    dot: 'bg-stone-500',
+    dot: 'bg-pink-400',
     nb: 'bg-stone-800 text-stone-200',
     nt: 'text-stone-200',
-    q: 'border-l-4 border-stone-600 bg-stone-950/40 pl-3 italic text-stone-400',
+    q: 'border-l-2 border-pink-500/45 pl-3 italic text-stone-400',
   },
   warning: {
-    wrap: 'rounded-xl border border-red-900/45 bg-red-950/30 px-4 py-3',
-    h2: 'text-sm font-bold text-red-200',
+    accent: '#f87171',
+    h2: 'text-sm font-semibold text-red-200',
     h3: 'text-sm font-semibold text-red-300/95',
     dot: 'bg-red-500',
     nb: 'bg-red-950/80 text-red-100',
     nt: 'text-red-100',
-    q: 'border-l-4 border-red-800/60 bg-red-950/35 pl-3 italic text-red-200/95',
+    q: 'border-l-2 border-red-500/50 pl-3 italic text-red-200/90',
   },
   star: {
-    wrap: 'rounded-xl border border-amber-700/40 bg-amber-950/28 px-4 py-3',
-    h2: 'text-sm font-bold text-amber-100',
-    h3: 'text-sm font-semibold text-amber-200/90',
-    dot: 'bg-amber-600',
+    accent: '#fcd34d',
+    h2: 'text-sm font-semibold text-stone-100',
+    h3: 'text-sm font-semibold text-stone-300',
+    dot: 'bg-amber-500',
     nb: 'bg-amber-900/80 text-amber-50',
     nt: 'text-amber-50',
-    q: 'border-l-4 border-amber-700/50 bg-amber-950/22 pl-3 italic text-stone-300',
+    q: 'border-l-2 border-amber-500/45 pl-3 italic text-stone-400',
   },
   job: {
-    wrap: 'rounded-xl border border-amber-800/40 bg-amber-950/32 px-4 py-3',
-    h2: 'text-sm font-bold text-amber-100',
-    h3: 'text-sm font-semibold text-amber-200/95',
-    dot: 'bg-amber-500',
-    nb: 'bg-amber-900/85 text-amber-50',
-    nt: 'text-amber-50',
-    q: 'border-l-4 border-amber-700/55 bg-amber-950/25 pl-3 italic text-stone-300',
+    accent: '#a78bfa',
+    h2: 'text-sm font-semibold text-stone-100',
+    h3: 'text-sm font-semibold text-stone-300',
+    dot: 'bg-violet-400',
+    nb: 'bg-violet-900/80 text-violet-100',
+    nt: 'text-violet-100',
+    q: 'border-l-2 border-violet-500/45 pl-3 italic text-stone-400',
   },
   default: {
-    wrap: '',
-    h2: 'border-b border-stone-600/70 pb-1 text-sm font-bold text-amber-100',
+    accent: '#f9a8d4',
+    h2: 'text-sm font-semibold text-stone-100',
     h3: 'text-sm font-semibold text-stone-300',
-    dot: 'bg-amber-600',
+    dot: 'bg-pink-400',
     nb: 'bg-stone-800 text-stone-200',
     nt: 'text-stone-200',
-    q: 'border-l-4 border-stone-600 bg-stone-900/45 pl-3 italic text-stone-400',
+    q: 'border-l-2 border-stone-600/60 pl-3 italic text-stone-400',
   },
 }
 
@@ -124,16 +152,16 @@ function groupSections(blocks: Block[]): Section[] {
   return sections
 }
 
-function renderBlock(block: Block, style: typeof STYLES[SectionKind], index: number): ReactNode {
+function renderBlock(block: Block, style: SectionStyle, index: number): ReactNode {
   switch (block.type) {
     case 'h3':
       return <h4 key={index} className={`mb-1 mt-2 ${style.h3}`}>{renderInline(block.content)}</h4>
     case 'ul':
       return (
-        <ul key={index} className="mb-1.5 mt-1.5 flex flex-col gap-1">
+        <ul key={index} className="mb-1.5 mt-1.5 flex flex-col gap-1.5">
           {block.items.map((item, i) => (
-            <li key={i} className="flex items-start gap-2 text-sm text-stone-300">
-              <span className={`mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full ${style.dot}`} />
+            <li key={i} className="flex items-start gap-2.5 text-sm text-stone-300">
+              <span className={`mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full ${style.dot}`} />
               <span className="leading-relaxed">{renderInline(item)}</span>
             </li>
           ))}
@@ -141,9 +169,9 @@ function renderBlock(block: Block, style: typeof STYLES[SectionKind], index: num
       )
     case 'ol':
       return (
-        <ol key={index} className="mb-1.5 mt-1.5 flex flex-col gap-1.5">
+        <ol key={index} className="mb-1.5 mt-1.5 flex flex-col gap-2">
           {block.items.map((item, i) => (
-            <li key={i} className="flex items-start gap-2 text-sm text-stone-300">
+            <li key={i} className="flex items-start gap-2.5 text-sm text-stone-300">
               <span className={`mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${style.nb} ${style.nt}`}>{i + 1}</span>
               <span className="leading-relaxed">{renderInline(item)}</span>
             </li>
@@ -152,14 +180,14 @@ function renderBlock(block: Block, style: typeof STYLES[SectionKind], index: num
       )
     case 'blockquote':
       return (
-        <div key={index} className={`my-2 rounded-r-lg py-2 pr-3 text-sm ${style.q}`}>
+        <div key={index} className={`my-2 py-1 text-sm ${style.q}`}>
           {block.content.split('\n').map((line, i) => <p key={i}>{renderInline(line)}</p>)}
         </div>
       )
     case 'hr':
-      return <hr key={index} className="my-2 border-stone-700/70" />
+      return <hr key={index} className="my-3 border-stone-700/40" />
     default:
-        return <p key={index} className="text-sm leading-relaxed text-stone-300">{renderInline((block as { content: string }).content)}</p>
+      return <p key={index} className="text-sm leading-relaxed text-stone-300">{renderInline((block as { content: string }).content)}</p>
   }
 }
 
@@ -169,49 +197,99 @@ interface Props {
   showStreamCursor?: boolean
 }
 
+type RenderItem =
+  | { key: string; type: 'code'; code: string; language: string }
+  | { key: string; type: 'section'; section: Section }
+
+function buildRenderItems(segments: ReturnType<typeof parseSegments>): RenderItem[] {
+  const items: RenderItem[] = []
+  segments.forEach((seg, segIndex) => {
+    if (seg.type === 'code') {
+      items.push({ key: `code-${segIndex}`, type: 'code', code: seg.content, language: seg.language })
+      return
+    }
+    groupSections(parseBlocks(seg.content)).forEach((section, sectionIndex) => {
+      items.push({ key: `${segIndex}-${sectionIndex}`, type: 'section', section })
+    })
+  })
+  return items
+}
+
 export default function InterviewResponse({ text, timestamp, showStreamCursor = false }: Props) {
   const time = new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   const segments = parseSegments(text)
-  const hasStructure = segments.some(seg => seg.type === 'text' && seg.content.includes('## '))
+  const featureColor = getChatFeatureColor('interview')
+  const sections = buildRenderItems(segments)
+
+  const hasStructuredSections = sections.some(
+    s => s.type === 'section' && s.section.heading !== null,
+  )
 
   return (
     <div className="self-start flex w-full animate-slide-up flex-col gap-1">
-      <div className="overflow-hidden rounded-[4px_18px_18px_18px] border border-stone-600/45 bg-app-raised shadow-[inset_0_1px_0_0_rgba(255,251,235,0.04)]">
-        <div className="h-1 bg-gradient-to-r from-amber-900 via-amber-700 to-amber-900" />
-        <div className={`flex flex-col px-4 pb-4 pt-3 ${hasStructure ? 'gap-3' : 'gap-1'}`}>
-          {segments.map((seg, segIndex) =>
-            seg.type === 'code' ? (
-              <CodeBlock key={segIndex} code={seg.content} language={seg.language} />
-            ) : (
-              groupSections(parseBlocks(seg.content)).map((section, sectionIndex) => {
-                const style = STYLES[section.kind]
-                const content = <div className="flex flex-col gap-1">{section.blocks.map((b, i) => renderBlock(b, style, i))}</div>
-                if (!section.heading) return <div key={`${segIndex}-${sectionIndex}`}>{content}</div>
-
-                return (
-                  <div key={`${segIndex}-${sectionIndex}`} className={section.kind !== 'default' ? style.wrap : ''}>
-                    <h3 className={`mb-2 ${style.h2}`}>{section.heading.content}</h3>
-                    {content}
-                  </div>
-                )
-              })
-            ),
-          )}
-          {showStreamCursor ? (
-            <div className="mt-1">
-              <StreamingTextCursor />
-            </div>
-          ) : null}
+      <div
+        className="w-full overflow-hidden rounded-[4px_18px_18px_18px] border border-stone-600/35 bg-app-raised shadow-[inset_0_1px_0_0_rgba(255,251,235,0.04)]"
+        style={{ borderLeftWidth: 3, borderLeftColor: featureColor }}
+      >
+        <div
+          className="px-4 py-3.5"
+          style={{
+            backgroundImage: `linear-gradient(135deg, ${hexToRgba(featureColor, CHAT_FEATURE_ACTIVE_BG_ALPHA)} 0%, transparent 70%)`,
+          }}
+        >
+          <p
+            className="text-[11px] font-semibold uppercase tracking-[0.14em]"
+            style={{ color: hexToRgba(featureColor, 0.9) }}
+          >
+            Interview Coach
+          </p>
+          <p className="text-sm font-semibold text-stone-100">
+            {hasStructuredSections ? 'Interview-Vorbereitung' : 'Antwort'}
+          </p>
         </div>
+
+        {sections.map(item => {
+          if (item.type === 'code') {
+            return (
+              <div key={item.key} className="border-t border-stone-700/30 px-4 py-3.5">
+                <CodeBlock code={item.code} language={item.language} />
+              </div>
+            )
+          }
+
+          const { section } = item
+          const style = STYLES[section.kind]
+          const Icon = SECTION_ICON[section.kind]
+          const content = (
+            <div className="flex flex-col gap-1.5">
+              {section.blocks.map((b, i) => renderBlock(b, style, i))}
+            </div>
+          )
+
+          return (
+            <article
+              key={item.key}
+              className="border-t border-stone-700/30 px-4 py-3.5"
+            >
+              {section.heading ? (
+                <header className="mb-2.5 flex items-start gap-2">
+                  <Icon size={15} style={{ color: style.accent }} className="mt-0.5 shrink-0" aria-hidden />
+                  <h3 className={style.h2}>{section.heading.content}</h3>
+                </header>
+              ) : null}
+              {content}
+            </article>
+          )
+        })}
+
+        {showStreamCursor ? (
+          <div className="border-t border-stone-700/30 px-4 py-2">
+            <StreamingTextCursor />
+          </div>
+        ) : null}
       </div>
 
-      <div className="flex items-center gap-2 pl-1">
-        <span className="inline-flex items-center gap-1 rounded-full border border-amber-800/45 bg-amber-950/40 px-2 py-0.5 text-[10px] font-medium text-amber-100/95">
-          <MessageCircleMore size={11} />
-          <span>Interview Coach</span>
-        </span>
-        <span className="text-[11px] text-stone-500">{time}</span>
-      </div>
+      <span className="pl-1 text-[11px] text-stone-500">{time}</span>
     </div>
   )
 }
