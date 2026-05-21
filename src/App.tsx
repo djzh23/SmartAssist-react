@@ -5,8 +5,8 @@ import { AppErrorBoundary } from './components/AppErrorBoundary'
 import DocumentHead from './components/layout/DocumentHead'
 import MainLayout from './components/layout/MainLayout'
 import LoadingScreen from './components/LoadingScreen'
-import LandingPage from './pages/LandingPage'
 import { useCareerProfile } from './hooks/useCareerProfile'
+const LandingPage = lazy(() => import('./pages/LandingPage'))
 const ChatPage = lazy(() => import('./pages/ChatPage'))
 const ProfilePage = lazy(() => import('./pages/ProfilePage'))
 const OnboardingPage = lazy(() => import('./pages/OnboardingPage'))
@@ -72,7 +72,14 @@ function AppRoutes() {
   return (
     <Routes>
       {/* Public standalone pages */}
-      <Route path="/" element={<LandingPage />} />
+      <Route
+        path="/"
+        element={(
+          <Suspense fallback={<RouteFallback />}>
+            <LandingPage />
+          </Suspense>
+        )}
+      />
 
       <Route
         path="/onboarding"
