@@ -3,6 +3,21 @@ import { useAuth } from '@clerk/clerk-react'
 import { fetchSkills } from '../api/client'
 import type { SkillSummary } from '../types'
 
+/** Registered in backend but hidden from sidebar / chat switcher until launched. Code paths stay intact. */
+export const SKILLS_HIDDEN_FROM_NAV = new Set([
+  'cover_letter',
+  'salary_coach',
+  'salary',
+  'gehalt',
+  'linkedin',
+])
+
+function isSkillHiddenFromNav(skill: SkillSummary): boolean {
+  const t = skill.apiToolType.toLowerCase()
+  const id = skill.id.toLowerCase()
+  return SKILLS_HIDDEN_FROM_NAV.has(t) || SKILLS_HIDDEN_FROM_NAV.has(id)
+}
+
 export function useSkills() {
   const { getToken, isLoaded, isSignedIn } = useAuth()
   const [skills, setSkills] = useState<SkillSummary[] | null>(null)
@@ -19,7 +34,11 @@ export function useSkills() {
       const filtered = data.filter(s => {
         const t = s.apiToolType.toLowerCase()
         const id = s.id.toLowerCase()
-        return t !== 'weather' && t !== 'jokes' && id !== 'weather' && id !== 'jokes'
+        if (t === 'weather' || t === 'jokes' || id === 'weather' || id === 'jokes')
+          return false
+        if (isSkillHiddenFromNav(s))
+          return false
+        return true
       })
       setSkills(filtered)
     } catch (e) {

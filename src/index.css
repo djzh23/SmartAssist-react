@@ -453,21 +453,34 @@
 
 .job-analysis-body .job-md-table th,
 .job-analysis-body .job-md-table td {
-  border: 1px solid #E2E8F0;
+  border: 1px solid rgba(168, 162, 158, 0.22);
   padding: 8px 10px;
   text-align: left;
   vertical-align: top;
+  color: #e7e5e4;
 }
 
 .job-analysis-body .job-md-table th {
-  background: #F8FAFC;
+  background: rgba(28, 25, 23, 0.98);
   font-weight: 700;
-  color: #0F172A;
+  color: #fafaf9;
   white-space: nowrap;
 }
 
 .job-analysis-body .job-md-table tbody tr:nth-child(even) {
-  background: #FAFAFA;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.job-analysis-body .job-md-table tbody tr:nth-child(odd) {
+  background: rgba(0, 0, 0, 0.12);
+}
+
+.job-analysis-body .job-md-table tbody td {
+  color: #d6d3d1;
+}
+
+.job-analysis-body .job-md-table tbody td strong {
+  color: #fafaf9;
 }
 
 .job-analysis-body .job-md-td-status {
