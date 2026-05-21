@@ -67,13 +67,13 @@ function iconForSkill(icon: string): LucideIcon {
 function badgeColorClass(color: string): string {
   switch (color) {
     case 'orange':
-      return 'bg-amber-500/18 text-amber-200'
+      return 'bg-amber-500/15 text-amber-100 ring-1 ring-inset ring-amber-400/20'
     case 'teal':
-      return 'bg-stone-500/20 text-stone-200'
+      return 'bg-teal-500/12 text-teal-100/95 ring-1 ring-inset ring-teal-300/20'
     case 'blue':
-      return 'bg-amber-900/30 text-amber-100/90'
+      return 'bg-amber-900/30 text-amber-100/90 ring-1 ring-inset ring-amber-500/15'
     default:
-      return 'bg-stone-500/15 text-stone-300'
+      return 'bg-white/[0.08] text-stone-200 ring-1 ring-inset ring-white/10'
   }
 }
 
@@ -111,7 +111,7 @@ function SkillSidebarRow({
   const base = density === 'icons'
     ? 'mb-1 flex items-center justify-center rounded-r-md border border-transparent border-l-[4px] border-l-transparent px-2 py-2 text-sm font-medium no-underline transition-all duration-150'
     : 'mb-1 flex items-center gap-2.5 rounded-r-md border border-transparent border-l-[4px] border-l-transparent px-3 py-2 text-sm font-medium no-underline transition-all duration-150'
-  const inactive = 'text-sidebar-muted hover:border-white/10 hover:text-stone-100'
+  const inactive = 'text-stone-300 hover:bg-white/[0.05] hover:text-stone-50'
   const locked = !skill.isEnabled || !skill.isAccessible
   const featureColor = getChatFeatureColor(skill.apiToolType)
   const activeBg = hexToRgba(featureColor, CHAT_FEATURE_ACTIVE_BG_ALPHA)
@@ -285,7 +285,7 @@ function UsageBanner({ compact }: { compact?: boolean }) {
       <button
         type="button"
         onClick={() => navigate('/pricing')}
-        className="mx-1 mb-1 flex items-center justify-center rounded-lg border border-white/12 bg-white/[0.03] p-2 text-slate-300 transition-colors hover:bg-white/[0.06] hover:text-slate-100"
+        className="mx-1 mb-1 flex items-center justify-center rounded-lg bg-white/[0.06] p-2 text-stone-300 ring-1 ring-inset ring-white/10 transition-colors hover:bg-white/[0.1] hover:text-stone-100"
         title="Upgrade"
         aria-label="Nachrichten-Limit und Upgrade"
       >
@@ -297,7 +297,7 @@ function UsageBanner({ compact }: { compact?: boolean }) {
   return (
     <button
       onClick={() => navigate('/pricing')}
-      className="mx-2 mb-2 flex items-center justify-between gap-2 rounded-lg border border-white/12 bg-white/[0.03] px-3 py-2 text-left transition-colors hover:border-white/20 hover:bg-white/[0.08]"
+      className="mx-2 mb-2 flex items-center justify-between gap-2 rounded-lg bg-white/[0.05] px-3 py-2 text-left ring-1 ring-inset ring-white/10 transition-colors hover:bg-white/[0.09]"
     >
       <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-200">
         <Sparkles size={11} className="text-slate-400" />
@@ -530,11 +530,11 @@ export default function SidebarNavContent({
                       <button
                         type="button"
                         onClick={() => setSecondaryOpen(v => !v)}
-                        className="mb-1 flex w-full items-center justify-between rounded-r-md border border-stone-600/35 border-l-4 border-l-stone-500/60 px-3 py-2 text-[11px] font-semibold tracking-wide text-stone-200 transition hover:border-stone-500/60 hover:bg-white/[0.06]"
+                        className="mb-1 flex w-full items-center justify-between rounded-r-md border border-transparent border-l-4 border-l-stone-500/55 px-3 py-2 text-[11px] font-semibold tracking-wide text-stone-100 transition hover:bg-white/[0.06]"
                       >
                         <span className="inline-flex items-center gap-1.5">
                           Weitere Werkzeuge
-                          <span className="rounded-full border border-stone-500/50 bg-stone-700/40 px-1.5 py-0 text-[10px] text-stone-300">
+                          <span className="rounded-full bg-white/[0.08] px-1.5 py-0 text-[10px] font-semibold text-stone-200 ring-1 ring-inset ring-white/12">
                             {orderedSkills.secondary.length}
                           </span>
                         </span>

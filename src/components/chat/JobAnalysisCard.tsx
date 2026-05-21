@@ -34,12 +34,12 @@ const ICON_BY_TONE: Record<JobSectionTone, LucideIcon> = {
 
 function scorePillClasses(score?: number): string {
   if (typeof score !== 'number') {
-    return 'border-stone-600/50 bg-stone-800/70 text-stone-400'
+    return 'bg-stone-800/75 text-stone-400 ring-1 ring-inset ring-white/10'
   }
 
-  if (score >= 75) return 'border-amber-600/45 bg-amber-950/55 text-amber-100'
-  if (score >= 50) return 'border-stone-600/50 bg-stone-800/80 text-stone-200'
-  return 'border-orange-900/45 bg-orange-950/40 text-orange-100'
+  if (score >= 75) return 'bg-amber-950/45 text-amber-100 ring-1 ring-inset ring-amber-500/25'
+  if (score >= 50) return 'bg-stone-800/85 text-stone-200 ring-1 ring-inset ring-white/10'
+  return 'bg-orange-950/35 text-orange-100 ring-1 ring-inset ring-orange-500/25'
 }
 
 function scoreBarClasses(score?: number): string {
@@ -69,10 +69,10 @@ export default function JobAnalysisCard({ text, showStreamCursor = false, accent
   return (
     <div className="w-full space-y-3">
       <div
-        className="rounded-xl border bg-app-raised px-4 py-3 shadow-[inset_0_1px_0_0_rgba(255,251,235,0.04)]"
+        className="rounded-xl border-0 border-l-[3px] bg-app-raised px-4 py-3 pl-[1.05rem] shadow-none"
         style={{
-          borderColor: hexToRgba(featureColor, 0.35),
-          backgroundImage: `linear-gradient(90deg, ${hexToRgba(featureColor, CHAT_FEATURE_ACTIVE_BG_ALPHA)} 0%, #1f1a16 72%)`,
+          borderLeftColor: featureColor,
+          backgroundImage: `linear-gradient(90deg, ${hexToRgba(featureColor, CHAT_FEATURE_ACTIVE_BG_ALPHA)} 0%, #1f1a16 68%)`,
         }}
       >
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -108,19 +108,18 @@ export default function JobAnalysisCard({ text, showStreamCursor = false, accent
         )}
       </div>
 
-      <div className="flex w-full flex-col gap-2.5">
+      <div className="flex w-full flex-col gap-2 sm:gap-2.5">
         {visibleSections.map((section, index) => {
           const Icon = ICON_BY_TONE[section.tone] ?? FileSearch
           return (
             <article
               key={`${section.title}-${index}`}
-              className="rounded-xl border px-4 py-3.5 shadow-sm backdrop-blur-[1px]"
+              className="rounded-r-xl rounded-l-md border-0 border-l-[3px] bg-[#1a1612]/95 py-3 pl-3 pr-3 sm:py-3.5 sm:pl-3.5 sm:pr-4"
               style={{
-                background: section.bg,
-                borderColor: section.border,
+                borderLeftColor: section.border,
               }}
             >
-              <header className="mb-2.5 flex flex-wrap items-center justify-between gap-2">
+              <header className="mb-2 flex flex-wrap items-center justify-between gap-2 sm:mb-2.5">
                 <div className="flex min-w-0 items-center gap-2">
                   <Icon size={16} style={{ color: section.color }} />
                   <h3 className="truncate text-sm font-semibold" style={{ color: section.color }}>
@@ -128,19 +127,15 @@ export default function JobAnalysisCard({ text, showStreamCursor = false, accent
                   </h3>
                 </div>
                 <span
-                  className="rounded-full border px-2.5 py-0.5 text-[11px] font-semibold"
-                  style={{
-                    background: section.chipBg,
-                    borderColor: section.border,
-                    color: section.chipColor,
-                  }}
+                  className="rounded-md bg-white/[0.06] px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset ring-white/10"
+                  style={{ color: section.chipColor }}
                 >
                   {section.chip}
                 </span>
               </header>
 
               <div
-                className="job-analysis-body text-[0.89rem] leading-relaxed text-stone-300 [&_a]:text-amber-400 [&_strong]:text-stone-100"
+                className="job-analysis-body text-[0.89rem] leading-relaxed text-stone-200 [&_a]:text-amber-400 [&_strong]:text-stone-50"
                 dangerouslySetInnerHTML={{ __html: bodyToHtml(section.body) }}
               />
             </article>

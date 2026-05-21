@@ -388,7 +388,7 @@
 
 .job-analysis-body .job-kv-key {
   font-weight: 600;
-  color: #1E293B;
+  color: #e7e5e4;
 }
 
 .job-analysis-body .job-subhead {
@@ -396,38 +396,38 @@
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.02em;
-  color: #334155;
+  color: #d6d3d1;
 }
 
 .job-analysis-body .job-inline-code {
-  background: #E2E8F0;
-  border: 1px solid #CBD5E1;
+  background: rgba(28, 25, 23, 0.85);
+  border: 1px solid rgba(168, 162, 158, 0.35);
   border-radius: 6px;
   padding: 1px 5px;
   font-size: 0.82em;
-  color: #0F172A;
+  color: #fafaf9;
 }
 
 .job-analysis-body .job-inline-score {
   display: inline-block;
-  background: #FEF3C7;
-  border: 1px solid #FDE68A;
+  background: rgba(245, 158, 11, 0.14);
+  border: 1px solid rgba(251, 191, 36, 0.35);
   border-radius: 999px;
   padding: 1px 7px;
   font-size: 0.82em;
   font-weight: 700;
-  color: #92400E;
+  color: #fde68a;
 }
 
 .job-analysis-body .job-inline-percent {
   display: inline-block;
-  background: #DCFCE7;
-  border: 1px solid #BBF7D0;
+  background: rgba(52, 211, 153, 0.12);
+  border: 1px solid rgba(52, 211, 153, 0.32);
   border-radius: 999px;
   padding: 1px 6px;
   font-size: 0.82em;
   font-weight: 700;
-  color: #166534;
+  color: #a7f3d0;
 }
 
 .job-analysis-body .job-md-table-wrap {
@@ -436,8 +436,8 @@
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   border-radius: 10px;
-  border: 1px solid #E2E8F0;
-  background: #fff;
+  border: 1px solid rgba(168, 162, 158, 0.22);
+  background: rgba(20, 17, 14, 0.92);
 }
 
 .job-analysis-body .job-md-table-wrap:last-child {
@@ -488,19 +488,19 @@
 }
 
 .job-analysis-body .job-cell-status-yes {
-  background: #DCFCE7;
-  border: 1px solid #BBF7D0;
-  color: #166534;
+  background: rgba(52, 211, 153, 0.15);
+  border: 1px solid rgba(52, 211, 153, 0.35);
+  color: #bbf7d0;
 }
 
 .job-analysis-body .job-cell-status-no {
-  background: #FEE2E2;
-  border: 1px solid #FECACA;
-  color: #991B1B;
+  background: rgba(248, 113, 113, 0.12);
+  border: 1px solid rgba(248, 113, 113, 0.35);
+  color: #fecaca;
 }
 
 .job-analysis-body .job-cell-status-empty {
-  color: #94A3B8;
+  color: #a8a29e;
   font-weight: 600;
 }
 
