@@ -551,11 +551,21 @@ export async function fetchSessionTranscriptsBulk(
   const unique = [...new Set(sessionIds.filter(id => id.trim().length > 0))]
   if (unique.length === 0)
     return {}
+
   const res = await fetch(`${BASE}/api/sessions/transcripts`, {
     method: 'POST',
     headers: authHeaders(token),
     body: JSON.stringify({ sessionIds: unique }),
   })
+
+  // Older deployments without the bulk endpoint — fall back to per-session GETs.
+  if (res.status === 404 || res.status === 405) {
+    const entries = await Promise.all(
+      unique.map(async (id) => [id, await fetchSessionTranscript(token, id)] as const),
+    )
+    return Object.fromEntries(entries)
+  }
+
   if (!res.ok)
     throw new Error(await readApiError(res, `Verläufe laden fehlgeschlagen (${res.status})`))
   const payload = await res.json() as {
