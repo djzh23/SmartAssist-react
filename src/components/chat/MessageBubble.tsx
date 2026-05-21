@@ -1,4 +1,4 @@
-import { memo } from 'react'
+import { memo, useMemo, type CSSProperties } from 'react'
 import type { ChatMessage, ToolType } from '../../types'
 import { BriefcaseBusiness, Settings2 } from 'lucide-react'
 import AssistantNoteSaveButton from './AssistantNoteSaveButton'
@@ -43,6 +43,38 @@ function MessageBubble({
 }: Props) {
   const time = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   const isJobAnalyzerReply = !msg.isUser && (toolType === 'jobanalyzer' || msg.toolUsed === 'analyze_job')
+
+  // Stable style objects per bubble: tool colours are pure functions of toolType / toolUsed,
+  // so memoising keyed by the input strings prevents a fresh object on every parent render
+  // and keeps the React diff cheap when a bubble re-renders for an unrelated reason.
+  const jobAnalyzerBorderStyle = useMemo<CSSProperties>(
+    () => ({ borderLeftColor: getChatFeatureColor('jobanalyzer') }),
+    [],
+  )
+  const jobAnalyzerChipStyle = useMemo<CSSProperties>(() => {
+    const jobColor = getChatFeatureColor('jobanalyzer')
+    return {
+      borderColor: hexToRgba(jobColor, 0.45),
+      backgroundColor: hexToRgba(jobColor, CHAT_FEATURE_ACTIVE_BG_ALPHA),
+      color: jobColor,
+    }
+  }, [])
+  const toolUsedChipStyle = useMemo<CSSProperties | undefined>(() => {
+    if (!msg.toolUsed) return undefined
+    const color = getChatFeatureColor(msg.toolUsed)
+    return {
+      borderColor: hexToRgba(color, 0.45),
+      backgroundColor: hexToRgba(color, 0.14),
+      color,
+    }
+  }, [msg.toolUsed])
+  const userBubbleStyle = useMemo<CSSProperties>(
+    () => ({
+      backgroundColor: getChatFeatureSolidFill(toolType),
+      color: getChatFeatureOnAccentFg(toolType),
+    }),
+    [toolType],
+  )
 
   if (!msg.isUser && toolType === 'language' && useLanguageCard) {
     // 1. New structured ---ZIELSPRACHE--- format (preferred)
@@ -130,17 +162,13 @@ function MessageBubble({
     const jobColor = getChatFeatureColor('jobanalyzer')
     return (
       <div className="flex w-full animate-slide-up flex-col items-start gap-1">
-        <div className="w-full rounded-xl border-l-[3px] pl-2" style={{ borderLeftColor: jobColor }}>
+        <div className="w-full rounded-xl border-l-[3px] pl-2" style={jobAnalyzerBorderStyle}>
           <JobAnalysisCard text={msg.text} showStreamCursor={showStreamCursor} accentColor={jobColor} />
         </div>
         <div className="flex items-center gap-2 pl-1">
           <span
             className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium"
-            style={{
-              borderColor: hexToRgba(jobColor, 0.45),
-              backgroundColor: hexToRgba(jobColor, CHAT_FEATURE_ACTIVE_BG_ALPHA),
-              color: jobColor,
-            }}
+            style={jobAnalyzerChipStyle}
           >
             <BriefcaseBusiness size={11} />
             <span>Stellenanalyse</span>
@@ -190,11 +218,7 @@ function MessageBubble({
           {msg.toolUsed && msg.toolUsed !== 'analyze_job' && (
             <span
               className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium min-[391px]:px-2.5 min-[391px]:text-[11px]"
-              style={{
-                borderColor: hexToRgba(getChatFeatureColor(msg.toolUsed), 0.45),
-                backgroundColor: hexToRgba(getChatFeatureColor(msg.toolUsed), 0.14),
-                color: getChatFeatureColor(msg.toolUsed),
-              }}
+              style={toolUsedChipStyle}
             >
               <Settings2 size={11} />
               <span>{msg.toolUsed.replace(/_/g, ' ')}</span>
@@ -211,10 +235,7 @@ function MessageBubble({
     <div className="flex max-w-[76%] animate-slide-up flex-col items-end gap-0.5 self-end min-[391px]:max-w-[72%] min-[391px]:gap-1">
       <div
         className="break-words whitespace-pre-wrap rounded-[16px_16px_4px_16px] px-3 py-2 text-[14px] leading-relaxed shadow-[0_8px_18px_-8px_rgba(0,0,0,0.45)] min-[391px]:rounded-[18px_18px_4px_18px] min-[391px]:px-3.5 min-[391px]:py-2.5 min-[391px]:text-sm min-[391px]:shadow-[0_8px_22px_-4px_rgba(0,0,0,0.4)]"
-        style={{
-          backgroundColor: getChatFeatureSolidFill(toolType),
-          color: getChatFeatureOnAccentFg(toolType),
-        }}
+        style={userBubbleStyle}
       >
         {msg.text}
       </div>
