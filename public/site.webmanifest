@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "Applikum: Bewerbung vorbereiten, Stellenanalyse, Interview-Training",
-  "short_name": "Applikum",
+  "name": "PrivatePrep: Bewerbung vorbereiten, Stellenanalyse, Interview-Training",
+  "short_name": "PrivatePrep",
   "description": "Stellenanzeige einfügen: Keywords, Lebenslauf-Lücken und Interviewfragen in Sekunden. Anschreiben, Lebenslauf, Karriere-Chat. Für Bewerbungen in Deutschland. Kostenlos starten, keine Kreditkarte.",
   "start_url": "/?utm_source=pwa",
   "scope": "/",
