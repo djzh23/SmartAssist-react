@@ -543,6 +543,35 @@ export async function fetchSessionTranscript(token: string, sessionId: string): 
   }
 }
 
+/** Batch-load transcripts in one API call (avoids N parallel GETs on sync). */
+export async function fetchSessionTranscriptsBulk(
+  token: string,
+  sessionIds: string[],
+): Promise<Record<string, SessionTranscriptResponse>> {
+  const unique = [...new Set(sessionIds.filter(id => id.trim().length > 0))]
+  if (unique.length === 0)
+    return {}
+  const res = await fetch(`${BASE}/api/sessions/transcripts`, {
+    method: 'POST',
+    headers: authHeaders(token),
+    body: JSON.stringify({ sessionIds: unique }),
+  })
+  if (!res.ok)
+    throw new Error(await readApiError(res, `Verläufe laden fehlgeschlagen (${res.status})`))
+  const payload = await res.json() as {
+    transcripts?: Record<string, { toolType?: unknown; messages?: unknown }>
+  }
+  const raw = payload.transcripts ?? {}
+  const out: Record<string, SessionTranscriptResponse> = {}
+  for (const [id, row] of Object.entries(raw)) {
+    out[id] = {
+      toolType: typeof row.toolType === 'string' ? row.toolType : 'general',
+      messages: parseTranscriptMessages(row.messages),
+    }
+  }
+  return out
+}
+
 export async function putSessionTranscript(
   token: string,
   sessionId: string,

@@ -16,9 +16,11 @@ import {
   deleteChatSessionRemote,
   fetchChatSessions,
   fetchSessionTranscript,
+  fetchSessionTranscriptsBulk,
   patchChatSessionTitle,
   putChatSessionOrder,
   putSessionTranscript,
+  type SessionTranscriptResponse,
 } from '../api/client'
 import { reorderSessionOrderForTool } from '../utils/sessionOrder'
 import { isPlaceholderSessionTitle, suggestSessionTitle } from '../utils/sessionTitle'
@@ -284,9 +286,12 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
   const broadcastRef = useRef<BroadcastChannel | null>(null)
   const remoteSyncFingerprintRef = useRef('')
   const remoteSyncToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  /** Session IDs whose full transcript has been fetched from the API (lazy-load others on tab switch). */
+  const loadedTranscriptIdsRef = useRef<Set<string>>(new Set())
 
   useEffect(() => {
     remoteSyncFingerprintRef.current = ''
+    loadedTranscriptIdsRef.current = new Set()
   }, [scopeId])
 
   const persistIdsRef = useRef(new Set<string>())
@@ -385,28 +390,52 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
           return
         const prevLocal = sessionsRef.current
         const active = activeIdRef.current
-        /**
-         * Refresh transcript fetches: API `messageCount` is only bumped server-side on agent
-         * completion (not on user turns / PUT transcript), so comparing it to `messages.length`
-         * forces a refetch for almost every session → one Sync explodes Redis reads.
-         * On refresh we only load full transcript for the active tab and for sessions we have
-         * not seen yet; other tabs keep local messages until the user opens them or uses Sync
-         * again after switching.
-         */
-        const transcripts = await Promise.all(
-          records.map(m => {
-            if (mode === 'initial')
-              return fetchSessionTranscript(token, m.id)
+        const storedLastActive = readStoredLastActiveChatId(scopeId)
+        const preferredInitialId =
+          storedLastActive && records.some(m => m.id === storedLastActive)
+            ? storedLastActive
+            : records.find(m => normalizeToolFromApi(m.toolType) === 'general')?.id
+              ?? records[0]?.id
+              ?? null
+
+        let transcripts: SessionTranscriptResponse[]
+        if (mode === 'initial') {
+          // Startup: only load the tab the user will see — others lazy-load on switch.
+          const idsToFetch = preferredInitialId ? [preferredInitialId] : []
+          const bulk = idsToFetch.length > 0
+            ? await fetchSessionTranscriptsBulk(token, idsToFetch)
+            : {}
+          loadedTranscriptIdsRef.current = new Set(idsToFetch)
+          transcripts = records.map(m => {
+            const hit = bulk[m.id]
+            if (hit)
+              return hit
+            return { toolType: normalizeToolFromApi(m.toolType), messages: [] }
+          })
+        }
+        else {
+          const idsToFetch: string[] = []
+          for (const m of records) {
             const local = prevLocal[m.id]
             const needFetch = !local || m.id === active
             if (needFetch)
-              return fetchSessionTranscript(token, m.id)
-            return Promise.resolve({
-              toolType: local.toolType,
-              messages: local.messages,
-            })
-          }),
-        )
+              idsToFetch.push(m.id)
+          }
+          const bulk = idsToFetch.length > 0
+            ? await fetchSessionTranscriptsBulk(token, idsToFetch)
+            : {}
+          for (const id of idsToFetch)
+            loadedTranscriptIdsRef.current.add(id)
+          transcripts = records.map(m => {
+            const hit = bulk[m.id]
+            if (hit)
+              return hit
+            const local = prevLocal[m.id]
+            if (local && !idsToFetch.includes(m.id))
+              return { toolType: local.toolType, messages: local.messages }
+            return { toolType: normalizeToolFromApi(m.toolType), messages: [] }
+          })
+        }
         if (seq !== loadSeqRef.current)
           return
         const nextSessions: Record<string, ChatSession> = {}
@@ -456,8 +485,7 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
         setSessionsStaleHint(null)
         setSessionsLastSyncedAt(new Date().toISOString())
         if (mode === 'initial') {
-          const stored = readStoredLastActiveChatId(scopeId)
-          const preferred = stored && nextSessions[stored] ? stored : null
+          const preferred = preferredInitialId && nextSessions[preferredInitialId] ? preferredInitialId : null
           const firstForGeneral = order.find(id => nextSessions[id]?.toolType === 'general')
           setActiveId(preferred ?? firstForGeneral ?? order[0] ?? null)
         }
@@ -669,6 +697,7 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
       }
       setSessions(prev => ({ ...prev, [rec.id]: session }))
       setSessionOrder(prev => [rec.id, ...prev.filter(id => id !== rec.id)])
+      loadedTranscriptIdsRef.current.add(rec.id)
       await putSessionTranscript(token, rec.id, { toolType: tool, messages: welcome })
       pingOtherTabs()
       return rec.id
@@ -676,22 +705,49 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     [getToken, pingOtherTabs],
   )
 
+  const ensureTranscriptLoaded = useCallback(async (sessionId: string) => {
+    if (loadedTranscriptIdsRef.current.has(sessionId))
+      return
+    const session = sessionsRef.current[sessionId]
+    if (!session)
+      return
+    try {
+      const token = await getToken()
+      if (!token)
+        return
+      const tr = await fetchSessionTranscript(token, sessionId)
+      loadedTranscriptIdsRef.current.add(sessionId)
+      const tool = normalizeToolFromApi(tr.toolType || session.toolType)
+      const messages = tr.messages.length > 0 ? tr.messages : welcomeMessages(tool)
+      setSessions(prev => {
+        const s = prev[sessionId]
+        if (!s)
+          return prev
+        return { ...prev, [sessionId]: { ...s, toolType: tool, messages } }
+      })
+    }
+    catch (e) {
+      console.warn('[sessions] Lazy transcript load failed', sessionId, e)
+    }
+  }, [getToken])
+
+  const setActiveSession = useCallback((id: string) => {
+    setActiveId(id)
+    void ensureTranscriptLoaded(id)
+  }, [ensureTranscriptLoaded])
+
   const switchToTool = useCallback((tool: ToolType) => {
     setCurrentTool(tool)
     const order = sessionOrderRef.current
     const sess = sessionsRef.current
     const existing = order.find(id => sess[id]?.toolType === tool)
     if (existing) {
-      setActiveId(existing)
+      setActiveSession(existing)
       return
     }
     // Do not auto-create a server session when switching tools - user starts one via "Neues Gespräch".
     setActiveId(null)
-  }, [])
-
-  const setActiveSession = useCallback((id: string) => {
-    setActiveId(id)
-  }, [])
+  }, [setActiveSession])
 
   const renameSession = useCallback(
     async (sessionId: string, title: string) => {

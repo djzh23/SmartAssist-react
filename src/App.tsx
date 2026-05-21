@@ -49,9 +49,10 @@ function ProtectedApp() {
   const { isSignedIn, isLoaded } = useUser()
   const { needsOnboarding, loading: profileLoading } = useCareerProfile()
 
-  if (!isLoaded || profileLoading) return <LoadingScreen />
+  if (!isLoaded) return <LoadingScreen />
   if (!isSignedIn) return <Navigate to="/" replace />
-  if (needsOnboarding) return <Navigate to="/onboarding" replace />
+  // Profile loads in the background — only redirect once we know onboarding is required.
+  if (!profileLoading && needsOnboarding) return <Navigate to="/onboarding" replace />
   return <MainLayout />
 }
 
