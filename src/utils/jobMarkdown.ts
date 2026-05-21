@@ -1,3 +1,19 @@
+import DOMPurify from 'dompurify'
+
+// Defense-in-depth: formatInline() already escape-encodes user content, but if any future regex
+// edit accidentally lets an attribute through (e.g. onclick=...), DOMPurify strips it before
+// the HTML reaches dangerouslySetInnerHTML in JobAnalysisCard.
+const SANITIZE_CONFIG = {
+  ALLOWED_TAGS: [
+    'div', 'span', 'p', 'h4',
+    'strong', 'em', 'code',
+    'ul', 'ol', 'li',
+    'table', 'thead', 'tbody', 'tr', 'th', 'td',
+  ],
+  ALLOWED_ATTR: ['class', 'scope', 'title', 'value'],
+  FORBID_TAGS: ['script', 'style', 'iframe', 'object', 'embed', 'link'],
+}
+
 export type JobSectionTone =
   | 'score'
   | 'strength'
@@ -485,7 +501,7 @@ export function bodyToHtml(text: string): string {
   }
 
   closeList()
-  return parts.join('')
+  return DOMPurify.sanitize(parts.join(''), SANITIZE_CONFIG)
 }
 
 export function pickOverallScore(sections: JobSection[]): number | undefined {
