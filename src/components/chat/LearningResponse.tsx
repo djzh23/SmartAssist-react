@@ -78,6 +78,8 @@ export default function LearningResponse({
   const { getToken } = useAuth()
   const [isPlaying, setIsPlaying] = useState(false)
   const [audioError, setAudioError] = useState<string | null>(null)
+  /** Soft notice for finding #31: server TTS unavailable, we're using the local browser voice. */
+  const [audioNotice, setAudioNotice] = useState<string | null>(null)
   // For browser TTS fallback
   const uttRef = useRef<SpeechSynthesisUtterance | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
@@ -136,6 +138,11 @@ export default function LearningResponse({
     window.speechSynthesis.speak(utt)
   }, [targetLangCode])
 
+  const announceFallback = useCallback(() => {
+    setAudioNotice('Server-Stimme nicht verfügbar – Browser-Stimme wird genutzt.')
+    window.setTimeout(() => setAudioNotice(null), 4000)
+  }, [])
+
   const handleSpeak = useCallback(async () => {
     if (isPlaying) { stopAndCleanup(); return }
 
@@ -144,8 +151,10 @@ export default function LearningResponse({
 
     setIsPlaying(true)
     setAudioError(null)
+    setAudioNotice(null)
 
     // ── Primary: backend TTS (Azure Neural - real human voice) ───────────
+    let backendFailed = false
     try {
       const blob = fetchAudio
         ? await fetchAudio(text, targetLangCode)
@@ -162,18 +171,22 @@ export default function LearningResponse({
         audio.onerror = () => {
           URL.revokeObjectURL(url)
           audioRef.current = null
-          speakWithBrowser(text)   // silent fallback to browser TTS
+          announceFallback()
+          speakWithBrowser(text)
         }
         await audio.play()
         return
       }
+      backendFailed = true
     } catch {
-      // backend unavailable - fall through to browser TTS silently
+      backendFailed = true
     }
+
+    if (backendFailed) announceFallback()
 
     // ── Fallback: browser Web Speech API ──────────────────────────────────
     speakWithBrowser(text)
-  }, [isPlaying, data.targetLanguageText, targetLangCode, getToken, fetchAudio, stopAndCleanup, speakWithBrowser])
+  }, [isPlaying, data.targetLanguageText, targetLangCode, getToken, fetchAudio, stopAndCleanup, speakWithBrowser, announceFallback])
 
   return (
     <div className="flex max-w-[520px] animate-slide-up flex-col gap-1.5">
@@ -203,6 +216,15 @@ export default function LearningResponse({
             {audioError && (
               <span className="max-w-[180px] text-right text-[10px] leading-tight text-red-500">
                 {audioError}
+              </span>
+            )}
+            {!audioError && audioNotice && (
+              <span
+                className="max-w-[200px] text-right text-[10px] leading-tight text-amber-300/90"
+                role="status"
+                aria-live="polite"
+              >
+                {audioNotice}
               </span>
             )}
           </div>

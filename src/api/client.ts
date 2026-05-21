@@ -350,8 +350,11 @@ export async function createLearningInsight(
 
 /**
  * Fetch synthesized speech from the backend (/api/speech/tts).
- * Requires an auth token. Returns null on any failure - callers should fall
- * back to browser TTS rather than showing an error.
+ *
+ * Returns null on any failure (no token, 4xx/5xx, network error). Callers MUST
+ * surface a user-visible notice when this happens before falling back to
+ * browser TTS — silently swapping voices violates the "fail loud, never fake"
+ * rule (see CLAUDE.md). See {@link LearningResponse} for the canonical handling.
  */
 export async function fetchTtsAudio(
   text: string,
