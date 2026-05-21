@@ -1,16 +1,31 @@
-import * as pdfjsLib from 'pdfjs-dist'
+// pdfjs-dist is a ~300 KB dependency. Loading it eagerly bloats the main bundle for
+// every user, even though the PDF upload code path is only used inside the Interview
+// Setup modal. Defer the import (and the matching worker URL) until the user actually
+// triggers a PDF parse.
 
-// Point to the bundled worker - Vite handles the URL correctly
-pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.mjs',
-  import.meta.url,
-).href
+type PdfjsLib = typeof import('pdfjs-dist')
+
+let cached: Promise<PdfjsLib> | null = null
+
+function loadPdfjs(): Promise<PdfjsLib> {
+  if (cached) return cached
+  cached = import('pdfjs-dist').then(async (mod) => {
+    const workerUrl = new URL(
+      'pdfjs-dist/build/pdf.worker.min.mjs',
+      import.meta.url,
+    ).href
+    mod.GlobalWorkerOptions.workerSrc = workerUrl
+    return mod
+  })
+  return cached
+}
 
 /**
  * Extract plain text from a PDF file entirely in the browser.
  * No data ever leaves the user's machine.
  */
 export async function extractTextFromPdf(file: File): Promise<string> {
+  const pdfjsLib = await loadPdfjs()
   const arrayBuffer = await file.arrayBuffer()
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
 
