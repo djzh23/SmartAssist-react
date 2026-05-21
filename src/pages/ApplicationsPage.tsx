@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo, useState, type DragEvent } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '@clerk/clerk-react'
-import { Briefcase, Loader2, Plus } from 'lucide-react'
+import { Briefcase, ChevronDown, ChevronUp, Loader2, Plus } from 'lucide-react'
 import {
   type ApplicationStatusApi,
   type JobApplicationApi,
@@ -10,12 +10,21 @@ import {
   updateJobApplicationStatus,
 } from '../api/client'
 import ApplicationInfoModal from '../components/applications/ApplicationInfoModal'
+import ApplicationListToolbar from '../components/applications/ApplicationListToolbar'
+import ApplicationStatusCards from '../components/applications/ApplicationStatusCards'
+import ApplicationTable from '../components/applications/ApplicationTable'
+import { ARCHIVE_STATUSES, TERMINAL_STATUSES } from '../components/applications/pipelineConfig'
 import type { CvStudioResumeSummary } from '../types'
 import PageHeader from '../components/layout/PageHeader'
 import { appCtaButtonClasses } from '../components/ui/AppCtaButton'
-import ArchiveSection from '../components/applications/ArchiveSection'
-import PipelineBoard from '../components/applications/PipelineBoard'
-import { ARCHIVE_STATUSES, PIPELINE_STATUSES, TERMINAL_STATUSES } from '../components/applications/pipelineConfig'
+import {
+  APPLICATIONS_PAGE_SIZE,
+  filterArchiveApplications,
+  filterPipelineApplications,
+  paginateItems,
+  sortApplications,
+  type ApplicationSort,
+} from '../utils/applicationListUtils'
 
 function isActiveStatus(s: ApplicationStatusApi): boolean {
   return !TERMINAL_STATUSES.includes(s)
@@ -28,9 +37,14 @@ export default function ApplicationsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [infoApp, setInfoApp] = useState<JobApplicationApi | null>(null)
-  const [draggingAppId, setDraggingAppId] = useState<string | null>(null)
-  const [dropStatus, setDropStatus] = useState<ApplicationStatusApi | null>(null)
   const [archiveOpen, setArchiveOpen] = useState(false)
+
+  const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState<ApplicationStatusApi | null>(null)
+  const [sort, setSort] = useState<ApplicationSort>('updatedDesc')
+  const [filterOpen, setFilterOpen] = useState(false)
+  const [page, setPage] = useState(1)
+  const [archivePage, setArchivePage] = useState(1)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -59,18 +73,13 @@ export default function ApplicationsPage() {
     void load()
   }, [load])
 
-  const grouped = useMemo(() => {
-    const m = new Map<ApplicationStatusApi, JobApplicationApi[]>()
-    for (const s of [...PIPELINE_STATUSES, ...TERMINAL_STATUSES])
-      m.set(s, [])
-    for (const a of apps) {
-      const key = a.status
-      const list = m.get(key) ?? []
-      list.push(a)
-      m.set(key, list)
-    }
-    return m
-  }, [apps])
+  useEffect(() => {
+    setPage(1)
+  }, [search, statusFilter, sort])
+
+  useEffect(() => {
+    setArchivePage(1)
+  }, [search, archiveOpen])
 
   const activeCount = useMemo(
     () => apps.filter(a => isActiveStatus(a.status)).length,
@@ -78,8 +87,31 @@ export default function ApplicationsPage() {
   )
 
   const archiveTotal = useMemo(
-    () => ARCHIVE_STATUSES.reduce((n, s) => n + (grouped.get(s)?.length ?? 0), 0),
-    [grouped],
+    () => apps.filter(a => ARCHIVE_STATUSES.includes(a.status)).length,
+    [apps],
+  )
+
+  const filteredPipeline = useMemo(
+    () => sortApplications(
+      filterPipelineApplications(apps, { search, statusFilter }),
+      sort,
+    ),
+    [apps, search, statusFilter, sort],
+  )
+
+  const paginatedPipeline = useMemo(
+    () => paginateItems(filteredPipeline, page, APPLICATIONS_PAGE_SIZE),
+    [filteredPipeline, page],
+  )
+
+  const filteredArchive = useMemo(
+    () => sortApplications(filterArchiveApplications(apps, search), sort),
+    [apps, search, sort],
+  )
+
+  const paginatedArchive = useMemo(
+    () => paginateItems(filteredArchive, archivePage, APPLICATIONS_PAGE_SIZE),
+    [filteredArchive, archivePage],
   )
 
   async function moveApplicationToStatus(appId: string, targetStatus: ApplicationStatusApi) {
@@ -108,41 +140,13 @@ export default function ApplicationsPage() {
     }
   }
 
-  function handleDragStart(e: DragEvent<HTMLDivElement>, appId: string) {
-    e.dataTransfer.effectAllowed = 'move'
-    e.dataTransfer.setData('text/application-id', appId)
-    setDraggingAppId(appId)
-  }
-
-  function handleDragEnd() {
-    setDraggingAppId(null)
-    setDropStatus(null)
-  }
-
-  function handleColumnDragOver(e: DragEvent<HTMLElement>, status: ApplicationStatusApi) {
-    if (!draggingAppId) return
-    e.preventDefault()
-    e.dataTransfer.dropEffect = 'move'
-    setDropStatus(status)
-  }
-
-  function handleColumnDrop(e: DragEvent<HTMLElement>, status: ApplicationStatusApi) {
-    e.preventDefault()
-    const appId = e.dataTransfer.getData('text/application-id')
-    if (appId) {
-      void moveApplicationToStatus(appId, status)
-    }
-    setDropStatus(null)
-    setDraggingAppId(null)
-  }
-
   return (
     <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden bg-transparent">
       <div className="mx-auto w-full max-w-[1580px] px-4 pt-3 pb-6 sm:px-6 sm:py-7">
         <PageHeader
           pageKey="applications"
           subtitle={`${activeCount} aktiv · ${apps.length} gesamt · ${archiveTotal} Archiv`}
-          className="mb-4"
+          className="mb-5"
           hideTitleOnMobile
           actions={(
             <Link
@@ -166,38 +170,87 @@ export default function ApplicationsPage() {
             <Loader2 className="animate-spin" size={28} />
             <p className="text-sm font-medium">Bewerbungen werden geladen…</p>
           </div>
+        ) : apps.length === 0 ? (
+          <div className="mx-auto mt-5 max-w-md rounded-2xl border border-white/10 bg-app-muted/80 px-6 py-12 text-center">
+            <Briefcase className="mx-auto text-stone-500" size={36} strokeWidth={1.5} />
+            <p className="mt-4 text-sm font-semibold text-stone-100">Noch keine Bewerbungen</p>
+            <p className="mt-1 text-sm text-stone-400">Lege deine erste Bewerbung an und behalte den Überblick.</p>
+            <Link
+              to="/applications/new"
+              className={appCtaButtonClasses({ size: 'md', className: 'mt-5' })}
+            >
+              <Plus size={18} />
+              Neue Bewerbung
+            </Link>
+          </div>
         ) : (
-          <>
-            <section aria-label="Bewerbungspipeline" className="mb-4">
-              <PipelineBoard
-                statuses={PIPELINE_STATUSES}
-                grouped={grouped}
-                draggingAppId={draggingAppId}
-                dropStatus={dropStatus}
-                onDragStart={handleDragStart}
-                onDragEnd={handleDragEnd}
-                onDragOver={handleColumnDragOver}
-                onDrop={handleColumnDrop}
-                onDragLeave={status => { if (dropStatus === status) setDropStatus(null) }}
-                onOpenInfo={setInfoApp}
-              />
-            </section>
-
-            <ArchiveSection
-              open={archiveOpen}
-              count={archiveTotal}
-              statuses={ARCHIVE_STATUSES}
-              grouped={grouped}
-              draggingAppId={draggingAppId}
-              dropStatus={dropStatus}
-              onToggle={() => setArchiveOpen(prev => !prev)}
-              onDragStart={handleDragStart}
-              onDragEnd={handleDragEnd}
-              onDragOver={handleColumnDragOver}
-              onDrop={handleColumnDrop}
-              onDragLeave={status => { if (dropStatus === status) setDropStatus(null) }}
-              onOpenInfo={setInfoApp}
+          <div className="space-y-5">
+            <ApplicationStatusCards
+              apps={apps}
+              activeStatus={statusFilter}
+              onSelectStatus={setStatusFilter}
             />
+
+            <ApplicationListToolbar
+              search={search}
+              onSearchChange={setSearch}
+              sort={sort}
+              onSortChange={setSort}
+              filterOpen={filterOpen}
+              onFilterOpenChange={setFilterOpen}
+            />
+
+            <ApplicationTable
+              apps={paginatedPipeline.items}
+              rangeStart={paginatedPipeline.rangeStart}
+              rangeEnd={paginatedPipeline.rangeEnd}
+              total={paginatedPipeline.total}
+              page={paginatedPipeline.page}
+              pageCount={paginatedPipeline.pageCount}
+              onPageChange={setPage}
+              onOpenInfo={setInfoApp}
+              onStatusChange={moveApplicationToStatus}
+              emptyMessage={
+                statusFilter
+                  ? 'Keine Bewerbungen mit diesem Status.'
+                  : 'Keine Bewerbungen gefunden.'
+              }
+            />
+
+            {archiveTotal > 0 ? (
+              <section className="rounded-2xl border border-white/10 bg-app-muted/60 p-4">
+                <button
+                  type="button"
+                  onClick={() => setArchiveOpen(prev => !prev)}
+                  className="flex w-full items-center justify-between gap-3 rounded-xl px-1 py-1 text-left text-stone-100 transition hover:bg-white/5"
+                >
+                  <span className="inline-flex items-center gap-2 text-sm font-semibold">
+                    Archiv — Absagen und erledigt
+                    <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs tabular-nums text-stone-200">
+                      {archiveTotal}
+                    </span>
+                  </span>
+                  {archiveOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                </button>
+
+                {archiveOpen ? (
+                  <div className="mt-4">
+                    <ApplicationTable
+                      apps={paginatedArchive.items}
+                      rangeStart={paginatedArchive.rangeStart}
+                      rangeEnd={paginatedArchive.rangeEnd}
+                      total={paginatedArchive.total}
+                      page={paginatedArchive.page}
+                      pageCount={paginatedArchive.pageCount}
+                      onPageChange={setArchivePage}
+                      onOpenInfo={setInfoApp}
+                      onStatusChange={moveApplicationToStatus}
+                      emptyMessage="Keine archivierten Bewerbungen gefunden."
+                    />
+                  </div>
+                ) : null}
+              </section>
+            ) : null}
 
             {infoApp ? (
               <ApplicationInfoModal
@@ -206,21 +259,7 @@ export default function ApplicationsPage() {
                 onClose={() => setInfoApp(null)}
               />
             ) : null}
-
-            {apps.length === 0 && !loading && (
-              <div className="mx-auto mt-5 max-w-md rounded-2xl border border-white/10 bg-[#120e0b]/80 px-6 py-12 text-center">
-                <Briefcase className="mx-auto text-stone-500" size={36} strokeWidth={1.5} />
-                <p className="mt-4 text-sm font-semibold text-stone-100">Noch keine Bewerbungen</p>
-                <Link
-                  to="/applications/new"
-                  className={appCtaButtonClasses({ size: 'md', className: 'mt-5' })}
-                >
-                  <Plus size={18} />
-                  Neue Bewerbung
-                </Link>
-              </div>
-            )}
-          </>
+          </div>
         )}
       </div>
     </div>
