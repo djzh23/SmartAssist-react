@@ -498,7 +498,36 @@ export async function putChatSessionOrder(token: string, orderedSessionIds: stri
 
 export interface SessionTranscriptResponse {
   toolType: string
-  messages: unknown
+  messages: ChatMessage[]
+}
+
+/**
+ * Runtime guard for the transcript array: the backend is supposed to send rows shaped like
+ * ChatMessage but it has historically returned `unknown` and we have no schema validator.
+ * Anything that fails the shape check is dropped (and we synthesise an id/timestamp) so
+ * downstream code can safely assume ChatMessage[] without any casts.
+ */
+function parseTranscriptMessages(raw: unknown): ChatMessage[] {
+  if (!Array.isArray(raw)) return []
+  const out: ChatMessage[] = []
+  for (const row of raw) {
+    if (!row || typeof row !== 'object') continue
+    const o = row as Record<string, unknown>
+    const id = typeof o.id === 'string' && o.id.length > 0
+      ? o.id
+      : (typeof crypto !== 'undefined' && 'randomUUID' in crypto
+        ? crypto.randomUUID()
+        : Math.random().toString(36).slice(2, 10))
+    const text = typeof o.text === 'string' ? o.text : ''
+    const isUser = Boolean(o.isUser)
+    const timestamp = typeof o.timestamp === 'string' ? o.timestamp : new Date().toISOString()
+    const toolUsed = typeof o.toolUsed === 'string' ? o.toolUsed : undefined
+    const learningData = o.learningData && typeof o.learningData === 'object'
+      ? (o.learningData as ChatMessage['learningData'])
+      : undefined
+    out.push({ id, text, isUser, timestamp, toolUsed, learningData })
+  }
+  return out
 }
 
 export async function fetchSessionTranscript(token: string, sessionId: string): Promise<SessionTranscriptResponse> {
@@ -507,7 +536,11 @@ export async function fetchSessionTranscript(token: string, sessionId: string): 
   })
   if (!res.ok)
     throw new Error(await readApiError(res, `Verlauf laden fehlgeschlagen (${res.status})`))
-  return await res.json() as SessionTranscriptResponse
+  const payload = await res.json() as { toolType?: unknown; messages?: unknown }
+  return {
+    toolType: typeof payload.toolType === 'string' ? payload.toolType : 'general',
+    messages: parseTranscriptMessages(payload.messages),
+  }
 }
 
 export async function putSessionTranscript(

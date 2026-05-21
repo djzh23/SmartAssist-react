@@ -97,24 +97,9 @@ function normalizeToolFromApi(t: string | undefined | null): ToolType {
   return 'general'
 }
 
-function parseTranscriptMessages(raw: unknown): ChatMessage[] {
-  if (!Array.isArray(raw)) return []
-  const out: ChatMessage[] = []
-  for (const row of raw) {
-    if (!row || typeof row !== 'object') continue
-    const o = row as Record<string, unknown>
-    const id = typeof o.id === 'string' ? o.id : uid()
-    const text = typeof o.text === 'string' ? fixMojibake(o.text) : ''
-    const isUser = Boolean(o.isUser)
-    const timestamp = typeof o.timestamp === 'string' ? o.timestamp : new Date().toISOString()
-    const toolUsed = typeof o.toolUsed === 'string' ? o.toolUsed : undefined
-    const learningData = o.learningData && typeof o.learningData === 'object'
-      ? (o.learningData as ChatMessage['learningData'])
-      : undefined
-    out.push({ id, text, isUser, timestamp, toolUsed, learningData })
-  }
-  return out
-}
+// Transcript messages are validated and shaped to ChatMessage[] inside client.ts's
+// fetchSessionTranscript (audit finding #30). Mojibake repair happens in sanitizeSessions
+// once the sessions map is assembled, so we don't need a second pass at parse time.
 
 function welcomeFor(tool: ToolType): string | null {
   switch (tool) {
@@ -431,7 +416,7 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
           const m = records[i]
           const tr = transcripts[i]
           const tool = normalizeToolFromApi(tr.toolType || m.toolType)
-          const parsedMessages = parseTranscriptMessages(tr.messages)
+          const parsedMessages = tr.messages
           let messages = parsedMessages
           if (messages.length === 0)
             messages = welcomeMessages(tool)
