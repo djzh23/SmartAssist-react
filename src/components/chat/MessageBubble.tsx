@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import type { ChatMessage, ToolType } from '../../types'
 import { BriefcaseBusiness, Settings2 } from 'lucide-react'
 import AssistantNoteSaveButton from './AssistantNoteSaveButton'
@@ -29,7 +30,7 @@ interface Props {
   activeSessionId?: string | null
 }
 
-export default function MessageBubble({
+function MessageBubble({
   msg,
   toolType,
   targetLang = 'Spanish',
@@ -221,3 +222,10 @@ export default function MessageBubble({
     </div>
   )
 }
+
+// Memoised so streaming token updates only re-render the one bubble whose `msg` reference
+// changed. The reducer in ChatSessionsProvider.updateMessageText replaces only the streamed
+// message via .map(m => m.id === id ? { ...m, text } : m), so reference equality on the other
+// messages is preserved; without memo, every bubble's RenderedMarkdown would re-parse on every
+// SSE chunk.
+export default memo(MessageBubble)
