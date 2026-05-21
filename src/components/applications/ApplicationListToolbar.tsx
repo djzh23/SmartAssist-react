@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { ChevronDown, Filter, Search } from 'lucide-react'
+import { ChevronDown, Search, SlidersHorizontal } from 'lucide-react'
 import type { ApplicationSort } from '../../utils/applicationListUtils'
 
 interface ApplicationListToolbarProps {
@@ -39,10 +39,10 @@ export default function ApplicationListToolbar({
   }, [filterOpen, onFilterOpenChange])
 
   return (
-    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-      <label className="relative flex-1">
+    <div className="flex items-stretch gap-2">
+      <label className="relative min-w-0 flex-1">
         <Search
-          className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-500"
+          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-stone-500"
           size={16}
           aria-hidden
         />
@@ -51,7 +51,7 @@ export default function ApplicationListToolbar({
           value={search}
           onChange={e => onSearchChange(e.target.value)}
           placeholder="Suchen…"
-          className="w-full rounded-xl border border-white/10 bg-app-raised py-2.5 pl-10 pr-4 text-sm text-stone-100 placeholder:text-stone-500 transition focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20"
+          className="w-full rounded-xl border border-white/10 bg-app-raised py-2.5 pl-9 pr-3 text-sm text-stone-100 placeholder:text-stone-500 transition focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 sm:pl-10 sm:pr-4"
         />
       </label>
 
@@ -61,11 +61,11 @@ export default function ApplicationListToolbar({
           onClick={() => onFilterOpenChange(!filterOpen)}
           aria-expanded={filterOpen}
           aria-haspopup="listbox"
-          className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 bg-app-raised px-4 py-2.5 text-sm font-medium text-stone-200 transition hover:border-white/20 hover:bg-[#252019] sm:w-auto"
+          className="inline-flex h-full min-w-[4.25rem] flex-col items-center justify-center gap-0.5 rounded-xl border border-white/10 bg-app-raised px-3 py-2 text-stone-200 transition hover:border-white/20 hover:bg-[#252019] sm:min-w-0 sm:flex-row sm:gap-2 sm:px-4 sm:py-2.5"
         >
-          <Filter size={15} aria-hidden />
-          Filter
-          <ChevronDown size={14} className={`transition ${filterOpen ? 'rotate-180' : ''}`} aria-hidden />
+          <SlidersHorizontal size={16} aria-hidden />
+          <span className="text-[11px] font-medium sm:text-sm">Filter</span>
+          <ChevronDown size={14} className={`hidden transition sm:block ${filterOpen ? 'rotate-180' : ''}`} aria-hidden />
         </button>
 
         {filterOpen ? (

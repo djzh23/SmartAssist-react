@@ -27,10 +27,22 @@ interface ApplicationTableProps {
   emptyMessage?: string
 }
 
-const DEV_TITLE_PATTERN = /\b(developer|engineer|software|frontend|backend|devops|full[\s-]?stack|programmier|entwickler)\b/i
+const DEV_TITLE_PATTERN = /\b(developer|engineer|software|frontend|backend|devops|full[\s-]?stack|programmier|entwickler|sap)\b/i
 
 function positionIcon(title: string) {
   return DEV_TITLE_PATTERN.test(title) ? Code2 : Briefcase
+}
+
+const ICON_GLOW: Record<ApplicationStatusApi, string> = {
+  draft: 'shadow-[0_0_14px_-2px_rgba(251,191,36,0.35)] ring-amber-500/30',
+  applied: 'shadow-[0_0_14px_-2px_rgba(56,189,248,0.35)] ring-sky-500/35',
+  phoneScreen: 'shadow-[0_0_14px_-2px_rgba(139,92,246,0.35)] ring-violet-500/35',
+  interview: 'shadow-[0_0_14px_-2px_rgba(45,212,191,0.35)] ring-teal-500/35',
+  assessment: 'shadow-[0_0_14px_-2px_rgba(250,204,21,0.3)] ring-yellow-500/30',
+  offer: 'shadow-[0_0_14px_-2px_rgba(52,211,153,0.35)] ring-emerald-500/35',
+  accepted: 'shadow-[0_0_14px_-2px_rgba(16,185,129,0.35)] ring-emerald-600/35',
+  rejected: 'shadow-[0_0_14px_-2px_rgba(100,116,139,0.25)] ring-slate-500/25',
+  withdrawn: 'shadow-[0_0_14px_-2px_rgba(100,116,139,0.25)] ring-slate-500/25',
 }
 
 function StatusBadge({ status }: { status: ApplicationStatusApi }) {
@@ -126,7 +138,48 @@ function ApplicationRowMenu({ app, onOpenInfo, onStatusChange }: RowMenuProps) {
   )
 }
 
-function ApplicationTableRow({
+function ApplicationMobileCard({ app }: { app: JobApplicationApi }) {
+  const theme = STATUS_THEME[app.status]
+  const PositionIcon = positionIcon(app.jobTitle || '')
+
+  return (
+    <Link
+      to={`/applications/${encodeURIComponent(app.id)}`}
+      className="group flex items-center gap-3 rounded-xl border border-white/10 bg-app-raised px-3 py-3.5 transition active:scale-[0.99] active:bg-[#252019] sm:hidden"
+    >
+      <span
+        className={[
+          'inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ring-1 ring-inset',
+          theme.iconBg,
+          ICON_GLOW[app.status],
+        ].join(' ')}
+      >
+        <PositionIcon className={theme.iconText} size={18} strokeWidth={2} aria-hidden />
+      </span>
+
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-semibold text-stone-50 group-hover:text-white">
+          {app.jobTitle || 'Ohne Titel'}
+        </p>
+        <p className="mt-0.5 truncate text-xs text-stone-400">
+          {app.company || '–'}
+        </p>
+      </div>
+
+      <div className="flex shrink-0 flex-col items-end gap-1.5">
+        <span className="text-[11px] tabular-nums text-stone-500">
+          {applicationDateLabel(app)}
+        </span>
+        <div className="flex items-center gap-1.5">
+          <span className={`h-2 w-2 rounded-full ${theme.badgeDot}`} aria-hidden />
+          <ChevronRight size={14} className="text-stone-500" aria-hidden />
+        </div>
+      </div>
+    </Link>
+  )
+}
+
+function ApplicationDesktopRow({
   app,
   onOpenInfo,
   onStatusChange,
@@ -139,15 +192,15 @@ function ApplicationTableRow({
   const PositionIcon = positionIcon(app.jobTitle || '')
 
   return (
-    <article className="group relative rounded-xl border border-white/10 bg-app-raised transition hover:border-white/15 hover:bg-[#252019]">
+    <article className="group relative hidden rounded-xl border border-white/10 bg-app-raised transition hover:border-white/15 hover:bg-[#252019] sm:block">
       <span
         className={`absolute bottom-3 left-0 top-3 w-1 rounded-r-full ${theme.accent}`}
         aria-hidden
       />
-      <div className="grid grid-cols-1 gap-2 px-4 py-3.5 pl-5 sm:grid-cols-[minmax(0,2fr)_minmax(0,1.4fr)_auto_auto_auto] sm:items-center sm:gap-4">
+      <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,1.4fr)_auto_auto_auto] items-center gap-4 px-4 py-3.5 pl-5">
         <Link
           to={`/applications/${encodeURIComponent(app.id)}`}
-          className="flex min-w-0 items-center gap-3 pr-8 sm:pr-0"
+          className="flex min-w-0 items-center gap-3"
         >
           <span className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${theme.iconBg}`}>
             <PositionIcon className={theme.iconText} size={16} strokeWidth={2} aria-hidden />
@@ -157,30 +210,19 @@ function ApplicationTableRow({
           </span>
         </Link>
 
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 pl-12 sm:contents">
-          <p className="text-sm text-stone-400">
-            <span className="mr-1.5 text-[10px] font-semibold uppercase tracking-wide text-stone-600 sm:hidden">
-              Unternehmen
-            </span>
-            {app.company || '–'}
-          </p>
+        <p className="truncate text-sm text-stone-400">
+          {app.company || '–'}
+        </p>
 
-          <div className="sm:justify-self-start">
-            <span className="mr-1.5 text-[10px] font-semibold uppercase tracking-wide text-stone-600 sm:hidden">
-              Status
-            </span>
-            <StatusBadge status={app.status} />
-          </div>
-
-          <p className="text-sm text-stone-500 sm:min-w-[6.5rem] sm:text-right">
-            <span className="mr-1.5 text-[10px] font-semibold uppercase tracking-wide text-stone-600 sm:hidden">
-              Datum
-            </span>
-            {applicationDateLabel(app)}
-          </p>
+        <div className="justify-self-start">
+          <StatusBadge status={app.status} />
         </div>
 
-        <div className="absolute right-2 top-2.5 sm:static sm:justify-self-end">
+        <p className="min-w-[6.5rem] text-right text-sm text-stone-500">
+          {applicationDateLabel(app)}
+        </p>
+
+        <div className="justify-self-end">
           <ApplicationRowMenu
             app={app}
             onOpenInfo={onOpenInfo}
@@ -226,25 +268,30 @@ export default function ApplicationTable({
       ) : (
         <div className="space-y-2">
           {apps.map(app => (
-            <ApplicationTableRow
-              key={app.id}
-              app={app}
-              onOpenInfo={onOpenInfo}
-              onStatusChange={onStatusChange}
-            />
+            <div key={app.id}>
+              <ApplicationMobileCard app={app} />
+              <ApplicationDesktopRow
+                app={app}
+                onOpenInfo={onOpenInfo}
+                onStatusChange={onStatusChange}
+              />
+            </div>
           ))}
         </div>
       )}
 
       {total > 0 ? (
         <div className="flex flex-col gap-3 border-t border-white/10 pt-4 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-stone-400">
+          <p className="text-xs text-stone-400 sm:text-sm">
             <span className="tabular-nums text-stone-200">{rangeStart}–{rangeEnd}</span>
             {' '}von{' '}
             <span className="tabular-nums text-stone-200">{total}</span>
           </p>
 
-          <nav aria-label="Seiten" className="flex items-center gap-1 self-end sm:self-auto">
+          <nav
+            aria-label="Seiten"
+            className="flex items-center justify-center gap-1 sm:justify-end"
+          >
             <button
               type="button"
               onClick={() => onPageChange(page - 1)}
@@ -265,10 +312,10 @@ export default function ApplicationTable({
                   onClick={() => onPageChange(n)}
                   aria-current={n === page ? 'page' : undefined}
                   className={[
-                    'inline-flex h-8 min-w-8 items-center justify-center rounded-lg px-2 text-sm tabular-nums transition',
+                    'inline-flex h-8 min-w-8 items-center justify-center text-sm tabular-nums transition',
                     n === page
-                      ? 'bg-primary font-semibold text-white shadow-sm'
-                      : 'text-stone-400 hover:bg-white/5 hover:text-stone-100',
+                      ? 'rounded-full bg-primary font-semibold text-white shadow-sm sm:rounded-lg'
+                      : 'rounded-lg text-stone-400 hover:bg-white/5 hover:text-stone-100',
                   ].join(' ')}
                 >
                   {n}

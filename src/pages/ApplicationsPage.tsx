@@ -142,11 +142,11 @@ export default function ApplicationsPage() {
 
   return (
     <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden bg-transparent">
-      <div className="mx-auto w-full max-w-[1580px] px-4 pt-3 pb-6 sm:px-6 sm:py-7">
+      <div className="mx-auto w-full max-w-[1580px] px-3 pt-2 pb-8 sm:px-6 sm:py-7">
         <PageHeader
           pageKey="applications"
           subtitle={`${activeCount} aktiv · ${apps.length} gesamt · ${archiveTotal} Archiv`}
-          className="mb-5"
+          className="mb-4 sm:mb-5"
           hideTitleOnMobile
           actions={(
             <Link
@@ -184,7 +184,7 @@ export default function ApplicationsPage() {
             </Link>
           </div>
         ) : (
-          <div className="space-y-5">
+          <div className="space-y-4 sm:space-y-5">
             <ApplicationStatusCards
               apps={apps}
               activeStatus={statusFilter}
