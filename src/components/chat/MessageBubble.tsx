@@ -47,10 +47,6 @@ function MessageBubble({
   // Stable style objects per bubble: tool colours are pure functions of toolType / toolUsed,
   // so memoising keyed by the input strings prevents a fresh object on every parent render
   // and keeps the React diff cheap when a bubble re-renders for an unrelated reason.
-  const jobAnalyzerBorderStyle = useMemo<CSSProperties>(
-    () => ({ borderLeftColor: getChatFeatureColor('jobanalyzer') }),
-    [],
-  )
   const jobAnalyzerChipStyle = useMemo<CSSProperties>(() => {
     const jobColor = getChatFeatureColor('jobanalyzer')
     return {
@@ -162,12 +158,10 @@ function MessageBubble({
     const jobColor = getChatFeatureColor('jobanalyzer')
     return (
       <div className="flex w-full animate-slide-up flex-col items-start gap-1">
-        <div className="w-full rounded-xl border-l-[3px] pl-2" style={jobAnalyzerBorderStyle}>
-          <JobAnalysisCard text={msg.text} showStreamCursor={showStreamCursor} accentColor={jobColor} />
-        </div>
+        <JobAnalysisCard text={msg.text} showStreamCursor={showStreamCursor} accentColor={jobColor} />
         <div className="flex items-center gap-2 pl-1">
           <span
-            className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium"
+            className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset"
             style={jobAnalyzerChipStyle}
           >
             <BriefcaseBusiness size={11} />

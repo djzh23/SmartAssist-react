@@ -47,8 +47,8 @@ function renderBlocks(blocks: Block[]): ReactNode[] {
         return (
           <ul key={i} className="mt-1.5 mb-1.5 flex flex-col gap-0.5 pl-0">
             {b.items.map((item, j) => (
-              <li key={j} className="flex items-start gap-2 text-sm text-stone-300">
-                <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-amber-600 flex-shrink-0" />
+              <li key={j} className="flex items-start gap-2 text-sm text-stone-200">
+                <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-amber-500/80 flex-shrink-0" />
                 <span>{renderInline(item)}</span>
               </li>
             ))}
@@ -58,8 +58,8 @@ function renderBlocks(blocks: Block[]): ReactNode[] {
         return (
           <ol key={i} className="mt-1.5 mb-1.5 flex flex-col gap-0.5 pl-0">
             {b.items.map((item, j) => (
-              <li key={j} className="flex items-start gap-2 text-sm text-stone-300">
-                <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-stone-800 text-[10px] font-bold text-amber-100/95 mt-0.5">{j + 1}</span>
+              <li key={j} className="flex items-start gap-2 text-sm text-stone-200">
+                <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-stone-800 text-[10px] font-bold text-amber-100 mt-0.5">{j + 1}</span>
                 <span>{renderInline(item)}</span>
               </li>
             ))}
@@ -72,9 +72,9 @@ function renderBlocks(blocks: Block[]): ReactNode[] {
           </div>
         )
       case 'hr':
-        return <hr key={i} className="border-slate-200 my-2" />
+        return <hr key={i} className="my-2 border-stone-600/60" />
       default:
-        return <p key={i} className="text-sm leading-relaxed text-stone-300">{renderInline((b as { content: string }).content)}</p>
+        return <p key={i} className="text-sm leading-relaxed text-stone-200">{renderInline((b as { content: string }).content)}</p>
     }
   })
 }
@@ -95,7 +95,7 @@ export default function ProgrammingResponse({ text, progLang, timestamp, showStr
 
   return (
     <div className="self-start w-full animate-slide-up flex flex-col gap-1">
-      <div className="bg-white border border-slate-200 rounded-[4px_18px_18px_18px] px-4 pt-3 pb-3 shadow-sm">
+      <div className="break-words rounded-[4px_18px_18px_18px] border border-stone-600/45 bg-app-raised px-3.5 py-2.5 text-sm leading-relaxed text-stone-200 shadow-[inset_0_1px_0_0_rgba(255,251,235,0.05),0_10px_28px_-12px_rgba(0,0,0,0.55)]">
         {segments.map((seg, i) =>
           seg.type === 'code' ? (
             <CodeBlock key={i} code={seg.content} language={seg.language} />

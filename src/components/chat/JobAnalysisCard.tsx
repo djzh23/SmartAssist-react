@@ -34,7 +34,7 @@ const ICON_BY_TONE: Record<JobSectionTone, LucideIcon> = {
 
 function scorePillClasses(score?: number): string {
   if (typeof score !== 'number') {
-    return 'bg-stone-800/75 text-stone-400 ring-1 ring-inset ring-white/10'
+    return 'bg-stone-800/75 text-stone-300 ring-1 ring-inset ring-white/10'
   }
 
   if (score >= 75) return 'bg-amber-950/45 text-amber-100 ring-1 ring-inset ring-amber-500/25'
@@ -57,7 +57,7 @@ export default function JobAnalysisCard({ text, showStreamCursor = false, accent
 
   if (visibleSections.length === 0) {
     return (
-      <p className="whitespace-pre-wrap text-sm text-stone-300">
+      <p className="whitespace-pre-wrap text-sm text-stone-200">
         {text}
         {showStreamCursor ? <StreamingTextCursor /> : null}
       </p>
@@ -67,12 +67,14 @@ export default function JobAnalysisCard({ text, showStreamCursor = false, accent
   const overallScore = pickOverallScore(visibleSections)
 
   return (
-    <div className="w-full space-y-3">
+    <div
+      className="w-full overflow-hidden rounded-[4px_18px_18px_18px] border border-stone-600/35 bg-app-raised shadow-[inset_0_1px_0_0_rgba(255,251,235,0.04)]"
+      style={{ borderLeftWidth: 3, borderLeftColor: featureColor }}
+    >
       <div
-        className="rounded-xl border-0 border-l-[3px] bg-app-raised px-4 py-3 pl-[1.05rem] shadow-none"
+        className="px-4 py-3.5"
         style={{
-          borderLeftColor: featureColor,
-          backgroundImage: `linear-gradient(90deg, ${hexToRgba(featureColor, CHAT_FEATURE_ACTIVE_BG_ALPHA)} 0%, #1f1a16 68%)`,
+          backgroundImage: `linear-gradient(135deg, ${hexToRgba(featureColor, CHAT_FEATURE_ACTIVE_BG_ALPHA)} 0%, transparent 70%)`,
         }}
       >
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -87,18 +89,18 @@ export default function JobAnalysisCard({ text, showStreamCursor = false, accent
               Strukturierte Match Analyse
             </p>
           </div>
-          <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${scorePillClasses(overallScore)}`}>
+          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${scorePillClasses(overallScore)}`}>
             {typeof overallScore === 'number' ? `Match Score ${overallScore}/100` : 'Score wird berechnet'}
           </span>
         </div>
 
         {typeof overallScore === 'number' && (
           <div className="mt-3">
-            <div className="mb-1 flex items-center justify-between text-[11px] text-stone-500">
+            <div className="mb-1 flex items-center justify-between text-[11px] text-stone-400">
               <span>Uebereinstimmung</span>
               <span>{overallScore}%</span>
             </div>
-            <div className="h-2 overflow-hidden rounded-full bg-stone-800">
+            <div className="h-1.5 overflow-hidden rounded-full bg-stone-800/90">
               <div
                 className={`h-full rounded-full transition-all duration-500 ${scoreBarClasses(overallScore)}`}
                 style={{ width: `${Math.max(3, overallScore)}%` }}
@@ -108,42 +110,37 @@ export default function JobAnalysisCard({ text, showStreamCursor = false, accent
         )}
       </div>
 
-      <div className="flex w-full flex-col gap-2 sm:gap-2.5">
-        {visibleSections.map((section, index) => {
-          const Icon = ICON_BY_TONE[section.tone] ?? FileSearch
-          return (
-            <article
-              key={`${section.title}-${index}`}
-              className="rounded-r-xl rounded-l-md border-0 border-l-[3px] bg-[#1a1612]/95 py-3 pl-3 pr-3 sm:py-3.5 sm:pl-3.5 sm:pr-4"
-              style={{
-                borderLeftColor: section.border,
-              }}
-            >
-              <header className="mb-2 flex flex-wrap items-center justify-between gap-2 sm:mb-2.5">
-                <div className="flex min-w-0 items-center gap-2">
-                  <Icon size={16} style={{ color: section.color }} />
-                  <h3 className="truncate text-sm font-semibold" style={{ color: section.color }}>
-                    {section.title}
-                  </h3>
-                </div>
-                <span
-                  className="rounded-md bg-white/[0.06] px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset ring-white/10"
-                  style={{ color: section.chipColor }}
-                >
-                  {section.chip}
-                </span>
-              </header>
+      {visibleSections.map((section, index) => {
+        const Icon = ICON_BY_TONE[section.tone] ?? FileSearch
+        return (
+          <article
+            key={`${section.title}-${index}`}
+            className="border-t border-stone-700/30 px-4 py-3.5"
+          >
+            <header className="mb-2 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex min-w-0 items-center gap-2">
+                <Icon size={15} style={{ color: section.color }} aria-hidden />
+                <h3 className="truncate text-sm font-semibold text-stone-100">
+                  {section.title}
+                </h3>
+              </div>
+              <span
+                className="rounded-md bg-white/[0.06] px-2 py-0.5 text-[11px] font-semibold text-stone-300 ring-1 ring-inset ring-white/8"
+              >
+                {section.chip}
+              </span>
+            </header>
 
-              <div
-                className="job-analysis-body text-[0.89rem] leading-relaxed text-stone-200 [&_a]:text-amber-400 [&_strong]:text-stone-50"
-                dangerouslySetInnerHTML={{ __html: bodyToHtml(section.body) }}
-              />
-            </article>
-          )
-        })}
-      </div>
+            <div
+              className="job-analysis-body text-[0.89rem] leading-relaxed text-stone-200 [&_a]:text-amber-400 [&_strong]:text-stone-50"
+              dangerouslySetInnerHTML={{ __html: bodyToHtml(section.body) }}
+            />
+          </article>
+        )
+      })}
+
       {showStreamCursor ? (
-        <div className="pl-1 pt-1">
+        <div className="border-t border-stone-700/30 px-4 py-2">
           <StreamingTextCursor />
         </div>
       ) : null}
