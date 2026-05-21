@@ -64,14 +64,11 @@ function MainLayoutShell() {
     if (railEnterTimerRef.current)
       window.clearTimeout(railEnterTimerRef.current)
     railEnterTimerRef.current = window.setTimeout(() => {
-      setRailWide(true)
-      setRailLabelsShown(true)
-      if (isChatRoute) {
-        setDesktopChatHistoryOpen(true)
-        return
+      // On /chat keep the rail icon-only; chat history opens per category hover in SidebarNavContent.
+      if (!isChatRoute) {
+        setRailWide(true)
+        setRailLabelsShown(true)
       }
-      if (desktopChatHistoryOpen)
-        setDesktopChatHistoryOpen(false)
     }, 80)
   }
 

@@ -26,7 +26,7 @@ import { useUserPlan } from '../../hooks/useUserPlan'
 import { useSkills } from '../../hooks/useSkills'
 import { useChatSessions, TOOL_TO_QUERY } from '../../hooks/useChatSessions'
 import type { SkillSummary } from '../../types'
-import type { ChatSession } from '../../types'
+import type { ChatSession, ToolType } from '../../types'
 import { sessionListLabel } from '../../utils/sessionTitle'
 import { formatRecentChatTime } from '../../utils/recentChatTime'
 import { toolSessionDotStyle } from '../../utils/toolSessionDot'
@@ -88,8 +88,8 @@ function SkillSidebarRow({
   onNavClick?: () => void
   density: SidebarDensity
   desktopRail?: DesktopRailState
-  /** Desktop rail: open chat history column after navigating to this tool. */
-  onActivateFeature?: () => void
+  /** Desktop rail: open chat history for this tool (hover/click on /chat). */
+  onActivateFeature?: (skill: SkillSummary) => void
 }) {
   const { showToast } = useAppUi()
   const navigate = useNavigate()
@@ -136,7 +136,13 @@ function SkillSidebarRow({
     }
     navigate(href)
     onNavClick?.()
-    onActivateFeature?.()
+    onActivateFeature?.(skill)
+  }
+
+  const openDesktopHistoryForSkill = () => {
+    if (locked || !onActivateFeature)
+      return
+    onActivateFeature(skill)
   }
 
   if (desktopRail) {
@@ -176,6 +182,7 @@ function SkillSidebarRow({
         transition={{ type: 'spring', stiffness: 480, damping: 34, mass: 0.72 }}
         onMouseEnter={(e) => {
           if (!isActive && !locked) e.currentTarget.style.backgroundColor = hexToRgba(featureColor, 0.1)
+          openDesktopHistoryForSkill()
         }}
         onMouseLeave={(e) => {
           if (!isActive) e.currentTarget.style.backgroundColor = ''
@@ -353,6 +360,14 @@ const RECENT_PAGE_SIZE = 3
 const PRIMARY_TOOL_ORDER = ['general', 'jobanalyzer', 'interviewprep', 'cover_letter', 'salary_coach', 'linkedin']
 const SECONDARY_TOOL_ORDER = ['programming', 'language']
 
+function apiToolTypeToChatTool(api: string): ToolType {
+  const x = api.toLowerCase()
+  if (x === 'interviewprep') return 'interview'
+  if (x === 'general' || x === 'jobanalyzer' || x === 'language' || x === 'programming' || x === 'interview')
+    return x
+  return 'general'
+}
+
 function recentSessionsList(
   sessions: Record<string, ChatSession>,
   sessionOrder: string[],
@@ -375,6 +390,7 @@ export default function SidebarNavContent({
   desktopHistoryOpen = false,
 }: Props) {
   const navigate = useNavigate()
+  const location = useLocation()
   const { plan } = useUserPlan()
   const { skills, loading: skillsLoading } = useSkills()
   const store = useChatSessions()
@@ -428,7 +444,26 @@ export default function SidebarNavContent({
     onNavClick?.()
   }
 
-  const activateDesktopHistory = desktopRail ? () => setDesktopChatHistoryOpen(true) : undefined
+  const activateDesktopHistory = desktopRail
+    ? (skill: SkillSummary) => {
+        if (!skill.isEnabled || !skill.isAccessible)
+          return
+        setDesktopChatHistoryOpen(true)
+        const href =
+          skill.apiToolType === 'general'
+            ? '/chat'
+            : `/chat?tool=${encodeURIComponent(skill.apiToolType)}`
+        if (location.pathname !== '/chat') {
+          navigate(href)
+          return
+        }
+        store.switchToTool(apiToolTypeToChatTool(skill.apiToolType))
+        const currentTool = new URLSearchParams(location.search).get('tool') ?? 'general'
+        const targetTool = skill.apiToolType === 'general' ? 'general' : skill.apiToolType
+        if (targetTool !== currentTool)
+          navigate(href, { replace: true })
+      }
+    : undefined
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-x-hidden">
