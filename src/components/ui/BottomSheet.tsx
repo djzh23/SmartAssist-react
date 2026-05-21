@@ -1,5 +1,6 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import type { ReactNode } from 'react'
+import { useFocusTrap } from '../../hooks/useFocusTrap'
 
 interface BottomSheetProps {
   open: boolean
@@ -9,6 +10,9 @@ interface BottomSheetProps {
 }
 
 export default function BottomSheet({ open, title, onClose, children }: BottomSheetProps) {
+  const dialogRef = useRef<HTMLDivElement>(null)
+  useFocusTrap(dialogRef, open)
+
   useEffect(() => {
     if (!open) return
     const onKeyDown = (event: KeyboardEvent) => {
@@ -21,7 +25,14 @@ export default function BottomSheet({ open, title, onClose, children }: BottomSh
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-end sm:items-center sm:justify-center" role="dialog" aria-modal="true" aria-label={title ?? 'Menü'}>
+    <div
+      ref={dialogRef}
+      className="fixed inset-0 z-[120] flex items-end sm:items-center sm:justify-center"
+      role="dialog"
+      aria-modal="true"
+      aria-label={title ?? 'Menü'}
+      tabIndex={-1}
+    >
       <button
         type="button"
         className="absolute inset-0 bg-black/55"

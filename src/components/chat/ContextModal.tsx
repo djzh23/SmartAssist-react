@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth, useUser } from '@clerk/clerk-react'
 import { ChevronLeft, ChevronRight, FileText, Link2 } from 'lucide-react'
 import AppCtaButton from '../ui/AppCtaButton'
 import { fetchJobPreview, setAgentContext, UsageLimitError } from '../../api/client'
 import { PROGRAMMING_LANGUAGES } from '../../types'
 import { sanitizeTechnicalContext } from '../../utils/cvTechnicalContext'
+import { useFocusTrap } from '../../hooks/useFocusTrap'
 
 export type ContextModalToolType = 'jobanalyzer' | 'interview' | 'interviewprep' | 'programming'
 
@@ -125,6 +126,8 @@ export default function ContextModal({
   const profileAvailable = Boolean(profileCvFromCareer?.trim())
   const { user } = useUser()
   const { getToken } = useAuth()
+  const dialogRef = useRef<HTMLDivElement>(null)
+  useFocusTrap(dialogRef, true)
 
   const [jobText, setJobText] = useState(initialData?.jobText ?? '')
   const [jobTitle, setJobTitle] = useState(initialData?.jobTitle ?? '')
@@ -611,7 +614,7 @@ export default function ContextModal({
 
   if (effectiveToolType === 'interviewprep') {
     return (
-      <div className="modal-backdrop">
+      <div className="modal-backdrop" ref={dialogRef} role="dialog" aria-modal="true" aria-label="Interview-Setup" tabIndex={-1}>
         <div className="modal-box max-h-[90vh] overflow-y-auto">
           <div className="modal-header">
             <span>Interview-Setup</span>
@@ -670,7 +673,7 @@ export default function ContextModal({
 
   if (effectiveToolType === 'jobanalyzer') {
     return (
-      <div className="modal-backdrop">
+      <div className="modal-backdrop" ref={dialogRef} role="dialog" aria-modal="true" aria-label="Job Analyzer" tabIndex={-1}>
         <div className="modal-box max-h-[90vh] overflow-y-auto">
           <div className="modal-header">
             <span>Job Analyzer</span>
@@ -727,7 +730,7 @@ export default function ContextModal({
 
   if (effectiveToolType === 'programming') {
     return (
-      <div className="modal-backdrop">
+      <div className="modal-backdrop" ref={dialogRef} role="dialog" aria-modal="true" aria-label="Programming Setup" tabIndex={-1}>
         <div className="modal-box">
           <div className="modal-header">
             <span>Programming Setup</span>

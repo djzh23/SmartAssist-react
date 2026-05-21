@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { BookmarkPlus, X } from 'lucide-react'
 import AppCtaButton from '../ui/AppCtaButton'
+import { useFocusTrap } from '../../hooks/useFocusTrap'
 
 interface Props {
   isOpen: boolean
@@ -27,6 +28,8 @@ export default function SaveChatNoteModal({
   const [body, setBody] = useState(defaultBody)
   const [tagInput, setTagInput] = useState('')
   const [tags, setTags] = useState<string[]>([])
+  const dialogRef = useRef<HTMLDivElement>(null)
+  useFocusTrap(dialogRef, isOpen)
 
   useEffect(() => {
     if (isOpen) {
@@ -63,6 +66,8 @@ export default function SaveChatNoteModal({
 
   return (
     <div
+      ref={dialogRef}
+      tabIndex={-1}
       className="fixed inset-0 z-[70] flex animate-fade-in items-center justify-center bg-black/50 p-4"
       role="dialog"
       aria-modal="true"

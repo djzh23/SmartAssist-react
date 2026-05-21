@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ClipboardList, Loader2, X } from 'lucide-react'
 import AppCtaButton from '../ui/AppCtaButton'
+import { useFocusTrap } from '../../hooks/useFocusTrap'
 
 /** Session only: user closed modal to try chat without entering data (not the same as API skip). */
 export const ONBOARDING_CHAT_PROMPT_DISMISS_KEY = 'privateprep_onboarding_chat_prompt_dismissed'
@@ -22,6 +23,8 @@ export default function OnboardingPromptModal({
   const navigate = useNavigate()
   const [skipBusy, setSkipBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const dialogRef = useRef<HTMLDivElement>(null)
+  useFocusTrap(dialogRef, isOpen)
 
   if (!isOpen) return null
 
@@ -48,6 +51,8 @@ export default function OnboardingPromptModal({
 
   return (
     <div
+      ref={dialogRef}
+      tabIndex={-1}
       className="fixed inset-0 z-[60] flex animate-fade-in items-center justify-center bg-black/50 p-4"
       role="dialog"
       aria-modal="true"
