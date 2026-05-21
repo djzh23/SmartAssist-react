@@ -593,22 +593,45 @@ export function ChatSessionsProvider({ children }: { children: ReactNode }) {
     if (scopeId === '_loading' || scopeId === 'guest')
       return
 
-    const maybeSync = () => {
-      if (document.visibilityState !== 'visible')
-        return
-      if (sessionsRemoteSyncing)
-        return
+    // Previous version still ran setInterval while the tab was hidden and only short-circuited
+    // inside the tick. Switch to actually pausing the interval when hidden so mobile/background
+    // tabs don't keep waking the JS loop or holding pending timers (audit finding #33).
+    let intervalId: number | null = null
+
+    const triggerSync = () => {
+      if (sessionsRemoteSyncing) return
       void syncSessionsRemote()
     }
 
-    const intervalId = window.setInterval(maybeSync, 45_000)
-    window.addEventListener('focus', maybeSync)
-    document.addEventListener('visibilitychange', maybeSync)
+    const start = () => {
+      if (intervalId !== null) return
+      intervalId = window.setInterval(triggerSync, 45_000)
+    }
+
+    const stop = () => {
+      if (intervalId === null) return
+      window.clearInterval(intervalId)
+      intervalId = null
+    }
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        start()
+        triggerSync()
+      } else {
+        stop()
+      }
+    }
+
+    if (document.visibilityState === 'visible') start()
+
+    document.addEventListener('visibilitychange', handleVisibility)
+    window.addEventListener('focus', handleVisibility)
 
     return () => {
-      window.clearInterval(intervalId)
-      window.removeEventListener('focus', maybeSync)
-      document.removeEventListener('visibilitychange', maybeSync)
+      stop()
+      document.removeEventListener('visibilitychange', handleVisibility)
+      window.removeEventListener('focus', handleVisibility)
     }
   }, [scopeId, sessionsRemoteSyncing, syncSessionsRemote])
 
