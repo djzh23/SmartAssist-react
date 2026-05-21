@@ -22,7 +22,7 @@ src/
 │   │             LearningResponse, ChatInput
 │   └── ui/       ToolCard, Modal (reusable)
 ├── hooks/        useChatSessions — localStorage-persisted session state
-├── pages/        HomePage, ChatPage, ToolsPage
+├── pages/        LandingPage, ChatPage, ToolsPage
 ├── types/        index.ts — all shared types
 └── utils/        jobMarkdown.ts — markdown→HTML for job analysis cards
 docs/
