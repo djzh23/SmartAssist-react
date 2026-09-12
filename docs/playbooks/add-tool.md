@@ -41,6 +41,6 @@ your_tool: '🔧'
 If the tool returns structured data, add a branch in `MessageBubble.tsx`.
 
 ## 8. Backend
-The backend (SmartAssistApi) needs a new `Tool.FromFunc` registered in `AgentService.cs`
+The backend (PrivatePrep) needs a new `Tool.FromFunc` registered in `AgentService.cs`
 and a corresponding tool class in `Services/Tools/`.
-Follow `SmartAssistApi/docs/playbooks/add-new-tool.md`.
+Follow `PrivatePrep/docs/playbooks/add-new-tool.md`.

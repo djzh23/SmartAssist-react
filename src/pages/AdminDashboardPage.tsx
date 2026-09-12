@@ -62,7 +62,7 @@ const C = {
   tokenOut: '#1e40af',
 } as const
 
-/** Matches Redis token key retention (see SmartAssistApi TokenTrackingService). */
+/** Matches Redis token key retention (see PrivatePrep TokenTrackingService). */
 const USAGE_RETENTION_DAYS = 90
 
 const chartGrid = '#334155'
@@ -1000,7 +1000,7 @@ export default function AdminDashboardPage() {
                       <th className="py-2 pr-3">Modell</th>
                       <th className="py-2 pr-3 text-right">Nachr.</th>
                       <th className="py-2 pr-3 text-right">Tokens</th>
-                      <th className="py-2 text-right">Kosten (SmartAssist)</th>
+                      <th className="py-2 text-right">Kosten (PrivatePrep)</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-700/60">

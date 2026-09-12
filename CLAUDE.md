@@ -1,7 +1,7 @@
-# CLAUDE.md — SmartAssist React Frontend
+# CLAUDE.md — PrivatePrep React Frontend
 
-React frontend for SmartAssist AI chat application.
-Connects to the SmartAssistApi ASP.NET Core backend at `C:\Dev\projects\_active\SmartAssistApi`.
+React frontend for PrivatePrep AI career assistant.
+Connects to the PrivatePrep ASP.NET Core backend at `C:\Dev\projects\_active\SmartAIAssist\PrivatePrep`.
 
 ## Stack
 
@@ -34,7 +34,7 @@ docs/
 ## Development troubleshooting
 
 - **Vite (`npm run dev`)**: If the default port is busy, Vite tries the next port (console shows the real URL, e.g. `http://localhost:5175/`). Exit code `1` after “ready” usually means the dev server was stopped (Ctrl+C), not a failed start. If you see `EADDRINUSE` and no fallback, free the port or set `server.port` in `vite.config.ts`.
-- **Backend (`dotnet build` on SmartAssistApi)**: On Windows, `MSB3492` / “Could not read … AssemblyInfoInputs.cache” is an SDK/filesystem glitch. Run `dotnet clean` in the API project (or delete the `obj` folder), then `dotnet build` again. Do not paper over API or agent failures with silent fallbacks — fix config, keys, and Redis as documented.
+- **Backend (`dotnet build` on PrivatePrep)**: On Windows, `MSB3492` / “Could not read ... AssemblyInfoInputs.cache” is an SDK/filesystem glitch. Run `dotnet clean` in the API project (or delete the `obj` folder), then `dotnet build` again. Do not paper over API or agent failures with silent fallbacks - fix config, keys, and Redis as documented.
 
 ## Backend API
 

@@ -245,7 +245,7 @@ async function throwIfChatNotesHttpError(res: Response, fallbackLabel: string): 
   if (res.ok) return
   if (res.status === 404) {
     throw new Error(
-      'Die Notizen-API ist auf diesem Server nicht verfügbar (404). Bitte SmartAssistApi mit Chat-Notizen deployen oder lokal neu starten; in der Entwicklung `VITE_PROXY_TARGET` bzw. den Port in `vite.config.ts` prüfen.',
+      'Die Notizen-API ist auf diesem Server nicht verfügbar (404). Bitte PrivatePrep mit Chat-Notizen deployen oder lokal neu starten; in der Entwicklung `VITE_PROXY_TARGET` bzw. den Port in `vite.config.ts` prüfen.',
     )
   }
   throw new Error(await readApiError(res, `${fallbackLabel} (${res.status})`))

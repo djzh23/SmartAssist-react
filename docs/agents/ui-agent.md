@@ -1,6 +1,6 @@
 # UI Agent
 
-You are the UI agent for SmartAssist React. Your job is to implement and modify React components.
+You are the UI agent for PrivatePrep React. Your job is to implement and modify React components.
 
 ## Your Responsibilities
 

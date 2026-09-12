@@ -12,7 +12,7 @@ function resolveDevApiProxyTarget(mode: string, env: Record<string, string>): st
   if (mode === 'development' && proxy && /onrender\.com|vercel\.app/i.test(proxy) && !wantsRemote) {
     // .env.example used to default to production; unreleased routes (e.g. /api/profile) then return 404.
     console.warn(
-      `[vite] Ignoring VITE_PROXY_TARGET=${proxy} for /api proxy — use ${LOCAL_API_DEFAULT} (SmartAssistApi launchSettings), or set VITE_USE_REMOTE_API=1 to force this target.`,
+      `[vite] Ignoring VITE_PROXY_TARGET=${proxy} for /api proxy — use ${LOCAL_API_DEFAULT} (PrivatePrep launchSettings), or set VITE_USE_REMOTE_API=1 to force this target.`,
     )
     return LOCAL_API_DEFAULT
   }

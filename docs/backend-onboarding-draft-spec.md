@@ -1,6 +1,6 @@
 # Backend Spec — Onboarding Draft & Coach Tour
 
-Project: `SmartAssistApi` (C:\Dev\projects\_active\SmartAssistApi)
+Project: `PrivatePrep` (C:\Dev\projects\_active\SmartAIAssist\PrivatePrep)
 Auth: existing Clerk JWT middleware (same as all `/api/profile` routes)
 
 ---
