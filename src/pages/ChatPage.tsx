@@ -688,9 +688,29 @@ export default function ChatPage() {
   }, [deliberate])
 
   const stopStreaming = useCallback(() => {
-    streamAbortRef.current?.abort()
-    streamAbortRef.current = null
-  }, [])
+    if (streamAbortRef.current) {
+      // Network still in progress - abort the fetch; AbortError catch handles cleanup
+      streamAbortRef.current.abort()
+      streamAbortRef.current = null
+    } else {
+      // Network done but deliberate animation still running
+      const c = streamCtxRef.current
+      if (c) {
+        deliberate.reset()
+        setThinkingSession(null)
+        const msgs = store.sessions[c.sessionId]?.messages ?? []
+        const currentText = msgs.find(m => m.id === c.msgId)?.text ?? ''
+        if (currentText.trim()) {
+          store.finalizeMessage(c.sessionId, c.msgId, {})
+        } else {
+          store.deleteMessage(c.sessionId, c.msgId)
+        }
+        store.setSessionStreaming(c.sessionId, false)
+        streamCtxRef.current = null
+        streamResultRef.current = null
+      }
+    }
+  }, [deliberate, store])
 
   useEffect(() => {
     return () => {
