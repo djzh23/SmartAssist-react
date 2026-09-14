@@ -1,5 +1,7 @@
 # PrivatePrep
 
+[![CI](https://github.com/djzh23/SmartAssist-react/actions/workflows/ci.yml/badge.svg)](https://github.com/djzh23/SmartAssist-react/actions/workflows/ci.yml)
+
 React frontend for [PrivatePrep](https://www.betweenatna.de), an AI-powered career workspace.
 
 **Backend:** [github.com/djzh23/SmartAIAssist](https://github.com/djzh23/SmartAIAssist)  
