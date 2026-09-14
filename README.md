@@ -1,122 +1,61 @@
-# PrivatePrep — Frontend
+# PrivatePrep
 
-React SPA for **PrivatePrep** (live: [betweenatna.de](https://www.betweenatna.de)), an AI-powered career workspace: applications, CV editor, career profile, and coaching chats.
+React frontend for [PrivatePrep](https://www.betweenatna.de), an AI-powered career workspace.
 
-Backend: [github.com/djzh23/SmartAIAssist](https://github.com/djzh23/SmartAIAssist)  
-API host: `https://smartassist-api.onrender.com`
+**Backend:** [github.com/djzh23/SmartAIAssist](https://github.com/djzh23/SmartAIAssist)  
+**API host:** `https://smartassist-api.onrender.com`
 
-Product name in the UI is **PrivatePrep**. The git org/repos still use SmartAssist / BetweenAtna.
+## Features
 
----
+- **AI chat** with five modes (career coach, job analysis, interview prep, language learning, programming). Responses stream over SSE with a deliberate reveal animation; sessions and transcripts are persisted server-side.
+- **CV Studio** — in-browser resume editor with templates, category management, snapshot versioning, and PDF/DOCX export with quota tracking.
+- **Job applications** — pipeline board with six stages, archive, cover letter and interview notes per application.
+- **Career profile** — guided onboarding wizard, skills, work experience, CV upload and AI parsing, target job tracking.
+- **Subscriptions** — Stripe Checkout and Customer Portal; daily message quotas enforced and returned from the backend.
 
-## What the app does
-
-### Job applications
-Pipeline with six active stages plus three archive states: Draft → Applied → Phone Screen → Interview → Assessment → Offer, then Accepted / Rejected / Withdrawn. Overview shows a Sankey of the flow.
-
-### CV.Studio
-In-browser resumes: categories, templates, live editor, named snapshot versions, PDF/DOCX export with quota, link a CV to an application (`/cv-studio`, `/cv-studio/edit/:resumeId`, `/cv-studio/basis/:applicationId`).
-
-### AI chat
-Modes (Clerk session → `POST /api/agent/stream`): Career Coach, Job Analysis, Interview Prep, Language Learning, Programming. Sessions and transcripts live on the **API** (`/api/sessions`), not only in localStorage. Notes use `/api/chat-notes`. Streams continue in `ChatSessionsProvider` while you navigate away from `/chat`.
-
-### Career profile & onboarding
-Signed-in users complete onboarding (`/onboarding`) then edit skills, experience, languages, CV upload/parse, target jobs (`/career-profile`). Protected app routes wait on profile load to decide onboarding.
-
-### Other surfaces
-- Overview cockpit (`/overview`)
-- Account (`/profile`), pricing/Stripe (`/pricing`)
-- Guides (`/guides`), notes (`/notes`)
-- Admin dashboard (`/admin`, Clerk allow-list on the API)
-
-### Subscriptions
-Stripe Checkout / Customer Portal via the backend. Daily message limits come from `GET /api/agent/usage`.
-
----
-
-## How the browser talks to the API
-
-| Environment | `VITE_API_BASE_URL` | Where `/api/*` goes |
-|---|---|---|
-| Local `npm run dev` | leave **empty** | Vite proxy → `VITE_PROXY_TARGET` (default local API) |
-| Production build (current live bundle) | `https://smartassist-api.onrender.com` | **Direct** to Render (CORS) |
-| `vercel.json` | n/a | Also rewrites `/api/(.*)` → Render (used only if the bundle calls same-origin `/api`) |
-
-If the API is down or Supabase is paused, the **static site still loads** and Clerk login still works. Authenticated pages then spin until `fetch` fails — there is **no client timeout**.
-
-To hit a local API, `VITE_PROXY_TARGET` must match `SmartAssistApi` `launchSettings.json` (**`http://localhost:5108`**). Remote Render from Vite requires `VITE_USE_REMOTE_API=1` (otherwise a production proxy target is ignored so unreleased routes are not 404s).
-
----
-
-## Tech stack
+## Tech Stack
 
 | Area | Technology |
 |---|---|
-| Framework | React 18 + TypeScript |
-| Build | Vite 5 |
+| Framework | React 18, TypeScript, Vite 5 |
 | Styling | Tailwind CSS v3 |
-| Icons | Lucide React |
+| Auth | Clerk |
 | Routing | React Router v6 |
-| Auth | Clerk (`@clerk/clerk-react`) |
-| Payments | Stripe via backend |
-| Markdown | react-markdown + DOMPurify |
 | Charts | Recharts |
-| PDF parse (client) | pdfjs-dist |
-| Fonts | Google Fonts: **Lato**, **Space Grotesk**, **Lora** |
+| Markdown | react-markdown + DOMPurify |
+| PDF parsing | pdfjs-dist |
 | Tests | Vitest + Testing Library |
-| Deployment | Vercel (GitHub Actions on `main`) |
+| Deployment | Vercel |
 
----
-
-## Routes
-
-| Path | Auth |
-|---|---|
-| `/` | Public landing |
-| `/onboarding` | Signed in |
-| `/chat`, `/overview`, `/profile`, `/career-profile`, `/pricing` | Signed in + layout |
-| `/applications`, `/applications/new`, `/applications/:id` | Signed in |
-| `/cv-studio/*` | Signed in |
-| `/guides`, `/guides/:slug`, `/notes` | Signed in |
-| `/admin` | Signed in (API enforces admin) |
-
----
-
-## Project structure
+## Project Structure
 
 ```
 src/
-├── api/
-│   ├── client.ts           Agent, sessions, notes, applications, CV.Studio, learning
-│   ├── profileClient.ts    /api/profile*
-│   └── adminClient.ts      /api/admin*
-├── components/
-│   ├── chat/               Sidebar, messages, job-analysis / learning / interview cards
-│   ├── layout/             MainLayout, Sidebar, BottomTabBar, nav
-│   ├── overview/           Sankey + pipeline panel
-│   ├── applications/       Board, table, archive
-│   ├── onboarding/         Wizard + coach tour
-│   └── ui/                 Buttons, usage modal, auth
-├── context/
-│   └── ChatSessionsProvider.tsx   Session state + background streams (API-backed)
-├── cv-studio/              Overview, editor, application-basis, templates
-├── hooks/
-│   ├── useCareerProfile    GET /api/profile
-│   ├── useChatSessions     re-export of ChatSessionsProvider
-│   ├── useChatNotes        /api/chat-notes (+ one-time localStorage migrate)
-│   ├── useCvResumeCategories
-│   └── useUserPlan         usage + Stripe plan
-├── pages/                  Landing, Chat, Overview, Applications, CareerProfile,
-│                           Onboarding, Pricing, Notes, Guides, Admin, Profile
-├── services/               StripeService, AuthService
-└── types/                  Shared TS types
+  api/
+    agentClient.ts          Streaming, ask, usage, demo endpoints
+    cvStudioClient.ts       CV Studio API
+    applicationsClient.ts   Job application CRUD
+    profileClient.ts        /api/profile endpoints
+    client.ts               Sessions, notes, learning; re-exports all above
+  components/
+    chat/                   Message list, tool cards, context modal, thinking indicator
+    cv-studio/              Resume editor, version panel, templates
+    applications/           Pipeline board, detail view, status timeline
+    ui/                     Buttons, modals, usage indicator
+  hooks/
+    useChatStreaming.ts      Streaming state machine (abort, deliberate reveal, stop)
+    useChatSessions.ts      Session store backed by the API
+    useCareerProfile.ts     Profile data and feature toggles
+    useUserPlan.ts          Usage limits and Stripe plan
+  utils/
+    chatContextStorage.ts   Session context types and localStorage helpers
+    chatPromptBuilders.ts   Interview and job-analyzer prompt assembly
+  pages/                    Chat, Overview, Applications, CareerProfile, CvStudio, ...
 ```
 
----
+## Local Development
 
-## Local development
-
-**Requirements:** Node.js 20+
+Requires Node.js 20+.
 
 ```bash
 git clone https://github.com/djzh23/SmartAssist-react.git
@@ -126,8 +65,6 @@ npm install
 npm run dev
 ```
 
-Dev server: **`http://localhost:5174`**.
-
 `.env.local`:
 
 ```
@@ -136,18 +73,7 @@ VITE_API_BASE_URL=
 VITE_PROXY_TARGET=http://localhost:5108
 ```
 
-Run [SmartAIAssist](https://github.com/djzh23/SmartAIAssist) on port **5108**, or change `VITE_PROXY_TARGET`.
-
-Optional:
-
-| Variable | Description |
-|---|---|
-| `VITE_API_BASE_URL` | Empty in dev (proxy). Production: API origin, no trailing slash |
-| `VITE_API_URL` | Alias used only by `StripeService` (falls back to `VITE_API_BASE_URL`) |
-| `VITE_CLERK_PUBLISHABLE_KEY` | Clerk publishable key (**`pk_live_` in production**) |
-| `VITE_PROXY_TARGET` | Vite `/api` proxy target |
-| `VITE_USE_REMOTE_API=1` | Allow proxying to Render/Vercel from `npm run dev` |
-| `VITE_REMAINING_FREE_SLOTS` | Landing-page remaining-slots copy |
+Leave `VITE_API_BASE_URL` empty in development; Vite proxies `/api/*` to `VITE_PROXY_TARGET` (the local backend). Set it to the production API origin for staging or production builds.
 
 ```bash
 npm run lint
@@ -155,19 +81,13 @@ npm test
 npm run build
 ```
 
----
-
 ## Deployment
 
 ```
-push to main → CI (tsc + vitest + vite build) → vercel pull / build / deploy --prod
+push to main -> CI (type-check + vitest + vite build) -> Vercel
 ```
 
-Secrets: `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`. Set **`VITE_API_BASE_URL`** and **`VITE_CLERK_PUBLISHABLE_KEY`** in the Vercel project (baked in at build time).
-
-`vercel.json` SPA fallback + `/api` rewrite to Render. The current production JS also calls Render **directly**, so CORS on the API must allow `https://www.betweenatna.de`.
-
----
+Secrets required in Vercel: `VITE_CLERK_PUBLISHABLE_KEY`, `VITE_API_BASE_URL`.
 
 ## License
 
