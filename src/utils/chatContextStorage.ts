@@ -1,8 +1,8 @@
 import type { ToolType } from '../types'
 import { sanitizeTechnicalContext } from './cvTechnicalContext'
 
-export const LS_CONTEXT = 'smartassist_context_by_tool_and_session'
-export const LS_CONTEXT_DISMISSED = 'smartassist_context_modal_dismissed'
+export const LS_CONTEXT = 'privateprep_context_by_tool_and_session'
+export const LS_CONTEXT_DISMISSED = 'privateprep_context_modal_dismissed'
 export const LS_KONTEXT_HINT_DISMISSED = 'privateprep_kontext_hint_dismissed'
 export const LS_ACTIVE_CONTEXT_INFO_VISIBLE = 'privateprep_active_context_info_visible'
 

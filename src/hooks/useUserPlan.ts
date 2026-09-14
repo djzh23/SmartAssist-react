@@ -2,27 +2,27 @@ import { useCallback, useEffect, useState } from 'react'
 import { useUser, useAuth } from '@clerk/clerk-react'
 import { getAgentUsage } from '../api/client'
 
-const USAGE_EVENT = 'smartassist_usage_updated'
-const PLAN_EVENT = 'smartassist_plan_updated'
+const USAGE_EVENT = 'privateprep_usage_updated'
+const PLAN_EVENT = 'privateprep_plan_updated'
 
 export type PlanType = 'anonymous' | 'free' | 'premium' | 'pro'
 
 const TODAY = () => new Date().toISOString().split('T')[0]
 
 function usageKey(userId: string | null): string {
-  return `smartassist_usage_${userId ?? 'anonymous'}`
+  return `privateprep_usage_${userId ?? 'anonymous'}`
 }
 
 function planKey(userId: string): string {
-  return `smartassist_plan_${userId}`
+  return `privateprep_plan_${userId}`
 }
 
 function pendingUpgradeKey(userId: string): string {
-  return `smartassist_pending_upgrade_${userId}`
+  return `privateprep_pending_upgrade_${userId}`
 }
 
 function historyKey(userId: string | null): string {
-  return `smartassist_history_${userId ?? 'anonymous'}`
+  return `privateprep_history_${userId ?? 'anonymous'}`
 }
 
 function readHistory(userId: string | null): Record<string, number> {
@@ -196,7 +196,7 @@ export function getPlanColors(plan: PlanType): { badge: string; border: string; 
 export function dispatchServerUsage(usageToday: number): void {
   try {
     // We don't have userId here, so write to a temp key and let the hook pick it up
-    localStorage.setItem('smartassist_server_usage', String(usageToday))
+    localStorage.setItem('privateprep_server_usage', String(usageToday))
   } catch (error) {
     console.warn('[useUserPlan] Failed to store server usage value', error)
   }
@@ -269,14 +269,14 @@ export function useUserPlan(): UserPlanState {
   useEffect(() => {
     const sync = () => {
       // Check if server sent a real usage value
-      const serverVal = localStorage.getItem('smartassist_server_usage')
+      const serverVal = localStorage.getItem('privateprep_server_usage')
       if (serverVal !== null) {
         const parsed = Number(serverVal)
         if (!Number.isNaN(parsed)) {
           const key = isSignedIn ? userId : null
           writeUsageToday(key, parsed)
           setUsageToday(parsed)
-          localStorage.removeItem('smartassist_server_usage')
+          localStorage.removeItem('privateprep_server_usage')
           return
         }
       }

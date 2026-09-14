@@ -9,7 +9,7 @@ export type AppConfirmOptions = {
 }
 
 /** Dispatched on `window`; `AppUiProvider` shows a toast. Keeps non-React helpers (e.g. CV notify) free of React imports. */
-export const APP_TOAST_EVENT = 'smartassist-app-toast'
+export const APP_TOAST_EVENT = 'privateprep-app-toast'
 
 export type AppToastVariant = 'info' | 'success' | 'error'
 

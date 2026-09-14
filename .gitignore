@@ -5,3 +5,10 @@ dist/
 !.env.example
 
 .vercel
+
+# Dev tooling (not for remote)
+.claude/
+CLAUDE.md
+CONTRIBUTING.md
+HARDENING_FINDINGS.md
+docs/

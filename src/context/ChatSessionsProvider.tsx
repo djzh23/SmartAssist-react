@@ -28,15 +28,15 @@ import type { ChatSession, ChatMessage, ToolType } from '../types'
 
 function lsKeys(scopeId: string) {
   return {
-    sessions: `smartassist_react_sessions_${scopeId}`,
-    order: `smartassist_react_order_${scopeId}`,
-    active: `smartassist_react_active_${scopeId}`,
+    sessions: `privateprep_react_sessions_${scopeId}`,
+    order: `privateprep_react_order_${scopeId}`,
+    active: `privateprep_react_active_${scopeId}`,
   }
 }
 
 /** Per-browser last open chat for this Clerk user - avoids jumping to server-first tab after refresh. */
 function lastActiveChatStorageKey(scopeId: string): string {
-  return `smartassist_last_active_chat_${scopeId}`
+  return `privateprep_last_active_chat_${scopeId}`
 }
 
 function readStoredLastActiveChatId(scopeId: string): string | null {

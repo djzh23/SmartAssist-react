@@ -1,7 +1,7 @@
 import { emitAppToast } from '../../context/appUiBridge'
 import type { AppToastVariant } from '../../context/appUiBridge'
 
-const LAST_RESUME_KEY = 'smartassist_cv_studio_last_resume_id'
+const LAST_RESUME_KEY = 'privateprep_cv_studio_last_resume_id'
 
 export function getLastResumeId(): string | null {
   try {
