@@ -2,17 +2,13 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Outlet, useLocation } from 'react-router-dom'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { ChatSessionsProvider } from '../../hooks/useChatSessions'
-import { ChatNotesProvider } from '../../hooks/useChatNotes'
 import { AppUiProvider } from '../../context/AppUiContext'
 import { LayoutChromeProvider, useLayoutChrome } from '../../context/LayoutChromeContext'
 import { useBreakpoint } from '../../hooks/useBreakpoint'
-import ChatNotesStorageBanner from './ChatNotesStorageBanner'
 import SidebarNavContent from './SidebarNavContent'
 import TopNavBar from './TopNavBar'
 import MobileDrawer from './MobileDrawer'
 import BottomTabBar from './BottomTabBar'
-import MobileMoreSheet from './MobileMoreSheet'
 import '../../styles/landing.css'
 
 function MainLayoutShell() {
@@ -242,18 +238,12 @@ function MainLayoutShell() {
               bp === 'mobile' ? 'pb-[calc(3.5rem+env(safe-area-inset-bottom))]' : '',
             ].join(' ')}
           >
-            <ChatNotesStorageBanner />
             <Outlet />
           </main>
         </div>
       </div>
 
-      {bp === 'mobile' && (
-        <>
-          <BottomTabBar />
-          <MobileMoreSheet />
-        </>
-      )}
+      {bp === 'mobile' && <BottomTabBar />}
       </div>
     </div>
   )
@@ -261,14 +251,10 @@ function MainLayoutShell() {
 
 export default function MainLayout() {
   return (
-    <ChatSessionsProvider>
-      <ChatNotesProvider>
-        <LayoutChromeProvider>
-          <AppUiProvider>
-            <MainLayoutShell />
-          </AppUiProvider>
-        </LayoutChromeProvider>
-      </ChatNotesProvider>
-    </ChatSessionsProvider>
+    <LayoutChromeProvider>
+      <AppUiProvider>
+        <MainLayoutShell />
+      </AppUiProvider>
+    </LayoutChromeProvider>
   )
 }

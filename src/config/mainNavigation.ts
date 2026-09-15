@@ -1,16 +1,20 @@
 import {
-  BookOpen,
   ClipboardList,
-  FileText,
-  FolderOpen,
+  FileSearch,
+  Tag,
   LayoutDashboard,
+  FolderOpen,
+  FileText,
+  BookOpen,
   NotebookPen,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
 export type MainNavPageKey =
-  | 'overview'
+  | 'analyze'
   | 'careerProfile'
+  | 'pricing'
+  | 'overview'
   | 'applications'
   | 'cvStudio'
   | 'guides'
@@ -27,56 +31,75 @@ export interface MainNavItemMeta {
 
 export const MAIN_NAV_ITEMS: MainNavItemMeta[] = [
   {
-    key: 'overview',
-    route: '/overview',
-    label: 'Übersicht',
-    subtitle: 'Zentrale Kennzahlen und Fokus für deinen nächsten Schritt.',
-    icon: LayoutDashboard,
-    matchesPath: pathname => pathname === '/overview',
+    key: 'analyze',
+    route: '/analyze',
+    label: 'Analyse',
+    subtitle: 'Stellenanzeige prüfen: Match-Score, Skill-Lücken und Formulierungen.',
+    icon: FileSearch,
+    matchesPath: pathname => pathname === '/analyze' || pathname.startsWith('/analyze/'),
   },
   {
     key: 'careerProfile',
     route: '/career-profile',
-    label: 'Karriereprofil',
-    subtitle: 'Profildaten pflegen für präzisere Antworten und Bewerbungen.',
+    label: 'Profil',
+    subtitle: 'Beruf, Story und Lebenslauf für die Stellenanalyse.',
     icon: ClipboardList,
     matchesPath: pathname => pathname.startsWith('/career-profile'),
   },
   {
+    key: 'pricing',
+    route: '/pricing',
+    label: 'Preise',
+    subtitle: 'Free mit 3 Analysen pro Tag, Premium unbegrenzt.',
+    icon: Tag,
+    matchesPath: pathname => pathname.startsWith('/pricing'),
+  },
+]
+
+const HIDDEN_NAV_ITEMS: MainNavItemMeta[] = [
+  {
+    key: 'overview',
+    route: '/analyze',
+    label: 'Übersicht',
+    subtitle: '',
+    icon: LayoutDashboard,
+    matchesPath: pathname => pathname === '/overview',
+  },
+  {
     key: 'applications',
-    route: '/applications',
+    route: '/analyze',
     label: 'Bewerbungen',
-    subtitle: 'Pipeline und Archiv mit klaren Status pro Bewerbung.',
+    subtitle: '',
     icon: FolderOpen,
     matchesPath: pathname => pathname.startsWith('/applications'),
   },
   {
     key: 'cvStudio',
-    route: '/cv-studio',
+    route: '/career-profile',
     label: 'CV.Studio',
-    subtitle: 'Lebensläufe strukturiert erstellen, versionieren und zuordnen.',
+    subtitle: '',
     icon: FileText,
     matchesPath: pathname => pathname.startsWith('/cv-studio'),
   },
   {
     key: 'guides',
-    route: '/guides',
+    route: '/analyze',
     label: 'Ratgeber',
-    subtitle: 'Kurze Anleitungen für klare Abläufe in der gesamten App.',
+    subtitle: '',
     icon: BookOpen,
     matchesPath: pathname => pathname.startsWith('/guides'),
   },
   {
     key: 'notes',
-    route: '/notes',
+    route: '/analyze',
     label: 'Notizen',
-    subtitle: 'Gespeicherte Chat-Ergebnisse suchen, filtern und weiterverarbeiten.',
+    subtitle: '',
     icon: NotebookPen,
     matchesPath: pathname => pathname.startsWith('/notes'),
   },
 ]
 
-const MAIN_NAV_BY_KEY: Record<MainNavPageKey, MainNavItemMeta> = MAIN_NAV_ITEMS.reduce(
+const MAIN_NAV_BY_KEY: Record<MainNavPageKey, MainNavItemMeta> = [...MAIN_NAV_ITEMS, ...HIDDEN_NAV_ITEMS].reduce(
   (acc, item) => {
     acc[item.key] = item
     return acc

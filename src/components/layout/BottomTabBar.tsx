@@ -1,17 +1,12 @@
 import { NavLink } from 'react-router-dom'
-import { Home, UserCircle, Ellipsis, FileText, FolderOpen } from 'lucide-react'
-import { useLayoutChrome } from '../../context/LayoutChromeContext'
+import { ClipboardList, FileSearch, Tag } from 'lucide-react'
 
 export default function BottomTabBar() {
-  const { setMoreSheetOpen, moreSheetOpen, keyboardLikelyOpen } = useLayoutChrome()
-
   const tabClass = (active: boolean) =>
     [
       'flex min-h-[44px] min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-0.5 rounded-lg py-1 text-[10px] font-medium transition-transform duration-100 active:scale-95',
       active ? 'text-primary' : 'text-white/50',
     ].join(' ')
-
-  if (keyboardLikelyOpen) return null
 
   return (
     <nav
@@ -21,58 +16,30 @@ export default function BottomTabBar() {
       aria-label="Hauptnavigation"
     >
       <div className="flex h-14 w-full items-stretch justify-evenly border-t border-white/10 bg-sidebar px-1 pt-0.5">
-        <NavLink to="/overview" className={({ isActive }) => tabClass(isActive)} end>
+        <NavLink to="/analyze" className={({ isActive }) => tabClass(isActive)} end>
           {({ isActive }) => (
             <>
-              <Home size={20} strokeWidth={isActive ? 2.5 : 2} aria-hidden />
-              <span>Übersicht</span>
+              <FileSearch size={20} strokeWidth={isActive ? 2.5 : 2} aria-hidden />
+              <span>Analyse</span>
             </>
           )}
         </NavLink>
-
         <NavLink to="/career-profile" className={({ isActive }) => tabClass(isActive)}>
           {({ isActive }) => (
             <>
-              <UserCircle size={20} strokeWidth={isActive ? 2.5 : 2} aria-hidden />
-              <span>Karriere</span>
+              <ClipboardList size={20} strokeWidth={isActive ? 2.5 : 2} aria-hidden />
+              <span>Profil</span>
             </>
           )}
         </NavLink>
-
-        <NavLink to="/applications" className={({ isActive }) => tabClass(isActive)}>
+        <NavLink to="/pricing" className={({ isActive }) => tabClass(isActive)}>
           {({ isActive }) => (
             <>
-              <FolderOpen size={20} strokeWidth={isActive ? 2.5 : 2} aria-hidden />
-              <span>Bewerbungen</span>
+              <Tag size={20} strokeWidth={isActive ? 2.5 : 2} aria-hidden />
+              <span>Preise</span>
             </>
           )}
         </NavLink>
-
-        <NavLink to="/cv-studio" className={({ isActive }) => tabClass(isActive)}>
-          {({ isActive }) => (
-            <>
-              <FileText size={20} strokeWidth={isActive ? 2.5 : 2} aria-hidden />
-              <span>CV&apos;s</span>
-            </>
-          )}
-        </NavLink>
-
-        <button
-          type="button"
-          className={tabClass(false)}
-          onClick={() => setMoreSheetOpen(true)}
-          aria-label="Mehr Optionen"
-        >
-          <Ellipsis
-            size={20}
-            aria-hidden
-            className={[
-              'transition-transform duration-200',
-              moreSheetOpen ? 'scale-110 text-primary' : '',
-            ].join(' ')}
-          />
-          <span>Mehr</span>
-        </button>
       </div>
     </nav>
   )

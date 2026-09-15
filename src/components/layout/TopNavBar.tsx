@@ -2,15 +2,11 @@ import { useEffect, useRef, useState, type Ref } from 'react'
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { SignOutButton } from '@clerk/clerk-react'
 import {
-  ArrowLeft,
-  MessageCircle,
-  Palette,
-  ShieldCheck,
+  Menu,
   Tag,
   User,
   X,
 } from 'lucide-react'
-import { useIsAdmin } from '../../hooks/useIsAdmin'
 import { useUserPlan } from '../../hooks/useUserPlan'
 import { useBreakpoint } from '../../hooks/useBreakpoint'
 import { useMobileNavTitle } from '../../hooks/useMobileNavTitle'
@@ -37,22 +33,17 @@ function UserAvatarMenu({
   planLabel,
   initials,
   email,
-  isAdmin,
 }: {
   isMobile: boolean
   planColor: string
   planLabel: string
   initials: string
   email: string | null
-  isAdmin: boolean
 }) {
   const navigate = useNavigate()
   const location = useLocation()
-  const { notesTheme, setNotesTheme } = useLayoutChrome()
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const userMenuRef = useRef<HTMLDivElement>(null)
-  const notesDark = notesTheme === 'dark'
-  const isNotesRoute = location.pathname.startsWith('/notes')
 
   useEffect(() => {
     setUserMenuOpen(false)
@@ -130,37 +121,6 @@ function UserAvatarMenu({
             <Tag size={16} className="text-stone-400" aria-hidden />
             Preise
           </button>
-          <button
-            type="button"
-            role="menuitem"
-            className={[
-              'flex w-full items-center gap-2 px-3 py-2 text-left text-sm',
-              isNotesRoute ? 'text-stone-200 hover:bg-white/6' : 'cursor-not-allowed text-stone-500',
-            ].join(' ')}
-            onClick={() => {
-              if (!isNotesRoute) return
-              setNotesTheme(prev => prev === 'dark' ? 'light' : 'dark')
-            }}
-            aria-label={isNotesRoute ? 'Theme für Notizen wechseln' : 'Theme-Schalter ist nur auf Notizen aktiv'}
-            title={isNotesRoute ? 'Theme für Notizen wechseln' : 'Schalter nur auf Notizen aktiv'}
-          >
-            <Palette size={16} className="text-stone-400" aria-hidden />
-            {notesDark ? 'Light Mode' : 'Dark Mode'}
-          </button>
-          {isAdmin && (
-            <button
-              type="button"
-              role="menuitem"
-              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-stone-200 hover:bg-white/6"
-              onClick={() => {
-                setUserMenuOpen(false)
-                navigate('/admin')
-              }}
-            >
-              <ShieldCheck size={16} className="text-stone-400" aria-hidden />
-              Admin
-            </button>
-          )}
           <div className="my-1 h-px bg-stone-600/40" />
           <SignOutButton>
             <button
@@ -178,39 +138,25 @@ function UserAvatarMenu({
 }
 
 export default function TopNavBar({ onMenuClick, menuOpen }: Props) {
-  const navigate = useNavigate()
   const location = useLocation()
   const bp = useBreakpoint()
   const mobileTitle = useMobileNavTitle()
   const { drawerTriggerRef } = useLayoutChrome()
-  const { isAdmin } = useIsAdmin()
   const { planLabel, planColor, initials, email } = useUserPlan()
-  const isChatRoute = location.pathname === '/chat'
 
   if (bp === 'mobile') {
     return (
       <header className="sticky top-0 z-50 flex h-12 flex-shrink-0 items-center gap-2 border-b border-sidebar-border bg-sidebar px-2">
         <div className="flex min-w-0 flex-1 items-center gap-2">
-          {isChatRoute ? (
-            <button
-              type="button"
-              onClick={() => navigate('/overview')}
-              className="flex h-11 w-11 min-h-[44px] min-w-[44px] flex-shrink-0 items-center justify-center rounded-lg text-white/90 hover:bg-sidebar-hover"
-              aria-label="Zurück"
-            >
-              <ArrowLeft size={22} />
-            </button>
-          ) : (
-            <button
-              ref={drawerTriggerRef as Ref<HTMLButtonElement>}
-              type="button"
-              onClick={onMenuClick}
-              className="flex h-11 w-11 min-h-[44px] min-w-[44px] flex-shrink-0 items-center justify-center rounded-lg text-white/90 hover:bg-sidebar-hover"
-              aria-label={menuOpen ? 'Chat-Navigation schließen' : 'Chat-Navigation öffnen'}
-            >
-              {menuOpen ? <X size={22} /> : <MessageCircle size={22} strokeWidth={2} />}
-            </button>
-          )}
+          <button
+            ref={drawerTriggerRef as Ref<HTMLButtonElement>}
+            type="button"
+            onClick={onMenuClick}
+            className="flex h-11 w-11 min-h-[44px] min-w-[44px] flex-shrink-0 items-center justify-center rounded-lg text-white/90 hover:bg-sidebar-hover"
+            aria-label={menuOpen ? 'Navigation schließen' : 'Navigation öffnen'}
+          >
+            {menuOpen ? <X size={22} /> : <Menu size={22} strokeWidth={2} />}
+          </button>
           <p className="min-w-0 flex-1 truncate text-center text-sm font-semibold tracking-wide text-white">
             {mobileTitle}
           </p>
@@ -221,7 +167,6 @@ export default function TopNavBar({ onMenuClick, menuOpen }: Props) {
           planLabel={planLabel}
           initials={initials}
           email={email}
-          isAdmin={isAdmin}
         />
       </header>
     )
@@ -236,7 +181,7 @@ export default function TopNavBar({ onMenuClick, menuOpen }: Props) {
     >
       <div className="flex min-w-0 items-center justify-start gap-2">
         <Link
-          to="/overview"
+          to="/analyze"
           aria-label="PrivatePrep"
           className="flex min-w-0 flex-shrink-0 items-center gap-2 rounded-lg py-1 pr-2 no-underline hover:opacity-90"
         >
@@ -259,7 +204,7 @@ export default function TopNavBar({ onMenuClick, menuOpen }: Props) {
             <NavLink
               key={item.key}
               to={item.route}
-              end={item.route === '/overview'}
+              end={item.route === '/analyze'}
               className={() => navClass(item.matchesPath(location.pathname))}
             >
               <span className="inline-flex items-center gap-1.5">
@@ -278,7 +223,6 @@ export default function TopNavBar({ onMenuClick, menuOpen }: Props) {
           planLabel={planLabel}
           initials={initials}
           email={email}
-          isAdmin={isAdmin}
         />
       </div>
     </header>
