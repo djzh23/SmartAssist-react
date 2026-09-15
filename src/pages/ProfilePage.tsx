@@ -277,8 +277,7 @@ export default function ProfilePage() {
                     className="text-stone-500 hover:bg-stone-200/90 hover:text-stone-900"
                   >
                     <p>
-                      Auf dieser Seite stehen nur Angaben zu deinem Konto, deiner heutigen KI-Nutzung und deinem Plan.
-                      Zahlen zu Bewerbungen, Lebensläufen und Schnellzugriffen findest du unter Übersicht.
+                      Auf dieser Seite stehen nur Angaben zu deinem Konto, deiner heutigen Nutzung und deinem Plan.
                     </p>
                     <p className="mt-3 text-stone-600">
                       Direktsprung: <span className="font-mono text-stone-800">/profile#profil-nutzung</span>
@@ -286,13 +285,13 @@ export default function ProfilePage() {
                   </InfoExplainerButton>
                 </div>
                 <p className="mt-2 text-sm leading-relaxed text-stone-700">
-                  Limits, Plan und Abo - getrennt von der Arbeitsübersicht.
+                  Limits, Plan und Abo - getrennt von der Stellenanalyse.
                 </p>
                 <Link
-                  to="/overview"
+                  to="/analyze"
                   className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline"
                 >
-                  Zur Übersicht (Bewerbungen, CVs, Graph)
+                  Zur Analyse
                   <ArrowRight size={14} aria-hidden />
                 </Link>
               </div>

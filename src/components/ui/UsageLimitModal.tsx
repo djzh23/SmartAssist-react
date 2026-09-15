@@ -79,7 +79,7 @@ export default function UsageLimitModal({ isOpen, isLoggedIn, userEmail, onClose
             <ul className="mb-3 space-y-1">
               {!isLoggedIn && (
                 <li className="flex items-center gap-1.5 text-xs text-slate-600">
-                  <Check size={12} className="text-emerald-500" /> 20 Nachrichten am Tag, für immer kostenlos
+                  <Check size={12} className="text-emerald-500" /> 3 Analysen am Tag, kostenlos
                 </li>
               )}
               <li className="flex items-center gap-1.5 text-xs text-slate-600">
@@ -90,7 +90,7 @@ export default function UsageLimitModal({ isOpen, isLoggedIn, userEmail, onClose
               </li>
             </ul>
             {!isLoggedIn && (
-              <SignInButton mode="modal" fallbackRedirectUrl="/chat">
+              <SignInButton mode="modal" fallbackRedirectUrl="/analyze">
                 <button className="w-full rounded-xl border border-slate-300 bg-white py-2 text-xs font-semibold text-slate-700 transition-colors hover:border-slate-400">
                   Mit Google anmelden
                 </button>

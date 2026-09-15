@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth, useClerk, useUser } from '@clerk/clerk-react'
-import { Check, ChevronDown, ChevronUp, Clock, Crown, Sparkles, X, Zap } from 'lucide-react'
+import { Check, ChevronDown, ChevronUp, Clock, Sparkles, X, Zap } from 'lucide-react'
 import { createCheckoutSession } from '../services/StripeService'
 
 interface Feature {
@@ -10,7 +10,7 @@ interface Feature {
 }
 
 interface Plan {
-  id: 'free' | 'premium' | 'pro'
+  id: 'free' | 'premium'
   name: string
   price: string
   period: string
@@ -35,13 +35,10 @@ const PLANS: Plan[] = [
     accentBorder: 'border-stone-600/45',
     accentHeader: 'bg-app-muted/90',
     features: [
-      { text: '2 Antworten ohne Anmeldung', included: true },
-      { text: '20 Antworten pro Tag nach Anmeldung', included: true },
-      { text: 'Karriere-Tools und Sprachtraining', included: true },
-      { text: 'Browser-Sitzungsspeicher', included: true },
-      { text: 'Stellenanalyse', included: false },
-      { text: 'Audio Aussprache', included: false },
-      { text: 'Gesprächsverlauf', included: false },
+      { text: '3 Stellenanalysen pro Tag', included: true },
+      { text: 'Match-Score, Skill-Lücken, Formulierungen', included: true },
+      { text: 'Profil, Story und Lebenslauf', included: true },
+      { text: 'Unbegrenzte Analysen', included: false },
     ],
     buttonLabel: 'Kostenlos starten',
     buttonStyle: 'border border-stone-600/45 text-stone-200 hover:border-stone-500/55 bg-app-raised/90',
@@ -59,32 +56,11 @@ const PLANS: Plan[] = [
     scale: true,
     features: [
       { text: 'Alles aus Free', included: true },
-      { text: '200 Antworten pro Tag', included: true },
-      { text: 'Stellenanalyse Tool', included: true },
-      { text: 'Audio Aussprache', included: true },
-      { text: 'Gesprächsverlauf (30 Tage)', included: true },
-      { text: 'Bevorzugte Antwortzeiten', included: true },
+      { text: 'Unbegrenzte Analysen', included: true },
+      { text: 'Match-Score, Skill-Lücken, Formulierungen', included: true },
     ],
     buttonLabel: 'Premium starten',
     buttonStyle: 'bg-primary hover:bg-primary-hover text-white',
-  },
-  {
-    id: 'pro',
-    name: 'Pro',
-    price: '9,99 €',
-    period: '/Monat',
-    icon: <Crown size={18} className="text-amber-600" />,
-    accentBorder: 'border-amber-500/45',
-    accentHeader: 'bg-amber-950/35',
-    features: [
-      { text: 'Alles aus Premium', included: true },
-      { text: 'Unbegrenzte Antworten', included: true },
-      { text: 'Vollständiger Gesprächsverlauf', included: true },
-      { text: 'API-Zugang (demnächst)', included: true },
-      { text: 'Frühzugang zu neuen Tools', included: true },
-    ],
-    buttonLabel: 'Pro werden',
-    buttonStyle: 'bg-amber-500 hover:bg-amber-600 text-white',
   },
 ]
 
@@ -95,7 +71,7 @@ const FAQ = [
   },
   {
     q: 'Sind meine Daten sicher?',
-    a: 'Alle Daten bleiben in deinem Browser. Wir speichern keinen persönlichen Chatverlauf auf unseren Servern.',
+    a: 'Analysen und Profil liegen auf dem Server, gebunden an dein Konto. Kein Chatverlauf.',
   },
   {
     q: 'Welche Zahlungsmethoden werden akzeptiert?',
@@ -131,7 +107,7 @@ export default function PricingPage() {
   const { getToken } = useAuth()
   const { user, isSignedIn, isLoaded } = useUser()
 
-  const [loadingPlan, setLoadingPlan] = useState<'premium' | 'pro' | null>(null)
+  const [loadingPlan, setLoadingPlan] = useState<'premium' | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
 
@@ -141,7 +117,7 @@ export default function PricingPage() {
   )
   const checkoutCancelled = (searchParams.get('cancelled') ?? '').toLowerCase() === 'true'
 
-  const handleUpgrade = async (plan: 'premium' | 'pro') => {
+  const handleUpgrade = async (plan: 'premium') => {
     if (!isSignedIn) {
       try {
         await openSignIn()
@@ -181,8 +157,8 @@ export default function PricingPage() {
   }
 
   const handleFreeClick = () => {
-    navigate('/chat')
-    setToast('Free-Plan ausgewählt. Du kannst direkt im Chat loslegen.')
+    navigate('/analyze')
+    setToast('Free-Plan: 3 Analysen pro Tag.')
     window.setTimeout(() => setToast(null), 3000)
   }
 
@@ -232,7 +208,7 @@ export default function PricingPage() {
           </p>
         )}
 
-        <div className="mb-14 grid grid-cols-1 gap-5 md:grid-cols-3 md:items-start">
+        <div className="mb-14 grid grid-cols-1 gap-5 md:grid-cols-2 md:items-start">
           {PLANS.map(plan => (
             <div
               key={plan.id}
@@ -293,7 +269,6 @@ export default function PricingPage() {
                   className={`w-full rounded-xl py-2.5 text-sm font-semibold transition-colors disabled:opacity-60 ${plan.buttonStyle}`}
                 >
                   {plan.id === 'premium' && (loadingPlan === 'premium' ? 'Wird weitergeleitet…' : 'Premium starten')}
-                  {plan.id === 'pro' && (loadingPlan === 'pro' ? 'Wird weitergeleitet…' : 'Pro werden')}
                   {plan.id === 'free' && plan.buttonLabel}
                 </button>
               </div>
