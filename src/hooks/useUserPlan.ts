@@ -158,11 +158,11 @@ function normalizePlan(value: string | null | undefined, signedIn: boolean): Pla
 
 function dailyLimitFor(plan: PlanType): number {
   switch (plan) {
-    case 'anonymous': return 2
-    case 'free': return 20
-    case 'premium': return 200
+    case 'anonymous': return 0
+    case 'free': return 3
+    case 'premium': return Infinity
     case 'pro': return Infinity
-    default: return 2
+    default: return 0
   }
 }
 

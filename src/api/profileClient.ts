@@ -18,6 +18,7 @@ export interface CareerProfile {
   experience: WorkExperience[]
   educationEntries: Education[]
   languages: ProfileLanguage[]
+  story?: string | null
   cvRawText: string | null
   cvSummary: string | null
   cvSummaryEn: string | null
