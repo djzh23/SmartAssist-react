@@ -22,7 +22,7 @@ function LandingNav() {
         <button type="button" onClick={() => scrollTo('hero')} className="flex items-center gap-2">
           <img src="/logo-nav.webp" alt="" className="h-8 w-8 rounded-lg" width={32} height={32} />
           <span className="bg-gradient-to-r from-amber-200 via-amber-100 to-amber-50/90 bg-clip-text text-[15px] font-bold tracking-tight text-transparent sm:text-[17px]">
-            Applikum
+            PrivatePrep
           </span>
         </button>
 
@@ -172,7 +172,11 @@ export default function LandingPage() {
         </section>
       </main>
       <footer className="bg-[#0D0800] px-6 py-10 text-center text-xs text-stone-600">
-        © 2026 Applikum. Stellenanalyse — kein Chat, kein CV-Studio.
+        <p>© 2026 PrivatePrep. Stellenanalyse, kein CV-Studio.</p>
+        <p className="mt-2 flex items-center justify-center gap-4">
+          <a href="/impressum" className="hover:text-stone-400 transition-colors">Impressum</a>
+          <a href="/datenschutz" className="hover:text-stone-400 transition-colors">Datenschutz</a>
+        </p>
       </footer>
     </div>
   )

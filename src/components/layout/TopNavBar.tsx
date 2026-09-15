@@ -1,30 +1,15 @@
-import { useEffect, useRef, useState, type Ref } from 'react'
-import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { SignOutButton } from '@clerk/clerk-react'
-import {
-  Menu,
-  Tag,
-  User,
-  X,
-} from 'lucide-react'
+import { User } from 'lucide-react'
 import { useUserPlan } from '../../hooks/useUserPlan'
 import { useBreakpoint } from '../../hooks/useBreakpoint'
 import { useMobileNavTitle } from '../../hooks/useMobileNavTitle'
-import { useLayoutChrome } from '../../context/LayoutChromeContext'
-import { MAIN_NAV_ITEMS } from '../../config/mainNavigation'
 
+// onMenuClick/menuOpen kept in Props so MainLayout can still pass them without type error
 interface Props {
-  onMenuClick: () => void
-  menuOpen: boolean
-}
-
-const navBtn =
-  'rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors min-[769px]:px-3 desktop:px-3'
-const navActive = 'bg-amber-500/15 text-amber-100'
-const navIdle = 'text-stone-300 hover:bg-white/8 hover:text-white'
-
-function navClass(isActive: boolean): string {
-  return `${navBtn} ${isActive ? navActive : navIdle}`
+  onMenuClick?: () => void
+  menuOpen?: boolean
 }
 
 function UserAvatarMenu({
@@ -107,19 +92,7 @@ function UserAvatarMenu({
             }}
           >
             <User size={16} className="text-stone-400" aria-hidden />
-            Profil
-          </button>
-          <button
-            type="button"
-            role="menuitem"
-            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-stone-200 hover:bg-white/6"
-            onClick={() => {
-              setUserMenuOpen(false)
-              navigate('/pricing')
-            }}
-          >
-            <Tag size={16} className="text-stone-400" aria-hidden />
-            Preise
+            Konto
           </button>
           <div className="my-1 h-px bg-stone-600/40" />
           <SignOutButton>
@@ -137,30 +110,17 @@ function UserAvatarMenu({
   )
 }
 
-export default function TopNavBar({ onMenuClick, menuOpen }: Props) {
-  const location = useLocation()
+export default function TopNavBar(_props: Props) {
   const bp = useBreakpoint()
   const mobileTitle = useMobileNavTitle()
-  const { drawerTriggerRef } = useLayoutChrome()
   const { planLabel, planColor, initials, email } = useUserPlan()
 
   if (bp === 'mobile') {
     return (
-      <header className="sticky top-0 z-50 flex h-12 flex-shrink-0 items-center gap-2 border-b border-sidebar-border bg-sidebar px-2">
-        <div className="flex min-w-0 flex-1 items-center gap-2">
-          <button
-            ref={drawerTriggerRef as Ref<HTMLButtonElement>}
-            type="button"
-            onClick={onMenuClick}
-            className="flex h-11 w-11 min-h-[44px] min-w-[44px] flex-shrink-0 items-center justify-center rounded-lg text-white/90 hover:bg-sidebar-hover"
-            aria-label={menuOpen ? 'Navigation schließen' : 'Navigation öffnen'}
-          >
-            {menuOpen ? <X size={22} /> : <Menu size={22} strokeWidth={2} />}
-          </button>
-          <p className="min-w-0 flex-1 truncate text-center text-sm font-semibold tracking-wide text-white">
-            {mobileTitle}
-          </p>
-        </div>
+      <header className="sticky top-0 z-50 flex h-12 flex-shrink-0 items-center justify-between border-b border-sidebar-border bg-sidebar px-3">
+        <p className="min-w-0 flex-1 truncate text-sm font-semibold tracking-wide text-white">
+          {mobileTitle}
+        </p>
         <UserAvatarMenu
           isMobile
           planColor={planColor}
@@ -173,58 +133,30 @@ export default function TopNavBar({ onMenuClick, menuOpen }: Props) {
   }
 
   return (
-    <header
-      className={[
-        'sticky top-0 z-50 flex h-[52px] flex-shrink-0 items-center gap-2 border-b border-stone-600/40 bg-[#1a1208]/92 px-2 backdrop-blur-xl desktop:px-4',
-        'min-[769px]:grid min-[769px]:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] min-[769px]:items-center min-[769px]:gap-2 desktop:gap-3',
-      ].join(' ')}
-    >
-      <div className="flex min-w-0 items-center justify-start gap-2">
-        <Link
-          to="/analyze"
-          aria-label="PrivatePrep"
-          className="flex min-w-0 flex-shrink-0 items-center gap-2 rounded-lg py-1 pr-2 no-underline hover:opacity-90"
-        >
-          <img
-            src="/logo-nav.webp"
-            alt=""
-            className="h-8 w-8 rounded-lg"
-            width={32}
-            height={32}
-            decoding="async"
-          />
-          <span className="hidden text-[15px] font-bold tracking-wide text-stone-50 sm:inline">PrivatePrep</span>
-        </Link>
-      </div>
-
-      <nav className="hidden shrink-0 items-center justify-center gap-0.5 min-[769px]:flex desktop:gap-1">
-        {MAIN_NAV_ITEMS.map(item => {
-          const Icon = item.icon
-          return (
-            <NavLink
-              key={item.key}
-              to={item.route}
-              end={item.route === '/analyze'}
-              className={() => navClass(item.matchesPath(location.pathname))}
-            >
-              <span className="inline-flex items-center gap-1.5">
-                <Icon size={15} className="shrink-0 opacity-80" aria-hidden />
-                {item.label}
-              </span>
-            </NavLink>
-          )
-        })}
-      </nav>
-
-      <div className="ml-auto flex min-w-0 flex-shrink-0 items-center justify-end gap-1.5 min-[769px]:ml-0 sm:gap-2">
-        <UserAvatarMenu
-          isMobile={false}
-          planColor={planColor}
-          planLabel={planLabel}
-          initials={initials}
-          email={email}
+    <header className="sticky top-0 z-50 flex h-[52px] flex-shrink-0 items-center justify-between gap-2 border-b border-stone-600/40 bg-[#1a1208]/92 px-4 backdrop-blur-xl">
+      <Link
+        to="/analyze"
+        aria-label="PrivatePrep"
+        className="flex flex-shrink-0 items-center gap-2 rounded-lg py-1 pr-2 no-underline hover:opacity-90"
+      >
+        <img
+          src="/logo-nav.webp"
+          alt=""
+          className="h-8 w-8 rounded-lg"
+          width={32}
+          height={32}
+          decoding="async"
         />
-      </div>
+        <span className="text-[15px] font-bold tracking-wide text-stone-50">PrivatePrep</span>
+      </Link>
+
+      <UserAvatarMenu
+        isMobile={false}
+        planColor={planColor}
+        planLabel={planLabel}
+        initials={initials}
+        email={email}
+      />
     </header>
   )
 }

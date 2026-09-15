@@ -15,7 +15,6 @@ import {
   Eye,
   HelpCircle,
   Languages,
-  Lightbulb,
   Loader2,
   Plus,
   Sparkles,
@@ -23,15 +22,7 @@ import {
   Trash2,
   X,
 } from 'lucide-react'
-import {
-  listCvStudioResumes,
-  fetchJobApplications,
-  fetchLearningInsights,
-  patchLearningInsight,
-  resolveLearningInsight,
-  type JobApplicationApi,
-} from '../api/client'
-import type { LearningInsight as LearningInsightRow } from '../types'
+import { listCvStudioResumes } from '../api/client'
 import type {
   CareerProfile,
   Education,
@@ -43,7 +34,6 @@ import type {
 import {
   addTargetJob,
   completeOnboarding,
-  deleteCareerProfile,
   fetchAnonymousCvSummary,
   fetchProfile,
   removeTargetJob,
@@ -499,244 +489,6 @@ function SummaryModal({
   )
 }
 
-// ─── DeleteConfirmModal ──────────────────────────────────────────────────────
-
-function DeleteConfirmModal({
-  onConfirm,
-  onClose,
-  busy,
-}: {
-  onConfirm: () => Promise<void>
-  onClose: () => void
-  busy: boolean
-}) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-md rounded-2xl border border-red-200 bg-white shadow-2xl">
-        <div className="p-6">
-          <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-red-100">
-              <AlertTriangle className="h-6 w-6 text-red-600" />
-            </div>
-            <div>
-              <h2 className="text-base font-semibold text-stone-900">Karriereprofil löschen?</h2>
-              <p className="mt-2 text-sm text-stone-600 leading-relaxed">
-                Alle gespeicherten Daten werden unwiderruflich gelöscht: Basis-Infos, Skills,
-                Berufserfahrung, Ausbildung, Sprachen, CV und Zusammenfassungen.
-              </p>
-              <p className="mt-2 text-sm font-medium text-red-700">
-                Diese Aktion kann nicht rückgängig gemacht werden.
-              </p>
-            </div>
-          </div>
-          <div className="mt-6 flex justify-end gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={busy}
-              className="rounded-xl border border-stone-300 px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-100 disabled:opacity-50"
-            >
-              Abbrechen
-            </button>
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => void onConfirm()}
-              className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
-            >
-              {busy && <Loader2 className="h-4 w-4 animate-spin" />}
-              Ja, alles löschen
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// ─── LearningInsightsPanel ───────────────────────────────────────────────────
-
-function LearningInsightsPanel() {
-  const { getToken, isSignedIn } = useAuth()
-  const [rows, setRows] = useState<LearningInsightRow[]>([])
-  const [applications, setApplications] = useState<JobApplicationApi[]>([])
-  const [filterAppId, setFilterAppId] = useState<string>('')
-  const [loading, setLoading] = useState(true)
-  const [err, setErr] = useState<string | null>(null)
-  const [busyId, setBusyId] = useState<string | null>(null)
-
-  const load = useCallback(async () => {
-    if (!isSignedIn) {
-      setRows([])
-      setApplications([])
-      setLoading(false)
-      return
-    }
-    setLoading(true)
-    setErr(null)
-    try {
-      const token = await getToken()
-      if (!token) {
-        setRows([])
-        setApplications([])
-        return
-      }
-      const [data, apps] = await Promise.all([
-        fetchLearningInsights(token, {
-          applicationId: filterAppId.trim() || undefined,
-        }),
-        fetchJobApplications(token),
-      ])
-      setApplications(apps)
-      setRows(data.filter(r => !r.resolved))
-    } catch (e) {
-      setErr(e instanceof Error ? e.message : 'Erkenntnisse konnten nicht geladen werden')
-      setRows([])
-    } finally {
-      setLoading(false)
-    }
-  }, [getToken, isSignedIn, filterAppId])
-
-  useEffect(() => {
-    void load()
-  }, [load])
-
-  const onResolve = async (id: string) => {
-    const token = await getToken()
-    if (!token) return
-    setBusyId(id)
-    try {
-      await resolveLearningInsight(token, id)
-      await load()
-    } catch (e) {
-      setErr(e instanceof Error ? e.message : 'Konnte nicht speichern')
-    } finally {
-      setBusyId(null)
-    }
-  }
-
-  const onPatchBlur = async (id: string, patch: { title?: string; content?: string }) => {
-    const token = await getToken()
-    if (!token) return
-    try {
-      await patchLearningInsight(token, id, patch)
-    } catch (e) {
-      setErr(e instanceof Error ? e.message : 'Speichern fehlgeschlagen')
-    }
-  }
-
-  if (!isSignedIn) return null
-
-  const grouped = new Map<string, LearningInsightRow[]>()
-  for (const r of rows) {
-    const key = r.jobApplicationId?.trim() || '_general'
-    const list = grouped.get(key) ?? []
-    list.push(r)
-    grouped.set(key, list)
-  }
-
-  const appLabel = (id: string) => {
-    if (id === '_general') return 'Allgemein (nicht an eine Bewerbung gebunden)'
-    const a = applications.find(x => x.id === id)
-    return a ? `${a.jobTitle} · ${a.company}` : `Bewerbung ${id}`
-  }
-
-  return (
-    <section className="mb-8 rounded-xl border border-amber-500/35 bg-app-parchment p-5 shadow-landing text-stone-900">
-      <div className="mb-3 flex items-center gap-2">
-        <Lightbulb className="h-5 w-5 text-amber-700" aria-hidden />
-        <h2 className="text-sm font-semibold text-stone-900">To-dos aus Chats</h2>
-      </div>
-      <p className="mb-4 text-sm text-stone-700">
-        Einträge aus Stellenanalyse und Interview-Coach - gebündelt pro Bewerbung.
-        Bearbeite Titel oder Text; „Erledigt" entfernt den Eintrag aus dem KI-Kontext.
-      </p>
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        <label className="flex items-center gap-2 text-xs text-stone-700">
-          <span className="font-medium text-stone-800">Filter</span>
-          <select
-            value={filterAppId}
-            onChange={e => setFilterAppId(e.target.value)}
-            className="rounded-md border border-stone-400/50 bg-white px-2 py-1 text-xs text-stone-900"
-          >
-            <option value="">Alle offenen</option>
-            {applications.map(a => (
-              <option key={a.id} value={a.id}>
-                {a.jobTitle} · {a.company}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
-      {loading && (
-        <div className="flex items-center gap-2 text-sm text-stone-600">
-          <Loader2 className="animate-spin" size={18} />
-          Lade…
-        </div>
-      )}
-      {err && <p className="text-sm text-red-600">{err}</p>}
-      {!loading && !err && rows.length === 0 && (
-        <p className="text-sm text-stone-600">Noch keine offenen To-dos für diesen Filter.</p>
-      )}
-      {!loading && rows.length > 0 && (
-        <div className="flex flex-col gap-5">
-          {[...grouped.entries()].map(([gid, list]) => (
-            <div key={gid}>
-              <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-amber-900/90">
-                {appLabel(gid)}
-              </p>
-              <ul className="flex flex-col gap-2">
-                {list.map(r => (
-                  <li
-                    key={r.id}
-                    className="rounded-lg border border-stone-400/35 bg-white/90 px-3 py-2.5 shadow-sm"
-                  >
-                    <div className="mb-2 flex flex-wrap items-center gap-2">
-                      <span className="text-[10px] font-bold uppercase text-amber-700">{r.category}</span>
-                    </div>
-                    <input
-                      type="text"
-                      defaultValue={r.title ?? ''}
-                      placeholder="Kurztitel (optional)"
-                      onBlur={e => {
-                        const v = e.target.value.trim()
-                        if (v !== (r.title ?? '').trim())
-                          void onPatchBlur(r.id, { title: v || undefined })
-                      }}
-                      className="mb-2 w-full rounded border border-stone-300 px-2 py-1 text-xs text-stone-900"
-                    />
-                    <textarea
-                      defaultValue={r.content}
-                      rows={3}
-                      onBlur={e => {
-                        const v = e.target.value.trim()
-                        if (v && v !== r.content.trim())
-                          void onPatchBlur(r.id, { content: v })
-                      }}
-                      className="mb-2 w-full resize-y rounded border border-stone-300 px-2 py-1 text-sm text-stone-900"
-                    />
-                    <div className="flex justify-end">
-                      <button
-                        type="button"
-                        disabled={busyId === r.id}
-                        onClick={() => void onResolve(r.id)}
-                        className="rounded-md border border-stone-300 bg-white px-3 py-1.5 text-xs font-medium text-stone-800 hover:bg-stone-100 disabled:opacity-50"
-                      >
-                        {busyId === r.id ? '…' : 'Erledigt'}
-                      </button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-      )}
-    </section>
-  )
-}
-
 // ─── CareerProfilePage ───────────────────────────────────────────────────────
 
 export default function CareerProfilePage() {
@@ -764,9 +516,6 @@ export default function CareerProfilePage() {
   const [summaryModalLang, setSummaryModalLang] = useState<'de' | 'en' | null>(null)
   const [helpOpen, setHelpOpen] = useState(false)
   const [insightModalOpen, setInsightModalOpen] = useState(false)
-  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
-  const [deleting, setDeleting] = useState(false)
-  const [profileDeleted, setProfileDeleted] = useState(false)
   const [cvSummaries, setCvSummaries] = useState<CvStudioResumeSummary[]>([])
   const [activeSection, setActiveSection] = useState<CareerSectionKey>('overview')
   const [mobileSection, setMobileSection] = useState<CareerSectionKey>('overview')
@@ -1054,23 +803,6 @@ export default function CareerProfilePage() {
     }
   }
 
-  const handleDeleteProfile = async () => {
-    const token = await getToken()
-    if (!token) return
-    setDeleting(true)
-    setError(null)
-    try {
-      await deleteCareerProfile(token)
-      setProfileDeleted(true)
-      setDeleteConfirmOpen(false)
-      setProfile(null)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Löschen fehlgeschlagen')
-      setDeleteConfirmOpen(false)
-    } finally {
-      setDeleting(false)
-    }
-  }
 
   // ─── render states ─────────────────────────────────────────────────────────
 
@@ -1078,31 +810,6 @@ export default function CareerProfilePage() {
     return (
       <div className="flex min-h-0 flex-1 items-center justify-center text-stone-400">
         <Loader2 className="animate-spin" size={28} />
-      </div>
-    )
-  }
-
-  if (profileDeleted) {
-    return (
-      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-4 p-6 text-center">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-stone-100">
-          <Trash2 className="h-8 w-8 text-stone-400" />
-        </div>
-        <div>
-          <p className="text-base font-semibold text-stone-900">Karriereprofil gelöscht</p>
-          <p className="mt-1 text-sm text-stone-600">
-            Alle Karrieredaten wurden entfernt. Du kannst jederzeit neu beginnen.
-          </p>
-        </div>
-        <AppCtaButton
-          type="button"
-          onClick={() => {
-            setProfileDeleted(false)
-            void load()
-          }}
-        >
-          Neues Profil anlegen
-        </AppCtaButton>
       </div>
     )
   }
@@ -1164,13 +871,6 @@ export default function CareerProfilePage() {
           if (isDesktop) setActiveSection(key)
         }}
       />
-      {deleteConfirmOpen && (
-        <DeleteConfirmModal
-          onConfirm={handleDeleteProfile}
-          onClose={() => setDeleteConfirmOpen(false)}
-          busy={deleting}
-        />
-      )}
       {summaryModalLang && (
         <SummaryModal
           lang={summaryModalLang}
@@ -1216,14 +916,6 @@ export default function CareerProfilePage() {
                   <p className="text-xs font-medium tabular-nums text-stone-200">{formatDateTime(profile.updatedAt)}</p>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={() => setDeleteConfirmOpen(true)}
-                className="hidden sm:inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-red-500/40 px-3 py-2 text-xs font-medium text-red-400 transition-colors hover:border-red-400 hover:bg-red-950/30 hover:text-red-300"
-              >
-                <Trash2 size={14} aria-hidden />
-                Alle Daten löschen
-              </button>
             </>
           )}
         />
@@ -1925,7 +1617,6 @@ export default function CareerProfilePage() {
         {/* ── KI-Zusammenfassung ─────────────────────────────────────── */}
         {currentSection === 'summary' && (
         <>
-        <LearningInsightsPanel />
         <section className="mb-8 rounded-xl border border-violet-500/35 bg-app-parchment p-5 shadow-landing text-stone-900">
           <div className="mb-4 flex items-start justify-between gap-3">
             <div>
@@ -2119,17 +1810,6 @@ export default function CareerProfilePage() {
           </p>
         )}
 
-        {/* Mobile-only danger zone — delete is hidden from the top header on mobile */}
-        <div className="mt-8 sm:hidden">
-          <button
-            type="button"
-            onClick={() => setDeleteConfirmOpen(true)}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-red-500/40 px-3 py-2 text-xs font-medium text-red-400 transition-colors hover:border-red-400 hover:bg-red-950/30 hover:text-red-300"
-          >
-            <Trash2 size={13} aria-hidden />
-            Alle Daten löschen
-          </button>
-        </div>
       </StandardPageContainer>
     </div>
   )

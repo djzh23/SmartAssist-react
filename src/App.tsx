@@ -13,6 +13,8 @@ const OnboardingPage = lazy(() => import('./pages/OnboardingPage'))
 const PricingPage = lazy(() => import('./pages/PricingPage'))
 const CareerProfilePage = lazy(() => import('./pages/CareerProfilePage'))
 const AnalyzePage = lazy(() => import('./pages/AnalyzePage'))
+const ImpressumPage = lazy(() => import('./pages/ImpressumPage'))
+const DatenschutzPage = lazy(() => import('./pages/DatenschutzPage'))
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string
 
@@ -120,6 +122,23 @@ function AppRoutes() {
         <Route path="/cv-studio/*" element={<Navigate to="/career-profile" replace />} />
         <Route path="/admin" element={<Navigate to="/analyze" replace />} />
       </Route>
+
+      <Route
+        path="/impressum"
+        element={(
+          <Suspense fallback={<RouteFallback />}>
+            <ImpressumPage />
+          </Suspense>
+        )}
+      />
+      <Route
+        path="/datenschutz"
+        element={(
+          <Suspense fallback={<RouteFallback />}>
+            <DatenschutzPage />
+          </Suspense>
+        )}
+      />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

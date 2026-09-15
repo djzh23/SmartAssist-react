@@ -7,7 +7,6 @@ import { LayoutChromeProvider, useLayoutChrome } from '../../context/LayoutChrom
 import { useBreakpoint } from '../../hooks/useBreakpoint'
 import SidebarNavContent from './SidebarNavContent'
 import TopNavBar from './TopNavBar'
-import MobileDrawer from './MobileDrawer'
 import BottomTabBar from './BottomTabBar'
 import '../../styles/landing.css'
 
@@ -15,30 +14,14 @@ function MainLayoutShell() {
   const bp = useBreakpoint()
   const location = useLocation()
   const {
-    drawerOpen,
-    setDrawerOpen,
     tabletSidebarExpanded,
     setTabletSidebarExpanded,
-    drawerTriggerRef,
     desktopChatHistoryOpen,
     setDesktopChatHistoryOpen,
     collapseDesktopRail,
     registerDesktopRailCollapse,
   } = useLayoutChrome()
   const mainRef = useRef<HTMLElement>(null)
-
-  useEffect(() => {
-    if (bp !== 'mobile') setDrawerOpen(false)
-  }, [bp, setDrawerOpen])
-
-  useEffect(() => {
-    if (bp === 'mobile' && drawerOpen) {
-      mainRef.current?.setAttribute('aria-hidden', 'true')
-    }
-    else {
-      mainRef.current?.removeAttribute('aria-hidden')
-    }
-  }, [bp, drawerOpen])
 
   const showTabletDesktopSidebar = bp === 'tablet' || bp === 'desktop'
   const sidebarDensity = bp === 'desktop' || (bp === 'tablet' && tabletSidebarExpanded) ? 'full' : 'icons'
@@ -160,19 +143,9 @@ function MainLayoutShell() {
       />
       <div className="pointer-events-none absolute inset-0 landing-dot-grid opacity-[0.42]" aria-hidden />
       <div className="relative z-10 flex h-full min-h-0 flex-col">
-      <TopNavBar onMenuClick={() => setDrawerOpen(v => !v)} menuOpen={drawerOpen} />
+      <TopNavBar />
 
       <div className="flex min-h-0 flex-1 overflow-hidden">
-        {bp === 'mobile' && (
-          <MobileDrawer
-            open={drawerOpen}
-            onClose={() => {
-              setDrawerOpen(false)
-              queueMicrotask(() => drawerTriggerRef.current?.focus())
-            }}
-          />
-        )}
-
         {showTabletDesktopSidebar && bp === 'desktop' && (
           <aside
             data-desktop-sidebar-hover
