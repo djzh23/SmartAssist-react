@@ -6,22 +6,13 @@ import DocumentHead from './components/layout/DocumentHead'
 import MainLayout from './components/layout/MainLayout'
 import LoadingScreen from './components/LoadingScreen'
 import { useCareerProfile } from './hooks/useCareerProfile'
+
 const LandingPage = lazy(() => import('./pages/LandingPage'))
-const ChatPage = lazy(() => import('./pages/ChatPage'))
 const ProfilePage = lazy(() => import('./pages/ProfilePage'))
 const OnboardingPage = lazy(() => import('./pages/OnboardingPage'))
-
-const OverviewPage = lazy(() => import('./pages/OverviewPage'))
 const PricingPage = lazy(() => import('./pages/PricingPage'))
 const CareerProfilePage = lazy(() => import('./pages/CareerProfilePage'))
-const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage'))
-const ApplicationsPage = lazy(() => import('./pages/ApplicationsPage'))
-const ApplicationNewPage = lazy(() => import('./pages/ApplicationNewPage'))
-const ApplicationDetailPage = lazy(() => import('./pages/ApplicationDetailPage'))
-const GuidesIndexPage = lazy(() => import('./pages/guides/GuidesIndexPage'))
-const GuideArticlePage = lazy(() => import('./pages/guides/GuideArticlePage'))
-const NotesPage = lazy(() => import('./pages/NotesPage'))
-const CvStudioRouter = lazy(() => import('./cv-studio/CvStudioRouter'))
+const AnalyzePage = lazy(() => import('./pages/AnalyzePage'))
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string
 
@@ -29,7 +20,6 @@ function RouteFallback() {
   return <LoadingScreen />
 }
 
-// ClerkProvider must be inside BrowserRouter so useNavigate is available
 function ClerkProviderWithRouter({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate()
   return (
@@ -44,19 +34,16 @@ function ClerkProviderWithRouter({ children }: { children: React.ReactNode }) {
   )
 }
 
-// Requires authentication - redirects to landing if not signed in, to /onboarding if not yet onboarded
 function ProtectedApp() {
   const { isSignedIn, isLoaded } = useUser()
   const { needsOnboarding, loading: profileLoading } = useCareerProfile()
 
   if (!isLoaded) return <LoadingScreen />
   if (!isSignedIn) return <Navigate to="/" replace />
-  // Profile loads in the background — only redirect once we know onboarding is required.
   if (!profileLoading && needsOnboarding) return <Navigate to="/onboarding" replace />
   return <MainLayout />
 }
 
-/** Signed-in only, no MainLayout - /admin (sidebar shows link only for admins). */
 function RequireSignedIn({ children }: { children: React.ReactNode }) {
   const { isSignedIn, isLoaded } = useUser()
 
@@ -72,7 +59,6 @@ function AppRoutes() {
 
   return (
     <Routes>
-      {/* Public standalone pages */}
       <Route
         path="/"
         element={(
@@ -93,21 +79,12 @@ function AppRoutes() {
         }
       />
 
-      {/* Protected app - requires sign in, renders MainLayout with sidebar */}
       <Route element={<ProtectedApp />}>
         <Route
-          path="/chat"
+          path="/analyze"
           element={(
             <Suspense fallback={<RouteFallback />}>
-              <ChatPage />
-            </Suspense>
-          )}
-        />
-        <Route
-          path="/overview"
-          element={(
-            <Suspense fallback={<RouteFallback />}>
-              <OverviewPage />
+              <AnalyzePage />
             </Suspense>
           )}
         />
@@ -135,76 +112,15 @@ function AppRoutes() {
             </Suspense>
           )}
         />
-        <Route
-          path="/applications"
-          element={(
-            <Suspense fallback={<RouteFallback />}>
-              <ApplicationsPage />
-            </Suspense>
-          )}
-        />
-        <Route
-          path="/applications/new"
-          element={(
-            <Suspense fallback={<RouteFallback />}>
-              <ApplicationNewPage />
-            </Suspense>
-          )}
-        />
-        <Route
-          path="/applications/:id"
-          element={(
-            <Suspense fallback={<RouteFallback />}>
-              <ApplicationDetailPage />
-            </Suspense>
-          )}
-        />
-        <Route
-          path="/guides"
-          element={(
-            <Suspense fallback={<RouteFallback />}>
-              <GuidesIndexPage />
-            </Suspense>
-          )}
-        />
-        <Route
-          path="/guides/:slug"
-          element={(
-            <Suspense fallback={<RouteFallback />}>
-              <GuideArticlePage />
-            </Suspense>
-          )}
-        />
-        <Route
-          path="/notes"
-          element={(
-            <Suspense fallback={<RouteFallback />}>
-              <NotesPage />
-            </Suspense>
-          )}
-        />
-        <Route
-          path="/cv-studio/*"
-          element={(
-            <Suspense fallback={<RouteFallback />}>
-              <CvStudioRouter />
-            </Suspense>
-          )}
-        />
+        <Route path="/chat" element={<Navigate to="/analyze" replace />} />
+        <Route path="/overview" element={<Navigate to="/analyze" replace />} />
+        <Route path="/applications/*" element={<Navigate to="/analyze" replace />} />
+        <Route path="/guides/*" element={<Navigate to="/analyze" replace />} />
+        <Route path="/notes" element={<Navigate to="/analyze" replace />} />
+        <Route path="/cv-studio/*" element={<Navigate to="/career-profile" replace />} />
+        <Route path="/admin" element={<Navigate to="/analyze" replace />} />
       </Route>
 
-      <Route
-        path="/admin"
-        element={(
-          <RequireSignedIn>
-            <Suspense fallback={<RouteFallback />}>
-              <AdminDashboardPage />
-            </Suspense>
-          </RequireSignedIn>
-        )}
-      />
-
-      {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
