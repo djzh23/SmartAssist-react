@@ -24,9 +24,7 @@ export default function OnboardingPage() {
       return
     }
     if (!needsOnboarding && !profileError) {
-      // Already onboarded — redirect handled inside wizard after completion,
-      // but if user lands here directly with completed profile, go to chat.
-      navigate('/chat', { replace: true })
+      navigate('/analyze', { replace: true })
     }
   }, [isLoaded, profileLoading, isSignedIn, needsOnboarding, profileError, navigate])
 
@@ -40,10 +38,10 @@ export default function OnboardingPage() {
         <AppCtaButton onClick={() => void reload()}>Erneut versuchen</AppCtaButton>
         <button
           type="button"
-          onClick={() => navigate('/chat', { replace: true })}
+          onClick={() => navigate('/analyze', { replace: true })}
           className="mt-3 text-sm text-stone-500 hover:text-stone-300"
         >
-          Zum Chat ohne Profil
+          Zur Analyse ohne Profil
         </button>
       </div>
     )

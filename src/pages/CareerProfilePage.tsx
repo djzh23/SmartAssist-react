@@ -1186,7 +1186,7 @@ export default function CareerProfilePage() {
       <StandardPageContainer className="w-full pt-3 pb-6 sm:py-6">
         <PageHeader
           pageKey="careerProfile"
-          subtitle="Deine Datenbasis für präzisere KI-Antworten und maßgeschneiderte Empfehlungen."
+          subtitle="Deine Datenbasis für die Stellenanalyse."
           className="mb-4 sm:mb-6"
           hideTitleOnMobile
           infoSlot={(
@@ -1627,6 +1627,17 @@ export default function CareerProfilePage() {
                 value={profile.currentRole ?? ''}
                 onChange={e => setProfile({ ...profile, currentRole: e.target.value })}
                 onBlur={() => void saveProfilePatch({ currentRole: profile.currentRole?.trim() || null })}
+                className="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 text-stone-900"
+              />
+            </label>
+            <label className="col-span-full block text-sm">
+              <span className="text-stone-700">Story</span>
+              <textarea
+                value={profile.story ?? ''}
+                onChange={e => setProfile({ ...profile, story: e.target.value })}
+                onBlur={() => void saveProfilePatch({ story: profile.story?.trim() || null })}
+                rows={5}
+                placeholder="Kurz in eigenen Worten: Werdegang, Stärken, was du suchst."
                 className="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 text-stone-900"
               />
             </label>
