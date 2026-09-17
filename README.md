@@ -1,63 +1,47 @@
-# PrivatePrep
+# PrivatePrep Frontend
+
+React-Oberfläche für PrivatePrep: Onboarding, Profil, CV-Upload und die
+Match-Analyse gegen eine Stellenausschreibung.
+
+Live: [betweenatna.com](https://betweenatna.com)
 
 [![CI](https://github.com/djzh23/SmartAssist-react/actions/workflows/ci.yml/badge.svg)](https://github.com/djzh23/SmartAssist-react/actions/workflows/ci.yml)
 
-React frontend for [PrivatePrep](https://www.betweenatna.de), an AI-powered career workspace.
+## Status
 
-**Backend:** [github.com/djzh23/SmartAIAssist](https://github.com/djzh23/SmartAIAssist)  
-**API host:** `https://smartassist-api.onrender.com`
+Version 1, September 2026. Aktive Routen sind Landing (`/`), Onboarding
+(`/onboarding`), die Match-Analyse (`/analyze`), Profil (`/profile`,
+`/career-profile`), Preise (`/pricing`) sowie Impressum und Datenschutz.
+Ältere Routen aus dem Full-Scope-Prototyp (`/chat`, `/overview`,
+`/applications/*`, `/guides/*`, `/notes`, `/cv-studio/*`, `/admin`) leiten in
+`src/App.tsx` auf `/analyze` beziehungsweise `/career-profile` um; die
+zugehörigen Seiten-Komponenten liegen noch im Code, werden aber nicht
+verlinkt.
 
-## Features
+## About
 
-- **AI chat** with five modes (career coach, job analysis, interview prep, language learning, programming). Responses stream over SSE with a deliberate reveal animation; sessions and transcripts are persisted server-side.
-- **CV Studio** — in-browser resume editor with templates, category management, snapshot versioning, and PDF/DOCX export with quota tracking.
-- **Job applications** — pipeline board with six stages, archive, cover letter and interview notes per application.
-- **Career profile** — guided onboarding wizard, skills, work experience, CV upload and AI parsing, target job tracking.
-- **Subscriptions** — Stripe Checkout and Customer Portal; daily message quotas enforced and returned from the backend.
+PrivatePrep Frontend ruft das Backend-Repo
+[PrivatePrep](https://github.com/djzh23/PrivatePrep) an. Nutzer durchlaufen
+ein Onboarding, pflegen ein Kurzprofil und laden einen Lebenslauf hoch. Die
+Analyze-Seite nimmt eine Stellenausschreibung entgegen und zeigt den vom
+Backend erzeugten Match-Report (Score, Skill-Gap, Bullet-Rewrite-Vorschläge)
+an. Stripe Checkout und Customer Portal steuern Free- und Premium-Zugriff.
 
 ## Tech Stack
 
-| Area | Technology |
+| Bereich | Technologie |
 |---|---|
 | Framework | React 18, TypeScript, Vite 5 |
-| Styling | Tailwind CSS v3 |
+| Styling | Tailwind CSS 3 |
 | Auth | Clerk |
-| Routing | React Router v6 |
-| Charts | Recharts |
-| Markdown | react-markdown + DOMPurify |
-| PDF parsing | pdfjs-dist |
-| Tests | Vitest + Testing Library |
-| Deployment | Vercel |
+| Routing | React Router 6 |
+| PDF-Parsing | pdfjs-dist |
+| Tests | Vitest, Testing Library |
+| Deployment | Vercel (CI-gesteuert über die Vercel CLI) |
 
-## Project Structure
+## Lokale Entwicklung
 
-```
-src/
-  api/
-    agentClient.ts          Streaming, ask, usage, demo endpoints
-    cvStudioClient.ts       CV Studio API
-    applicationsClient.ts   Job application CRUD
-    profileClient.ts        /api/profile endpoints
-    client.ts               Sessions, notes, learning; re-exports all above
-  components/
-    chat/                   Message list, tool cards, context modal, thinking indicator
-    cv-studio/              Resume editor, version panel, templates
-    applications/           Pipeline board, detail view, status timeline
-    ui/                     Buttons, modals, usage indicator
-  hooks/
-    useChatStreaming.ts      Streaming state machine (abort, deliberate reveal, stop)
-    useChatSessions.ts      Session store backed by the API
-    useCareerProfile.ts     Profile data and feature toggles
-    useUserPlan.ts          Usage limits and Stripe plan
-  utils/
-    chatContextStorage.ts   Session context types and localStorage helpers
-    chatPromptBuilders.ts   Interview and job-analyzer prompt assembly
-  pages/                    Chat, Overview, Applications, CareerProfile, CvStudio, ...
-```
-
-## Local Development
-
-Requires Node.js 20+.
+Voraussetzung: Node.js 20 oder höher.
 
 ```bash
 git clone https://github.com/djzh23/SmartAssist-react.git
@@ -75,7 +59,10 @@ VITE_API_BASE_URL=
 VITE_PROXY_TARGET=http://localhost:5108
 ```
 
-Leave `VITE_API_BASE_URL` empty in development; Vite proxies `/api/*` to `VITE_PROXY_TARGET` (the local backend). Set it to the production API origin for staging or production builds.
+`VITE_API_BASE_URL` bleibt in der Entwicklung leer: Vite leitet `/api/*` an
+`VITE_PROXY_TARGET` weiter, standardmäßig das lokale Backend unter
+`http://localhost:5108`. Für Production-Builds wird die Variable auf die
+Backend-Origin gesetzt.
 
 ```bash
 npm run lint
@@ -83,14 +70,25 @@ npm test
 npm run build
 ```
 
-## Deployment
+## Tests
+
+```bash
+npm test
+```
+
+5 Testdateien unter `src/`, ausgeführt mit Vitest und Testing Library.
+
+## CI und Deployment
 
 ```
-push to main -> CI (type-check + vitest + vite build) -> Vercel
+push auf main -> Type-Check (tsc) + Vitest + Vite-Build -> Vercel-Deploy (Production)
 ```
 
-Secrets required in Vercel: `VITE_CLERK_PUBLISHABLE_KEY`, `VITE_API_BASE_URL`.
+Der Deploy-Job läuft nur bei einem Push auf `main` und nutzt die Vercel CLI
+direkt (`vercel build` und `vercel deploy --prebuilt`), nicht die
+Git-Integration von Vercel. Benötigte Secrets in GitHub Actions:
+`VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`.
 
-## License
+## Verwandte Repos
 
-MIT
+- Backend: [PrivatePrep](https://github.com/djzh23/PrivatePrep)
