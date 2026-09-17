@@ -1,7 +1,6 @@
-import { useEffect, useLayoutEffect, useState } from 'react'
+import { useEffect, useLayoutEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { SignInButton, SignUpButton, useUser } from '@clerk/clerk-react'
-import { Menu, X } from 'lucide-react'
 import '../styles/landing.css'
 
 const AFTER_AUTH = '/analyze'
@@ -14,14 +13,12 @@ const navLinkClass =
   'rounded-full px-3 py-2 text-sm font-medium text-stone-300 transition hover:bg-white/8 hover:text-white'
 
 function LandingNav() {
-  const [mobileOpen, setMobileOpen] = useState(false)
-
   return (
     <header className="fixed inset-x-0 top-0 z-50 border-b border-white/8 bg-[#120c08]/90 backdrop-blur-xl">
-      <nav className="mx-auto flex h-16 max-w-[1120px] items-center justify-between gap-3 px-4 sm:px-6">
+      <nav className="mx-auto flex h-14 max-w-[1120px] items-center justify-between gap-2 px-4 sm:h-16 sm:gap-3 sm:px-6">
         <button type="button" onClick={() => scrollTo('hero')} className="flex items-center gap-2">
-          <img src="/logo-nav.webp" alt="" className="h-8 w-8 rounded-lg" width={32} height={32} />
-          <span className="bg-gradient-to-r from-amber-200 via-amber-100 to-amber-50/90 bg-clip-text text-[15px] font-bold tracking-tight text-transparent sm:text-[17px]">
+          <img src="/logo-nav.webp" alt="" className="h-7 w-7 rounded-lg sm:h-8 sm:w-8" width={32} height={32} />
+          <span className="bg-gradient-to-r from-amber-200 via-amber-100 to-amber-50/90 bg-clip-text text-[14px] font-bold tracking-tight text-transparent sm:text-[17px]">
             PrivatePrep
           </span>
         </button>
@@ -32,11 +29,11 @@ function LandingNav() {
           <button type="button" onClick={() => scrollTo('demo')} className={navLinkClass}>Analysebericht</button>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           <SignInButton mode="modal" fallbackRedirectUrl={AFTER_AUTH}>
             <button
               type="button"
-              className="hidden min-h-[40px] rounded-full border border-amber-800/45 bg-white/[0.06] px-4 py-2 text-sm font-medium text-stone-100 sm:inline-flex"
+              className="hidden min-h-[36px] rounded-full border border-amber-800/45 bg-white/[0.06] px-3 text-xs font-medium text-stone-100 sm:inline-flex sm:min-h-[40px] sm:px-4 sm:text-sm"
             >
               Anmelden
             </button>
@@ -44,28 +41,13 @@ function LandingNav() {
           <SignUpButton mode="modal" fallbackRedirectUrl={AFTER_AUTH}>
             <button
               type="button"
-              className="inline-flex min-h-[40px] items-center rounded-full bg-gradient-to-r from-amber-400 to-amber-500 px-4 py-2 text-sm font-bold text-amber-950 shadow-lg shadow-black/30"
+              className="inline-flex min-h-[36px] items-center rounded-full bg-gradient-to-r from-amber-400 to-amber-500 px-3 text-xs font-bold text-amber-950 shadow-lg shadow-black/30 sm:min-h-[40px] sm:px-4 sm:text-sm"
             >
               Kostenlos starten
             </button>
           </SignUpButton>
-          <button
-            type="button"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-amber-800/45 text-white md:hidden"
-            aria-label={mobileOpen ? 'Menü schließen' : 'Menü öffnen'}
-            onClick={() => setMobileOpen(o => !o)}
-          >
-            {mobileOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
         </div>
       </nav>
-      {mobileOpen && (
-        <div className="border-t border-white/8 bg-[#120c08] px-4 py-3 md:hidden">
-          <button type="button" className={`${navLinkClass} block w-full text-left`} onClick={() => { scrollTo('features'); setMobileOpen(false) }}>Funktionen</button>
-          <button type="button" className={`${navLinkClass} block w-full text-left`} onClick={() => { scrollTo('how'); setMobileOpen(false) }}>Ablauf</button>
-          <button type="button" className={`${navLinkClass} block w-full text-left`} onClick={() => { scrollTo('demo'); setMobileOpen(false) }}>Analysebericht</button>
-        </div>
-      )}
     </header>
   )
 }
@@ -159,18 +141,18 @@ export default function LandingPage() {
         {/* Hero */}
         <section
           id="hero"
-          className="relative overflow-hidden pt-28"
-          style={{ background: 'linear-gradient(165deg, #120c08 0%, #1a100a 42%, #16110d 100%)', minHeight: '100svh' }}
+          className="relative overflow-hidden pt-20 sm:pt-28"
+          style={{ background: 'linear-gradient(165deg, #120c08 0%, #1a100a 42%, #16110d 100%)' }}
         >
           <div className="landing-dot-grid pointer-events-none absolute inset-0 opacity-70" />
-          <div className="relative z-10 mx-auto flex max-w-[780px] flex-col items-center px-5 pb-20 pt-12 text-center">
-            <p className="mb-6 inline-flex rounded-full border border-amber-500/22 bg-amber-950/30 px-4 py-1.5 text-xs font-semibold text-amber-100/90">
+          <div className="relative z-10 mx-auto flex max-w-[780px] flex-col items-center px-5 pb-10 pt-8 text-center sm:pb-16 sm:pt-12">
+            <p className="mb-4 inline-flex rounded-full border border-amber-500/22 bg-amber-950/30 px-4 py-1.5 text-xs font-semibold text-amber-100/90 sm:mb-6">
               KI-gestützte Stellenanalyse für den deutschen Arbeitsmarkt
             </p>
-            <h1 className="font-serif mb-6 text-[clamp(34px,5.2vw,60px)] font-bold leading-[1.12] text-stone-100">
+            <h1 className="font-serif mb-4 text-[clamp(30px,5.2vw,60px)] font-bold leading-[1.14] text-stone-100 sm:mb-6">
               Bewerbungen fundiert<br className="hidden sm:block" /> vorbereiten.
             </h1>
-            <p className="mb-8 max-w-[560px] text-lg leading-relaxed text-stone-400">
+            <p className="mb-6 max-w-[560px] text-base leading-relaxed text-stone-400 sm:mb-8 sm:text-lg">
               PrivatePrep analysiert Stellenanzeigen anhand des hinterlegten Karriereprofils und Lebenslaufs.
               Das Ergebnis ist ein strukturierter Bericht: Match-Score, Skill-Lückenanalyse und konkrete
               CV-Formulierungsvorschläge, die zur ausgeschriebenen Stelle passen.
@@ -186,16 +168,16 @@ export default function LandingPage() {
             <p className="mt-4 text-sm text-stone-500">3 Analysen pro Tag im kostenlosen Tarif. Keine Zahlungsdaten erforderlich.</p>
 
             {/* Feature highlights */}
-            <div className="mt-14 grid w-full max-w-[640px] grid-cols-2 gap-3 text-left sm:grid-cols-4">
+            <div className="mt-8 grid w-full max-w-[640px] grid-cols-2 gap-3 text-left sm:mt-14 sm:grid-cols-4">
               {[
                 ['Match-Score', 'Gesamtbewertung 1,0 bis 5,0'],
                 ['Skill-Analyse', 'Fehlende und vorhandene Qualifikationen'],
                 ['CV-Optimierung', '3 bis 5 stellenspezifische Formulierungen'],
                 ['Kulturscreening', 'Kulturelle Passungshinweise'],
               ].map(([label, desc]) => (
-                <div key={label} className="rounded-2xl border border-stone-600/35 bg-white/[0.03] px-3 py-3">
-                  <p className="text-xs font-semibold text-amber-300">{label}</p>
-                  <p className="mt-1 text-[11px] leading-snug text-stone-500">{desc}</p>
+                <div key={label} className="rounded-2xl border border-stone-600/35 bg-white/[0.03] px-3.5 py-3.5">
+                  <p className="text-sm font-semibold text-amber-300">{label}</p>
+                  <p className="mt-1 text-xs leading-snug text-stone-400">{desc}</p>
                 </div>
               ))}
             </div>
@@ -203,10 +185,10 @@ export default function LandingPage() {
         </section>
 
         {/* Features */}
-        <section id="features" className="scroll-mt-20 bg-[#100d0a] px-5 py-20">
+        <section id="features" className="scroll-mt-20 bg-[#100d0a] px-5 py-12 sm:py-20">
           <div className="mx-auto max-w-[960px]">
             <h2 className="mb-3 text-center text-2xl font-bold text-stone-100">Was PrivatePrep leistet</h2>
-            <p className="mx-auto mb-12 max-w-[520px] text-center text-sm text-stone-500">
+            <p className="mx-auto mb-8 max-w-[520px] text-center text-sm text-stone-500 sm:mb-12">
               Jede Analyse basiert auf dem persönlichen Karriereprofil und liefert vier strukturierte Bewertungsdimensionen.
             </p>
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -238,10 +220,10 @@ export default function LandingPage() {
         </section>
 
         {/* How it works */}
-        <section id="how" className="scroll-mt-20 bg-[#14100c] px-5 py-20">
+        <section id="how" className="scroll-mt-20 bg-[#14100c] px-5 py-12 sm:py-20">
           <div className="mx-auto max-w-[960px]">
             <h2 className="mb-3 text-center text-2xl font-bold text-stone-100">Ablauf in drei Schritten</h2>
-            <p className="mx-auto mb-12 max-w-[480px] text-center text-sm text-stone-500">
+            <p className="mx-auto mb-8 max-w-[480px] text-center text-sm text-stone-500 sm:mb-12">
               Das Karriereprofil wird einmalig angelegt. Jede Stellenanzeige wird danach in Sekunden analysiert.
             </p>
             <div className="grid gap-6 sm:grid-cols-3">
@@ -275,10 +257,10 @@ export default function LandingPage() {
         </section>
 
         {/* Sample Report */}
-        <section id="demo" className="scroll-mt-20 bg-[#120c08] px-5 py-20">
+        <section id="demo" className="scroll-mt-20 bg-[#120c08] px-5 py-12 sm:py-20">
           <div className="mx-auto max-w-[960px]">
             <h2 className="mb-3 text-center text-2xl font-bold text-stone-100">Aufbau eines Analyseberichts</h2>
-            <p className="mx-auto mb-10 max-w-[500px] text-center text-sm text-stone-500">
+            <p className="mx-auto mb-6 max-w-[500px] text-center text-sm text-stone-500 sm:mb-10">
               Beispielszenario: IT-Fachkraft mit C# und SQL bewirbt sich auf eine Senior-DevOps-Stelle mit Kubernetes-Anforderung.
             </p>
             <div className="grid gap-8 lg:grid-cols-2 lg:items-start">
