@@ -16,22 +16,37 @@ import {
 } from '../api/analyzeClient'
 import { UsageLimitError } from '../api/agentClient'
 
-const REPORT_KEY = 'privateprep_last_analyze_report'
+const REPORT_KEY_PREFIX = 'privateprep_last_analyze_report_'
 
-function readStoredReport(): AnalyzeReport | null {
+interface StoredReport {
+  report: AnalyzeReport
+  storedAt: string
+}
+
+/** Scoped by Clerk user id so switching accounts on the same device never shows someone else's report. */
+function readStoredReport(userId: string): StoredReport | null {
   try {
-    const raw = sessionStorage.getItem(REPORT_KEY)
+    const raw = sessionStorage.getItem(REPORT_KEY_PREFIX + userId)
     if (!raw) return null
-    return JSON.parse(raw) as AnalyzeReport
+    return JSON.parse(raw) as StoredReport
   } catch {
     return null
   }
 }
 
-function storeReport(report: AnalyzeReport): void {
+function storeReport(userId: string, report: AnalyzeReport): void {
   try {
-    sessionStorage.setItem(REPORT_KEY, JSON.stringify(report))
+    const entry: StoredReport = { report, storedAt: new Date().toISOString() }
+    sessionStorage.setItem(REPORT_KEY_PREFIX + userId, JSON.stringify(entry))
   } catch { /* ignore quota */ }
+}
+
+function formatStoredAt(iso: string): string {
+  try {
+    return new Date(iso).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' })
+  } catch {
+    return ''
+  }
 }
 
 function scoreLabel(n: number): string {
@@ -169,16 +184,24 @@ function ReportView({ report }: { report: AnalyzeReport }) {
 }
 
 export default function AnalyzePage() {
-  const { getToken } = useAuth()
+  const { getToken, userId, isLoaded: authLoaded } = useAuth()
   const { profile, loading: profileLoading } = useCareerProfile()
   const [jobText, setJobText] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [report, setReport] = useState<AnalyzeReport | null>(() => readStoredReport())
+  const [report, setReport] = useState<AnalyzeReport | null>(null)
+  const [reportStoredAt, setReportStoredAt] = useState<string | null>(null)
+  const [reportIsFromPreviousSession, setReportIsFromPreviousSession] = useState(false)
 
   useEffect(() => {
-    if (report) storeReport(report)
-  }, [report])
+    if (!authLoaded || !userId) return
+    const stored = readStoredReport(userId)
+    if (stored) {
+      setReport(stored.report)
+      setReportStoredAt(stored.storedAt)
+      setReportIsFromPreviousSession(true)
+    }
+  }, [authLoaded, userId])
 
   const cvReady = (profile?.cvRawText?.trim().length ?? 0) >= 50
   const jdLen = jobText.trim().length
@@ -206,6 +229,9 @@ export default function AnalyzePage() {
       if (!token) throw new Error('Bitte erneut anmelden.')
       const { report: next } = await analyzeJob(jobText.trim(), token)
       setReport(next)
+      setReportIsFromPreviousSession(false)
+      setReportStoredAt(null)
+      if (userId) storeReport(userId, next)
     } catch (e) {
       if (e instanceof UsageLimitError) {
         setError(e.message || 'Tageslimit erreicht. Mit Premium unbegrenzt analysieren.')
@@ -271,6 +297,25 @@ export default function AnalyzePage() {
         <div className="mt-8 flex items-center justify-center gap-2 text-sm text-stone-400">
           <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
           Analyse läuft…
+        </div>
+      )}
+
+      {report && reportIsFromPreviousSession && (
+        <div className="mt-6 flex items-center justify-between gap-3 rounded-xl border border-stone-600/40 bg-white/[0.03] px-4 py-2.5 text-xs text-stone-400">
+          <span>
+            Letztes Ergebnis{reportStoredAt ? ` vom ${formatStoredAt(reportStoredAt)}` : ''}, keine neue Stellenanzeige eingefügt.
+          </span>
+          <button
+            type="button"
+            onClick={() => {
+              setReport(null)
+              setReportIsFromPreviousSession(false)
+              setReportStoredAt(null)
+            }}
+            className="shrink-0 font-medium text-stone-300 hover:text-stone-100"
+          >
+            Ausblenden
+          </button>
         </div>
       )}
 

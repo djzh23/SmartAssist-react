@@ -127,30 +127,103 @@ function emptyLang(): ProfileLanguage {
 
 const PENDING_CV_KEY = 'privateprep_pending_cv_parsed'
 
-function mergeParsedDraftIntoProfile(
-  profile: CareerProfile,
-  draft: ParsedCvData,
-): CareerProfile {
+const norm = (s: string | null | undefined) => (s ?? '').trim().toLowerCase()
+
+/** Adds new skills to the existing list instead of replacing it; case-insensitive dedup. */
+function mergeSkills(existing: string[], incoming: string[]): { merged: string[]; added: number } {
+  const seen = new Set(existing.map(norm))
+  const added: string[] = []
+  for (const skill of incoming) {
+    const key = norm(skill)
+    if (!key || seen.has(key)) continue
+    seen.add(key)
+    added.push(skill)
+  }
+  return { merged: [...existing, ...added], added: added.length }
+}
+
+/** Adds new rows to the existing list instead of replacing it; dedups by the given key fields. */
+function mergeRows<T>(existing: T[], incoming: T[], keyOf: (row: T) => string): { merged: T[]; added: number } {
+  const seen = new Set(existing.map(keyOf))
+  const added: T[] = []
+  for (const row of incoming) {
+    const key = keyOf(row)
+    if (!key || seen.has(key)) continue
+    seen.add(key)
+    added.push(row)
+  }
+  return { merged: [...existing, ...added], added: added.length }
+}
+
+interface MergeResult {
+  profile: CareerProfile
+  addedSkills: number
+  addedExperience: number
+  addedEducation: number
+  addedLanguages: number
+}
+
+/**
+ * Adds newly parsed CV data (skills, experience, education, languages) to the existing profile
+ * instead of replacing it, so a re-upload with an incomplete parse can never drop previously
+ * saved entries. Field/level/currentRole (single values, not lists) still take the new value
+ * when present, since those describe "now", not an accumulating history.
+ */
+function mergeParsedDraftIntoProfile(profile: CareerProfile, draft: ParsedCvData): MergeResult {
   const effField = (draft.field?.trim() || profile.field)?.trim() || profile.field
   const effLevel = (draft.level?.trim() || profile.level)?.trim() || profile.level
-  const exFiltered =
+  const exIncoming =
     draft.experience?.filter(e => (e.title ?? '').trim() || (e.company ?? '').trim()) ?? []
-  const eduFiltered =
+  const eduIncoming =
     draft.education?.filter(e => (e.degree ?? '').trim() || (e.institution ?? '').trim()) ?? []
-  const langFiltered = draft.languages?.filter(l => (l.name ?? '').trim()) ?? []
+  const langIncoming = draft.languages?.filter(l => (l.name ?? '').trim()) ?? []
+
+  const skills = mergeSkills(profile.skills ?? [], draft.skills ?? [])
+  const experience = mergeRows(
+    profile.experience ?? [],
+    exIncoming,
+    e => `${norm(e.title)}|${norm(e.company)}`,
+  )
+  const educationEntries = mergeRows(
+    profile.educationEntries ?? [],
+    eduIncoming,
+    e => `${norm(e.degree)}|${norm(e.institution)}`,
+  )
+  const languages = mergeRows(
+    profile.languages ?? [],
+    langIncoming,
+    l => norm(l.name),
+  )
 
   return {
-    ...profile,
-    field: effField ?? null,
-    fieldLabel: FIELDS.find(f => f.value === effField)?.label ?? profile.fieldLabel,
-    level: effLevel ?? null,
-    levelLabel: LEVELS.find(l => l.value === effLevel)?.label ?? profile.levelLabel,
-    currentRole: draft.currentRole?.trim() || profile.currentRole,
-    skills: draft.skills?.length ? draft.skills : profile.skills,
-    experience: exFiltered.length > 0 ? exFiltered : profile.experience,
-    educationEntries: eduFiltered.length > 0 ? eduFiltered : profile.educationEntries,
-    languages: langFiltered.length > 0 ? langFiltered : profile.languages,
+    profile: {
+      ...profile,
+      field: effField ?? null,
+      fieldLabel: FIELDS.find(f => f.value === effField)?.label ?? profile.fieldLabel,
+      level: effLevel ?? null,
+      levelLabel: LEVELS.find(l => l.value === effLevel)?.label ?? profile.levelLabel,
+      currentRole: draft.currentRole?.trim() || profile.currentRole,
+      skills: skills.merged,
+      experience: experience.merged,
+      educationEntries: educationEntries.merged,
+      languages: languages.merged,
+    },
+    addedSkills: skills.added,
+    addedExperience: experience.added,
+    addedEducation: educationEntries.added,
+    addedLanguages: languages.added,
   }
+}
+
+function describeMergeResult(result: MergeResult): string | null {
+  const parts: string[] = []
+  if (result.addedExperience > 0) parts.push(`${result.addedExperience} Erfahrung${result.addedExperience === 1 ? '' : 'en'}`)
+  if (result.addedEducation > 0) parts.push(`${result.addedEducation} Ausbildungseintrag${result.addedEducation === 1 ? '' : 'e'}`)
+  if (result.addedSkills > 0) parts.push(`${result.addedSkills} Skill${result.addedSkills === 1 ? '' : 's'}`)
+  if (result.addedLanguages > 0) parts.push(`${result.addedLanguages} Sprache${result.addedLanguages === 1 ? '' : 'n'}`)
+
+  if (parts.length === 0) return 'Übernommen. Alle Einträge aus dem neuen CV waren bereits in deinem Profil vorhanden.'
+  return `Übernommen: ${parts.join(', ')} neu hinzugefügt. Bestehende Einträge bleiben erhalten.`
 }
 
 // ─── markdown renderer ───────────────────────────────────────────────────────
@@ -510,6 +583,7 @@ export default function CareerProfilePage() {
   const [cvSummaryLoading, setCvSummaryLoading] = useState(false)
   const [summaryStale, setSummaryStale] = useState(false)
   const [pendingMergedDraftHint, setPendingMergedDraftHint] = useState(false)
+  const [mergeSummaryHint, setMergeSummaryHint] = useState<string | null>(null)
   /** Which language the user wants to generate next */
   const [selectedGenLang, setSelectedGenLang] = useState<AnonymousSummaryLanguage>('de')
   /** Which language summary is open in the modal (null = closed) */
@@ -558,8 +632,9 @@ export default function CareerProfilePage() {
     try {
       sessionStorage.removeItem(PENDING_CV_KEY)
       const draft = JSON.parse(raw) as ParsedCvData
-      setProfile(mergeParsedDraftIntoProfile(profile, draft))
+      setProfile(mergeParsedDraftIntoProfile(profile, draft).profile)
       setDataEntryTab('manual')
+      setPendingMergedDraftHint(true)
     } catch {
       /* ignore corrupt payload */
     }
@@ -668,12 +743,13 @@ export default function CareerProfilePage() {
     setSaving(true)
     setError(null)
     try {
-      const merged = mergeParsedDraftIntoProfile(profile, draft)
-      await updateFullProfile(token, merged)
+      const result = mergeParsedDraftIntoProfile(profile, draft)
+      await updateFullProfile(token, result.profile)
       await load()
       setDataEntryTab('manual')
       setSummaryStale(true)
       setPendingMergedDraftHint(false)
+      setMergeSummaryHint(describeMergeResult(result))
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Speichern fehlgeschlagen'
       setError(msg)
@@ -684,7 +760,7 @@ export default function CareerProfilePage() {
   }
 
   const applyManualDraftLocally = (draft: ParsedCvData) => {
-    setProfile(prev => (prev ? mergeParsedDraftIntoProfile(prev, draft) : null))
+    setProfile(prev => (prev ? mergeParsedDraftIntoProfile(prev, draft).profile : null))
     setDataEntryTab('manual')
     setPendingMergedDraftHint(true)
   }
@@ -1271,6 +1347,21 @@ export default function CareerProfilePage() {
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
               Jetzt speichern
             </AppCtaButton>
+          </div>
+        )}
+
+        {/* ── Merge summary hint ────────────────────────────────────── */}
+        {mergeSummaryHint && (
+          <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-emerald-500/35 bg-emerald-50 px-4 py-2.5 text-sm text-emerald-800">
+            <p>{mergeSummaryHint}</p>
+            <button
+              type="button"
+              onClick={() => setMergeSummaryHint(null)}
+              className="shrink-0 text-emerald-700/70 hover:text-emerald-900"
+              aria-label="Hinweis schließen"
+            >
+              ×
+            </button>
           </div>
         )}
 
