@@ -65,6 +65,7 @@ import {
   type CareerSectionKey,
 } from '../utils/careerProfileIntelligence'
 import { useMediaQuery } from '../hooks/useMediaQuery'
+import { CAREER_FIELDS, CAREER_GOALS, CAREER_LEVELS } from '../config/careerOptions'
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -77,39 +78,6 @@ function hasEnoughForAnonymousCvSummary(p: CareerProfile): boolean {
   if ((p.experience?.length ?? 0) > 0) return true
   return (p.cvRawText?.trim().length ?? 0) >= 50
 }
-
-const FIELDS: { value: string; label: string }[] = [
-  { value: 'it', label: 'IT / Softwareentwicklung' },
-  { value: 'marketing', label: 'Marketing / Kommunikation' },
-  { value: 'finance', label: 'Finanzen / Buchhaltung' },
-  { value: 'healthcare', label: 'Gesundheit / Pflege' },
-  { value: 'engineering', label: 'Ingenieurwesen / Technik' },
-  { value: 'education', label: 'Bildung / Wissenschaft' },
-  { value: 'sales', label: 'Vertrieb / Sales' },
-  { value: 'hr', label: 'Personal / HR' },
-  { value: 'legal', label: 'Recht / Jura' },
-  { value: 'trades', label: 'Handwerk / Produktion' },
-  { value: 'design', label: 'Design / Kreativ' },
-  { value: 'other', label: 'Sonstiges' },
-]
-
-const LEVELS: { value: string; label: string }[] = [
-  { value: 'entry', label: 'Berufseinsteiger (0–1 Jahre)' },
-  { value: 'junior', label: 'Junior (1–3 Jahre)' },
-  { value: 'mid', label: 'Mid-Level (3–5 Jahre)' },
-  { value: 'senior', label: 'Senior (5–10 Jahre)' },
-  { value: 'lead', label: 'Lead / Führungskraft (10+ Jahre)' },
-  { value: 'career_change', label: 'Karrierewechsler' },
-]
-
-const GOALS: { id: string; label: string }[] = [
-  { id: 'new_job', label: 'Neuen Job finden' },
-  { id: 'career_switch', label: 'Karrierewechsel' },
-  { id: 'interview_prep', label: 'Interview vorbereiten' },
-  { id: 'cv_improvement', label: 'Lebenslauf verbessern' },
-  { id: 'salary_negotiation', label: 'Gehaltsverhandlung' },
-  { id: 'language', label: 'Sprachen / Kommunikation' },
-]
 
 function emptyExp(): WorkExperience {
   return { title: '', company: '', duration: '', summary: '' }
@@ -197,9 +165,9 @@ function mergeParsedDraftIntoProfile(profile: CareerProfile, draft: ParsedCvData
     profile: {
       ...profile,
       field: effField ?? null,
-      fieldLabel: FIELDS.find(f => f.value === effField)?.label ?? profile.fieldLabel,
+      fieldLabel: CAREER_FIELDS.find(f => f.value === effField)?.label ?? profile.fieldLabel,
       level: effLevel ?? null,
-      levelLabel: LEVELS.find(l => l.value === effLevel)?.label ?? profile.levelLabel,
+      levelLabel: CAREER_LEVELS.find(l => l.value === effLevel)?.label ?? profile.levelLabel,
       currentRole: draft.currentRole?.trim() || profile.currentRole,
       skills: skills.merged,
       experience: experience.merged,
@@ -670,10 +638,10 @@ export default function CareerProfilePage() {
       await completeOnboarding(token, {
         field,
         fieldLabel:
-          profile.fieldLabel?.trim() || FIELDS.find(f => f.value === field)?.label || field,
+          profile.fieldLabel?.trim() || CAREER_FIELDS.find(f => f.value === field)?.label || field,
         level,
         levelLabel:
-          profile.levelLabel?.trim() || LEVELS.find(l => l.value === level)?.label || level,
+          profile.levelLabel?.trim() || CAREER_LEVELS.find(l => l.value === level)?.label || level,
         currentRole: profile.currentRole?.trim() || undefined,
         goals: profile.goals,
       })
@@ -898,7 +866,7 @@ export default function CareerProfilePage() {
   const missingItems = getMissingProfileItems(profile)
   const nextAction = getNextProfileAction(profile)
   const goalLabels = profile.goals
-    .map(id => GOALS.find(g => g.id === id)?.label)
+    .map(id => CAREER_GOALS.find(g => g.id === id)?.label)
     .filter((l): l is string => Boolean(l))
   const showProfileSetupBadge = profile.onboardingCompleted || canMarkProfileSetupComplete(profile)
   const sectionItems: Array<{ key: CareerSectionKey; label: string; state: 'complete' | 'attention' | 'incomplete' }> = [
@@ -1249,8 +1217,8 @@ export default function CareerProfilePage() {
           {dataEntryTab === 'pdf' && (
             <CvUploader
               getToken={getToken}
-              fieldOptions={FIELDS}
-              levelOptions={LEVELS}
+              fieldOptions={CAREER_FIELDS}
+              levelOptions={CAREER_LEVELS}
               cvPasteText={cvPasteForUploader}
               onCvPasteTextChange={setCvPasteForUploader}
               onApplyParsed={saveParsedDraftToProfile}
@@ -1358,13 +1326,13 @@ export default function CareerProfilePage() {
                 value={field}
                 onChange={e => {
                   const v = e.target.value
-                  const label = FIELDS.find(f => f.value === v)?.label ?? ''
+                  const label = CAREER_FIELDS.find(f => f.value === v)?.label ?? ''
                   void saveProfilePatch({ field: v || null, fieldLabel: label || null })
                 }}
                 className="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 text-stone-900"
               >
                 <option value="">-</option>
-                {FIELDS.map(f => (
+                {CAREER_FIELDS.map(f => (
                   <option key={f.value} value={f.value}>{f.label}</option>
                 ))}
               </select>
@@ -1375,13 +1343,13 @@ export default function CareerProfilePage() {
                 value={level}
                 onChange={e => {
                   const v = e.target.value
-                  const label = LEVELS.find(l => l.value === v)?.label ?? ''
+                  const label = CAREER_LEVELS.find(l => l.value === v)?.label ?? ''
                   void saveProfilePatch({ level: v || null, levelLabel: label || null })
                 }}
                 className="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 text-stone-900"
               >
                 <option value="">-</option>
-                {LEVELS.map(l => (
+                {CAREER_LEVELS.map(l => (
                   <option key={l.value} value={l.value}>{l.label}</option>
                 ))}
               </select>
@@ -1393,6 +1361,7 @@ export default function CareerProfilePage() {
                 value={profile.currentRole ?? ''}
                 onChange={e => setProfile({ ...profile, currentRole: e.target.value })}
                 onBlur={() => void saveProfilePatch({ currentRole: profile.currentRole?.trim() || null })}
+                placeholder="z. B. Teamassistenz, Pflegefachkraft, Vertriebsmitarbeiterin"
                 className="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 text-stone-900"
               />
             </label>
@@ -1403,14 +1372,14 @@ export default function CareerProfilePage() {
                 onChange={e => setProfile({ ...profile, story: e.target.value })}
                 onBlur={() => void saveProfilePatch({ story: profile.story?.trim() || null })}
                 rows={5}
-                placeholder="Kurz in eigenen Worten: Werdegang, Stärken, was du suchst."
+                placeholder="Kurz in eigenen Worten: Werdegang, Stärken, was du suchst. Egal ob Pflege, Vertrieb, Büro oder ein anderer Beruf."
                 className="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2 text-stone-900"
               />
             </label>
           </div>
           <p className="mt-4 text-xs font-medium text-stone-600">Ziele</p>
           <div className="mt-2 flex flex-wrap gap-2">
-            {GOALS.map(g => (
+            {CAREER_GOALS.map(g => (
               <button
                 key={g.id}
                 type="button"
@@ -1433,9 +1402,9 @@ export default function CareerProfilePage() {
               onClick={() =>
                 void saveProfilePatch({
                   field: field || null,
-                  fieldLabel: FIELDS.find(f => f.value === field)?.label ?? profile.fieldLabel ?? null,
+                  fieldLabel: CAREER_FIELDS.find(f => f.value === field)?.label ?? profile.fieldLabel ?? null,
                   level: level || null,
-                  levelLabel: LEVELS.find(l => l.value === level)?.label ?? profile.levelLabel ?? null,
+                  levelLabel: CAREER_LEVELS.find(l => l.value === level)?.label ?? profile.levelLabel ?? null,
                   currentRole: profile.currentRole?.trim() || null,
                 })}
               className="inline-flex items-center justify-center rounded-xl border border-stone-400/50 bg-app-parchment px-4 py-2.5 text-sm font-medium text-stone-900 shadow-sm hover:bg-app-parchmentDeep disabled:opacity-50"
@@ -1468,7 +1437,7 @@ export default function CareerProfilePage() {
             <input
               value={skillDraft}
               onChange={e => setSkillDraft(e.target.value)}
-              placeholder="Skill hinzufügen…"
+              placeholder="z. B. Kundenberatung, MS Office, Schichtleitung"
               className="flex-1 rounded-lg border border-stone-300 px-3 py-2 text-sm"
               onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), void addSkill())}
             />
@@ -1491,7 +1460,7 @@ export default function CareerProfilePage() {
           {(profile.experience ?? []).map((exp, i) => (
             <div key={i} className="mb-3 grid gap-2 rounded-lg border border-stone-300/40 p-3 md:grid-cols-2">
               <input
-                placeholder="Titel"
+                placeholder="z. B. Teamassistenz"
                 value={exp.title ?? ''}
                 onChange={e => {
                   const next = [...(profile.experience ?? [])]
@@ -1853,7 +1822,7 @@ export default function CareerProfilePage() {
               <textarea
                 value={jobDesc}
                 onChange={e => setJobDesc(e.target.value)}
-                placeholder="Stellenbeschreibung - fließt direkt in die Jobanalyse ein (optional)"
+                placeholder="Stellenbeschreibung einfügen. Der Text fließt in die Analyse ein (optional)."
                 rows={3}
                 className="col-span-full rounded-lg border border-stone-300 px-3 py-2 text-sm"
               />

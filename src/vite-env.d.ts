@@ -7,8 +7,15 @@ interface ImportMetaEnv {
   readonly VITE_PROXY_TARGET: string
   readonly VITE_USE_REMOTE_API: string
   readonly VITE_REMAINING_FREE_SLOTS: string
+  readonly VITE_PIRSCH_CODE: string
+  readonly VITE_ANALYTICS_DOMAIN: string
 }
 
 interface ImportMeta {
   readonly env: ImportMetaEnv
+}
+
+declare module '*.md?raw' {
+  const content: string
+  export default content
 }

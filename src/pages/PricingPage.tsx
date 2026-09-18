@@ -56,7 +56,7 @@ const PLANS: Plan[] = [
     scale: true,
     features: [
       { text: 'Alles aus Free', included: true },
-      { text: 'Unbegrenzte Analysen', included: true },
+      { text: 'Unbegrenzte Analysen, auch mehrere Stellen am Tag', included: true },
       { text: 'Match-Score, Skill-Lücken, Formulierungen', included: true },
     ],
     buttonLabel: 'Premium starten',
@@ -65,6 +65,14 @@ const PLANS: Plan[] = [
 ]
 
 const FAQ = [
+  {
+    q: 'Für welche Berufe ist PrivatePrep?',
+    a: 'Für jede Stellenanzeige mit Text. Pflege, Vertrieb, Büro, Handwerk, Bildung, Finanzen, IT. Die Analyse liest die Anzeige und deinen Lebenslauf, nicht eine Branchenvorlage.',
+  },
+  {
+    q: 'Warum Premium, wenn Free schon eine Analyse pro Tag hat?',
+    a: 'Free reicht zum Ausprobieren einer konkreten Stelle. Premium (6,99 € im Monat) ist für die Phase, in der du mehrere Anzeigen am Tag vergleichst und den Lebenslauf jeweils an die nächste Ausschreibung anpasst. Jederzeit kündbar.',
+  },
   {
     q: 'Kann ich jederzeit kündigen?',
     a: 'Ja, mit einem Klick kündigen. Keine Fragen, keine versteckten Gebühren.',
@@ -122,7 +130,7 @@ export default function PricingPage() {
       try {
         await openSignIn()
       } catch {
-        alert('Please sign in first to upgrade')
+        alert('Bitte zuerst anmelden, um Premium zu starten.')
       }
       return
     }
@@ -132,16 +140,16 @@ export default function PricingPage() {
 
     try {
       if (!email) {
-        throw new Error('Please add an email address to your Clerk profile first.')
+        throw new Error('Bitte zuerst eine E-Mail-Adresse im Konto hinterlegen.')
       }
 
       const token = await getToken()
       if (!token) {
-        throw new Error('Could not create authenticated checkout session. Please sign in again.')
+        throw new Error('Die Zahlungssitzung konnte nicht gestartet werden. Bitte erneut anmelden.')
       }
 
       if (!user?.id) {
-        throw new Error('Missing user profile ID. Please reload and try again.')
+        throw new Error('Konto-ID fehlt. Bitte die Seite neu laden und erneut versuchen.')
       }
 
       const checkoutUrl = await createCheckoutSession(plan, email, {
@@ -150,7 +158,7 @@ export default function PricingPage() {
       })
       window.location.href = checkoutUrl
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create checkout')
+      setError(err instanceof Error ? err.message : 'Checkout konnte nicht gestartet werden.')
     } finally {
       setLoadingPlan(null)
     }
@@ -192,7 +200,7 @@ export default function PricingPage() {
             Einfach. Transparent. Fair.
           </h1>
           <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-stone-400">
-            Starte kostenlos und upgrade wenn du bereit bist. Kein Abo-Trick, keine versteckten Kosten.
+            Starte kostenlos mit einer Analyse pro Tag. Premium, wenn du mehrere Stellen parallel prüfst. Kein Abo-Trick, keine versteckten Kosten.
           </p>
         </div>
 

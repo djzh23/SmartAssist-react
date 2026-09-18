@@ -12,31 +12,8 @@ import {
   uploadCv,
   type ParsedCvData,
 } from '../../api/profileClient'
+import { CAREER_FIELDS, CAREER_LEVELS } from '../../config/careerOptions'
 import '../../styles/landing.css'
-
-const FIELDS: { value: string; label: string }[] = [
-  { value: 'it', label: 'IT / Softwareentwicklung' },
-  { value: 'marketing', label: 'Marketing / Kommunikation' },
-  { value: 'finance', label: 'Finanzen / Buchhaltung' },
-  { value: 'healthcare', label: 'Gesundheit / Pflege' },
-  { value: 'engineering', label: 'Ingenieurwesen / Technik' },
-  { value: 'education', label: 'Bildung / Wissenschaft' },
-  { value: 'sales', label: 'Vertrieb / Sales' },
-  { value: 'hr', label: 'Personal / HR' },
-  { value: 'legal', label: 'Recht / Jura' },
-  { value: 'trades', label: 'Handwerk / Produktion' },
-  { value: 'design', label: 'Design / Kreativ' },
-  { value: 'other', label: 'Sonstiges' },
-]
-
-const LEVELS: { value: string; label: string }[] = [
-  { value: 'entry', label: 'Berufseinsteiger (0-1 Jahre)' },
-  { value: 'junior', label: 'Junior (1-3 Jahre)' },
-  { value: 'mid', label: 'Mid-Level (3-5 Jahre)' },
-  { value: 'senior', label: 'Senior (5-10 Jahre)' },
-  { value: 'lead', label: 'Lead / Führungskraft (10+ Jahre)' },
-  { value: 'career_change', label: 'Karrierewechsler' },
-]
 
 const ANALYZE_PATH = '/analyze'
 
@@ -108,8 +85,8 @@ export default function OnboardingWizard({ getToken, reload, skipOnboarding }: P
     return () => window.clearTimeout(t)
   }, [saveDraft])
 
-  const fieldLabel = FIELDS.find(f => f.value === field)?.label ?? ''
-  const levelLabel = LEVELS.find(l => l.value === level)?.label ?? ''
+  const fieldLabel = CAREER_FIELDS.find(f => f.value === field)?.label ?? ''
+  const levelLabel = CAREER_LEVELS.find(l => l.value === level)?.label ?? ''
 
   const handleSkipAll = async () => {
     setFormError(null)
@@ -178,8 +155,8 @@ export default function OnboardingWizard({ getToken, reload, skipOnboarding }: P
 
       const effField = (parsed.field?.trim() || field).trim()
       const effLevel = (parsed.level?.trim() || level).trim()
-      const effFieldLabel = FIELDS.find(f => f.value === effField)?.label ?? fieldLabel
-      const effLevelLabel = LEVELS.find(l => l.value === effLevel)?.label ?? levelLabel
+      const effFieldLabel = CAREER_FIELDS.find(f => f.value === effField)?.label ?? fieldLabel
+      const effLevelLabel = CAREER_LEVELS.find(l => l.value === effLevel)?.label ?? levelLabel
       const effRole = (parsed.currentRole?.trim() || currentRole.trim()) || undefined
 
       await completeOnboarding(token, {
@@ -272,14 +249,14 @@ export default function OnboardingWizard({ getToken, reload, skipOnboarding }: P
               <div>
                 <h2 className="text-xl font-semibold text-stone-100">Dein Profil</h2>
                 <p className="mt-1 text-sm text-stone-400">
-                  Berufsfeld und Level — Grundlage für die Stellenanalyse.
+                  Berufsfeld und Level. Grundlage für die Stellenanalyse.
                 </p>
               </div>
               <label className="block">
                 <span className="mb-1.5 block text-sm font-medium text-stone-300">Berufsfeld</span>
                 <select value={field} onChange={e => setField(e.target.value)} className={selectCls}>
                   <option value="">Bitte wählen…</option>
-                  {FIELDS.map(f => (
+                  {CAREER_FIELDS.map(f => (
                     <option key={f.value} value={f.value}>{f.label}</option>
                   ))}
                 </select>
@@ -288,7 +265,7 @@ export default function OnboardingWizard({ getToken, reload, skipOnboarding }: P
                 <span className="mb-1.5 block text-sm font-medium text-stone-300">Erfahrungslevel</span>
                 <select value={level} onChange={e => setLevel(e.target.value)} className={selectCls}>
                   <option value="">Bitte wählen…</option>
-                  {LEVELS.map(l => (
+                  {CAREER_LEVELS.map(l => (
                     <option key={l.value} value={l.value}>{l.label}</option>
                   ))}
                 </select>
@@ -301,7 +278,7 @@ export default function OnboardingWizard({ getToken, reload, skipOnboarding }: P
                   type="text"
                   value={currentRole}
                   onChange={e => setCurrentRole(e.target.value)}
-                  placeholder="z. B. Junior Frontend Developer"
+                  placeholder="z. B. Teamassistenz, Pflegefachkraft, Vertriebsmitarbeiterin"
                   className={inputCls}
                 />
               </label>
@@ -326,7 +303,7 @@ export default function OnboardingWizard({ getToken, reload, skipOnboarding }: P
                 value={story}
                 onChange={e => setStory(e.target.value)}
                 rows={10}
-                placeholder="z. B. Drei Jahre Backend in C#, suche eine Rolle mit mehr Verantwortung…"
+                placeholder="z. B. Fünf Jahre Kundenberatung im Einzelhandel, suche eine Stelle mit mehr Verantwortung im Innendienst."
                 className={inputCls}
               />
               <div className="mt-auto flex flex-col gap-2 pt-6">
@@ -379,8 +356,8 @@ export default function OnboardingWizard({ getToken, reload, skipOnboarding }: P
                   </button>
                   <CvUploader
                     getToken={getToken}
-                    fieldOptions={FIELDS}
-                    levelOptions={LEVELS}
+                    fieldOptions={CAREER_FIELDS}
+                    levelOptions={CAREER_LEVELS}
                     cvPasteText={cvText}
                     onCvPasteTextChange={setCvText}
                     onApplyParsed={applyParsedCvAndFinish}

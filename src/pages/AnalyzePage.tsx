@@ -133,7 +133,7 @@ function ReportView({ report }: { report: AnalyzeReport }) {
             {violations.map((v, i) => (
               <li key={`${v.violationType}-${i}`}>
                 <span className="font-medium">{v.violationType}</span>
-                {v.snippet ? <span className="text-rose-200/80"> — {v.snippet}</span> : null}
+                {v.snippet ? <span className="text-rose-200/80"> ({v.snippet})</span> : null}
                 {v.reason ? <p className="mt-0.5 text-xs text-rose-200/70">{v.reason}</p> : null}
               </li>
             ))}
@@ -265,13 +265,13 @@ export default function AnalyzePage() {
         <label className="block">
           <span className="text-sm font-medium text-stone-200">Stellenanzeige</span>
           <p className="mt-1 text-xs text-stone-500">
-            Text der Anzeige einfügen. Eine URL allein reicht nicht — bitte den Anzeigentext kopieren.
+            Text der Anzeige einfügen, egal ob Pflege, Vertrieb, Büro, Handwerk oder IT. Eine URL allein reicht nicht. Bitte den Anzeigentext kopieren.
           </p>
           <textarea
             value={jobText}
             onChange={e => setJobText(e.target.value)}
             rows={12}
-            placeholder="Stellenanzeige hier einfügen…"
+            placeholder="Stellenanzeige hier einfügen. Den vollständigen Text kopieren, nicht nur den Titel."
             className="mt-3 w-full rounded-xl border border-app-border bg-black/20 px-3 py-2.5 text-sm text-stone-100 placeholder-stone-600 focus:border-amber-500/50 focus:outline-none focus:ring-1 focus:ring-amber-500/30"
           />
         </label>

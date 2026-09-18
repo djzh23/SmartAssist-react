@@ -1,5 +1,21 @@
 # https://www.robotstxt.org/robotstxt.html
 User-agent: *
 Allow: /
+Allow: /blog
+Allow: /impressum
+Allow: /datenschutz
+Disallow: /analyze
+Disallow: /profile
+Disallow: /career-profile
+Disallow: /onboarding
+Disallow: /pricing
+Disallow: /chat
+Disallow: /overview
+Disallow: /applications
+Disallow: /cv-studio
+Disallow: /guides
+Disallow: /notes
+Disallow: /admin
+Disallow: /api/
 
 Sitemap: https://www.betweenatna.de/sitemap.xml

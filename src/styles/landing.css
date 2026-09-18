@@ -80,3 +80,44 @@
   border: none;
   box-shadow: 0 0 0 0.35px rgb(255 248 237 / 0.05);
 }
+
+.blog-prose h2 {
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #fafaf9;
+}
+
+.blog-prose p,
+.blog-prose li {
+  color: #a8a29a;
+  font-size: 0.95rem;
+  line-height: 1.7;
+}
+
+.blog-prose p + p {
+  margin-top: 1rem;
+}
+
+.blog-prose ol,
+.blog-prose ul {
+  margin: 1rem 0 1rem 1.2rem;
+}
+
+.blog-prose ol {
+  list-style: decimal;
+}
+
+.blog-prose ul {
+  list-style: disc;
+}
+
+.blog-prose li + li {
+  margin-top: 0.4rem;
+}
+
+.blog-prose strong {
+  color: #e7e5e4;
+  font-weight: 600;
+}

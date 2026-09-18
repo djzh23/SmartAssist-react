@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "PrivatePrep: Bewerbung vorbereiten, Stellenanalyse, Interview-Training",
+  "name": "PrivatePrep: Stellenanalyse für Bewerbungen",
   "short_name": "PrivatePrep",
-  "description": "Stellenanzeige einfügen: Keywords, Lebenslauf-Lücken und Interviewfragen in Sekunden. Anschreiben, Lebenslauf, Karriere-Chat. Für Bewerbungen in Deutschland. Kostenlos starten, keine Kreditkarte.",
+  "description": "Stellenanzeige gegen den Lebenslauf prüfen: Match-Score, Skill-Lücken und CV-Formulierungen. Für jede Branche. Kostenlos starten.",
   "start_url": "/?utm_source=pwa",
   "scope": "/",
   "display": "standalone",

@@ -1,56 +1,21 @@
 import { useEffect, useLayoutEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { SignInButton, SignUpButton, useUser } from '@clerk/clerk-react'
+import { SignUpButton, useUser } from '@clerk/clerk-react'
+import { PUBLIC_AFTER_AUTH, PublicSiteFooter, PublicSiteHeader } from '../components/marketing/PublicSiteChrome'
 import '../styles/landing.css'
 
-const AFTER_AUTH = '/analyze'
+const AFTER_AUTH = PUBLIC_AFTER_AUTH
 
-function scrollTo(id: string) {
-  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-}
-
-const navLinkClass =
-  'rounded-full px-3 py-2 text-sm font-medium text-stone-300 transition hover:bg-white/8 hover:text-white'
-
-function LandingNav() {
-  return (
-    <header className="fixed inset-x-0 top-0 z-50 border-b border-white/8 bg-[#120c08]/90 backdrop-blur-xl">
-      <nav className="mx-auto flex h-14 max-w-[1120px] items-center justify-between gap-2 px-4 sm:h-16 sm:gap-3 sm:px-6">
-        <button type="button" onClick={() => scrollTo('hero')} className="flex items-center gap-2">
-          <img src="/logo-nav.webp" alt="" className="h-7 w-7 rounded-lg sm:h-8 sm:w-8" width={32} height={32} />
-          <span className="bg-gradient-to-r from-amber-200 via-amber-100 to-amber-50/90 bg-clip-text text-[14px] font-bold tracking-tight text-transparent sm:text-[17px]">
-            PrivatePrep
-          </span>
-        </button>
-
-        <div className="hidden items-center gap-0.5 md:flex">
-          <button type="button" onClick={() => scrollTo('features')} className={navLinkClass}>Funktionen</button>
-          <button type="button" onClick={() => scrollTo('how')} className={navLinkClass}>Ablauf</button>
-          <button type="button" onClick={() => scrollTo('demo')} className={navLinkClass}>Analysebericht</button>
-        </div>
-
-        <div className="flex items-center gap-1.5 sm:gap-2">
-          <SignInButton mode="modal" fallbackRedirectUrl={AFTER_AUTH}>
-            <button
-              type="button"
-              className="hidden min-h-[36px] rounded-full border border-amber-800/45 bg-white/[0.06] px-3 text-xs font-medium text-stone-100 sm:inline-flex sm:min-h-[40px] sm:px-4 sm:text-sm"
-            >
-              Anmelden
-            </button>
-          </SignInButton>
-          <SignUpButton mode="modal" fallbackRedirectUrl={AFTER_AUTH}>
-            <button
-              type="button"
-              className="inline-flex min-h-[36px] items-center rounded-full bg-gradient-to-r from-amber-400 to-amber-500 px-3 text-xs font-bold text-amber-950 shadow-lg shadow-black/30 sm:min-h-[40px] sm:px-4 sm:text-sm"
-            >
-              Kostenlos starten
-            </button>
-          </SignUpButton>
-        </div>
-      </nav>
-    </header>
-  )
-}
+const AUDIENCE_FIELDS = [
+  'Pflege',
+  'Verwaltung',
+  'Vertrieb',
+  'Handwerk',
+  'Bildung',
+  'Finanzen',
+  'IT',
+  'und andere Berufe',
+]
 
 function StaticDemo() {
   return (
@@ -63,7 +28,7 @@ function StaticDemo() {
       </div>
       <p className="font-serif text-4xl font-bold text-stone-50">3,8</p>
       <p className="text-sm text-stone-400">Match-Score von 5,0</p>
-      <p className="mt-1 text-[11px] text-stone-600">IT-Fachkraft auf Senior-DevOps-Stelle</p>
+      <p className="mt-1 text-[11px] text-stone-600">Teamassistenz auf eine Stelle als Office Managerin</p>
 
       <div className="mt-5 grid grid-cols-2 gap-2 text-xs">
         {[
@@ -83,11 +48,11 @@ function StaticDemo() {
         <p className="text-[11px] font-bold uppercase tracking-wide text-stone-500">Skill-Analyse</p>
         <div className="mt-2 flex flex-wrap gap-1.5">
           <span className="mr-0.5 self-center text-[10px] font-medium text-stone-500">Nicht vorhanden:</span>
-          {['Kubernetes', 'Terraform'].map(s => (
+          {['Englisch C1', 'SAP'].map(s => (
             <span key={s} className="rounded-full border border-rose-500/30 bg-rose-950/40 px-2.5 py-1 text-xs text-rose-100">{s}</span>
           ))}
           <span className="ml-1 mr-0.5 self-center text-[10px] font-medium text-stone-500">Nachgewiesen:</span>
-          {['C#', 'SQL', 'Azure'].map(s => (
+          {['MS Office', 'Terminplanung', 'Reisekosten'].map(s => (
             <span key={s} className="rounded-full border border-emerald-500/30 bg-emerald-950/40 px-2.5 py-1 text-xs text-emerald-100">{s}</span>
           ))}
         </div>
@@ -98,15 +63,15 @@ function StaticDemo() {
         <ul className="mt-2 space-y-2 text-sm text-stone-300">
           <li className="rounded-lg bg-black/20 px-3 py-2">
             <span className="text-[10px] text-stone-500">Vorhandener Eintrag</span>
-            <p className="mt-0.5 text-xs text-stone-500">Team-API in C# betreut</p>
+            <p className="mt-0.5 text-xs text-stone-500">Termine für die Abteilungsleitung gemacht</p>
             <span className="mt-1 block text-[10px] text-amber-400/80">Formulierungsvorschlag</span>
-            <p className="text-xs text-stone-300">REST-API für Bestellprozesse in C# entwickelt und betrieben.</p>
+            <p className="text-xs text-stone-300">Kalenderführung und Terminkoordination für die Abteilungsleitung übernommen.</p>
           </li>
           <li className="rounded-lg bg-black/20 px-3 py-2">
             <span className="text-[10px] text-stone-500">Vorhandener Eintrag</span>
-            <p className="mt-0.5 text-xs text-stone-500">Cloud-Erfahrung</p>
+            <p className="mt-0.5 text-xs text-stone-500">Reisekosten abgerechnet</p>
             <span className="mt-1 block text-[10px] text-amber-400/80">Formulierungsvorschlag</span>
-            <p className="text-xs text-stone-300">Azure-Deployments eigenständig begleitet und dokumentiert.</p>
+            <p className="text-xs text-stone-300">Reisekostenabrechnung für Außentermine eigenständig erstellt und nachgehalten.</p>
           </li>
         </ul>
       </div>
@@ -133,12 +98,20 @@ export default function LandingPage() {
     }
   }, [isLoaded, isSignedIn, navigate])
 
+  useEffect(() => {
+    const id = window.location.hash.replace('#', '')
+    if (!id) return
+    const t = window.setTimeout(() => {
+      document.getElementById(id)?.scrollIntoView({ block: 'start' })
+    }, 50)
+    return () => window.clearTimeout(t)
+  }, [])
+
   return (
     <div className="landing-page-root min-h-screen text-stone-100">
-      <LandingNav />
+      <PublicSiteHeader variant="landing" />
       <main id="main-content">
 
-        {/* Hero */}
         <section
           id="hero"
           className="relative overflow-hidden pt-20 sm:pt-28"
@@ -147,15 +120,16 @@ export default function LandingPage() {
           <div className="landing-dot-grid pointer-events-none absolute inset-0 opacity-70" />
           <div className="relative z-10 mx-auto flex max-w-[780px] flex-col items-center px-5 pb-10 pt-8 text-center sm:pb-16 sm:pt-12">
             <p className="mb-4 inline-flex rounded-full border border-amber-500/22 bg-amber-950/30 px-4 py-1.5 text-xs font-semibold text-amber-100/90 sm:mb-6">
-              KI-gestützte Stellenanalyse für den deutschen Arbeitsmarkt
+              Stellenanalyse für Bewerbungen in Deutschland
             </p>
             <h1 className="font-serif mb-4 text-[clamp(30px,5.2vw,60px)] font-bold leading-[1.14] text-stone-100 sm:mb-6">
               Bewerbungen fundiert<br className="hidden sm:block" /> vorbereiten.
             </h1>
             <p className="mb-6 max-w-[560px] text-base leading-relaxed text-stone-400 sm:mb-8 sm:text-lg">
-              PrivatePrep analysiert Stellenanzeigen anhand des hinterlegten Karriereprofils und Lebenslaufs.
-              Das Ergebnis ist ein strukturierter Bericht: Match-Score, Skill-Lückenanalyse und konkrete
-              CV-Formulierungsvorschläge, die zur ausgeschriebenen Stelle passen.
+              PrivatePrep prüft eine Stellenanzeige gegen dein Karriereprofil und deinen Lebenslauf.
+              Du bekommst einen Bericht mit Match-Score, fehlenden Skills und CV-Formulierungen,
+              die zur ausgeschriebenen Stelle passen. Für Pflege, Vertrieb, Büro, Handwerk, Bildung, IT
+              und jeden anderen Beruf mit einer echten Stellenanzeige.
             </p>
             <SignUpButton mode="modal" fallbackRedirectUrl={AFTER_AUTH}>
               <button
@@ -167,7 +141,17 @@ export default function LandingPage() {
             </SignUpButton>
             <p className="mt-4 text-sm text-stone-500">1 Analyse pro Tag im kostenlosen Tarif. Keine Zahlungsdaten erforderlich.</p>
 
-            {/* Feature highlights */}
+            <div className="mt-6 flex max-w-[640px] flex-wrap items-center justify-center gap-2">
+              {AUDIENCE_FIELDS.map(label => (
+                <span
+                  key={label}
+                  className="rounded-full border border-stone-600/40 bg-white/[0.04] px-3 py-1 text-[11px] font-medium text-stone-300"
+                >
+                  {label}
+                </span>
+              ))}
+            </div>
+
             <div className="mt-8 grid w-full max-w-[640px] grid-cols-2 gap-3 text-left sm:mt-14 sm:grid-cols-4">
               {[
                 ['Match-Score', 'Gesamtbewertung 1,0 bis 5,0'],
@@ -184,12 +168,11 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* Features */}
         <section id="features" className="scroll-mt-20 bg-[#100d0a] px-5 py-12 sm:py-20">
           <div className="mx-auto max-w-[960px]">
             <h2 className="mb-3 text-center text-2xl font-bold text-stone-100">Was PrivatePrep leistet</h2>
             <p className="mx-auto mb-8 max-w-[520px] text-center text-sm text-stone-500 sm:mb-12">
-              Jede Analyse basiert auf dem persönlichen Karriereprofil und liefert vier strukturierte Bewertungsdimensionen.
+              Jede Analyse basiert auf deinem Profil und der konkreten Anzeige. Keine Branchenvorlage, kein IT-only-Werkzeug.
             </p>
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {[
@@ -203,11 +186,11 @@ export default function LandingPage() {
                 },
                 {
                   title: 'CV-Formulierungen',
-                  desc: 'Für bestehende Lebenslaufeinträge werden Umformulierungen vorgeschlagen, die relevante Keywords aus der Stellenanzeige aufgreifen, ohne nicht vorhandene Fähigkeiten zu behaupten.',
+                  desc: 'Für bestehende Lebenslaufeinträge werden Umformulierungen vorgeschlagen, die relevante Wörter aus der Stellenanzeige aufgreifen, ohne nicht vorhandene Fähigkeiten zu behaupten.',
                 },
                 {
                   title: 'Kulturscreening',
-                  desc: 'Sprache und Tonalität der Ausschreibung werden auf kulturelle Merkmale analysiert. Hinweise auf Hierarchieorientierung, Teamdynamik und Arbeitsweise fließen in die Bewertung ein.',
+                  desc: 'Sprache und Tonalität der Ausschreibung werden auf kulturelle Merkmale analysiert. Hinweise auf Hierarchie, Team und Arbeitsweise fließen in die Bewertung ein.',
                 },
               ].map(({ title, desc }) => (
                 <div key={title} className="rounded-2xl border border-stone-600/35 bg-white/[0.03] p-5">
@@ -219,7 +202,6 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* How it works */}
         <section id="how" className="scroll-mt-20 bg-[#14100c] px-5 py-12 sm:py-20">
           <div className="mx-auto max-w-[960px]">
             <h2 className="mb-3 text-center text-2xl font-bold text-stone-100">Ablauf in drei Schritten</h2>
@@ -231,17 +213,17 @@ export default function LandingPage() {
                 {
                   step: '1',
                   title: 'Karriereprofil anlegen',
-                  desc: 'Berufsfeld, Erfahrungslevel, inhaltliche Schwerpunkte und Karriereziele werden einmalig hinterlegt. Der Lebenslauf wird als Volltext eingefügt oder als PDF hochgeladen. Dieses Profil bildet die Vergleichsbasis für jede folgende Analyse und muss nicht wiederholt bearbeitet werden.',
+                  desc: 'Berufsfeld, Erfahrungsstand und Ziele einmal hinterlegen. Der Lebenslauf kommt als PDF oder Text dazu. Dieses Profil ist die Vergleichsbasis für jede folgende Analyse, unabhängig von der Branche.',
                 },
                 {
                   step: '2',
                   title: 'Stellenanzeige übergeben',
-                  desc: 'Der vollständige Text einer Stellenausschreibung wird in das Analysefeld eingefügt. Das System wertet geforderte Qualifikationen, Unternehmenssprache, Soft-Skill-Erwartungen und implizite Anforderungen systematisch aus.',
+                  desc: 'Den vollständigen Text einer Stellenausschreibung einfügen. Das System wertet geforderte Qualifikationen, Sprache und implizite Erwartungen aus, so wie sie in der Anzeige stehen.',
                 },
                 {
                   step: '3',
                   title: 'Analysebericht abrufen',
-                  desc: 'Innerhalb weniger Sekunden steht ein vollständiger Bericht bereit: gewichteter Match-Score, detaillierte Skill-Aufschlüsselung, Kulturscreening-Hinweise und direkt verwendbare CV-Formulierungsvorschläge.',
+                  desc: 'Innerhalb weniger Sekunden steht der Bericht bereit: Match-Score, Skill-Aufschlüsselung, Kulturscreening und CV-Formulierungen, die du direkt prüfen und übernehmen kannst.',
                 },
               ].map(({ step, title, desc }) => (
                 <div key={step} className="rounded-2xl border border-stone-600/35 bg-white/[0.03] p-6">
@@ -256,12 +238,11 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* Sample Report */}
         <section id="demo" className="scroll-mt-20 bg-[#120c08] px-5 py-12 sm:py-20">
           <div className="mx-auto max-w-[960px]">
             <h2 className="mb-3 text-center text-2xl font-bold text-stone-100">Aufbau eines Analyseberichts</h2>
-            <p className="mx-auto mb-6 max-w-[500px] text-center text-sm text-stone-500 sm:mb-10">
-              Beispielszenario: IT-Fachkraft mit C# und SQL bewirbt sich auf eine Senior-DevOps-Stelle mit Kubernetes-Anforderung.
+            <p className="mx-auto mb-6 max-w-[520px] text-center text-sm text-stone-500 sm:mb-10">
+              Beispiel: Teamassistenz mit MS Office und Terminplanung bewirbt sich auf Office Managerin. Dieselbe Berichtslogik gilt für Pflege, Vertrieb, Handwerk oder IT.
             </p>
             <div className="grid gap-8 lg:grid-cols-2 lg:items-start">
               <StaticDemo />
@@ -299,19 +280,16 @@ export default function LandingPage() {
                     Erste Analyse starten
                   </button>
                 </SignUpButton>
+                <p className="text-center text-xs leading-relaxed text-stone-500">
+                  Kostenlos: 1 Analyse pro Tag. Premium (6,99 € im Monat): unbegrenzt, wenn du mehrere Stellen parallel prüfst.
+                </p>
               </div>
             </div>
           </div>
         </section>
 
       </main>
-      <footer className="bg-[#0D0800] px-6 py-10 text-center text-xs text-stone-600">
-        <p>© 2026 PrivatePrep. KI-gestützte Stellenanalyse.</p>
-        <p className="mt-2 flex items-center justify-center gap-4">
-          <a href="/impressum" className="transition-colors hover:text-stone-400">Impressum</a>
-          <a href="/datenschutz" className="transition-colors hover:text-stone-400">Datenschutz</a>
-        </p>
-      </footer>
+      <PublicSiteFooter />
     </div>
   )
 }
