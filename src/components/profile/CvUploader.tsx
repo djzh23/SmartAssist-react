@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from 'react'
-import { FileUp, Loader2 } from 'lucide-react'
+import { FileUp, Loader2, X } from 'lucide-react'
 import AppCtaButton from '../ui/AppCtaButton'
 import type { Education, ParsedCvData, ProfileLanguage, WorkExperience } from '../../api/profileClient'
 import { uploadCvPdfForParsing } from '../../api/profileClient'
@@ -19,6 +19,11 @@ interface Props {
   onApplyParsed: (draft: ParsedCvData) => Promise<void>
   onManualAdjust: (draft: ParsedCvData) => void
 }
+
+const inputCls =
+  'mt-1 w-full rounded-lg border border-stone-400/40 bg-white px-2 py-1.5 text-sm text-stone-900 focus:border-amber-500/50 focus:outline-none focus:ring-1 focus:ring-amber-500/30'
+const rowInputCls =
+  'rounded-lg border border-stone-400/30 bg-white px-1.5 py-1 text-xs text-stone-900 focus:border-amber-500/50 focus:outline-none focus:ring-1 focus:ring-amber-500/30'
 
 function fileToBase64DataPart(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -154,16 +159,16 @@ export default function CvUploader({
     const levelLabel = levelOptions.find(l => l.value === (draft.level ?? ''))?.label ?? draft.level ?? ''
 
     return (
-      <div className="rounded-xl border border-emerald-200 bg-white p-4 shadow-sm">
-        <p className="mb-3 text-sm font-semibold text-emerald-800">Erkannt aus deinem Lebenslauf</p>
+      <div className="rounded-xl border border-emerald-500/30 bg-app-parchment p-4 shadow-landing">
+        <p className="mb-3 text-sm font-semibold text-emerald-700">Erkannt aus deinem Lebenslauf</p>
 
         <div className="mb-3 grid gap-3 sm:grid-cols-2">
-          <label className="block text-xs font-medium text-slate-600">
+          <label className="block text-xs font-medium text-stone-700">
             Berufsfeld
             <select
               value={draft.field ?? ''}
               onChange={e => setDraft({ ...draft, field: e.target.value })}
-              className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm text-slate-800"
+              className={inputCls}
             >
               <option value="">-</option>
               {fieldOptions.map(f => (
@@ -173,15 +178,15 @@ export default function CvUploader({
               ))}
             </select>
             {fieldLabel && (
-              <span className="mt-0.5 block text-[10px] text-slate-400">{fieldLabel}</span>
+              <span className="mt-0.5 block text-[10px] text-stone-500">{fieldLabel}</span>
             )}
           </label>
-          <label className="block text-xs font-medium text-slate-600">
+          <label className="block text-xs font-medium text-stone-700">
             Level
             <select
               value={draft.level ?? ''}
               onChange={e => setDraft({ ...draft, level: e.target.value })}
-              className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm text-slate-800"
+              className={inputCls}
             >
               <option value="">-</option>
               {levelOptions.map(l => (
@@ -191,31 +196,32 @@ export default function CvUploader({
               ))}
             </select>
             {levelLabel && (
-              <span className="mt-0.5 block text-[10px] text-slate-400">{levelLabel}</span>
+              <span className="mt-0.5 block text-[10px] text-stone-500">{levelLabel}</span>
             )}
           </label>
         </div>
 
-        <label className="mb-3 block text-xs font-medium text-slate-600">
+        <label className="mb-3 block text-xs font-medium text-stone-700">
           Aktuelle Rolle
           <input
             value={draft.currentRole ?? ''}
             onChange={e => setDraft({ ...draft, currentRole: e.target.value })}
-            className="mt-1 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm text-slate-800"
+            className={inputCls}
           />
         </label>
 
         <div className="mb-3">
-          <p className="mb-1 text-xs font-medium text-slate-600">Skills</p>
+          <p className="mb-1 text-xs font-medium text-stone-700">Skills</p>
           <div className="flex flex-wrap gap-1.5">
             {draft.skills.map(sk => (
               <button
                 key={sk}
                 type="button"
                 onClick={() => removeSkill(sk)}
-                className="rounded-full bg-primary-light px-2 py-0.5 text-xs font-medium text-primary hover:bg-violet-200"
+                className="inline-flex items-center gap-1 rounded-full bg-primary/15 px-2.5 py-1 text-xs font-medium text-amber-800 hover:bg-primary/25"
               >
-                {sk} ×
+                {sk}
+                <X size={11} />
               </button>
             ))}
           </div>
@@ -225,12 +231,12 @@ export default function CvUploader({
               onChange={e => setSkillInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addSkill())}
               placeholder="Skill hinzufügen"
-              className="min-w-0 flex-1 rounded-lg border border-slate-200 px-2 py-1 text-sm"
+              className="min-w-0 flex-1 rounded-lg border border-stone-400/30 bg-white px-2 py-1 text-sm text-stone-900 focus:border-amber-500/50 focus:outline-none focus:ring-1 focus:ring-amber-500/30"
             />
             <button
               type="button"
               onClick={addSkill}
-              className="rounded-lg border border-slate-200 px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50"
+              className="rounded-lg border border-stone-400/40 px-2 py-1 text-xs font-medium text-stone-700 hover:bg-app-parchmentDeep"
             >
               +
             </button>
@@ -238,81 +244,81 @@ export default function CvUploader({
         </div>
 
         <div className="mb-3 space-y-2">
-          <p className="text-xs font-medium text-slate-600">Erfahrung</p>
+          <p className="text-xs font-medium text-stone-700">Erfahrung</p>
           {draft.experience.map((ex, i) => (
-            <div key={i} className="flex flex-col gap-1 rounded-lg border border-slate-100 bg-slate-50/80 p-2 text-xs sm:flex-row sm:items-center">
+            <div key={i} className="flex flex-col gap-1 rounded-lg border border-stone-400/25 bg-app-parchmentDeep p-2 text-xs sm:flex-row sm:items-center">
               <input
                 value={ex.title ?? ''}
                 onChange={e => updateExp(i, { title: e.target.value })}
                 placeholder="Titel"
-                className="flex-1 rounded border border-slate-200 px-1.5 py-1"
+                className={`flex-1 ${rowInputCls}`}
               />
               <input
                 value={ex.company ?? ''}
                 onChange={e => updateExp(i, { company: e.target.value })}
                 placeholder="Firma"
-                className="flex-1 rounded border border-slate-200 px-1.5 py-1"
+                className={`flex-1 ${rowInputCls}`}
               />
               <input
                 value={ex.duration ?? ''}
                 onChange={e => updateExp(i, { duration: e.target.value })}
                 placeholder="Zeitraum"
-                className="w-full rounded border border-slate-200 px-1.5 py-1 sm:w-28"
+                className={`w-full sm:w-28 ${rowInputCls}`}
               />
-              <button type="button" onClick={() => removeExp(i)} className="text-red-500 hover:underline">
-                ×
+              <button type="button" onClick={() => removeExp(i)} className="text-rose-600 hover:text-rose-700">
+                <X size={14} />
               </button>
             </div>
           ))}
         </div>
 
         <div className="mb-3 space-y-2">
-          <p className="text-xs font-medium text-slate-600">Ausbildung</p>
+          <p className="text-xs font-medium text-stone-700">Ausbildung</p>
           {draft.education.map((ed, i) => (
-            <div key={i} className="flex flex-col gap-1 rounded-lg border border-slate-100 bg-slate-50/80 p-2 text-xs sm:flex-row sm:items-center">
+            <div key={i} className="flex flex-col gap-1 rounded-lg border border-stone-400/25 bg-app-parchmentDeep p-2 text-xs sm:flex-row sm:items-center">
               <input
                 value={ed.degree ?? ''}
                 onChange={e => updateEdu(i, { degree: e.target.value })}
                 placeholder="Abschluss"
-                className="flex-1 rounded border border-slate-200 px-1.5 py-1"
+                className={`flex-1 ${rowInputCls}`}
               />
               <input
                 value={ed.institution ?? ''}
                 onChange={e => updateEdu(i, { institution: e.target.value })}
                 placeholder="Institution"
-                className="flex-1 rounded border border-slate-200 px-1.5 py-1"
+                className={`flex-1 ${rowInputCls}`}
               />
               <input
                 value={ed.year ?? ''}
                 onChange={e => updateEdu(i, { year: e.target.value })}
                 placeholder="Jahr"
-                className="w-full rounded border border-slate-200 px-1.5 py-1 sm:w-20"
+                className={`w-full sm:w-20 ${rowInputCls}`}
               />
-              <button type="button" onClick={() => removeEdu(i)} className="text-red-500 hover:underline">
-                ×
+              <button type="button" onClick={() => removeEdu(i)} className="text-rose-600 hover:text-rose-700">
+                <X size={14} />
               </button>
             </div>
           ))}
         </div>
 
         <div className="mb-4 space-y-2">
-          <p className="text-xs font-medium text-slate-600">Sprachen</p>
+          <p className="text-xs font-medium text-stone-700">Sprachen</p>
           {draft.languages.map((lg, i) => (
             <div key={i} className="flex flex-wrap items-center gap-1 text-xs">
               <input
                 value={lg.name ?? ''}
                 onChange={e => updateLang(i, { name: e.target.value })}
                 placeholder="Sprache"
-                className="w-28 rounded border border-slate-200 px-1.5 py-1"
+                className={`w-28 ${rowInputCls}`}
               />
               <input
                 value={lg.level ?? ''}
                 onChange={e => updateLang(i, { level: e.target.value })}
                 placeholder="Level"
-                className="w-20 rounded border border-slate-200 px-1.5 py-1"
+                className={`w-20 ${rowInputCls}`}
               />
-              <button type="button" onClick={() => removeLang(i)} className="text-red-500 hover:underline">
-                ×
+              <button type="button" onClick={() => removeLang(i)} className="text-rose-600 hover:text-rose-700">
+                <X size={14} />
               </button>
             </div>
           ))}
@@ -339,6 +345,7 @@ export default function CvUploader({
           </AppCtaButton>
           <AppCtaButton
             variant="ghost"
+            className="!text-stone-700 hover:!bg-app-parchmentDeep"
             onClick={() => onManualAdjust(draft)}
           >
             Im Formular bearbeiten (speichert nicht automatisch)
@@ -346,25 +353,25 @@ export default function CvUploader({
           <button
             type="button"
             onClick={() => setDraft(null)}
-            className="text-sm text-slate-500 hover:text-slate-700"
+            className="text-sm text-stone-600 hover:text-stone-800"
           >
             Zurück
           </button>
         </div>
-        {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+        {error && <p className="mt-2 text-sm text-rose-600">{error}</p>}
       </div>
     )
   }
 
   return (
     <div className="space-y-3">
-      <div className="flex rounded-lg border border-slate-200 bg-slate-100 p-0.5 text-xs font-medium">
+      <div className="flex rounded-lg border border-stone-400/40 bg-app-parchmentDeep p-0.5 text-xs font-medium">
         <button
           type="button"
           onClick={() => setTab('upload')}
           className={[
             'flex-1 rounded-md py-2 transition-colors',
-            tab === 'upload' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700',
+            tab === 'upload' ? 'bg-app-parchment text-stone-900 shadow-sm' : 'text-stone-600 hover:text-stone-800',
           ].join(' ')}
         >
           PDF hochladen
@@ -374,7 +381,7 @@ export default function CvUploader({
           onClick={() => setTab('paste')}
           className={[
             'flex-1 rounded-md py-2 transition-colors',
-            tab === 'paste' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700',
+            tab === 'paste' ? 'bg-app-parchment text-stone-900 shadow-sm' : 'text-stone-600 hover:text-stone-800',
           ].join(' ')}
         >
           Text einfügen
@@ -396,15 +403,15 @@ export default function CvUploader({
               void handleFile(e.dataTransfer.files[0] ?? null)
             }}
             className={[
-              'flex w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300 bg-white px-4 py-10 transition-colors',
-              loading ? 'cursor-wait opacity-70' : 'hover:border-primary hover:bg-primary-light/30',
+              'flex w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-stone-400/50 bg-app-parchment px-4 py-10 transition-colors',
+              loading ? 'cursor-wait opacity-70' : 'hover:border-amber-500/50 hover:bg-amber-500/10',
             ].join(' ')}
           >
             {loading ? (
               <>
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <p className="text-sm font-medium text-slate-700">Lebenslauf wird analysiert…</p>
-                <p className="text-xs text-slate-500">
+                <p className="text-sm font-medium text-stone-800">Lebenslauf wird analysiert…</p>
+                <p className="text-xs text-stone-600">
                   {loadStep === 0 && 'Text extrahieren…'}
                   {loadStep === 1 && 'Daten erkennen…'}
                   {loadStep === 2 && 'Felder ausfüllen…'}
@@ -412,11 +419,11 @@ export default function CvUploader({
               </>
             ) : (
               <>
-                <FileUp className="h-10 w-10 text-slate-400" />
-                <p className="text-center text-sm text-slate-600">
+                <FileUp className="h-10 w-10 text-stone-500" />
+                <p className="text-center text-sm text-stone-700">
                   PDF-Lebenslauf hierhin ziehen oder klicken zum Auswählen
                 </p>
-                <p className="text-[11px] text-slate-400">Max. 5 MB</p>
+                <p className="text-[11px] text-stone-500">Max. 5 MB</p>
               </>
             )}
           </button>
@@ -437,15 +444,15 @@ export default function CvUploader({
             onChange={e => onCvPasteTextChange(e.target.value)}
             rows={8}
             placeholder="CV-Text hier einfügen…"
-            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800"
+            className="w-full rounded-lg border border-stone-400/40 bg-app-parchment px-3 py-2 text-sm text-stone-900 focus:border-amber-500/50 focus:outline-none focus:ring-1 focus:ring-amber-500/30"
           />
-          <p className="mt-1 text-[11px] text-slate-500">
+          <p className="mt-1 text-[11px] text-stone-600">
             Text wird beim Abschluss gespeichert (ohne KI-Analyse). Für automatische Erkennung nutze PDF.
           </p>
         </div>
       )}
 
-      {error && !draft && <p className="text-sm text-red-600">{error}</p>}
+      {error && !draft && <p className="text-sm text-rose-600">{error}</p>}
     </div>
   )
 }

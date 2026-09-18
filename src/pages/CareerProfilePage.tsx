@@ -1231,7 +1231,7 @@ export default function CareerProfilePage() {
         {currentSection === 'basis' && (
           <>
         {/* ── CV-Import ──────────────────────────────────────────────── */}
-        <section className="mb-8 rounded-xl border border-violet-500/35 bg-app-parchment p-5 shadow-landing text-stone-900">
+        <section className="mb-8 rounded-xl border border-stone-400/40 bg-app-parchment p-5 shadow-landing text-stone-900">
           <h2 className="mb-1 text-sm font-semibold text-stone-900">Profil befüllen</h2>
           <p className="mb-4 text-sm text-stone-700">
             PDF hochladen → KI erkennt Felder automatisch und befüllt das Formular.
@@ -1244,7 +1244,7 @@ export default function CareerProfilePage() {
               className={[
                 'flex-1 rounded-md py-2.5 transition-colors',
                 dataEntryTab === 'pdf'
-                  ? 'bg-white text-stone-900 shadow-sm'
+                  ? 'bg-app-parchment text-stone-900 shadow-sm'
                   : 'text-stone-600 hover:text-stone-900',
               ].join(' ')}
             >
@@ -1256,7 +1256,7 @@ export default function CareerProfilePage() {
               className={[
                 'flex-1 rounded-md py-2.5 transition-colors',
                 dataEntryTab === 'manual'
-                  ? 'bg-white text-stone-900 shadow-sm'
+                  ? 'bg-app-parchment text-stone-900 shadow-sm'
                   : 'text-stone-600 hover:text-stone-900',
               ].join(' ')}
             >
@@ -1333,7 +1333,7 @@ export default function CareerProfilePage() {
 
         {/* ── Pending merge hint ─────────────────────────────────────── */}
         {pendingMergedDraftHint && (
-          <div className="mb-4 flex flex-col gap-3 rounded-lg border border-violet-500/35 bg-app-parchment px-4 py-3 text-sm text-stone-900 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mb-4 flex flex-col gap-3 rounded-lg border border-amber-500/35 bg-app-parchment px-4 py-3 text-sm text-stone-900 sm:flex-row sm:items-center sm:justify-between">
             <p>
               PDF-Daten wurden ins Formular übernommen - noch nicht gespeichert. Jetzt alle
               sichtbaren Felder auf dem Server speichern?
