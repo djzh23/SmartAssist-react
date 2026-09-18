@@ -11,7 +11,6 @@ import { BASE, authHeaders, readApiError } from './apiBase'
 // ── Re-exports from domain-specific clients ────────────────────────────────
 export * from './agentClient'
 export * from './applicationsClient'
-export * from './cvStudioClient'
 
 // ── TTS via backend ────────────────────────────────────────────────────────
 

@@ -22,7 +22,6 @@ import {
   Trash2,
   X,
 } from 'lucide-react'
-import { listCvStudioResumes } from '../api/client'
 import type {
   CareerProfile,
   Education,
@@ -45,7 +44,6 @@ import CvUploader from '../components/profile/CvUploader'
 import PageHeader from '../components/layout/PageHeader'
 import AppCtaButton from '../components/ui/AppCtaButton'
 import StandardPageContainer from '../components/layout/StandardPageContainer'
-import type { CvStudioResumeSummary } from '../types'
 import {
   MobileCareerProfileOverview,
   ProfileAreaCard,
@@ -582,7 +580,6 @@ export default function CareerProfilePage() {
   const [summaryModalLang, setSummaryModalLang] = useState<'de' | 'en' | null>(null)
   const [helpOpen, setHelpOpen] = useState(false)
   const [insightModalOpen, setInsightModalOpen] = useState(false)
-  const [cvSummaries, setCvSummaries] = useState<CvStudioResumeSummary[]>([])
   const [activeSection, setActiveSection] = useState<CareerSectionKey>('overview')
   const [mobileSection, setMobileSection] = useState<CareerSectionKey>('overview')
   const isDesktop = useMediaQuery('(min-width: 1024px)')
@@ -594,12 +591,8 @@ export default function CareerProfilePage() {
     try {
       const token = await getToken()
       if (!token) throw new Error('Nicht angemeldet')
-      const [p, cvs] = await Promise.all([
-        fetchProfile(token),
-        listCvStudioResumes(token).catch(() => [] as CvStudioResumeSummary[]),
-      ])
+      const p = await fetchProfile(token)
       setProfile(p)
-      setCvSummaries(cvs)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Laden fehlgeschlagen')
     } finally {
@@ -919,9 +912,7 @@ export default function CareerProfilePage() {
     { key: 'targets', label: 'Wunschstellen', state: getSectionCompletion('targets', profile) },
   ]
   const completedSections = sectionItems.filter(item => item.state === 'complete').length
-  const activeCv = cvSummaries
-    .slice()
-    .sort((a, b) => new Date(b.updatedAtUtc).getTime() - new Date(a.updatedAtUtc).getTime())[0] ?? null
+  const hasCv = (profile.cvRawText?.trim().length ?? 0) > 0
   const mobileIsDetail = mobileSection !== 'overview'
   const currentSection = isDesktop ? activeSection : mobileSection
 
@@ -1135,11 +1126,11 @@ export default function CareerProfilePage() {
                 </AppCtaButton>
               </div>
               <div className="grid gap-3 md:grid-cols-3">
-                {activeCv ? (
+                {hasCv ? (
                   <ProfileSummaryCard
                     title="Aktiver Lebenslauf"
-                    value={activeCv.title}
-                    details={`Aktualisiert ${formatDateTime(activeCv.updatedAtUtc)}`}
+                    value="Hochgeladen"
+                    details={profile.cvUploadedAt ? `Zuletzt aktualisiert ${formatDateTime(profile.cvUploadedAt)}` : 'Bereit für die Analyse'}
                     icon={FileText}
                   />
                 ) : (
