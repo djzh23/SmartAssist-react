@@ -165,7 +165,7 @@ export default function LandingPage() {
                 Kostenlos starten
               </button>
             </SignUpButton>
-            <p className="mt-4 text-sm text-stone-500">3 Analysen pro Tag im kostenlosen Tarif. Keine Zahlungsdaten erforderlich.</p>
+            <p className="mt-4 text-sm text-stone-500">1 Analyse pro Tag im kostenlosen Tarif. Keine Zahlungsdaten erforderlich.</p>
 
             {/* Feature highlights */}
             <div className="mt-8 grid w-full max-w-[640px] grid-cols-2 gap-3 text-left sm:mt-14 sm:grid-cols-4">

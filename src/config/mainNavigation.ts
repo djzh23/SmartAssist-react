@@ -50,7 +50,7 @@ export const MAIN_NAV_ITEMS: MainNavItemMeta[] = [
     key: 'pricing',
     route: '/pricing',
     label: 'Preise',
-    subtitle: 'Free mit 3 Analysen pro Tag, Premium unbegrenzt.',
+    subtitle: 'Free mit 1 Analyse pro Tag, Premium unbegrenzt.',
     icon: Tag,
     matchesPath: pathname => pathname.startsWith('/pricing'),
   },

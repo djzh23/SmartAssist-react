@@ -7,7 +7,7 @@ const DEFAULT_TITLE
   = `${SITE_TITLE_SUFFIX} | Stellenanalyse: Match-Score, Skill-Lücken, Formulierungen`
 
 const DEFAULT_DESCRIPTION
-  = 'Stellenanzeige analysieren: Match-Score, Skill-Lücken und konkrete Formulierungen. 3 Analysen pro Tag kostenlos.'
+  = 'Stellenanzeige analysieren: Match-Score, Skill-Lücken und konkrete Formulierungen. 1 Analyse pro Tag kostenlos.'
 
 export interface RouteDocumentMeta {
   title: string
@@ -44,7 +44,7 @@ const ROUTE_META: MetaEntry[] = [
     pattern: '/pricing',
     end: true,
     title: `Preise | ${SITE_TITLE_SUFFIX}`,
-    description: 'Free: 3 Analysen pro Tag. Premium: unbegrenzt.',
+    description: 'Free: 1 Analyse pro Tag. Premium: unbegrenzt.',
   },
   {
     pattern: '/onboarding',

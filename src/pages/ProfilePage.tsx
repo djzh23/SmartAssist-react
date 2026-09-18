@@ -507,21 +507,17 @@ export default function ProfilePage() {
             <div className={`rounded-xl border-2 p-4 ${planColors.border} bg-app-parchment/60`}>
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-stone-400/40 bg-white">
-                  <PlanIcon size={18} className={user.plan === 'pro' ? 'text-amber-600' : user.plan === 'premium' ? 'text-amber-600' : 'text-stone-500'} />
+                  <PlanIcon size={18} className={user.plan === 'premium' ? 'text-amber-600' : 'text-stone-500'} />
                 </div>
                 <div>
                   <p className="font-bold text-stone-900">{planLabel}</p>
                   <p className="text-sm text-stone-600">
-                    {user.plan === 'free'
-                      ? '20 KI-Antworten pro Tag (nach Anmeldung)'
-                      : user.plan === 'premium'
-                        ? '200 KI-Antworten pro Tag'
-                        : 'Unbegrenzte KI-Antworten'}
+                    {user.plan === 'free' ? '1 Analyse pro Tag' : 'Unbegrenzte Analysen'}
                   </p>
                 </div>
               </div>
 
-              {(user.plan === 'premium' || user.plan === 'pro') && (
+              {user.plan === 'premium' && (
                 <button
                   type="button"
                   onClick={() => void handleManageSubscription()}

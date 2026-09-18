@@ -35,7 +35,7 @@ const PLANS: Plan[] = [
     accentBorder: 'border-stone-600/45',
     accentHeader: 'bg-app-muted/90',
     features: [
-      { text: '3 Stellenanalysen pro Tag', included: true },
+      { text: '1 Stellenanalyse pro Tag', included: true },
       { text: 'Match-Score, Skill-Lücken, Formulierungen', included: true },
       { text: 'Profil, Story und Lebenslauf', included: true },
       { text: 'Unbegrenzte Analysen', included: false },
@@ -46,7 +46,7 @@ const PLANS: Plan[] = [
   {
     id: 'premium',
     name: 'Premium',
-    price: '4,99 €',
+    price: '6,99 €',
     period: '/Monat',
     icon: <Sparkles size={18} className="text-amber-600" />,
     accentBorder: 'border-amber-500/45',
@@ -158,7 +158,7 @@ export default function PricingPage() {
 
   const handleFreeClick = () => {
     navigate('/analyze')
-    setToast('Free-Plan: 3 Analysen pro Tag.')
+    setToast('Free-Plan: 1 Analyse pro Tag.')
     window.setTimeout(() => setToast(null), 3000)
   }
 

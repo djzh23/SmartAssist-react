@@ -79,7 +79,7 @@ export default function UsageLimitModal({ isOpen, isLoggedIn, userEmail, onClose
             <ul className="mb-3 space-y-1">
               {!isLoggedIn && (
                 <li className="flex items-center gap-1.5 text-xs text-slate-600">
-                  <Check size={12} className="text-emerald-500" /> 3 Analysen am Tag, kostenlos
+                  <Check size={12} className="text-emerald-500" /> 1 Analyse am Tag, kostenlos
                 </li>
               )}
               <li className="flex items-center gap-1.5 text-xs text-slate-600">
@@ -106,10 +106,10 @@ export default function UsageLimitModal({ isOpen, isLoggedIn, userEmail, onClose
             <p className="relative mb-1 text-sm font-semibold text-slate-800">Premium werden</p>
             <ul className="relative mb-3 space-y-1">
               <li className="flex items-center gap-1.5 text-xs text-slate-700">
-                <Check size={12} className="text-emerald-500" /> 200 Nachrichten am Tag, alle Werkzeuge
+                <Check size={12} className="text-emerald-500" /> Unbegrenzte Analysen
               </li>
               <li className="flex items-center gap-1.5 text-xs text-slate-700">
-                <Check size={12} className="text-emerald-500" /> 4,99 € pro Monat
+                <Check size={12} className="text-emerald-500" /> 6,99 € pro Monat
               </li>
             </ul>
             <AppCtaButton
