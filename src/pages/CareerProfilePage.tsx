@@ -249,21 +249,21 @@ function renderSummaryMarkdown(text: string): ReactNode {
       {lines.map((line, i) => {
         if (line.startsWith('### ')) {
           return (
-            <h4 key={i} className="mt-3 mb-1 text-xs font-bold uppercase tracking-wide text-violet-700">
+            <h4 key={i} className="mt-3 mb-1 text-xs font-bold uppercase tracking-wide text-amber-800">
               {line.slice(4)}
             </h4>
           )
         }
         if (line.startsWith('## ')) {
           return (
-            <h3 key={i} className="mt-4 mb-1 text-sm font-bold text-violet-900">
+            <h3 key={i} className="mt-4 mb-1 text-sm font-bold text-stone-900">
               {line.slice(3)}
             </h3>
           )
         }
         if (line.startsWith('# ')) {
           return (
-            <h2 key={i} className="mt-4 mb-2 text-base font-bold text-violet-950">
+            <h2 key={i} className="mt-4 mb-2 text-base font-bold text-stone-950">
               {line.slice(2)}
             </h2>
           )
@@ -271,7 +271,7 @@ function renderSummaryMarkdown(text: string): ReactNode {
         if (line.startsWith('- ') || line.startsWith('• ')) {
           return (
             <div key={i} className="flex gap-2 items-start pl-1">
-              <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-violet-500" aria-hidden />
+              <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" aria-hidden />
               <span>{renderInline(line.slice(2))}</span>
             </div>
           )
@@ -302,19 +302,19 @@ function HelpModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-lg rounded-2xl border border-stone-300/40 bg-white shadow-2xl">
-        <div className="flex items-center justify-between border-b border-stone-200 px-5 py-4">
+      <div className="relative w-full max-w-lg rounded-2xl border border-stone-400/40 bg-app-parchment shadow-2xl">
+        <div className="flex items-center justify-between border-b border-stone-400/25 px-5 py-4">
           <h2 className="text-base font-semibold text-stone-900">Karriereprofil - Hilfe</h2>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-1.5 text-stone-500 hover:bg-stone-100 hover:text-stone-900"
+            className="rounded-lg p-1.5 text-stone-600 hover:bg-app-parchmentDeep hover:text-stone-900"
             aria-label="Schließen"
           >
             <X size={18} />
           </button>
         </div>
-        <div className="flex gap-1 border-b border-stone-200 px-4 pt-3">
+        <div className="flex gap-1 border-b border-stone-400/25 px-4 pt-3">
           {HELP_TABS.map(t => (
             <button
               key={t.id}
@@ -323,8 +323,8 @@ function HelpModal({ open, onClose }: { open: boolean; onClose: () => void }) {
               className={[
                 'rounded-t-lg px-3 py-2 text-xs font-semibold transition-colors',
                 tab === t.id
-                  ? 'border-b-2 border-violet-600 text-violet-700'
-                  : 'text-stone-500 hover:text-stone-900',
+                  ? 'border-b-2 border-amber-600 text-amber-800'
+                  : 'text-stone-600 hover:text-stone-900',
               ].join(' ')}
             >
               {t.label}
@@ -335,30 +335,30 @@ function HelpModal({ open, onClose }: { open: boolean; onClose: () => void }) {
           {tab === 'overview' && (
             <div className="space-y-3">
               <p>
-                Das <strong className="text-stone-900">Karriereprofil</strong> ist das Herzstück deiner
-                Personalisierung. Je vollständiger es ist, desto gezielter kann der Assistent dir bei
-                Bewerbungen, Interviews und Jobsuche helfen.
+                Das <strong className="text-stone-900">Karriereprofil</strong> ist die Grundlage jeder
+                Analyse. Je vollständiger es ist, desto genauer vergleicht die Stellenanalyse deinen
+                Lebenslauf mit einer Stellenausschreibung.
               </p>
-              <div className="rounded-xl border border-violet-200 bg-violet-50 p-4 space-y-2">
-                <p className="font-semibold text-violet-900">Was wird verwendet?</p>
+              <div className="rounded-xl border border-amber-500/25 bg-amber-500/10 p-4 space-y-2">
+                <p className="font-semibold text-amber-900">Was wird verwendet?</p>
                 <ul className="space-y-1">
                   {[
                     'Berufsfeld & Level → Grundlage aller Analysen',
-                    'Skills → Stärken-/Lückenanalyse im Chat',
-                    'Berufserfahrung → Kontext für Interviewvorbereitung',
-                    'Zusammenfassung → kompakter Kontext für den Assistenten',
+                    'Skills → Skill-Lückenanalyse in der Stellenanalyse',
+                    'Berufserfahrung → Formulierungsvorschläge für den Report',
+                    'Zusammenfassung → kompakter Kontext für die KI',
                     'Wunschstellen → präzisere Stellenanalysen',
                   ].map(item => (
                     <li key={item} className="flex gap-2 items-start">
-                      <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-violet-500" />
+                      <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />
                       <span>{item}</span>
                     </li>
                   ))}
                 </ul>
               </div>
-              <p className="text-xs text-stone-500">
-                Im Chat aktivierst du den Kontext über die Schalter über dem Eingabefeld.{' '}
-                <strong>Farbig = aktiv</strong>.
+              <p className="text-xs text-stone-600">
+                Die Stellenanalyse findest du unter{' '}
+                <strong>Analysieren</strong> in der Navigation.
               </p>
             </div>
           )}
@@ -402,11 +402,10 @@ function HelpModal({ open, onClose }: { open: boolean; onClose: () => void }) {
               <div className="flex gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
                 <Target className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" />
                 <div>
-                  <p className="font-semibold text-amber-900">Wunschstellen sind entscheidend</p>
+                  <p className="font-semibold text-amber-900">Wunschstellen halten fest, wonach du suchst</p>
                   <p className="mt-1 text-sm">
-                    Die Stellenanalyse im Chat vergleicht eine Jobanzeige direkt mit deinen
-                    Wunschstellen - so bekommst du eine präzise Passgenauigkeit statt einer
-                    generischen Einschätzung.
+                    Speichere Positionen, auf die du dich bewerben möchtest, als Übersicht in deinem
+                    Profil.
                   </p>
                 </div>
               </div>
@@ -414,8 +413,7 @@ function HelpModal({ open, onClose }: { open: boolean; onClose: () => void }) {
                 {[
                   'Bis zu 3 Wunschstellen speichern',
                   'Stellentitel ist Pflicht - Unternehmen und Beschreibung optional',
-                  'Die Beschreibung fließt direkt in die Jobanalyse ein',
-                  'Du kannst im Chat eine Wunschstelle als aktive Referenz wählen',
+                  'Für die Stellenanalyse selbst fügst du den Anzeigentext direkt bei „Analysieren" ein',
                 ].map(item => (
                   <li key={item} className="flex gap-2 items-start">
                     <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />
@@ -427,17 +425,17 @@ function HelpModal({ open, onClose }: { open: boolean; onClose: () => void }) {
           )}
           {tab === 'privacy' && (
             <div className="space-y-3">
-              <div className="rounded-xl border border-stone-200 bg-stone-50 p-4 space-y-2">
+              <div className="rounded-xl border border-stone-400/25 bg-app-parchmentDeep p-4 space-y-2">
                 <p className="font-semibold text-stone-900">Was wird anonymisiert?</p>
                 <p>
                   Die KI-Zusammenfassung wird ohne deinen Namen, deine Adresse oder andere direkt
-                  identifizierende Angaben erstellt. Der Assistent erhält nur berufliche Fakten.
+                  identifizierende Angaben erstellt. Die KI erhält nur berufliche Fakten.
                 </p>
               </div>
               <p>
                 Dein hochgeladener <strong className="text-stone-900">CV-Rohtext</strong> wird sicher
-                auf dem Server gespeichert und nur für die Zusammenfassungs-Generierung und die
-                PDF-Erkennung verwendet - er erscheint nicht direkt im Chat.
+                auf dem Server gespeichert und nur für die Zusammenfassungs-Generierung, die
+                PDF-Erkennung und die Stellenanalyse verwendet.
               </p>
               <p>
                 Du kannst jederzeit alle Karriereprofil-Daten über den Button{' '}
@@ -475,35 +473,35 @@ function SummaryModal({
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-12">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative flex w-full max-w-2xl flex-col rounded-2xl border border-stone-300/40 bg-white shadow-2xl max-h-[85vh]">
-        <div className="flex items-center justify-between border-b border-stone-200 px-5 py-4">
+      <div className="relative flex w-full max-w-2xl flex-col rounded-2xl border border-stone-400/40 bg-app-parchment shadow-2xl max-h-[85vh]">
+        <div className="flex items-center justify-between border-b border-stone-400/25 px-5 py-4">
           <div>
             <h2 className="text-base font-semibold text-stone-900">
               KI-Zusammenfassung{' '}
-              <span className="ml-1 rounded-md border border-violet-200 bg-violet-50 px-2 py-0.5 text-xs font-bold text-violet-700">
+              <span className="ml-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-xs font-bold text-amber-800">
                 {langLabel}
               </span>
             </h2>
-            <p className="mt-0.5 text-xs text-stone-500">Anonym - kein Name, nur berufliche Stärken</p>
+            <p className="mt-0.5 text-xs text-stone-600">Anonym - kein Name, nur berufliche Stärken</p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-1.5 text-stone-500 hover:bg-stone-100 hover:text-stone-900"
+            className="rounded-lg p-1.5 text-stone-600 hover:bg-app-parchmentDeep hover:text-stone-900"
             aria-label="Schließen"
           >
             <X size={18} />
           </button>
         </div>
-        <div className="flex items-center gap-1 border-b border-stone-200 px-4 pt-2">
+        <div className="flex items-center gap-1 border-b border-stone-400/25 px-4 pt-2">
           <button
             type="button"
             onClick={() => setMode('preview')}
             className={[
               'flex items-center gap-1.5 rounded-t-lg px-3 py-2 text-xs font-semibold transition-colors',
               mode === 'preview'
-                ? 'border-b-2 border-violet-600 text-violet-700'
-                : 'text-stone-500 hover:text-stone-900',
+                ? 'border-b-2 border-amber-600 text-amber-800'
+                : 'text-stone-600 hover:text-stone-900',
             ].join(' ')}
           >
             <Eye size={13} />
@@ -515,8 +513,8 @@ function SummaryModal({
             className={[
               'flex items-center gap-1.5 rounded-t-lg px-3 py-2 text-xs font-semibold transition-colors',
               mode === 'edit'
-                ? 'border-b-2 border-violet-600 text-violet-700'
-                : 'text-stone-500 hover:text-stone-900',
+                ? 'border-b-2 border-amber-600 text-amber-800'
+                : 'text-stone-600 hover:text-stone-900',
             ].join(' ')}
           >
             <Edit3 size={13} />
@@ -528,34 +526,28 @@ function SummaryModal({
             text.trim() ? (
               renderSummaryMarkdown(text)
             ) : (
-              <p className="text-sm text-stone-400 italic">Kein Inhalt vorhanden.</p>
+              <p className="text-sm text-stone-500 italic">Kein Inhalt vorhanden.</p>
             )
           ) : (
             <textarea
               value={text}
               onChange={e => setText(e.target.value)}
               rows={16}
-              className="w-full rounded-lg border border-stone-300 px-3 py-2.5 text-sm text-stone-900 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-200"
+              className="w-full rounded-lg border border-stone-400/40 bg-white px-3 py-2.5 text-sm text-stone-900 focus:border-amber-500/50 focus:outline-none focus:ring-1 focus:ring-amber-500/30"
             />
           )}
         </div>
-        <div className="flex items-center justify-end gap-2 border-t border-stone-200 px-5 py-4">
+        <div className="flex items-center justify-end gap-2 border-t border-stone-400/25 px-5 py-4">
           <button
             type="button"
             onClick={onClose}
-            className="rounded-xl border border-stone-300 px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-100"
+            className="rounded-xl border border-stone-400/40 px-4 py-2 text-sm font-medium text-stone-700 hover:bg-app-parchmentDeep"
           >
             Abbrechen
           </button>
-          <button
-            type="button"
-            disabled={saving}
-            onClick={() => void onSave(text)}
-            className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 disabled:opacity-50"
-          >
-            {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+          <AppCtaButton disabled={saving} loading={saving} onClick={() => void onSave(text)}>
             Speichern
-          </button>
+          </AppCtaButton>
         </div>
       </div>
     </div>
@@ -893,7 +885,7 @@ export default function CareerProfilePage() {
   if (error && !profile) {
     return (
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 p-6">
-        <p className="text-sm text-red-600">{error}</p>
+        <p className="text-sm text-rose-400">{error}</p>
         <AppCtaButton type="button" onClick={() => void load()}>
           Erneut laden
         </AppCtaButton>
@@ -1326,7 +1318,7 @@ export default function CareerProfilePage() {
         )}
 
         {error && (
-          <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <div className="mb-4 rounded-lg border border-rose-300/50 bg-rose-50 px-3 py-2 text-sm text-rose-700">
             {error}
           </div>
         )}
@@ -1455,7 +1447,7 @@ export default function CareerProfilePage() {
                   levelLabel: LEVELS.find(l => l.value === level)?.label ?? profile.levelLabel ?? null,
                   currentRole: profile.currentRole?.trim() || null,
                 })}
-              className="inline-flex items-center justify-center rounded-xl border border-stone-400/50 bg-white px-4 py-2.5 text-sm font-medium text-stone-900 shadow-sm hover:bg-stone-100 disabled:opacity-50"
+              className="inline-flex items-center justify-center rounded-xl border border-stone-400/50 bg-app-parchment px-4 py-2.5 text-sm font-medium text-stone-900 shadow-sm hover:bg-app-parchmentDeep disabled:opacity-50"
             >
               Änderungen speichern
             </button>
@@ -1475,7 +1467,7 @@ export default function CareerProfilePage() {
                 className="inline-flex items-center gap-1 rounded-full border border-stone-400/35 bg-stone-100/90 px-3 py-1 text-xs text-stone-800"
               >
                 {s}
-                <button type="button" onClick={() => void removeSkill(s)} className="text-stone-500 hover:text-red-600">
+                <button type="button" onClick={() => void removeSkill(s)} className="text-stone-500 hover:text-rose-600">
                   <Trash2 size={12} />
                 </button>
               </span>
@@ -1551,7 +1543,7 @@ export default function CareerProfilePage() {
                 <button
                   type="button"
                   onClick={() => removeExperienceRow(i)}
-                  className="inline-flex items-center gap-1 rounded-lg border border-stone-300 px-3 py-1.5 text-xs font-medium text-stone-700 hover:bg-red-50 hover:text-red-700"
+                  className="inline-flex items-center gap-1 rounded-lg border border-stone-400/40 px-3 py-1.5 text-xs font-medium text-stone-700 hover:bg-rose-50 hover:text-rose-700"
                 >
                   <Trash2 size={14} aria-hidden />
                   Entfernen
@@ -1563,7 +1555,7 @@ export default function CareerProfilePage() {
             <button
               type="button"
               onClick={() => setProfile({ ...profile, experience: [...(profile.experience ?? []), emptyExp()] })}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-primary shadow-sm hover:bg-primary-light/40"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-stone-400/40 bg-app-parchment px-4 py-2 text-sm font-medium text-primary shadow-sm hover:bg-primary-light/40"
             >
               <Plus size={18} aria-hidden />
               Eintrag hinzufügen
@@ -1618,7 +1610,7 @@ export default function CareerProfilePage() {
                 <button
                   type="button"
                   onClick={() => removeEducationRow(i)}
-                  className="inline-flex items-center gap-1 rounded-lg border border-stone-300 px-3 py-1.5 text-xs font-medium text-stone-700 hover:bg-red-50 hover:text-red-700"
+                  className="inline-flex items-center gap-1 rounded-lg border border-stone-400/40 px-3 py-1.5 text-xs font-medium text-stone-700 hover:bg-rose-50 hover:text-rose-700"
                 >
                   <Trash2 size={14} aria-hidden />
                   Entfernen
@@ -1634,7 +1626,7 @@ export default function CareerProfilePage() {
                   ...profile,
                   educationEntries: [...(profile.educationEntries ?? []), emptyEdu()],
                 })}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-primary shadow-sm hover:bg-primary-light/40"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-stone-400/40 bg-app-parchment px-4 py-2 text-sm font-medium text-primary shadow-sm hover:bg-primary-light/40"
             >
               <Plus size={18} aria-hidden />
               Eintrag hinzufügen
@@ -1678,7 +1670,7 @@ export default function CareerProfilePage() {
               <button
                 type="button"
                 onClick={() => removeLanguageRow(i)}
-                className="inline-flex shrink-0 items-center justify-center rounded-lg border border-stone-300 p-2 text-stone-600 hover:bg-red-50 hover:text-red-700"
+                className="inline-flex shrink-0 items-center justify-center rounded-lg border border-stone-400/40 p-2 text-stone-600 hover:bg-rose-50 hover:text-rose-700"
                 aria-label="Sprache entfernen"
               >
                 <Trash2 size={16} aria-hidden />
@@ -1690,7 +1682,7 @@ export default function CareerProfilePage() {
               type="button"
               onClick={() =>
                 setProfile({ ...profile, languages: [...(profile.languages ?? []), emptyLang()] })}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-primary shadow-sm hover:bg-primary-light/40"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-stone-400/40 bg-app-parchment px-4 py-2 text-sm font-medium text-primary shadow-sm hover:bg-primary-light/40"
             >
               <Plus size={18} aria-hidden />
               Sprache hinzufügen
@@ -1708,7 +1700,7 @@ export default function CareerProfilePage() {
         {/* ── KI-Zusammenfassung ─────────────────────────────────────── */}
         {currentSection === 'summary' && (
         <>
-        <section className="mb-8 rounded-xl border border-violet-500/35 bg-app-parchment p-5 shadow-landing text-stone-900">
+        <section className="mb-8 rounded-xl border border-stone-400/40 bg-app-parchment p-5 shadow-landing text-stone-900">
           <div className="mb-4 flex items-start justify-between gap-3">
             <div>
               <h2 className="text-sm font-semibold text-stone-900">KI-Zusammenfassung</h2>
@@ -1739,7 +1731,7 @@ export default function CareerProfilePage() {
                 onClick={() => setSelectedGenLang('de')}
                 className={[
                   'rounded-md px-4 py-2 transition-colors',
-                  selectedGenLang === 'de' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-600 hover:text-stone-900',
+                  selectedGenLang === 'de' ? 'bg-app-parchment text-stone-900 shadow-sm' : 'text-stone-600 hover:text-stone-900',
                 ].join(' ')}
               >
                 Deutsch (DE)
@@ -1749,25 +1741,20 @@ export default function CareerProfilePage() {
                 onClick={() => setSelectedGenLang('en')}
                 className={[
                   'rounded-md px-4 py-2 transition-colors',
-                  selectedGenLang === 'en' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-600 hover:text-stone-900',
+                  selectedGenLang === 'en' ? 'bg-app-parchment text-stone-900 shadow-sm' : 'text-stone-600 hover:text-stone-900',
                 ].join(' ')}
               >
                 English (EN)
               </button>
             </div>
-            <button
-              type="button"
+            <AppCtaButton
               onClick={() => void generateSummaryForLang(selectedGenLang)}
               disabled={saving || cvSummaryLoading || !canGenerate}
-              className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
+              loading={cvSummaryLoading}
             >
-              {cvSummaryLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-              ) : (
-                <Sparkles className="h-4 w-4 shrink-0" aria-hidden />
-              )}
+              {!cvSummaryLoading && <Sparkles className="h-4 w-4 shrink-0" aria-hidden />}
               {cvSummaryLoading ? 'Erstelle…' : 'Zusammenfassung erstellen'}
-            </button>
+            </AppCtaButton>
           </div>
 
           {/* Status cards for DE / EN */}
@@ -1804,7 +1791,7 @@ export default function CareerProfilePage() {
                   <button
                     type="button"
                     onClick={() => setSummaryModalLang(l)}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-300/60 bg-white px-3 py-1.5 text-xs font-medium text-emerald-800 hover:bg-emerald-50"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-300/60 bg-app-parchment px-3 py-1.5 text-xs font-medium text-emerald-800 hover:bg-emerald-50"
                   >
                     <Eye size={13} />
                     Anzeigen &amp; bearbeiten
@@ -1850,7 +1837,7 @@ export default function CareerProfilePage() {
                 <button
                   type="button"
                   onClick={() => void delJob(j.id)}
-                  className="text-stone-500 hover:text-red-600"
+                  className="text-stone-500 hover:text-rose-600"
                   aria-label="Entfernen"
                 >
                   <Trash2 size={18} />
