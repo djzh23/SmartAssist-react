@@ -12,6 +12,7 @@ const LANDING_SECTIONS = [
   'ablauf',
   'ueber',
   'datenschutz-teaser',
+  'faq',
   'zugang-anfragen',
 ] as const
 

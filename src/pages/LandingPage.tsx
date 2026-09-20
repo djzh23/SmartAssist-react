@@ -1,9 +1,10 @@
-import { useEffect, useLayoutEffect } from 'react'
+import { useEffect, useLayoutEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { SignUpButton, useUser } from '@clerk/clerk-react'
 import {
   AppWindow,
   Check,
+  ChevronDown,
   FileCheck,
   ListChecks,
   Mail,
@@ -107,6 +108,65 @@ const PRIVACY_CARDS = [
     Icon: AppWindow,
   },
 ]
+
+const FAQ_ITEMS = [
+  {
+    q: 'Was passiert mit meinem Lebenslauf?',
+    a: 'Dein Lebenslauf wird für die Analyse einmal an unser KI-Modell übermittelt und danach nicht auf unseren Servern gespeichert. Wir behalten nur eine technische Kennung. Der fertige Bericht wird ausschließlich in deinem Browser gespeichert und verschwindet, wenn du den Tab schließt.',
+  },
+  {
+    q: 'Was kostet PrivatePrep?',
+    a: 'Während der geschlossenen Beta ist die Nutzung kostenfrei. Es gibt keinen Zahlungsschritt bei der Anmeldung, kein Abo, keine Karte. Nach dem öffentlichen Start planen wir einen kostenfreien Basis-Tarif und einen kostenpflichtigen Tarif für unbegrenzte Analysen. Die Preise werden vorher öffentlich kommuniziert.',
+  },
+  {
+    q: 'Was ist der Unterschied zu ChatGPT oder anderen KI-Tools?',
+    a: 'Allgemeine KI-Tools beantworten einzelne Fragen. Sie kennen weder deinen Lebenslauf noch die deutsche Bewerbungspraxis. PrivatePrep vergleicht deine Angaben systematisch mit der konkreten Ausschreibung, prüft was fehlt und schlägt Umformulierungen aus deinem eigenen Lebenslauf vor. Automatische Prüfungen verhindern, dass Skills oder Zahlen behauptet werden, die nicht in deinen Angaben stehen.',
+  },
+  {
+    q: 'Für welche Branchen ist PrivatePrep geeignet?',
+    a: 'PrivatePrep ist branchenoffen. Die Analyse nutzt Kategorien, die in praktisch jeder Ausschreibung vorkommen: geforderte Qualifikationen, Rollenzuschnitt, Kulturhinweise und mögliche Risiken. Getestet wird derzeit in Pflege, Verwaltung, Vertrieb, Handwerk, Bildung und IT. Andere Berufsfelder funktionieren nach der gleichen Logik.',
+  },
+  {
+    q: 'Wie lange dauert eine Analyse?',
+    a: 'In der Regel unter einer Minute. Das System liest die Ausschreibung, vergleicht sie mit deinem Karriereprofil und deinem Lebenslauf und stellt den Bericht zusammen. Bei sehr langen Ausschreibungen kann die Verarbeitung etwas mehr Zeit brauchen.',
+  },
+]
+
+function FaqList() {
+  const [open, setOpen] = useState<number | null>(null)
+
+  return (
+    <div className="mt-8 text-left">
+      {FAQ_ITEMS.map((item, index) => {
+        const isOpen = open === index
+        return (
+          <div key={item.q} className="border-b-[0.5px] border-[#3a342e]">
+            <button
+              type="button"
+              aria-expanded={isOpen}
+              onClick={() => setOpen(isOpen ? null : index)}
+              className="flex w-full items-center justify-between gap-4 py-4 text-left text-[15px] font-medium text-white"
+            >
+              <span>{item.q}</span>
+              <ChevronDown
+                className={`h-4 w-4 shrink-0 text-[#C4B8AA] transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+                strokeWidth={ICON_STROKE}
+                aria-hidden
+              />
+            </button>
+            <div
+              className={`grid transition-[grid-template-rows] duration-200 ease-out ${isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}
+            >
+              <div className="min-h-0 overflow-hidden">
+                <p className="pb-5 pt-3 text-[14px] leading-[1.7] text-[#C4B8AA]">{item.a}</p>
+              </div>
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
 
 const DIMENSIONS = [
   {
@@ -407,8 +467,24 @@ export default function LandingPage() {
           </div>
         </section>
 
+        <section id="faq" className="pp-section pp-band-c">
+          <div className={`${PUBLIC_SHELL}`}>
+            <div className="mx-auto max-w-[720px] text-center">
+              <h2 className="text-[28px] font-medium text-white">Häufige Fragen</h2>
+              <p className="mt-3 text-[15px] leading-[1.75] text-[#C4B8AA]">
+                Wenn deine Frage nicht dabei ist, schreib eine kurze Mail an{' '}
+                <a href="mailto:ijd.zouh@yahoo.com" className="text-[#C4B8AA] underline-offset-2 hover:text-white hover:underline">
+                  ijd.zouh@yahoo.com
+                </a>
+                .
+              </p>
+              <FaqList />
+            </div>
+          </div>
+        </section>
+
         {betaModeEnabled ? (
-          <section id="zugang-anfragen" className="pp-section pp-band-c pb-16 sm:pb-20">
+          <section id="zugang-anfragen" className="pp-section pp-band-a pp-band-from-c pb-16 sm:pb-20">
             <div className={`${PUBLIC_SHELL} text-center`}>
               <h2 className="pp-section-title">Zugang anfragen</h2>
               <p className="pp-section-lead">
