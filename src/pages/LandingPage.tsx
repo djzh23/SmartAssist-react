@@ -411,15 +411,15 @@ export default function LandingPage() {
         <section id="ueber" className="pp-section pp-band-a pp-band-from-c py-20">
           <div className={`${PUBLIC_SHELL} text-center`}>
             <div className="mx-auto max-w-[640px]">
-              <h2 className="text-[28px] font-medium text-white">Über PrivatePrep</h2>
+              <h2 className="text-[28px] font-medium text-white">Warum PrivatePrep</h2>
               <p className="mt-8 text-[15px] leading-[1.75] text-[#C4B8AA]">
-                PrivatePrep ist ein privates Projekt aus Hamburg. Entwickelt von einem Informatik-Absolventen, der die deutsche Bewerbungspraxis aus mehreren Jahren eigener Erfahrung kennt: Werkstudentenstellen, Anschreiben die niemand liest, Absagen ohne Feedback.
+                Die meisten Bewerbungen scheitern nicht am Kandidaten. Sie scheitern am Abgleich. Zwischen dem was die Stellenausschreibung fordert und dem was der Lebenslauf zeigt. Zwischen den geforderten Qualifikationen und ihrer Formulierung im Profil.
               </p>
-              <p className="mt-6 text-[15px] leading-[1.75] text-[#C4B8AA]">
-                Die Idee hinter PrivatePrep ist einfach. Eine gute Bewerbung ist nicht die, die am besten klingt. Sie ist die, bei der Lebenslauf und Ausschreibung wirklich zusammenpassen. Wo das nicht der Fall ist, soll das ehrlich sichtbar sein. Wo es passt, soll die Formulierung dazu beitragen, dass es auch beim Lesen erkannt wird.
+              <p className="mt-8 text-[15px] leading-[1.75] text-[#C4B8AA]">
+                PrivatePrep prüft diesen Abgleich. Systematisch, nachvollziehbar, ohne Erfindung. Der Bericht zeigt was passt, was fehlt und welche vorhandenen Erfahrungen sich anders formulieren lassen, damit sie zur konkreten Stelle passen.
               </p>
-              <p className="mt-6 text-[15px] leading-[1.75] text-[#C4B8AA]">
-                PrivatePrep prüft diesen Abgleich. Nicht mehr, nicht weniger.
+              <p className="mt-8 text-[15px] leading-[1.75] text-[#C4B8AA]">
+                Der Bericht bewertet nicht dich. Er bewertet die Passung zu einer konkreten Stelle. Das ist ein Unterschied, den wir wichtig finden.
               </p>
             </div>
           </div>
