@@ -300,30 +300,12 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section id="ablauf" className="pp-section pp-band-b">
-          <div className={`${PUBLIC_SHELL} text-center`}>
-            <h2 className="pp-section-title">Ablauf in drei Schritten</h2>
-            <p className="pp-section-lead">
-              Das Karriereprofil wird einmalig angelegt. Jede Stellenanzeige wird danach in Sekunden analysiert.
-            </p>
-            <div className="mt-8 grid gap-4 text-left sm:grid-cols-3">
-              {STEPS.map(({ step, title, desc }) => (
-                <article key={step} className="pp-card p-5 sm:p-6">
-                  <span className="pp-step-num">{step}</span>
-                  <h3 className="mt-4 text-base font-semibold text-[#F5F0E8]">{title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-[#C4B8AA]">{desc}</p>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section id="bericht" className="pp-section pp-band-c">
-          <div className={`${PUBLIC_SHELL} text-center`}>
-            <h2 className="pp-section-title">Aufbau eines Analyseberichts</h2>
-            <p className="pp-section-lead">
-              Beispiel: Teamassistenz mit MS Office und Terminplanung bewirbt sich auf Office Managerin.
-              Dieselbe Berichtslogik gilt für Pflege, Vertrieb, Handwerk oder IT.
+        <section id="bericht" className="pp-section pp-band-b">
+          <div className={PUBLIC_SHELL}>
+            <p className="text-[11px] font-medium uppercase tracking-[0.6px] text-[#FBBF24]">BEISPIEL</p>
+            <h2 className="mt-2 text-[22px] font-medium text-white">So sieht dein Bericht aus.</h2>
+            <p className="mt-2 max-w-[40rem] text-[14px] leading-[1.6] text-[#C4B8AA]">
+              Ein anonymisiertes Beispiel aus der Kategorie Verwaltung. Deine echte Analyse basiert auf deinem eigenen Karriereprofil und deinem Lebenslauf.
             </p>
             <div className="mt-8 grid gap-6 text-left lg:grid-cols-2 lg:items-start lg:gap-8">
               <ExampleReport />
@@ -338,6 +320,24 @@ export default function LandingPage() {
                   </article>
                 ))}
               </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="ablauf" className="pp-section pp-band-c">
+          <div className={`${PUBLIC_SHELL} text-center`}>
+            <h2 className="pp-section-title">Ablauf in drei Schritten</h2>
+            <p className="pp-section-lead">
+              Das Karriereprofil wird einmalig angelegt. Jede Stellenanzeige wird danach in Sekunden analysiert.
+            </p>
+            <div className="mt-8 grid gap-4 text-left sm:grid-cols-3">
+              {STEPS.map(({ step, title, desc }) => (
+                <article key={step} className="pp-card p-5 sm:p-6">
+                  <span className="pp-step-num">{step}</span>
+                  <h3 className="mt-4 text-base font-semibold text-[#F5F0E8]">{title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-[#C4B8AA]">{desc}</p>
+                </article>
+              ))}
             </div>
           </div>
         </section>

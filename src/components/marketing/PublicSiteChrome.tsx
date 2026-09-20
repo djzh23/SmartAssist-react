@@ -8,8 +8,8 @@ const AFTER_AUTH = '/analyze'
 const LANDING_SECTIONS = [
   'hero',
   'funktionen',
-  'ablauf',
   'bericht',
+  'ablauf',
   'zugang-anfragen',
 ] as const
 
