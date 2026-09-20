@@ -23,7 +23,7 @@ export default function BlogPostPage() {
   return (
     <div className="landing-page-root min-h-screen text-stone-100">
       <PublicSiteHeader variant="page" />
-      <main id="main-content" className="mx-auto max-w-[720px] px-5 pb-16 pt-24 sm:pt-28">
+      <main id="main-content" className="mx-auto max-w-[720px] px-5 pb-16 pt-8 sm:pt-10">
         <Link to="/blog" className="text-sm text-stone-500 transition hover:text-stone-300">
           Alle Artikel
         </Link>

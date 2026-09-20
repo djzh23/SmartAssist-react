@@ -114,7 +114,7 @@ export default function LandingPage() {
 
         <section
           id="hero"
-          className="relative overflow-hidden pt-20 sm:pt-28"
+          className="relative overflow-hidden pt-8 sm:pt-12"
           style={{ background: 'linear-gradient(165deg, #120c08 0%, #1a100a 42%, #16110d 100%)' }}
         >
           <div className="landing-dot-grid pointer-events-none absolute inset-0 opacity-70" />

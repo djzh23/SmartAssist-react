@@ -1,11 +1,12 @@
 import { lazy, Suspense } from 'react'
-import { BrowserRouter, Navigate, Route, Routes, useNavigate } from 'react-router-dom'
+import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { ClerkProvider, useAuth, useUser } from '@clerk/clerk-react'
 import { AppErrorBoundary } from './components/AppErrorBoundary'
 import AnalyticsScript from './components/analytics/AnalyticsScript'
 import DocumentHead from './components/layout/DocumentHead'
 import MainLayout from './components/layout/MainLayout'
 import LoadingScreen from './components/LoadingScreen'
+import { ClosedBetaSplash, isBetaGateEnabled } from './components/marketing/ClosedBetaSplash'
 import { useCareerProfile } from './hooks/useCareerProfile'
 
 const LandingPage = lazy(() => import('./pages/LandingPage'))
@@ -59,8 +60,15 @@ function RequireSignedIn({ children }: { children: React.ReactNode }) {
 
 function AppRoutes() {
   const { isLoaded } = useAuth()
+  const { isSignedIn, isLoaded: userLoaded } = useUser()
+  const location = useLocation()
 
-  if (!isLoaded) return <LoadingScreen />
+  if (!isLoaded || !userLoaded) return <LoadingScreen />
+
+  const legalOpen = location.pathname === '/impressum' || location.pathname === '/datenschutz'
+  if (isBetaGateEnabled && !isSignedIn && !legalOpen) {
+    return <ClosedBetaSplash />
+  }
 
   return (
     <Routes>

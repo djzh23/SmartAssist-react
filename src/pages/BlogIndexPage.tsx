@@ -15,7 +15,7 @@ export default function BlogIndexPage() {
   return (
     <div className="landing-page-root min-h-screen text-stone-100">
       <PublicSiteHeader variant="page" />
-      <main id="main-content" className="mx-auto max-w-[760px] px-5 pb-16 pt-24 sm:pt-28">
+      <main id="main-content" className="mx-auto max-w-[760px] px-5 pb-16 pt-8 sm:pt-10">
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-400">Ratgeber</p>
         <h1 className="mt-3 font-serif text-3xl font-bold text-stone-50 sm:text-4xl">
           Bewerbung vorbereiten, ohne die Anzeige zu überfliegen

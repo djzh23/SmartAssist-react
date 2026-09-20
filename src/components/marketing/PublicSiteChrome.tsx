@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { SignInButton, SignUpButton } from '@clerk/clerk-react'
 
 const AFTER_AUTH = '/analyze'
+const BETA_GATE = import.meta.env.VITE_BETA_MODE === 'true'
 
 const navLinkClass =
   'rounded-full px-3 py-2 text-sm font-medium text-stone-300 transition hover:bg-white/8 hover:text-white'
@@ -14,11 +15,24 @@ interface PublicSiteHeaderProps {
   variant: 'landing' | 'page'
 }
 
+export function ClosedBetaBanner() {
+  return (
+    <div className="bg-amber-400 px-4 py-2 text-center text-xs leading-relaxed text-stone-950 sm:text-sm">
+      Diese Anwendung befindet sich in einer geschlossenen Beta-Phase. Der öffentliche Start ist für später geplant.
+      Für Zugang zur Beta:{' '}
+      <a href="mailto:ijd.zouh@yahoo.com" className="font-semibold underline decoration-stone-800/40 underline-offset-2">
+        ijd.zouh@yahoo.com
+      </a>
+    </div>
+  )
+}
+
 export function PublicSiteHeader({ variant }: PublicSiteHeaderProps) {
   const isLanding = variant === 'landing'
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 border-b border-white/8 bg-[#120c08]/90 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b border-white/8 bg-[#120c08]/90 backdrop-blur-xl">
+      <ClosedBetaBanner />
       <nav className="mx-auto flex h-14 max-w-[1120px] items-center justify-between gap-2 px-4 sm:h-16 sm:gap-3 sm:px-6">
         {isLanding ? (
           <button type="button" onClick={() => scrollTo('hero')} className="flex items-center gap-2">
@@ -62,14 +76,16 @@ export function PublicSiteHeader({ variant }: PublicSiteHeaderProps) {
               Anmelden
             </button>
           </SignInButton>
-          <SignUpButton mode="modal" fallbackRedirectUrl={AFTER_AUTH}>
-            <button
-              type="button"
-              className="inline-flex min-h-[36px] items-center rounded-full bg-gradient-to-r from-amber-400 to-amber-500 px-3 text-xs font-bold text-amber-950 shadow-lg shadow-black/30 sm:min-h-[40px] sm:px-4 sm:text-sm"
-            >
-              Kostenlos starten
-            </button>
-          </SignUpButton>
+          {BETA_GATE ? null : (
+            <SignUpButton mode="modal" fallbackRedirectUrl={AFTER_AUTH}>
+              <button
+                type="button"
+                className="inline-flex min-h-[36px] items-center rounded-full bg-gradient-to-r from-amber-400 to-amber-500 px-3 text-xs font-bold text-amber-950 shadow-lg shadow-black/30 sm:min-h-[40px] sm:px-4 sm:text-sm"
+              >
+                Kostenlos starten
+              </button>
+            </SignUpButton>
+          )}
         </div>
       </nav>
     </header>
