@@ -36,13 +36,6 @@ const AUDIENCE_FIELDS = [
   'und andere',
 ]
 
-const HERO_HIGHLIGHTS = [
-  { title: 'Match-Score', desc: 'Gesamtbewertung 1,0 bis 5,0' },
-  { title: 'Skill-Analyse', desc: 'Fehlende und vorhandene Qualifikationen' },
-  { title: 'CV-Optimierung', desc: '3 bis 5 stellenspezifische Formulierungen' },
-  { title: 'Kulturscreening', desc: 'Kulturelle Passungshinweise' },
-]
-
 const FEATURES = [
   {
     title: 'Match-Score',
@@ -350,14 +343,6 @@ export default function LandingPage() {
             <div className="mt-8 flex flex-wrap justify-center gap-2">
               {AUDIENCE_FIELDS.map(label => (
                 <span key={label} className="pp-tag">{label}</span>
-              ))}
-            </div>
-            <div className="mt-8 grid gap-3 text-left sm:grid-cols-2 xl:grid-cols-4">
-              {HERO_HIGHLIGHTS.map(({ title, desc }) => (
-                <article key={title} className="pp-card-mini px-4 py-4">
-                  <p className="text-sm font-semibold text-[#F5F0E8]">{title}</p>
-                  <p className="mt-1 text-xs leading-relaxed text-[#8A7F72]">{desc}</p>
-                </article>
               ))}
             </div>
           </div>
