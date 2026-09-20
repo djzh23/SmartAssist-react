@@ -1,14 +1,12 @@
 # PrivatePrep Frontend
 
+> Status: geschlossene Beta. Live-URL nicht öffentlich verlinkt. Für Zugang:
+> ijd.zouh@yahoo.com
+
 React-Oberfläche für PrivatePrep: Onboarding, Profil, CV-Upload und die
 Match-Analyse gegen eine Stellenausschreibung.
 
-Live: [betweenatna.com](https://betweenatna.com)
-
 [![CI](https://github.com/djzh23/SmartAssist-react/actions/workflows/ci.yml/badge.svg)](https://github.com/djzh23/SmartAssist-react/actions/workflows/ci.yml)
-
-PrivatePrep befindet sich in aktiver Entwicklung. Einzelne Funktionen können
-zeitweise eingeschränkt sein, während neue Verbesserungen eingebaut werden.
 
 ## Über das Projekt
 
@@ -28,6 +26,11 @@ Free- und Premium-Zugriff.
 | Routing | React Router |
 | Tests | Vitest, Testing Library |
 | Deployment | Vercel |
+
+## Live-Zugang
+
+Aktuell nur für eingeladene Beta-Tester über [betweenatna.com](https://betweenatna.com).
+Anfragen für Beta-Zugang: ijd.zouh@yahoo.com
 
 ## Lokale Entwicklung
 
@@ -53,6 +56,15 @@ npm run build
 ```bash
 npm test
 ```
+
+## Deploy-Prozess
+
+Vor jedem Deploy wird die Release-Checkliste im Backend-Repo durchgegangen.
+Siehe [PrivatePrep docs/deployment/RELEASE-CHECKLIST.md](https://github.com/djzh23/PrivatePrep/blob/v1-focus/docs/deployment/RELEASE-CHECKLIST.md)
+und [docs/BRANCHES.md](https://github.com/djzh23/PrivatePrep/blob/v1-focus/docs/BRANCHES.md).
+
+Live kommt aktuell von Branch `v1-focus` (Vercel). GitHub Actions Production
+Deploy läuft nur bei Push auf `main`.
 
 ## Verwandte Repos
 
