@@ -1,13 +1,16 @@
 import { useEffect, useLayoutEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { SignUpButton, useUser } from '@clerk/clerk-react'
 import {
+  AppWindow,
   Check,
   FileCheck,
   ListChecks,
   Mail,
   Pencil,
   Shield,
+  ShieldCheck,
+  ShieldOff,
   Target,
   TriangleAlert,
   UserRound,
@@ -85,6 +88,24 @@ const REPORT_METRICS = [
   { label: 'Rollenpassung', value: '3,9', Icon: UserRound },
   { label: 'Kultur', value: '3,5', Icon: Users },
   { label: 'Red Flags', value: '2,0', Icon: TriangleAlert },
+]
+
+const PRIVACY_CARDS = [
+  {
+    title: 'Kein Speichern deines Lebenslaufs',
+    desc: 'Dein Lebenslauf wird für die Analyse einmal an unser KI-Modell übermittelt und danach nicht auf unseren Servern gespeichert. Wir behalten nur eine technische Kennung, damit du die gleiche Analyse nicht doppelt startest.',
+    Icon: ShieldOff,
+  },
+  {
+    title: 'Kein Erfinden von Skills',
+    desc: 'Die KI darf keine Qualifikationen behaupten, die nicht in deinem Lebenslauf stehen. Eine automatische Prüfung filtert erfundene Angaben heraus, bevor der Bericht bei dir angezeigt wird.',
+    Icon: ShieldCheck,
+  },
+  {
+    title: 'Dein Bericht bleibt bei dir',
+    desc: 'Der fertige Analysebericht wird ausschließlich in deinem Browser gespeichert. Er ist uns nicht zugänglich und verschwindet, wenn du den Tab schließt.',
+    Icon: AppWindow,
+  },
 ]
 
 const DIMENSIONS = [
@@ -359,8 +380,35 @@ export default function LandingPage() {
           </div>
         </section>
 
+        <section id="datenschutz-teaser" className="pp-section pp-band-b">
+          <div className={`${PUBLIC_SHELL} text-center`}>
+            <h2 className="text-[28px] font-medium text-white">Deine Daten bleiben deine Daten</h2>
+            <p className="mx-auto mt-3 max-w-[36rem] text-[15px] leading-[1.75] text-[#C4B8AA]">
+              Datenschutz ist bei PrivatePrep in die Grundstruktur eingebaut. Nicht als Feature, sondern als Ausgangspunkt.
+            </p>
+            <div className="mt-8 grid gap-4 text-left md:grid-cols-3">
+              {PRIVACY_CARDS.map(({ title, desc, Icon }) => (
+                <article
+                  key={title}
+                  className="rounded-[12px] border-[0.5px] border-[#3a342e] bg-[#1a1512] p-6"
+                >
+                  <Icon className="h-6 w-6 text-[#FBBF24]" strokeWidth={ICON_STROKE} aria-hidden />
+                  <h3 className="mt-4 text-base font-medium text-white">{title}</h3>
+                  <p className="mt-2 text-[13px] leading-[1.6] text-[#C4B8AA]">{desc}</p>
+                </article>
+              ))}
+            </div>
+            <Link
+              to="/datenschutz"
+              className="mt-8 inline-block text-[13px] text-[#D99A16] transition-colors hover:text-[#FBBF24]"
+            >
+              Vollständige Datenschutzerklärung lesen
+            </Link>
+          </div>
+        </section>
+
         {betaModeEnabled ? (
-          <section id="zugang-anfragen" className="pp-section pp-band-b pb-16 sm:pb-20">
+          <section id="zugang-anfragen" className="pp-section pp-band-c pb-16 sm:pb-20">
             <div className={`${PUBLIC_SHELL} text-center`}>
               <h2 className="pp-section-title">Zugang anfragen</h2>
               <p className="pp-section-lead">
