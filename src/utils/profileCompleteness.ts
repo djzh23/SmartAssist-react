@@ -10,7 +10,7 @@ export function getProfileCompleteness(profile: CareerProfile): number {
     profile.goals.length > 0,
     profile.skills.length > 0,
     profile.experience.length > 0,
-    Boolean(profile.cvRawText?.trim()),
+    Boolean(profile.cvContentHash?.trim()),
     profile.targetJobs.length > 0,
   ]
   const weights = [15, 15, 10, 10, 15, 15, 10, 10]
@@ -37,7 +37,7 @@ export function getProfileCompletenessGapHint(profile: CareerProfile): string | 
   const parts: string[] = []
   if (!profile.skills.length) parts.push('Skills fehlen noch')
   if (!profile.experience.length) parts.push('Erfahrung ergänzen')
-  if (!profile.cvRawText?.trim()) parts.push('Lebenslauf-Text fehlt')
+  if (!profile.cvContentHash?.trim()) parts.push('Lebenslauf fehlt')
   if (!profile.targetJobs.length) parts.push('Zielstelle hinzufügen')
   if (!profile.currentRole?.trim()) parts.push('Aktuelle Rolle')
   return parts.length ? `${parts.slice(0, 2).join(' → ')}${parts.length > 2 ? ' …' : ''}` : null

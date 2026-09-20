@@ -72,11 +72,16 @@ export { MIN_JD_CHARS, MAX_JD_CHARS }
 export async function analyzeJob(
   jobDescription: string,
   token: string,
+  cv: { text: string; hash: string },
 ): Promise<{ report: AnalyzeReport; usage: AnalyzeUsageMeta }> {
   const res = await fetch(`${BASE}/api/agent/analyze`, {
     method: 'POST',
     headers: authHeaders(token),
-    body: JSON.stringify({ jobDescription }),
+    body: JSON.stringify({
+      jobDescription,
+      cvText: cv.text,
+      cvContentHash: cv.hash,
+    }),
   })
 
   if (res.status === 429) {

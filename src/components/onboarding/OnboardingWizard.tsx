@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '@clerk/clerk-react'
 import { CheckCircle2, FileText, Pencil, SkipForward } from 'lucide-react'
 import AppCtaButton from '../ui/AppCtaButton'
 import CvUploader from '../profile/CvUploader'
+import CvPrivacyNotice from '../profile/CvPrivacyNotice'
 import {
   completeOnboarding,
   fetchOnboardingDraft,
@@ -13,6 +15,7 @@ import {
   type ParsedCvData,
 } from '../../api/profileClient'
 import { CAREER_FIELDS, CAREER_LEVELS } from '../../config/careerOptions'
+import { storeCachedCv } from '../../utils/cvSessionCache'
 import '../../styles/landing.css'
 
 const ANALYZE_PATH = '/analyze'
@@ -32,6 +35,7 @@ interface Props {
 }
 
 export default function OnboardingWizard({ getToken, reload, skipOnboarding }: Props) {
+  const { userId } = useAuth()
   const navigate = useNavigate()
   const [step, setStep] = useState<WizardStep>('step1')
   const [field, setField] = useState('')
@@ -135,7 +139,14 @@ export default function OnboardingWizard({ getToken, reload, skipOnboarding }: P
       })
       await persistStory(token)
       if (includeCv && cvText.trim()) {
-        await uploadCv(token, cvText.trim())
+        const registered = await uploadCv(token, cvText.trim())
+        if (userId) {
+          storeCachedCv(userId, {
+            text: registered.extractedText,
+            hash: registered.contentHash,
+            length: registered.contentLength,
+          })
+        }
       }
       await reload()
       setStep('success')
@@ -378,10 +389,11 @@ export default function OnboardingWizard({ getToken, reload, skipOnboarding }: P
                     placeholder="CV-Text hier einfügen…"
                     className={inputCls}
                   />
+                  <CvPrivacyNotice />
                   <div className="mt-auto flex flex-col gap-2 pt-4">
                     <AppCtaButton onClick={() => void finishOnboarding(true)} disabled={busy}>Fertig</AppCtaButton>
                     <button type="button" onClick={() => void finishOnboarding(false)} disabled={busy} className="py-2 text-sm text-stone-500 hover:text-stone-300">
-                      Kein CV – weiter
+                      Kein CV - weiter
                     </button>
                   </div>
                 </>

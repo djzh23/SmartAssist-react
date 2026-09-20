@@ -78,8 +78,8 @@ const FAQ = [
     a: 'Ja, mit einem Klick kündigen. Keine Fragen, keine versteckten Gebühren.',
   },
   {
-    q: 'Sind meine Daten sicher?',
-    a: 'Analysen und Profil liegen auf dem Server, gebunden an dein Konto. Kein Chatverlauf.',
+    q: 'Wo liegen Lebenslauf und Analyse?',
+    a: 'Der Lebenslauf-Text geht zur Analyse einmalig an Groq in den USA. Bei uns bleibt er nicht, nur ein Prüfwert und die Zeichenzahl. Der Bericht liegt in diesem Browser, nicht im Konto. Das Profil ohne CV-Text schon. Mehr dazu in der Datenschutzerklärung.',
   },
   {
     q: 'Welche Zahlungsmethoden werden akzeptiert?',

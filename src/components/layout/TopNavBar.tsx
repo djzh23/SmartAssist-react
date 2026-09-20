@@ -4,7 +4,6 @@ import { SignOutButton } from '@clerk/clerk-react'
 import { User } from 'lucide-react'
 import { useUserPlan } from '../../hooks/useUserPlan'
 import { useBreakpoint } from '../../hooks/useBreakpoint'
-import { useMobileNavTitle } from '../../hooks/useMobileNavTitle'
 
 // onMenuClick/menuOpen kept in Props so MainLayout can still pass them without type error
 interface Props {
@@ -112,15 +111,26 @@ function UserAvatarMenu({
 
 export default function TopNavBar(_props: Props) {
   const bp = useBreakpoint()
-  const mobileTitle = useMobileNavTitle()
   const { planLabel, planColor, initials, email } = useUserPlan()
 
   if (bp === 'mobile') {
     return (
       <header className="sticky top-0 z-50 flex h-12 flex-shrink-0 items-center justify-between border-b border-sidebar-border bg-sidebar px-3">
-        <p className="min-w-0 flex-1 truncate text-sm font-semibold tracking-wide text-white">
-          {mobileTitle}
-        </p>
+        <Link
+          to="/analyze"
+          aria-label="PrivatePrep"
+          className="flex min-w-0 flex-1 items-center gap-2 no-underline hover:opacity-90"
+        >
+          <img
+            src="/logo-nav.webp"
+            alt=""
+            className="h-8 w-8 rounded-lg"
+            width={32}
+            height={32}
+            decoding="async"
+          />
+          <span className="truncate text-sm font-semibold tracking-wide text-white">PrivatePrep</span>
+        </Link>
         <UserAvatarMenu
           isMobile
           planColor={planColor}

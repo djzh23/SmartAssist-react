@@ -1,8 +1,11 @@
+import { useAuth } from '@clerk/clerk-react'
 import { useCallback, useRef, useState } from 'react'
 import { FileUp, Loader2, X } from 'lucide-react'
 import AppCtaButton from '../ui/AppCtaButton'
 import type { Education, ParsedCvData, ProfileLanguage, WorkExperience } from '../../api/profileClient'
-import { uploadCvPdfForParsing } from '../../api/profileClient'
+import { uploadCv, uploadCvPdfForParsing } from '../../api/profileClient'
+import { storeCachedCv } from '../../utils/cvSessionCache'
+import CvPrivacyNotice from './CvPrivacyNotice'
 
 interface FieldOpt {
   value: string
@@ -59,6 +62,7 @@ export default function CvUploader({
   onApplyParsed,
   onManualAdjust,
 }: Props) {
+  const { userId } = useAuth()
   const [tab, setTab] = useState<'upload' | 'paste'>('upload')
   const [loading, setLoading] = useState(false)
   const [loadStep, setLoadStep] = useState(0)
@@ -96,7 +100,10 @@ export default function CvUploader({
       const token = await getToken()
       if (!token) throw new Error('Nicht angemeldet')
       const b64 = await fileToBase64DataPart(file)
-      const { parsed } = await uploadCvPdfForParsing(token, b64)
+      const { parsed, extractedText, contentHash, contentLength } = await uploadCvPdfForParsing(token, b64)
+      if (userId) {
+        storeCachedCv(userId, { text: extractedText, hash: contentHash, length: contentLength })
+      }
       setDraft(normalizeParsed(parsed))
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Upload fehlgeschlagen')
@@ -104,6 +111,33 @@ export default function CvUploader({
       clearSteps()
       setLoading(false)
       setLoadStep(0)
+    }
+  }
+
+  const savePaste = async () => {
+    const text = cvPasteText.trim()
+    if (text.length < 50) {
+      setError('Bitte mindestens 50 Zeichen einfügen.')
+      return
+    }
+    setLoading(true)
+    setError(null)
+    try {
+      const token = await getToken()
+      if (!token) throw new Error('Nicht angemeldet')
+      const registered = await uploadCv(token, text)
+      if (userId) {
+        storeCachedCv(userId, {
+          text: registered.extractedText,
+          hash: registered.contentHash,
+          length: registered.contentLength,
+        })
+      }
+      onCvPasteTextChange('')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Speichern fehlgeschlagen')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -434,6 +468,7 @@ export default function CvUploader({
             className="hidden"
             onChange={e => void handleFile(e.target.files?.[0] ?? null)}
           />
+          <CvPrivacyNotice />
         </>
       )}
 
@@ -447,8 +482,18 @@ export default function CvUploader({
             className="w-full rounded-lg border border-stone-400/40 bg-app-parchment px-3 py-2 text-sm text-stone-900 focus:border-amber-500/50 focus:outline-none focus:ring-1 focus:ring-amber-500/30"
           />
           <p className="mt-1 text-[11px] text-stone-600">
-            Text wird beim Abschluss gespeichert (ohne KI-Analyse). Für automatische Erkennung nutze PDF.
+            Für automatische Felderkennung nutze PDF.
           </p>
+          <AppCtaButton
+            className="mt-3"
+            size="sm"
+            disabled={loading || cvPasteText.trim().length < 50}
+            loading={loading}
+            onClick={() => void savePaste()}
+          >
+            Lebenslauf merken
+          </AppCtaButton>
+          <CvPrivacyNotice />
         </div>
       )}
 

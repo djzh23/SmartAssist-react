@@ -1,10 +1,18 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '@clerk/clerk-react'
-import { AlertTriangle, Loader2 } from 'lucide-react'
+import { AlertTriangle, Plus } from 'lucide-react'
 import AppCtaButton from '../components/ui/AppCtaButton'
-import PageHeader from '../components/layout/PageHeader'
 import StandardPageContainer from '../components/layout/StandardPageContainer'
+import AnalyzeHeader from '../components/analyze/AnalyzeHeader'
+import AnalyzeHero from '../components/analyze/AnalyzeHero'
+import AnalyzeSubDimensions from '../components/analyze/AnalyzeSubDimensions'
+import AnalyzeWarningBanner from '../components/analyze/AnalyzeWarningBanner'
+import AnalyzeSkillBuckets from '../components/analyze/AnalyzeSkillBuckets'
+import AnalyzeBulletRewrites from '../components/analyze/AnalyzeBulletRewrites'
+import AnalyzeLoadingState from '../components/analyze/AnalyzeLoadingState'
+import AnalyzeRoleSummary from '../components/analyze/AnalyzeRoleSummary'
+import { emptySkillGap, inventedSkillCount, splitRoleSummary } from '../components/analyze/analyzeFormat'
 import { useCareerProfile } from '../hooks/useCareerProfile'
 import {
   analyzeJob,
@@ -13,8 +21,10 @@ import {
   MIN_JD_CHARS,
   MAX_JD_CHARS,
   type AnalyzeReport,
+  type SkillGapReport,
 } from '../api/analyzeClient'
 import { UsageLimitError } from '../api/agentClient'
+import { isCachedCvReady, readCachedCv } from '../utils/cvSessionCache'
 
 const REPORT_KEY_PREFIX = 'privateprep_last_analyze_report_'
 
@@ -49,138 +59,16 @@ function formatStoredAt(iso: string): string {
   }
 }
 
-function scoreLabel(n: number): string {
-  return n.toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
-}
-
-function cultureLabel(value: string): string {
-  switch (value) {
-    case 'pass': return 'bestanden'
-    case 'caution': return 'Vorsicht'
-    case 'fail': return 'nicht bestanden'
-    default: return 'nicht bewertet'
+function normalizeGap(gap?: SkillGapReport): SkillGapReport {
+  const base = emptySkillGap()
+  if (!gap) return base
+  return {
+    existing: gap.existing ?? [],
+    supportedByResume: gap.supportedByResume ?? [],
+    gap: gap.gap ?? [],
+    extractedJdSkills: gap.extractedJdSkills ?? [],
+    reasonCode: gap.reasonCode ?? '',
   }
-}
-
-function SkillPills({ items, empty, tone }: { items: string[]; empty: string; tone: 'ok' | 'gap' | 'muted' }) {
-  if (!items.length) {
-    return <p className="text-sm text-stone-500">{empty}</p>
-  }
-  const cls =
-    tone === 'ok'
-      ? 'border-emerald-500/30 bg-emerald-950/40 text-emerald-100'
-      : tone === 'gap'
-        ? 'border-rose-500/30 bg-rose-950/35 text-rose-100'
-        : 'border-stone-600/40 bg-white/[0.04] text-stone-200'
-  return (
-    <ul className="flex flex-wrap gap-1.5">
-      {items.map(item => (
-        <li key={item} className={`rounded-full border px-2.5 py-1 text-xs font-medium ${cls}`}>
-          {item}
-        </li>
-      ))}
-    </ul>
-  )
-}
-
-function ReportView({ report }: { report: AnalyzeReport }) {
-  const dims = report.dimensions ?? { cvMatch: 0, roleAlignment: 0, culture: 0, redFlags: 0 }
-  const gap = report.skillGap ?? { existing: [], supportedByResume: [], gap: [], extractedJdSkills: [], reasonCode: '' }
-  const bullets = report.bullets ?? []
-  const warnings = report.warnings ?? []
-  const violations = report.factViolations ?? []
-
-  return (
-    <div className="mt-8 space-y-6">
-      <section className="rounded-2xl border border-amber-500/25 bg-app-surface/90 p-5 shadow-landing">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-400">Gesamt-Match</p>
-        <p className="mt-2 font-serif text-5xl font-bold text-stone-50">{scoreLabel(report.globalScore)}</p>
-        <p className="mt-1 text-sm text-stone-400">von 5,0</p>
-        {report.roleSummary ? (
-          <p className="mt-4 text-sm leading-relaxed text-stone-300">{report.roleSummary}</p>
-        ) : null}
-        <dl className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {[
-            ['CV-Match', dims.cvMatch],
-            ['Rollenpassung', dims.roleAlignment],
-            ['Kultur', dims.culture],
-            ['Red Flags', dims.redFlags],
-          ].map(([label, value]) => (
-            <div key={String(label)} className="rounded-xl bg-black/20 px-3 py-2">
-              <dt className="text-[11px] uppercase tracking-wide text-stone-500">{label}</dt>
-              <dd className="mt-0.5 text-lg font-semibold text-stone-100">{scoreLabel(Number(value))}</dd>
-            </div>
-          ))}
-        </dl>
-        <p className="mt-4 text-sm text-stone-400">
-          Kulturscreening: <span className="font-medium text-stone-200">{cultureLabel(report.cultureScreen)}</span>
-        </p>
-      </section>
-
-      {warnings.length > 0 && (
-        <section className="rounded-2xl border border-amber-500/30 bg-amber-950/30 p-4 text-sm text-amber-100">
-          <p className="mb-2 font-semibold">Hinweise</p>
-          <ul className="list-disc space-y-1 pl-5">
-            {warnings.map(w => <li key={w}>{w}</li>)}
-          </ul>
-        </section>
-      )}
-
-      {violations.length > 0 && (
-        <section className="rounded-2xl border border-rose-500/30 bg-rose-950/25 p-4 text-sm text-rose-100">
-          <p className="mb-2 font-semibold">Fact-Gate: Formulierungen gekürzt</p>
-          <ul className="space-y-2">
-            {violations.map((v, i) => (
-              <li key={`${v.violationType}-${i}`}>
-                <span className="font-medium">{v.violationType}</span>
-                {v.snippet ? <span className="text-rose-200/80"> ({v.snippet})</span> : null}
-                {v.reason ? <p className="mt-0.5 text-xs text-rose-200/70">{v.reason}</p> : null}
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      <section className="rounded-2xl border border-stone-600/40 bg-app-surface/90 p-5">
-        <h2 className="text-lg font-semibold text-stone-50">Skill-Lücken</h2>
-        <div className="mt-4 grid gap-5 md:grid-cols-3">
-          <div>
-            <h3 className="mb-2 text-xs font-bold uppercase tracking-wide text-stone-500">Im Lebenslauf</h3>
-            <SkillPills items={gap.existing} empty="Keine Treffer" tone="ok" />
-          </div>
-          <div>
-            <h3 className="mb-2 text-xs font-bold uppercase tracking-wide text-stone-500">Durch CV gestützt</h3>
-            <SkillPills items={gap.supportedByResume} empty="Keine Treffer" tone="muted" />
-          </div>
-          <div>
-            <h3 className="mb-2 text-xs font-bold uppercase tracking-wide text-stone-500">Fehlt</h3>
-            <SkillPills items={gap.gap} empty="Keine Lücken erkannt" tone="gap" />
-          </div>
-        </div>
-      </section>
-
-      <section className="rounded-2xl border border-stone-600/40 bg-app-surface/90 p-5">
-        <h2 className="text-lg font-semibold text-stone-50">Formulierungen</h2>
-        {bullets.length === 0 ? (
-          <p className="mt-2 text-sm text-stone-500">Keine Umschreibungen in diesem Bericht.</p>
-        ) : (
-          <ul className="mt-4 space-y-4">
-            {bullets.map((b, i) => (
-              <li key={i} className="rounded-xl border border-white/8 bg-black/15 p-4">
-                <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">Original</p>
-                <p className="mt-1 text-sm text-stone-400">{b.originalBullet}</p>
-                <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-amber-400/90">Vorschlag</p>
-                <p className="mt-1 text-sm text-stone-100">{b.rewrittenBullet}</p>
-                {b.reasoning ? (
-                  <p className="mt-2 text-xs leading-relaxed text-stone-500">{b.reasoning}</p>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-    </div>
-  )
 }
 
 export default function AnalyzePage() {
@@ -192,6 +80,7 @@ export default function AnalyzePage() {
   const [report, setReport] = useState<AnalyzeReport | null>(null)
   const [reportStoredAt, setReportStoredAt] = useState<string | null>(null)
   const [reportIsFromPreviousSession, setReportIsFromPreviousSession] = useState(false)
+  const [composing, setComposing] = useState(false)
 
   useEffect(() => {
     if (!authLoaded || !userId) return
@@ -200,10 +89,13 @@ export default function AnalyzePage() {
       setReport(stored.report)
       setReportStoredAt(stored.storedAt)
       setReportIsFromPreviousSession(true)
+      setComposing(false)
     }
   }, [authLoaded, userId])
 
-  const cvReady = (profile?.cvRawText?.trim().length ?? 0) >= 50
+  const cachedCv = userId ? readCachedCv(userId) : null
+  const cvReady = isCachedCvReady(cachedCv, profile?.cvContentHash)
+  const cvNeedsReupload = Boolean(profile?.cvContentHash?.trim()) && !cvReady
   const jdLen = jobText.trim().length
   const jdOk = jobDescriptionLengthOk(jobText)
   const lengthHint = useMemo(() => {
@@ -213,10 +105,15 @@ export default function AnalyzePage() {
     return `${jdLen.toLocaleString('de-DE')} Zeichen`
   }, [jdLen])
 
+  const showReport = Boolean(report) && !busy && !composing
+  const showForm = !busy && (!report || composing)
+
   const runAnalyze = async () => {
     setError(null)
     if (!cvReady) {
-      setError('Bitte zuerst einen Lebenslauf im Profil hinterlegen.')
+      setError(cvNeedsReupload
+        ? 'Der Lebenslauf liegt nicht in diesem Browser. Bitte unter Profil erneut hochladen.'
+        : 'Bitte zuerst einen Lebenslauf im Profil hinterlegen.')
       return
     }
     if (!jdOk) {
@@ -227,16 +124,20 @@ export default function AnalyzePage() {
     try {
       const token = await getToken()
       if (!token) throw new Error('Bitte erneut anmelden.')
-      const { report: next } = await analyzeJob(jobText.trim(), token)
+      if (!cachedCv) throw new Error('Bitte zuerst einen Lebenslauf im Profil hinterlegen.')
+      const { report: next } = await analyzeJob(jobText.trim(), token, { text: cachedCv.text, hash: cachedCv.hash })
       setReport(next)
       setReportIsFromPreviousSession(false)
       setReportStoredAt(null)
+      setComposing(false)
       if (userId) storeReport(userId, next)
     } catch (e) {
       if (e instanceof UsageLimitError) {
         setError(e.message || 'Tageslimit erreicht. Mit Premium unbegrenzt analysieren.')
-      } else if (e instanceof AnalyzeApiError && e.errorCode === 'profile_incomplete') {
-        setError('Profil unvollständig. Bitte Lebenslauf und Basisdaten ergänzen.')
+      } else if (e instanceof AnalyzeApiError && (e.errorCode === 'profile_incomplete' || e.errorCode === 'cv_missing' || e.errorCode === 'cv_not_uploaded')) {
+        setError('Profil unvollständig. Bitte Lebenslauf in diesem Browser erneut hochladen.')
+      } else if (e instanceof AnalyzeApiError && (e.errorCode === 'cv_stale' || e.errorCode === 'cv_hash_mismatch')) {
+        setError('Der Lebenslauf in diesem Browser stimmt nicht mehr. Bitte unter Profil erneut hochladen.')
       } else {
         setError(e instanceof Error ? e.message : 'Analyse fehlgeschlagen.')
       }
@@ -245,15 +146,29 @@ export default function AnalyzePage() {
     }
   }
 
-  return (
-    <StandardPageContainer className="w-full pb-10 pt-3 sm:py-6">
-      <PageHeader pageKey="analyze" className="mb-5" />
+  const startNewAnalysis = () => {
+    setComposing(true)
+    setError(null)
+  }
 
-      {!profileLoading && !cvReady && (
+  const role = splitRoleSummary(report?.roleSummary)
+  const dims = report?.dimensions ?? { cvMatch: 0, roleAlignment: 0, culture: 0, redFlags: 0 }
+  const gap = normalizeGap(report?.skillGap)
+  const factGateCount = inventedSkillCount(report?.factViolations)
+
+  return (
+    <StandardPageContainer className="w-full overflow-x-hidden pb-10 pt-3 sm:py-6">
+      {showForm ? (
+        <AnalyzeHeader title="Stellenanzeige prüfen" />
+      ) : null}
+
+      {!profileLoading && !cvReady && showForm && (
         <div className="mb-5 flex items-start gap-2 rounded-2xl border border-amber-500/30 bg-amber-950/30 px-4 py-3 text-sm text-amber-100">
           <AlertTriangle size={16} className="mt-0.5 shrink-0" aria-hidden />
           <p>
-            Ohne Lebenslauf keine Analyse.{' '}
+            {cvNeedsReupload
+              ? 'Der Lebenslauf liegt nicht in diesem Browser. Bitte unter Profil erneut hochladen, dann analysieren.'
+              : 'Ohne Lebenslauf keine Analyse.'}{' '}
             <Link to="/career-profile" className="font-semibold underline decoration-amber-400/50 underline-offset-2">
               Profil öffnen
             </Link>
@@ -261,65 +176,87 @@ export default function AnalyzePage() {
         </div>
       )}
 
-      <section className="rounded-2xl border border-stone-600/40 bg-app-surface/90 p-5 shadow-landing">
-        <label className="block">
-          <span className="text-sm font-medium text-stone-200">Stellenanzeige</span>
-          <p className="mt-1 text-xs text-stone-500">
-            Text der Anzeige einfügen, egal ob Pflege, Vertrieb, Büro, Handwerk oder IT. Eine URL allein reicht nicht. Bitte den Anzeigentext kopieren.
-          </p>
-          <textarea
-            value={jobText}
-            onChange={e => setJobText(e.target.value)}
-            rows={12}
-            placeholder="Stellenanzeige hier einfügen. Den vollständigen Text kopieren, nicht nur den Titel."
-            className="mt-3 w-full rounded-xl border border-app-border bg-black/20 px-3 py-2.5 text-sm text-stone-100 placeholder-stone-600 focus:border-amber-500/50 focus:outline-none focus:ring-1 focus:ring-amber-500/30"
+      {showForm ? (
+        <section className="rounded-2xl border border-stone-600/40 bg-app-surface/90 p-5 shadow-landing">
+          <label className="block">
+            <span className="text-sm font-medium text-stone-200">Stellenanzeige</span>
+            <p className="mt-1 text-xs text-stone-500">
+              Text der Anzeige einfügen, egal ob Pflege, Vertrieb, Büro, Handwerk oder IT. Eine URL allein reicht nicht. Bitte den Anzeigentext kopieren.
+            </p>
+            <textarea
+              value={jobText}
+              onChange={e => setJobText(e.target.value)}
+              rows={12}
+              placeholder="Stellenanzeige hier einfügen. Den vollständigen Text kopieren, nicht nur den Titel."
+              className="mt-3 w-full rounded-xl border border-app-border bg-black/20 px-3 py-2.5 text-sm text-stone-100 placeholder-stone-600 focus:border-amber-500/50 focus:outline-none focus:ring-1 focus:ring-amber-500/30"
+            />
+          </label>
+          <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-xs text-stone-500">{lengthHint}</p>
+            <AppCtaButton
+              size="lg"
+              onClick={() => void runAnalyze()}
+              disabled={busy || !jdOk || !cvReady}
+              loading={busy}
+            >
+              Analysieren
+            </AppCtaButton>
+          </div>
+          {error && (
+            <p className="mt-3 rounded-lg border border-rose-500/30 bg-rose-950/30 px-3 py-2 text-sm text-rose-100" role="alert">
+              {error}
+            </p>
+          )}
+          {composing && report ? (
+            <button
+              type="button"
+              onClick={() => setComposing(false)}
+              className="mt-3 text-xs font-medium text-stone-400 underline decoration-stone-600 underline-offset-2 hover:text-stone-200"
+            >
+              Letztes Ergebnis anzeigen
+            </button>
+          ) : null}
+        </section>
+      ) : null}
+
+      {busy ? (
+        <div className="mt-4">
+          <AnalyzeLoadingState />
+        </div>
+      ) : null}
+
+      {showReport && report ? (
+        <div className="space-y-0">
+          <AnalyzeHeader title={role.title} subtitle={role.subtitle} />
+
+          {reportIsFromPreviousSession ? (
+            <p className="mb-3 text-xs text-stone-500">
+              Letztes Ergebnis{reportStoredAt ? ` vom ${formatStoredAt(reportStoredAt)}` : ''}. Nur in diesem Browser gespeichert.
+            </p>
+          ) : null}
+
+          <AnalyzeHero score={report.globalScore} factGateCount={factGateCount} />
+          <AnalyzeSubDimensions
+            cvMatch={dims.cvMatch}
+            roleAlignment={dims.roleAlignment}
+            culture={dims.culture}
+            redFlags={dims.redFlags}
           />
-        </label>
-        <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-xs text-stone-500">{lengthHint}</p>
-          <AppCtaButton
-            size="lg"
-            onClick={() => void runAnalyze()}
-            disabled={busy || !jdOk || !cvReady}
-            loading={busy}
-          >
-            {busy ? 'Analysiert…' : 'Analysieren'}
-          </AppCtaButton>
-        </div>
-        {error && (
-          <p className="mt-3 rounded-lg border border-rose-500/30 bg-rose-950/30 px-3 py-2 text-sm text-rose-100" role="alert">
-            {error}
-          </p>
-        )}
-      </section>
+          <AnalyzeWarningBanner skillGap={gap} warnings={report.warnings} />
+          <AnalyzeSkillBuckets skillGap={gap} />
+          <AnalyzeBulletRewrites bullets={report.bullets ?? []} />
+          <AnalyzeRoleSummary text={report.roleSummary ?? ''} />
 
-      {busy && !report && (
-        <div className="mt-8 flex items-center justify-center gap-2 text-sm text-stone-400">
-          <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-          Analyse läuft…
-        </div>
-      )}
-
-      {report && reportIsFromPreviousSession && (
-        <div className="mt-6 flex items-center justify-between gap-3 rounded-xl border border-stone-600/40 bg-white/[0.03] px-4 py-2.5 text-xs text-stone-400">
-          <span>
-            Letztes Ergebnis{reportStoredAt ? ` vom ${formatStoredAt(reportStoredAt)}` : ''}, keine neue Stellenanzeige eingefügt.
-          </span>
           <button
             type="button"
-            onClick={() => {
-              setReport(null)
-              setReportIsFromPreviousSession(false)
-              setReportStoredAt(null)
-            }}
-            className="shrink-0 font-medium text-stone-300 hover:text-stone-100"
+            onClick={startNewAnalysis}
+            className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-amber-600 px-4 py-3.5 text-sm font-semibold text-white transition hover:bg-amber-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-400/50"
           >
-            Ausblenden
+            <Plus className="h-4 w-4" aria-hidden />
+            Neue Analyse
           </button>
         </div>
-      )}
-
-      {report ? <ReportView report={report} /> : null}
+      ) : null}
     </StandardPageContainer>
   )
 }

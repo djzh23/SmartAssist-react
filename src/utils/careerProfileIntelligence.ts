@@ -39,7 +39,7 @@ export function getMissingProfileItems(profile: CareerProfile): MissingItem[] {
   if (profile.experience.length === 0) items.push({ id: 'experience', label: 'Berufserfahrung ergänzen', section: 'experience', priority: 75 })
   if (profile.educationEntries.length === 0) items.push({ id: 'education', label: 'Ausbildung ergänzen', section: 'education', priority: 70 })
   if (profile.languages.length === 0) items.push({ id: 'languages', label: 'Sprachen ergänzen', section: 'languages', priority: 65 })
-  if (!profile.cvRawText?.trim()) items.push({ id: 'cv', label: 'Lebenslauf hochladen', section: 'basis', priority: 60 })
+  if (!profile.cvContentHash?.trim()) items.push({ id: 'cv', label: 'Lebenslauf hochladen', section: 'basis', priority: 60 })
   if (!profile.cvSummary?.trim() && !profile.cvSummaryEn?.trim()) items.push({ id: 'summary', label: 'KI-Zusammenfassung erstellen', section: 'summary', priority: 55 })
   if (profile.targetJobs.length === 0) items.push({ id: 'targets', label: 'Wunschstelle hinzufügen', section: 'targets', priority: 50 })
   return items.sort((a, b) => b.priority - a.priority)

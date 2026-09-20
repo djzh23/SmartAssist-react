@@ -66,6 +66,7 @@ import {
 } from '../utils/careerProfileIntelligence'
 import { useMediaQuery } from '../hooks/useMediaQuery'
 import { CAREER_FIELDS, CAREER_GOALS, CAREER_LEVELS } from '../config/careerOptions'
+import { isCachedCvReady, readCachedCv } from '../utils/cvSessionCache'
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -73,10 +74,10 @@ function canMarkProfileSetupComplete(p: CareerProfile): boolean {
   return Boolean(p.field?.trim() && p.level?.trim() && p.goals.length > 0)
 }
 
-function hasEnoughForAnonymousCvSummary(p: CareerProfile): boolean {
+function hasEnoughForAnonymousCvSummary(p: CareerProfile, localCvText?: string | null): boolean {
   if ((p.skills?.length ?? 0) > 0) return true
   if ((p.experience?.length ?? 0) > 0) return true
-  return (p.cvRawText?.trim().length ?? 0) >= 50
+  return (localCvText?.trim().length ?? 0) >= 50
 }
 
 function emptyExp(): WorkExperience {
@@ -331,9 +332,10 @@ function HelpModal({ open, onClose }: { open: boolean; onClose: () => void }) {
           {tab === 'summary' && (
             <div className="space-y-3">
               <p>
-                Die <strong className="text-stone-900">KI-Zusammenfassung</strong> fasst dein Profil
-                anonymisiert und strukturiert zusammen - kein Name, keine persönlichen Daten, nur
-                berufliche Stärken und Erfahrung.
+                Die <strong className="text-stone-900">KI-Zusammenfassung</strong> soll berufliche
+                Fakten als Fließtext fassen. Die Anweisung an das Modell lautet: keine Namen,
+                Adressen oder Kontaktdaten ausgeben. Das ist eine Prompt-Regel, kein Beweis dass
+                nichts Persönliches ankommt.
               </p>
               <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 space-y-2">
                 <p className="font-semibold text-emerald-900">Ablauf</p>
@@ -341,7 +343,7 @@ function HelpModal({ open, onClose }: { open: boolean; onClose: () => void }) {
                   {[
                     'Sprache wählen (DE oder EN)',
                     'Auf „Zusammenfassung erstellen" klicken',
-                    'KI verarbeitet Profil + hochgeladenen CV im Hintergrund',
+                    'KI verarbeitet Profil plus Lebenslauf-Text (einmalig an Groq)',
                     'Ergebnis als Modal öffnen, lesen, ggf. anpassen, speichern',
                   ].map((step, i) => (
                     <li key={step} className="flex gap-2 items-start">
@@ -392,21 +394,21 @@ function HelpModal({ open, onClose }: { open: boolean; onClose: () => void }) {
           {tab === 'privacy' && (
             <div className="space-y-3">
               <div className="rounded-xl border border-stone-400/25 bg-app-parchmentDeep p-4 space-y-2">
-                <p className="font-semibold text-stone-900">Was wird anonymisiert?</p>
+                <p className="font-semibold text-stone-900">Was die KI zu sehen bekommt</p>
                 <p>
-                  Die KI-Zusammenfassung wird ohne deinen Namen, deine Adresse oder andere direkt
-                  identifizierende Angaben erstellt. Die KI erhält nur berufliche Fakten.
+                  Für die Stellenanalyse und die optionale Profil-Zusammenfassung geht der Lebenslauf-Text
+                  einmalig an Groq in den USA. Auf unseren Servern bleibt der Text nicht. Name und
+                  Kontaktdaten solltest du vorher selbst entfernen. Ein Filter streicht zusätzlich erkannte
+                  E-Mails, Telefonnummern und Links. Das ersetzt keine eigene Prüfung.
                 </p>
               </div>
               <p>
-                Dein hochgeladener <strong className="text-stone-900">CV-Rohtext</strong> wird sicher
-                auf dem Server gespeichert und nur für die Zusammenfassungs-Generierung, die
-                PDF-Erkennung und die Stellenanalyse verwendet.
+                Der Lebenslauf-Text bleibt in diesem Browser. Auf dem Server speichern wir nur einen
+                Prüfwert (Hash) und die Textlänge. Der Analysebericht liegt ebenfalls nur in diesem Browser.
               </p>
               <p>
-                Du kannst jederzeit alle Karriereprofil-Daten über den Button{' '}
-                <strong className="text-stone-900">„Alle Daten löschen"</strong> oben auf der Seite
-                vollständig entfernen.
+                Profilfelder kannst du selbst ändern oder leeren. Eine vollständige Kontolöschung läuft über
+                die Konto-Seite bei Clerk bzw. auf Anfrage, sobald die Kontaktadresse im Impressum steht.
               </p>
             </div>
           )}
@@ -523,7 +525,7 @@ function SummaryModal({
 // ─── CareerProfilePage ───────────────────────────────────────────────────────
 
 export default function CareerProfilePage() {
-  const { getToken, isLoaded } = useAuth()
+  const { getToken, isLoaded, userId } = useAuth()
   const mergedPendingCv = useRef(false)
   const desktopContentRef = useRef<HTMLDivElement | null>(null)
 
@@ -737,13 +739,16 @@ export default function CareerProfilePage() {
 
   /** Generates summary for ONE language only - does not touch the other. */
   const generateSummaryForLang = async (lang: AnonymousSummaryLanguage) => {
-    if (!profile || !hasEnoughForAnonymousCvSummary(profile)) return
+    if (!profile || !hasEnoughForAnonymousCvSummary(profile, readCachedCv(userId)?.text)) return
     const token = await getToken()
     if (!token) return
     setCvSummaryLoading(true)
     setError(null)
     try {
-      const text = await fetchAnonymousCvSummary(token, { language: lang })
+      const text = await fetchAnonymousCvSummary(token, {
+        language: lang,
+        cvText: readCachedCv(userId)?.text ?? null,
+      })
       const patch =
         lang === 'de'
           ? { cvSummary: text, cvSummaryEn: profile.cvSummaryEn ?? null }
@@ -860,7 +865,7 @@ export default function CareerProfilePage() {
   const level = profile.level ?? ''
   const hasDeSummary = Boolean(profile.cvSummary?.trim())
   const hasEnSummary = Boolean(profile.cvSummaryEn?.trim())
-  const canGenerate = hasEnoughForAnonymousCvSummary(profile)
+  const canGenerate = hasEnoughForAnonymousCvSummary(profile, readCachedCv(userId)?.text)
   const completeness = calculateProfileCompleteness(profile)
   const profileStatusLabel = getProfileStatusLabel(completeness)
   const missingItems = getMissingProfileItems(profile)
@@ -880,7 +885,9 @@ export default function CareerProfilePage() {
     { key: 'targets', label: 'Wunschstellen', state: getSectionCompletion('targets', profile) },
   ]
   const completedSections = sectionItems.filter(item => item.state === 'complete').length
-  const hasCv = (profile.cvRawText?.trim().length ?? 0) > 0
+  const localCv = readCachedCv(userId)
+  const cvOnThisBrowser = isCachedCvReady(localCv, profile.cvContentHash)
+  const hasCv = Boolean(profile.cvContentHash?.trim()) || cvOnThisBrowser
   const mobileIsDetail = mobileSection !== 'overview'
   const currentSection = isDesktop ? activeSection : mobileSection
 
@@ -915,7 +922,6 @@ export default function CareerProfilePage() {
           pageKey="careerProfile"
           subtitle="Deine Datenbasis für die Stellenanalyse."
           className="mb-4 sm:mb-6"
-          hideTitleOnMobile
           infoSlot={(
             <button
               type="button"
@@ -1098,7 +1104,11 @@ export default function CareerProfilePage() {
                   <ProfileSummaryCard
                     title="Aktiver Lebenslauf"
                     value="Hochgeladen"
-                    details={profile.cvUploadedAt ? `Zuletzt aktualisiert ${formatDateTime(profile.cvUploadedAt)}` : 'Bereit für die Analyse'}
+                    details={
+                      cvOnThisBrowser
+                        ? (profile.cvUploadedAt ? `Zuletzt aktualisiert ${formatDateTime(profile.cvUploadedAt)}` : 'Bereit für die Analyse')
+                        : 'In diesem Browser erneut hochladen'
+                    }
                     icon={FileText}
                   />
                 ) : (

@@ -19,7 +19,9 @@ export interface CareerProfile {
   educationEntries: Education[]
   languages: ProfileLanguage[]
   story?: string | null
-  cvRawText: string | null
+  cvRawText?: string | null
+  cvContentHash: string | null
+  cvContentLength: number | null
   cvSummary: string | null
   cvSummaryEn: string | null
   cvUploadedAt: string | null
@@ -130,13 +132,30 @@ export async function updateSkills(token: string, skills: string[]): Promise<voi
   if (!res.ok) throw new Error(await readError(res, `Skills update failed (${res.status})`))
 }
 
-export async function uploadCv(token: string, text: string): Promise<void> {
+export interface CvUploadResult {
+  contentHash: string
+  contentLength: number
+  extractedText: string
+}
+
+export async function uploadCv(token: string, text: string): Promise<CvUploadResult> {
   const res = await fetch(`${API_BASE}/api/profile/cv`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ text }),
   })
   if (!res.ok) throw new Error(await readError(res, `CV upload failed (${res.status})`))
+  const body = (await res.json()) as Partial<CvUploadResult>
+  const extractedText = body.extractedText?.trim() || text.trim()
+  const contentHash = body.contentHash?.trim().toLowerCase() ?? ''
+  if (!extractedText || contentHash.length !== 64) {
+    throw new Error('Lebenslauf konnte nicht bestätigt werden. Bitte erneut hochladen.')
+  }
+  return {
+    contentHash,
+    contentLength: body.contentLength ?? extractedText.length,
+    extractedText,
+  }
 }
 
 export type AnonymousSummaryLanguage = 'de' | 'en'
@@ -144,13 +163,13 @@ export type AnonymousSummaryLanguage = 'de' | 'en'
 /** LLM: anonymer Profil-Fließtext für KI-Kontext (keine Namen im Prompt-Auftrag). */
 export async function fetchAnonymousCvSummary(
   token: string,
-  options?: { language?: AnonymousSummaryLanguage },
+  options?: { language?: AnonymousSummaryLanguage; cvText?: string | null },
 ): Promise<string> {
   const language = options?.language ?? 'de'
   const res = await fetch(`${API_BASE}/api/profile/cv/anonymous-summary`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ language }),
+    body: JSON.stringify({ language, cvText: options?.cvText ?? undefined }),
   })
   if (res.status === 429)
     throw new Error(await readError(res, 'Zu viele Anfragen. Bitte kurz warten.'))
@@ -165,16 +184,30 @@ export async function fetchAnonymousCvSummary(
 export async function uploadCvPdfForParsing(
   token: string,
   base64Pdf: string,
-): Promise<{ rawTextLength: number; parsed: ParsedCvData }> {
+): Promise<{ rawTextLength: number; parsed: ParsedCvData; extractedText: string; contentHash: string; contentLength: number }> {
   const res = await fetch(`${API_BASE}/api/profile/cv/upload-pdf`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ base64Pdf }),
   })
   if (!res.ok) throw new Error(await readError(res, `PDF-Analyse fehlgeschlagen (${res.status})`))
-  const body = (await res.json()) as { rawTextLength?: number; parsed?: ParsedCvData }
+  const body = (await res.json()) as {
+    rawTextLength?: number
+    contentLength?: number
+    contentHash?: string
+    extractedText?: string
+    parsed?: ParsedCvData
+  }
+  const extractedText = body.extractedText?.trim() ?? ''
+  const contentHash = body.contentHash?.trim().toLowerCase() ?? ''
+  if (!extractedText || contentHash.length !== 64) {
+    throw new Error('Lebenslauf konnte nicht bestätigt werden. Bitte erneut hochladen.')
+  }
   return {
-    rawTextLength: body.rawTextLength ?? 0,
+    rawTextLength: body.contentLength ?? body.rawTextLength ?? extractedText.length,
+    contentHash,
+    contentLength: body.contentLength ?? extractedText.length,
+    extractedText,
     parsed: {
       skills: [],
       experience: [],
