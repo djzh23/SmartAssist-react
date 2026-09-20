@@ -156,12 +156,12 @@ function HeaderCtas({
   onSignedIn?: () => void
 }) {
   return (
-    <div className={stacked ? 'mt-4 flex flex-col gap-2' : 'flex items-center gap-2'}>
+    <div className={stacked ? 'mt-4 flex flex-col gap-2' : 'hidden items-center gap-2 lg:flex'}>
       <SignInButton mode="modal" fallbackRedirectUrl={AFTER_AUTH}>
         <button
           type="button"
           onClick={onSignedIn}
-          className={stacked ? 'pp-signin-ghost w-full' : 'pp-signin-ghost hidden lg:inline-flex'}
+          className={stacked ? 'pp-signin-ghost w-full' : 'pp-signin-ghost'}
         >
           Anmelden
         </button>
@@ -170,7 +170,7 @@ function HeaderCtas({
         <button
           type="button"
           onClick={onBeta}
-          className={stacked ? 'pp-cta w-full min-h-11' : 'pp-cta pp-cta-nav hidden lg:inline-flex'}
+          className={stacked ? 'pp-cta w-full min-h-11' : 'pp-cta pp-cta-nav'}
         >
           Beta anfragen
         </button>
@@ -178,7 +178,7 @@ function HeaderCtas({
         <SignUpButton mode="modal" fallbackRedirectUrl={AFTER_AUTH}>
           <button
             type="button"
-            className={stacked ? 'pp-cta w-full min-h-11' : 'pp-cta pp-cta-nav hidden lg:inline-flex'}
+            className={stacked ? 'pp-cta w-full min-h-11' : 'pp-cta pp-cta-nav'}
           >
             Kostenlos starten
           </button>

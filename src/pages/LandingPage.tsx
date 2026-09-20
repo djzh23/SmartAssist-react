@@ -475,8 +475,7 @@ export default function LandingPage() {
                 Wenn deine Frage nicht dabei ist, schreib eine kurze Mail an{' '}
                 <a href="mailto:ijd.zouh@yahoo.com" className="text-[#C4B8AA] underline-offset-2 hover:text-white hover:underline">
                   ijd.zouh@yahoo.com
-                </a>
-                .
+                </a>.
               </p>
               <FaqList />
             </div>
