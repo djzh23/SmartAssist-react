@@ -337,17 +337,82 @@ export function PublicSiteHeader({ variant }: PublicSiteHeaderProps) {
   )
 }
 
+const FOOTER_PRODUCT = [
+  { id: 'funktionen', label: 'Funktionen' },
+  { id: 'ablauf', label: 'So funktioniert es' },
+  { id: 'bericht', label: 'Beispielbericht' },
+  { id: 'ueber', label: 'Über PrivatePrep' },
+  { id: 'faq', label: 'FAQ' },
+] as const
+
 export function PublicSiteFooter() {
   return (
-    <footer className="pp-footer px-6 py-8 text-center text-xs">
-      <p>© 2026 PrivatePrep</p>
-      <p className="mt-3 flex flex-wrap items-center justify-center gap-4">
-        {betaModeEnabled ? null : (
-          <Link to="/blog" className="transition-colors hover:text-[#F5F5F5]">Ratgeber</Link>
-        )}
-        <Link to="/impressum" className="transition-colors hover:text-[#F5F5F5]">Impressum</Link>
-        <Link to="/datenschutz" className="transition-colors hover:text-[#F5F5F5]">Datenschutz</Link>
-      </p>
+    <footer className="pp-footer">
+      <div className={`${PUBLIC_SHELL} py-[60px]`}>
+        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
+          <div>
+            <div className="flex items-center gap-2.5">
+              <BrandMark />
+            </div>
+            <p className="mt-4 text-[13px] leading-relaxed text-[#8A7F72]">
+              Deutsche KI-Bewerbungsanalyse für alle Branchen.
+            </p>
+            <p className="mt-2 text-[13px] leading-relaxed text-[#8A7F72]">
+              Ein Projekt aus Hamburg.
+            </p>
+          </div>
+
+          <div>
+            <p className="text-[12px] font-medium uppercase tracking-[0.6px] text-[#C4B8AA]">Produkt</p>
+            <ul className="mt-4 space-y-2.5">
+              {FOOTER_PRODUCT.map(item => (
+                <li key={item.id}>
+                  <Link
+                    to={`/#${item.id}`}
+                    className="text-[13px] text-[#8A7F72] no-underline transition-colors hover:text-white"
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <p className="text-[12px] font-medium uppercase tracking-[0.6px] text-[#C4B8AA]">Rechtliches</p>
+            <ul className="mt-4 space-y-2.5">
+              <li>
+                <Link to="/impressum" className="text-[13px] text-[#8A7F72] no-underline transition-colors hover:text-white">
+                  Impressum
+                </Link>
+              </li>
+              <li>
+                <Link to="/datenschutz" className="text-[13px] text-[#8A7F72] no-underline transition-colors hover:text-white">
+                  Datenschutz
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          <div>
+            <p className="text-[12px] font-medium uppercase tracking-[0.6px] text-[#C4B8AA]">Kontakt</p>
+            <a
+              href="mailto:ijd.zouh@yahoo.com"
+              className="mt-4 inline-block text-[13px] text-[#8A7F72] no-underline transition-colors hover:text-white"
+            >
+              ijd.zouh@yahoo.com
+            </a>
+            <p className="mt-2 text-[13px] leading-relaxed text-[#8A7F72]">
+              Für Beta-Zugang, Fragen oder Feedback.
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-10 flex flex-col gap-2 border-t-[0.5px] border-[#3a342e] pt-6 text-[12px] text-[#9A9086] sm:flex-row sm:items-center sm:justify-between">
+          <p>© 2026 PrivatePrep</p>
+          <p>Geschlossene Beta</p>
+        </div>
+      </div>
     </footer>
   )
 }
