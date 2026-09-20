@@ -342,8 +342,25 @@ export default function LandingPage() {
           </div>
         </section>
 
+        <section id="ueber" className="pp-section pp-band-a pp-band-from-c py-20">
+          <div className={`${PUBLIC_SHELL} text-center`}>
+            <div className="mx-auto max-w-[640px]">
+              <h2 className="text-[28px] font-medium text-white">Über PrivatePrep</h2>
+              <p className="mt-8 text-[15px] leading-[1.75] text-[#C4B8AA]">
+                PrivatePrep ist ein privates Projekt aus Hamburg. Entwickelt von einem Informatik-Absolventen, der die deutsche Bewerbungspraxis aus mehreren Jahren eigener Erfahrung kennt: Werkstudentenstellen, Anschreiben die niemand liest, Absagen ohne Feedback.
+              </p>
+              <p className="mt-6 text-[15px] leading-[1.75] text-[#C4B8AA]">
+                Die Idee hinter PrivatePrep ist einfach. Eine gute Bewerbung ist nicht die, die am besten klingt. Sie ist die, bei der Lebenslauf und Ausschreibung wirklich zusammenpassen. Wo das nicht der Fall ist, soll das ehrlich sichtbar sein. Wo es passt, soll die Formulierung dazu beitragen, dass es auch beim Lesen erkannt wird.
+              </p>
+              <p className="mt-6 text-[15px] leading-[1.75] text-[#C4B8AA]">
+                PrivatePrep prüft diesen Abgleich. Nicht mehr, nicht weniger.
+              </p>
+            </div>
+          </div>
+        </section>
+
         {betaModeEnabled ? (
-          <section id="zugang-anfragen" className="pp-section pp-band-a pp-band-from-c pb-16 sm:pb-20">
+          <section id="zugang-anfragen" className="pp-section pp-band-b pb-16 sm:pb-20">
             <div className={`${PUBLIC_SHELL} text-center`}>
               <h2 className="pp-section-title">Zugang anfragen</h2>
               <p className="pp-section-lead">

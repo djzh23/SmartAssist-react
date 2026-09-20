@@ -10,6 +10,7 @@ const LANDING_SECTIONS = [
   'funktionen',
   'bericht',
   'ablauf',
+  'ueber',
   'zugang-anfragen',
 ] as const
 
