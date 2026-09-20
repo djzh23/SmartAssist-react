@@ -1,4 +1,5 @@
 import type { ProfileContextToggles } from '../types'
+import { readApiError } from './apiBase'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL
   ? `${import.meta.env.VITE_API_BASE_URL}`
@@ -80,12 +81,7 @@ export interface ParsedCvData {
 }
 
 async function readError(res: Response, fallback: string): Promise<string> {
-  try {
-    const j = await res.json() as { error?: string; message?: string }
-    return j.error ?? j.message ?? fallback
-  } catch {
-    return fallback
-  }
+  return readApiError(res, fallback)
 }
 
 export async function fetchProfile(token: string): Promise<CareerProfile> {

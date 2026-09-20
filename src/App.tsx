@@ -6,7 +6,8 @@ import AnalyticsScript from './components/analytics/AnalyticsScript'
 import DocumentHead from './components/layout/DocumentHead'
 import MainLayout from './components/layout/MainLayout'
 import LoadingScreen from './components/LoadingScreen'
-import { ClosedBetaSplash, isBetaGateEnabled } from './components/marketing/ClosedBetaSplash'
+import { BetaAccessOverlay } from './components/marketing/BetaAccessOverlay'
+import { betaModeEnabled } from './config/env'
 import { useCareerProfile } from './hooks/useCareerProfile'
 
 const LandingPage = lazy(() => import('./pages/LandingPage'))
@@ -66,8 +67,8 @@ function AppRoutes() {
   if (!isLoaded || !userLoaded) return <LoadingScreen />
 
   const legalOpen = location.pathname === '/impressum' || location.pathname === '/datenschutz'
-  if (isBetaGateEnabled && !isSignedIn && !legalOpen) {
-    return <ClosedBetaSplash />
+  if (betaModeEnabled && !isSignedIn && !legalOpen && location.pathname !== '/') {
+    return <Navigate to="/" replace />
   }
 
   return (
@@ -180,6 +181,7 @@ export default function App() {
         <ClerkProviderWithRouter>
           <AnalyticsScript />
           <DocumentHead />
+          <BetaAccessOverlay />
           <AppRoutes />
         </ClerkProviderWithRouter>
       </BrowserRouter>

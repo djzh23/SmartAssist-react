@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom'
 import { SignInButton, SignUpButton } from '@clerk/clerk-react'
+import { betaModeEnabled } from '../../config/env'
 
 const AFTER_AUTH = '/analyze'
-const BETA_GATE = import.meta.env.VITE_BETA_MODE === 'true'
 
 const navLinkClass =
   'rounded-full px-3 py-2 text-sm font-medium text-stone-300 transition hover:bg-white/8 hover:text-white'
@@ -51,32 +51,36 @@ export function PublicSiteHeader({ variant }: PublicSiteHeaderProps) {
         )}
 
         <div className="hidden items-center gap-0.5 md:flex">
-          {isLanding ? (
+          {betaModeEnabled ? null : (
             <>
-              <button type="button" onClick={() => scrollTo('features')} className={navLinkClass}>Funktionen</button>
-              <button type="button" onClick={() => scrollTo('how')} className={navLinkClass}>Ablauf</button>
-              <button type="button" onClick={() => scrollTo('demo')} className={navLinkClass}>Analysebericht</button>
-            </>
-          ) : (
-            <>
-              <Link to="/#features" className={navLinkClass}>Funktionen</Link>
-              <Link to="/#how" className={navLinkClass}>Ablauf</Link>
-              <Link to="/#demo" className={navLinkClass}>Analysebericht</Link>
+              {isLanding ? (
+                <>
+                  <button type="button" onClick={() => scrollTo('features')} className={navLinkClass}>Funktionen</button>
+                  <button type="button" onClick={() => scrollTo('how')} className={navLinkClass}>Ablauf</button>
+                  <button type="button" onClick={() => scrollTo('demo')} className={navLinkClass}>Analysebericht</button>
+                </>
+              ) : (
+                <>
+                  <Link to="/#features" className={navLinkClass}>Funktionen</Link>
+                  <Link to="/#how" className={navLinkClass}>Ablauf</Link>
+                  <Link to="/#demo" className={navLinkClass}>Analysebericht</Link>
+                </>
+              )}
+              <Link to="/blog" className={navLinkClass}>Ratgeber</Link>
             </>
           )}
-          <Link to="/blog" className={navLinkClass}>Ratgeber</Link>
         </div>
 
         <div className="flex items-center gap-1.5 sm:gap-2">
           <SignInButton mode="modal" fallbackRedirectUrl={AFTER_AUTH}>
             <button
               type="button"
-              className="hidden min-h-[36px] rounded-full border border-amber-800/45 bg-white/[0.06] px-3 text-xs font-medium text-stone-100 sm:inline-flex sm:min-h-[40px] sm:px-4 sm:text-sm"
+              className="inline-flex min-h-[36px] items-center rounded-full border border-amber-800/45 bg-white/[0.06] px-3 text-xs font-medium text-stone-100 sm:min-h-[40px] sm:px-4 sm:text-sm"
             >
               Anmelden
             </button>
           </SignInButton>
-          {BETA_GATE ? null : (
+          {betaModeEnabled ? null : (
             <SignUpButton mode="modal" fallbackRedirectUrl={AFTER_AUTH}>
               <button
                 type="button"
@@ -97,7 +101,9 @@ export function PublicSiteFooter() {
     <footer className="bg-[#0D0800] px-6 py-10 text-center text-xs text-stone-600">
       <p>© 2026 PrivatePrep. KI-gestützte Stellenanalyse für Bewerbungen in Deutschland.</p>
       <p className="mt-2 flex flex-wrap items-center justify-center gap-4">
-        <Link to="/blog" className="transition-colors hover:text-stone-400">Ratgeber</Link>
+        {betaModeEnabled ? null : (
+          <Link to="/blog" className="transition-colors hover:text-stone-400">Ratgeber</Link>
+        )}
         <Link to="/impressum" className="transition-colors hover:text-stone-400">Impressum</Link>
         <Link to="/datenschutz" className="transition-colors hover:text-stone-400">Datenschutz</Link>
       </p>

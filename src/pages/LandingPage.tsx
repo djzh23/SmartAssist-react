@@ -1,7 +1,9 @@
 import { useEffect, useLayoutEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { SignUpButton, useUser } from '@clerk/clerk-react'
+import { ComingSoonLanding } from '../components/marketing/ComingSoonLanding'
 import { PUBLIC_AFTER_AUTH, PublicSiteFooter, PublicSiteHeader } from '../components/marketing/PublicSiteChrome'
+import { betaModeEnabled } from '../config/env'
 import '../styles/landing.css'
 
 const AFTER_AUTH = PUBLIC_AFTER_AUTH
@@ -106,6 +108,9 @@ export default function LandingPage() {
     }, 50)
     return () => window.clearTimeout(t)
   }, [])
+
+  if (isLoaded && !isSignedIn && betaModeEnabled)
+    return <ComingSoonLanding />
 
   return (
     <div className="landing-page-root min-h-screen text-stone-100">

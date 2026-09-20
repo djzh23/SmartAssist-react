@@ -1,4 +1,5 @@
 import { BASE, authHeaders } from './apiBase'
+import { BetaAccessRequiredError, throwIfBetaForbidden } from './betaAccess'
 import { UsageLimitError } from './agentClient'
 
 export interface ScoreDimensions {
@@ -100,10 +101,14 @@ export async function analyzeJob(
     let message = `Analyse fehlgeschlagen (${res.status})`
     try {
       const err = await res.json() as { error?: string; message?: string }
+      throwIfBetaForbidden(res.status, err)
       if (err.error) errorCode = err.error
       if (err.message) message = err.message
       else if (err.error) message = err.error
-    } catch { /* fallback */ }
+    } catch (caught) {
+      if (caught instanceof BetaAccessRequiredError)
+        throw caught
+    }
     throw new AnalyzeApiError(errorCode, message, res.status)
   }
 
