@@ -3,8 +3,17 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --site-header-height: 100px;
+  }
+
   html {
     scroll-behavior: smooth;
+  }
+
+  section[id],
+  div[id] {
+    scroll-margin-top: calc(var(--site-header-height) + 24px);
   }
 
   html, body, #root {

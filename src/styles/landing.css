@@ -1,7 +1,7 @@
 /* Document smooth scroll lives in index.css. Landing in-page jumps use JS with --pp-header-offset. */
 
 html {
-  scroll-padding-top: var(--pp-header-offset, 7rem);
+  scroll-padding-top: calc(var(--pp-header-offset, var(--site-header-height, 100px)) + 24px);
 }
 
 .landing-page-root {

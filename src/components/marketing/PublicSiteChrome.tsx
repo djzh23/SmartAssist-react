@@ -26,18 +26,20 @@ const NAV_ITEMS = [
 export const LANDING_SCROLL_KEY = 'pp-landing-scroll'
 
 export const PUBLIC_SHELL = 'mx-auto w-full max-w-[960px] px-5 sm:px-6'
+const ANCHOR_GAP_PX = 24
 
 function headerOffsetPx() {
   const raw = getComputedStyle(document.documentElement).getPropertyValue('--pp-header-offset')
   const parsed = Number.parseFloat(raw)
   if (Number.isFinite(parsed) && parsed > 0) return parsed
-  return document.querySelector('.pp-header')?.getBoundingClientRect().height ?? 96
+  return document.querySelector('.pp-header')?.getBoundingClientRect().height ?? 100
 }
 
 function syncHeaderOffset() {
   const header = document.querySelector('.pp-header')
-  const h = Math.ceil(header?.getBoundingClientRect().height ?? 96)
+  const h = Math.ceil(header?.getBoundingClientRect().height ?? 100)
   document.documentElement.style.setProperty('--pp-header-offset', `${h}px`)
+  document.documentElement.style.setProperty('--site-header-height', `${h}px`)
   return h
 }
 
@@ -48,7 +50,7 @@ export function scrollToSection(id: string, behavior: ScrollBehavior = 'smooth')
   }
   const el = document.getElementById(id)
   if (!el) return
-  const top = window.scrollY + el.getBoundingClientRect().top - headerOffsetPx()
+  const top = window.scrollY + el.getBoundingClientRect().top - headerOffsetPx() - ANCHOR_GAP_PX
   window.scrollTo({ top: Math.max(0, top), behavior })
 }
 
@@ -234,7 +236,7 @@ export function PublicSiteHeader({ variant }: PublicSiteHeaderProps) {
     let frame = 0
     const updateSpy = () => {
       if (spyLocked.current) return
-      const probe = syncHeaderOffset() + 8
+      const probe = syncHeaderOffset() + ANCHOR_GAP_PX + 8
       let current = 'hero'
       for (const id of LANDING_SECTIONS) {
         const el = document.getElementById(id)
@@ -287,7 +289,7 @@ export function PublicSiteHeader({ variant }: PublicSiteHeaderProps) {
     scrollToSection(id, 'smooth')
     window.setTimeout(() => {
       spyLocked.current = false
-    }, 900)
+    }, 1200)
     closeMenu()
   }
 
