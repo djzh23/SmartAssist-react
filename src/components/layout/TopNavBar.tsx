@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { SignOutButton } from '@clerk/clerk-react'
 import { User } from 'lucide-react'
+import { MAIN_NAV_ITEMS } from '../../config/mainNavigation'
 import { useUserPlan } from '../../hooks/useUserPlan'
 import { useBreakpoint } from '../../hooks/useBreakpoint'
 
@@ -143,22 +144,47 @@ export default function TopNavBar(_props: Props) {
   }
 
   return (
-    <header className="sticky top-0 z-50 flex h-[52px] flex-shrink-0 items-center justify-between gap-2 border-b border-[#3a332d] bg-[#1a1613] px-4">
-      <Link
-        to="/analyze"
-        aria-label="PrivatePrep"
-        className="flex flex-shrink-0 items-center gap-2 rounded-lg py-1 pr-2 no-underline hover:opacity-90"
-      >
-        <img
-          src="/logo-nav.webp"
-          alt=""
-          className="pp-brand-mark h-10 w-10"
-          width={40}
-          height={40}
-          decoding="async"
-        />
-        <span className="pp-wordmark text-[15px]">Private<span>Prep</span></span>
-      </Link>
+    <header className="sticky top-0 z-50 flex h-14 flex-shrink-0 items-center justify-between gap-4 border-b border-[#3a332d] bg-[#1a1613] px-4 sm:px-6">
+      <div className="flex min-w-0 items-center gap-6">
+        <Link
+          to="/analyze"
+          aria-label="PrivatePrep"
+          className="flex flex-shrink-0 items-center gap-2 rounded-lg py-1 pr-2 no-underline hover:opacity-90"
+        >
+          <img
+            src="/logo-nav.webp"
+            alt=""
+            className="pp-brand-mark h-10 w-10"
+            width={40}
+            height={40}
+            decoding="async"
+          />
+          <span className="pp-wordmark text-[15px]">Private<span>Prep</span></span>
+        </Link>
+
+        <nav aria-label="Hauptnavigation" className="flex items-center gap-1">
+          {MAIN_NAV_ITEMS.map(item => {
+            const Icon = item.icon
+            return (
+              <NavLink
+                key={item.key}
+                to={item.route}
+                className={({ isActive }) =>
+                  [
+                    'flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium no-underline transition-colors',
+                    isActive
+                      ? 'bg-[rgba(217,119,87,0.16)] text-[#f5f1eb]'
+                      : 'text-[#a89e91] hover:bg-white/5 hover:text-[#f5f1eb]',
+                  ].join(' ')
+                }
+              >
+                <Icon size={16} aria-hidden />
+                {item.label}
+              </NavLink>
+            )
+          })}
+        </nav>
+      </div>
 
       <UserAvatarMenu
         isMobile={false}

@@ -1,228 +1,32 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { motion } from 'framer-motion'
-import { Outlet, useLocation } from 'react-router-dom'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { Outlet } from 'react-router-dom'
 import { AppUiProvider } from '../../context/AppUiContext'
-import { LayoutChromeProvider, useLayoutChrome } from '../../context/LayoutChromeContext'
 import { useBreakpoint } from '../../hooks/useBreakpoint'
-import SidebarNavContent from './SidebarNavContent'
 import TopNavBar from './TopNavBar'
 import BottomTabBar from './BottomTabBar'
 import '../../styles/landing.css'
 
-function MainLayoutShell() {
-  const bp = useBreakpoint()
-  const location = useLocation()
-  const {
-    tabletSidebarExpanded,
-    setTabletSidebarExpanded,
-    desktopChatHistoryOpen,
-    setDesktopChatHistoryOpen,
-    collapseDesktopRail,
-    registerDesktopRailCollapse,
-  } = useLayoutChrome()
-  const mainRef = useRef<HTMLElement>(null)
-
-  const showTabletDesktopSidebar = bp === 'tablet' || bp === 'desktop'
-  const sidebarDensity = bp === 'desktop' || (bp === 'tablet' && tabletSidebarExpanded) ? 'full' : 'icons'
-  const asideWidthClass =
-    tabletSidebarExpanded ? 'w-60' : 'w-14'
-
-  /** Desktop (≥1025px): icon rail + hover overlay expand — chat column stays full width (overlay). */
-  const [railWide, setRailWide] = useState(false)
-  const [railLabelsShown, setRailLabelsShown] = useState(false)
-  const railEnterTimerRef = useRef<number>()
-  const railLeaveCollapseTimerRef = useRef<number>()
-  const isChatRoute = location.pathname === '/chat'
-
-  const onDesktopRailEnter = () => {
-    if (railLeaveCollapseTimerRef.current) {
-      window.clearTimeout(railLeaveCollapseTimerRef.current)
-      railLeaveCollapseTimerRef.current = undefined
-    }
-    if (railEnterTimerRef.current)
-      window.clearTimeout(railEnterTimerRef.current)
-    railEnterTimerRef.current = window.setTimeout(() => {
-      // On /chat keep the rail icon-only; chat history opens per category hover in SidebarNavContent.
-      if (!isChatRoute) {
-        setRailWide(true)
-        setRailLabelsShown(true)
-      }
-    }, 80)
-  }
-
-  const onDesktopRailLeave = (e: React.MouseEvent) => {
-    const rel = e.relatedTarget as Node | null
-    if (rel) {
-      const hist = document.querySelector('[data-desktop-history-panel]')
-      if (hist?.contains(rel))
-        return
-    }
-    if (railEnterTimerRef.current) {
-      window.clearTimeout(railEnterTimerRef.current)
-      railEnterTimerRef.current = undefined
-    }
-    if (desktopChatHistoryOpen)
-      setDesktopChatHistoryOpen(false)
-    setRailLabelsShown(false)
-    railLeaveCollapseTimerRef.current = window.setTimeout(() => {
-      setRailWide(false)
-      railLeaveCollapseTimerRef.current = undefined
-    }, 120)
-  }
-
-  const collapseRailTimersAndWidth = useCallback(() => {
-    if (railEnterTimerRef.current) {
-      window.clearTimeout(railEnterTimerRef.current)
-      railEnterTimerRef.current = undefined
-    }
-    if (railLeaveCollapseTimerRef.current) {
-      window.clearTimeout(railLeaveCollapseTimerRef.current)
-      railLeaveCollapseTimerRef.current = undefined
-    }
-    setRailLabelsShown(false)
-    setRailWide(false)
-  }, [])
-
-  useEffect(() => {
-    registerDesktopRailCollapse(collapseRailTimersAndWidth)
-    return () => registerDesktopRailCollapse(null)
-  }, [collapseRailTimersAndWidth, registerDesktopRailCollapse])
-
-  useEffect(() => {
-    if (isChatRoute)
-      return
-    setDesktopChatHistoryOpen(false)
-  }, [isChatRoute, setDesktopChatHistoryOpen])
-
-  /** Desktop: click/tap outside rail + history panel closes both (smooth CSS transitions). */
-  useEffect(() => {
-    if (bp !== 'desktop')
-      return
-    const panelsOpen = railWide || railLabelsShown || desktopChatHistoryOpen
-    if (!panelsOpen)
-      return
-
-    const onPointerDown = (e: PointerEvent) => {
-      const t = e.target as Node
-      if (document.querySelector('[data-desktop-sidebar-hover]')?.contains(t))
-        return
-      if (document.querySelector('[data-desktop-history-panel]')?.contains(t))
-        return
-      const el = e.target as HTMLElement
-      if (el.closest?.('[role="dialog"]'))
-        return
-      setDesktopChatHistoryOpen(false)
-      collapseDesktopRail()
-    }
-    document.addEventListener('pointerdown', onPointerDown, true)
-    return () => document.removeEventListener('pointerdown', onPointerDown, true)
-  }, [
-    bp,
-    railWide,
-    railLabelsShown,
-    desktopChatHistoryOpen,
-    setDesktopChatHistoryOpen,
-    collapseDesktopRail,
-  ])
-
-  useEffect(() => {
-    return () => {
-      if (railEnterTimerRef.current)
-        window.clearTimeout(railEnterTimerRef.current)
-      if (railLeaveCollapseTimerRef.current)
-        window.clearTimeout(railLeaveCollapseTimerRef.current)
-    }
-  }, [])
-
-  return (
-    <div className="app-main-shell relative flex h-screen flex-col overflow-hidden bg-app-canvas text-[#f0ebe0]">
-      <div className="relative z-10 flex h-full min-h-0 flex-col">
-      <TopNavBar />
-
-      <div className="flex min-h-0 flex-1 overflow-hidden">
-        {showTabletDesktopSidebar && bp === 'desktop' && (
-          <aside
-            data-desktop-sidebar-hover
-            className="relative z-30 hidden min-[1025px]:flex h-full w-12 shrink-0 flex-col border-r border-sidebar-border bg-sidebar/90 backdrop-blur"
-          >
-            <motion.div
-              className="absolute left-0 top-0 z-10 flex h-full flex-col overflow-hidden border-r border-sidebar-border bg-sidebar/95 backdrop-blur"
-              initial={false}
-              animate={{
-                width: railWide ? 200 : 48,
-                boxShadow:
-                  railWide
-                    ? '8px 0 28px rgba(0,0,0,0.32)'
-                    : '0 0 0 rgba(0,0,0,0)',
-              }}
-              transition={{
-                width: { duration: 0.38, ease: [0.22, 1, 0.36, 1] },
-                boxShadow: { duration: 0.32, ease: [0.22, 1, 0.36, 1] },
-              }}
-              onMouseEnter={onDesktopRailEnter}
-              onMouseLeave={onDesktopRailLeave}
-            >
-              <div className="min-h-0 flex-1 overflow-hidden">
-                <SidebarNavContent
-                  density="full"
-                  desktopRail={{ wide: railWide, labelsShown: railLabelsShown }}
-                  desktopHistoryOpen={desktopChatHistoryOpen}
-                />
-              </div>
-            </motion.div>
-          </aside>
-        )}
-
-        {showTabletDesktopSidebar && bp !== 'desktop' && (
-          <aside
-            className={[
-              'hidden flex-shrink-0 flex-col overflow-hidden border-r border-sidebar-border bg-sidebar/90 backdrop-blur transition-[width] duration-200 ease-out min-[769px]:flex',
-              asideWidthClass,
-            ].join(' ')}
-          >
-            {bp === 'tablet' && (
-              <button
-                type="button"
-                className="flex h-10 w-full flex-shrink-0 items-center justify-center border-b border-sidebar-border text-sidebar-muted transition-colors hover:bg-sidebar-hover hover:text-sidebar-text"
-                onClick={() => setTabletSidebarExpanded(v => !v)}
-                aria-label={tabletSidebarExpanded ? 'Seitenleiste einklappen' : 'Seitenleiste ausklappen'}
-              >
-                {tabletSidebarExpanded ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
-              </button>
-            )}
-            <div className="min-h-0 flex-1 overflow-hidden">
-              <SidebarNavContent density={sidebarDensity} />
-            </div>
-          </aside>
-        )}
-
-        <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-          <main
-            id="main-content"
-            ref={mainRef}
-            className={[
-              'relative flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto',
-              bp === 'mobile' ? 'pb-[calc(3.5rem+env(safe-area-inset-bottom))]' : '',
-            ].join(' ')}
-          >
-            <Outlet />
-          </main>
-        </div>
-      </div>
-
-      {bp === 'mobile' && <BottomTabBar />}
-      </div>
-    </div>
-  )
-}
-
+/**
+ * App shell: the main navigation sits in the top bar on tablet and desktop and in a bottom tab bar on
+ * phones. Pages scroll inside <main>, so the bars stay put.
+ */
 export default function MainLayout() {
+  const bp = useBreakpoint()
+
   return (
-    <LayoutChromeProvider>
-      <AppUiProvider>
-        <MainLayoutShell />
-      </AppUiProvider>
-    </LayoutChromeProvider>
+    <AppUiProvider>
+      <div className="app-main-shell relative flex h-screen flex-col overflow-hidden bg-app-canvas text-[#f0ebe0]">
+        <TopNavBar />
+        <main
+          id="main-content"
+          className={[
+            'relative flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto',
+            bp === 'mobile' ? 'pb-[calc(3.5rem+env(safe-area-inset-bottom))]' : '',
+          ].join(' ')}
+        >
+          <Outlet />
+        </main>
+        {bp === 'mobile' && <BottomTabBar />}
+      </div>
+    </AppUiProvider>
   )
 }
