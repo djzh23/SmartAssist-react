@@ -52,7 +52,7 @@ export function NewsletterForm({ compact = false }: { compact?: boolean }) {
           className="mt-1 h-4 w-4 shrink-0 accent-[#FBBF24]"
         />
         <span>
-          Ich willige ein, dass meine E-Mail für die Beta-Ankündigung gespeichert wird. Widerruf jederzeit möglich.
+          Ich willige ein, dass meine E-Mail für Updates gespeichert wird. Widerruf jederzeit möglich.
         </span>
       </label>
       <button type="submit" className={ctaClass}>

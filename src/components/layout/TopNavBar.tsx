@@ -124,12 +124,12 @@ export default function TopNavBar(_props: Props) {
           <img
             src="/logo-nav.webp"
             alt=""
-            className="h-8 w-8 rounded-lg"
-            width={32}
-            height={32}
+            className="pp-brand-mark h-10 w-10"
+            width={40}
+            height={40}
             decoding="async"
           />
-          <span className="truncate text-sm font-semibold tracking-wide text-white">PrivatePrep</span>
+          <span className="pp-wordmark truncate text-sm">Private<span>Prep</span></span>
         </Link>
         <UserAvatarMenu
           isMobile
@@ -152,12 +152,12 @@ export default function TopNavBar(_props: Props) {
         <img
           src="/logo-nav.webp"
           alt=""
-          className="h-8 w-8 rounded-lg"
-          width={32}
-          height={32}
+          className="pp-brand-mark h-10 w-10"
+          width={40}
+          height={40}
           decoding="async"
         />
-        <span className="text-[15px] font-bold tracking-wide text-stone-50">PrivatePrep</span>
+        <span className="pp-wordmark text-[15px]">Private<span>Prep</span></span>
       </Link>
 
       <UserAvatarMenu

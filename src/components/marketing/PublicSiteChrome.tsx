@@ -6,23 +6,25 @@ import { Menu, X } from 'lucide-react'
 const AFTER_AUTH = '/analyze'
 const LANDING_SECTIONS = [
   'hero',
-  'funktionen',
-  'ablauf',
   'bericht',
+  'funktionen',
+  'cv-vorschlag',
+  'preise',
+  'starten',
+  'ablauf',
   'ueber',
   'datenschutz-teaser',
   'faq',
-  'starten',
 ] as const
 
 const NAV_ITEMS = [
-  { id: 'funktionen', label: 'Analyse' },
-  { id: 'ablauf', label: 'Ablauf' },
-  { id: 'bericht', label: 'Beispielbericht' },
+  { id: 'funktionen', label: 'Module' },
+  { id: 'preise', label: 'Preise' },
+  { id: 'bericht', label: 'Beispiel' },
 ] as const
 export const LANDING_SCROLL_KEY = 'pp-landing-scroll'
 
-export const PUBLIC_SHELL = 'mx-auto w-full max-w-[960px] px-5 sm:px-6'
+export const PUBLIC_SHELL = 'mx-auto w-full max-w-[1280px] px-5 sm:px-8 lg:px-24'
 const ANCHOR_GAP_PX = 24
 
 function headerOffsetPx() {
@@ -323,9 +325,10 @@ export function PublicSiteHeader({ variant }: PublicSiteHeaderProps) {
 }
 
 const FOOTER_PRODUCT = [
-  { id: 'funktionen', label: 'Analyse' },
+  { id: 'funktionen', label: 'Module' },
   { id: 'ablauf', label: 'Ablauf' },
   { id: 'bericht', label: 'Beispielbericht' },
+  { id: 'preise', label: 'Preise' },
   { id: 'ueber', label: 'Warum PrivatePrep' },
   { id: 'faq', label: 'FAQ' },
 ] as const
@@ -339,8 +342,8 @@ export function PublicSiteFooter() {
             <div className="flex items-center gap-2.5">
               <BrandMark />
             </div>
-            <p className="mt-4 text-[13px] leading-relaxed text-[#8A7F72]">
-              Deutsche KI-Bewerbungsanalyse für alle Branchen.
+            <p className="mt-4 text-[13px] leading-relaxed text-[#a89e91]">
+              Stellenanalyse für Bewerbungen in Deutschland. Für alle Branchen.
             </p>
           </div>
 

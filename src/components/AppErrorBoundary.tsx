@@ -1,7 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react'
 import { AlertTriangle } from 'lucide-react'
 import AppCtaButton from './ui/AppCtaButton'
-import { IconHubIcon } from './ui/IconHubIcon'
 
 type Props = { children: ReactNode }
 
@@ -26,10 +25,10 @@ export class AppErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-[#f5f6fb] px-6">
+        <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-[#0a0a0a] px-6">
           <div className="flex items-center gap-2">
-            <IconHubIcon name="lightning" className="h-7 w-7 shrink-0" />
-            <span className="text-xl font-bold text-slate-800">PrivatePrep</span>
+            <img src="/logo-nav.webp" alt="" className="pp-brand-mark h-9 w-9" width={36} height={36} />
+            <span className="pp-wordmark text-xl">Private<span>Prep</span></span>
           </div>
           <div className="flex max-w-md flex-col items-center gap-3 rounded-xl border border-red-200 bg-white p-6 text-center shadow-sm">
             <AlertTriangle className="h-10 w-10 text-red-600" aria-hidden />

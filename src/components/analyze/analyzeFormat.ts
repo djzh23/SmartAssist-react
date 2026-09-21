@@ -11,6 +11,13 @@ export function scoreCaption(score: number): string {
   return 'Gute Passung mit den vorliegenden Angaben.'
 }
 
+export function scoreBadge(score: number): string {
+  if (score < 2.5) return 'Schwache Passung'
+  if (score < 3.5) return 'Eingeschränkte Passung'
+  if (score < 4.5) return 'Brauchbare Passung'
+  return 'Gute Passung'
+}
+
 export function scorePercent(score: number): number {
   if (!Number.isFinite(score)) return 0
   return Math.max(0, Math.min(100, (score / 5) * 100))

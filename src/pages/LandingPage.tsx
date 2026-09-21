@@ -2,25 +2,20 @@ import { useEffect, useLayoutEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { SignUpButton, useUser } from '@clerk/clerk-react'
 import {
-  AppWindow,
+  ArrowRight,
   Check,
   ChevronDown,
   FileCheck,
-  FileText,
-  ListChecks,
-  Pencil,
-  Shield,
   ShieldCheck,
   ShieldOff,
-  Target,
   TriangleAlert,
-  UserPlus,
   UserRound,
   Users,
-  X,
+  AppWindow,
 } from 'lucide-react'
 import { NewsletterForm } from '../components/marketing/NewsletterForm'
-import { PUBLIC_AFTER_AUTH, PUBLIC_SHELL, PublicSiteFooter, PublicSiteHeader, LANDING_SCROLL_KEY } from '../components/marketing/PublicSiteChrome'
+import { PUBLIC_AFTER_AUTH, PUBLIC_SHELL, PublicSiteFooter, PublicSiteHeader, LANDING_SCROLL_KEY, scrollToSection } from '../components/marketing/PublicSiteChrome'
+import ScoreRing from '../components/report/ScoreRing'
 import '../styles/landing.css'
 
 const AFTER_AUTH = PUBLIC_AFTER_AUTH
@@ -38,24 +33,24 @@ const AUDIENCE_FIELDS = [
 
 const FEATURES = [
   {
-    title: 'Match-Score',
-    desc: 'Gewichtete Gesamtbewertung von 1,0 bis 5,0. Vier Dimensionen fließen ein: CV-Abdeckung, Rollenpassung, Kulturscreening und erkannte Risikofaktoren.',
-    Icon: Target,
+    title: 'CV-Match',
+    desc: 'Prüft jede geforderte Qualifikation gegen deinen Lebenslauf und markiert, was fehlt.',
+    Icon: FileCheck,
   },
   {
-    title: 'Skill-Analyse',
-    desc: 'Geforderte Qualifikationen werden mit dem Lebenslauf abgeglichen. Vorhandene und fehlende Skills stehen getrennt, damit Lücken gezielt adressiert werden können.',
-    Icon: ListChecks,
-  },
-  {
-    title: 'CV-Formulierungen',
-    desc: 'Für bestehende Lebenslaufeinträge gibt es Umformulierungen, die Wörter aus der Stellenanzeige aufgreifen, ohne nicht vorhandene Fähigkeiten zu behaupten.',
-    Icon: Pencil,
+    title: 'Rollenpassung',
+    desc: 'Gleicht Erfahrungsjahre, Positionen und Verantwortung mit dem Anforderungsniveau ab.',
+    Icon: UserRound,
   },
   {
     title: 'Kulturscreening',
-    desc: 'Sprache und Tonalität der Ausschreibung werden auf Hierarchie, Team und Arbeitsweise gelesen. Die Hinweise fließen in die Bewertung ein.',
-    Icon: Shield,
+    desc: 'Liest Tonalität und Wertesprache des Textes. Passt der Rahmen zu dir?',
+    Icon: Users,
+  },
+  {
+    title: 'Red Flags',
+    desc: 'Zeigt Warnzeichen: unklare Aufgaben, fehlende Gehaltsangabe, Familie statt Team.',
+    Icon: TriangleAlert,
   },
 ]
 
@@ -75,13 +70,6 @@ const STEPS = [
     title: 'Analysebericht abrufen',
     desc: 'Innerhalb weniger Sekunden steht der Bericht bereit: Match-Score, Skill-Aufschlüsselung, Kulturscreening und CV-Formulierungen zum Prüfen und Übernehmen.',
   },
-]
-
-const REPORT_METRICS = [
-  { label: 'CV-Match', value: '4,2', Icon: FileCheck },
-  { label: 'Rollenpassung', value: '3,9', Icon: UserRound },
-  { label: 'Kultur', value: '3,5', Icon: Users },
-  { label: 'Red Flags', value: '2,0', Icon: TriangleAlert },
 ]
 
 const PRIVACY_CARDS = [
@@ -109,7 +97,7 @@ const FAQ_ITEMS = [
   },
   {
     q: 'Was kostet PrivatePrep?',
-    a: 'Während der geschlossenen Beta ist die Nutzung kostenfrei. Es gibt keinen Zahlungsschritt bei der Anmeldung, kein Abo, keine Karte. Nach dem öffentlichen Start planen wir einen kostenfreien Basis-Tarif und einen kostenpflichtigen Tarif für unbegrenzte Analysen. Die Preise werden vorher öffentlich kommuniziert.',
+    a: 'Free: 1 Analyse pro Tag, ohne Kreditkarte. Premium: 6,99 € im Monat für unbegrenzte Analysen, jederzeit kündbar. Die genaue Aufstellung steht unter Preise.',
   },
   {
     q: 'Was ist der Unterschied zu ChatGPT oder anderen KI-Tools?',
@@ -133,16 +121,16 @@ function FaqList() {
       {FAQ_ITEMS.map((item, index) => {
         const isOpen = open === index
         return (
-          <div key={item.q} className="border-b-[0.5px] border-[#3a342e]">
+          <div key={item.q} className="border-b border-[#e8e0d0]">
             <button
               type="button"
               aria-expanded={isOpen}
               onClick={() => setOpen(isOpen ? null : index)}
-              className="flex w-full items-center justify-between gap-4 py-4 text-left text-[15px] font-medium text-white"
+              className="flex w-full items-center justify-between gap-4 py-4 text-left text-[15px] font-medium text-[#1a1613]"
             >
               <span>{item.q}</span>
               <ChevronDown
-                className={`h-4 w-4 shrink-0 text-[#C4B8AA] transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+                className={`h-4 w-4 shrink-0 text-[#8a7f70] transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
                 strokeWidth={ICON_STROKE}
                 aria-hidden
               />
@@ -151,7 +139,7 @@ function FaqList() {
               className={`grid transition-[grid-template-rows] duration-200 ease-out ${isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}
             >
               <div className="min-h-0 overflow-hidden">
-                <p className="pb-5 pt-3 text-[14px] leading-[1.7] text-[#C4B8AA]">{item.a}</p>
+                <p className="pb-5 pt-1 text-[14px] leading-[1.7] text-[#4a4238]">{item.a}</p>
               </div>
             </div>
           </div>
@@ -161,102 +149,80 @@ function FaqList() {
   )
 }
 
-const DIMENSIONS = [
-  {
-    title: 'CV-Match',
-    desc: 'Abdeckung der im Inserat geforderten Qualifikationen durch den hinterlegten Lebenslauf.',
-    Icon: FileCheck,
-  },
-  {
-    title: 'Rollenpassung',
-    desc: 'Abgleich von Erfahrungsjahren, Positionen und Verantwortung mit dem Anforderungsniveau der Stelle.',
-    Icon: UserRound,
-  },
-  {
-    title: 'Kulturscreening',
-    desc: 'Tonalität und Wertesprache des Stellentexts auf Rahmenbedingungen und mögliche Passung.',
-    Icon: Users,
-  },
-  {
-    title: 'Red Flags',
-    desc: 'Erkannte Risikofaktoren in der Ausschreibung, etwa unklare Erwartungen oder widersprüchliche Anforderungen.',
-    Icon: TriangleAlert,
-  },
-]
+function HeroScoreCard() {
+  return (
+    <div className="rounded-[18px] border border-[#3a332d] bg-[#232019] p-[26px]">
+      <p className="pp-caps text-[#a89e91]">Ein Beispiel</p>
+      <div className="mt-3.5 flex items-baseline gap-1.5">
+        <span className="pp-display text-[64px] leading-none text-[#f5f1eb]">3,8</span>
+        <span className="text-lg text-[#a89e91]">/ 5,0</span>
+      </div>
+      <p className="mt-1.5 text-sm text-[#c4b8a8]">Teamassistenz für Office Managerin</p>
+      <div className="mt-[18px] h-1.5 overflow-hidden rounded-full bg-[#1a1613]">
+        <div className="h-full w-[76%] rounded-full bg-[#d97757]" />
+      </div>
+      <div className="mt-3.5 flex flex-wrap gap-2">
+        <span className="rounded-full bg-[rgba(111,143,109,0.15)] px-2.5 py-1 text-[11px] text-[#8dae8b]">
+          4 Skills gedeckt
+        </span>
+        <span className="rounded-full bg-[rgba(217,119,87,0.12)] px-2.5 py-1 text-[11px] text-[#e89372]">
+          2 Red Flags
+        </span>
+      </div>
+    </div>
+  )
+}
 
 function ExampleReport() {
   return (
-    <div className="rounded-[22px] bg-[#faf7f2] p-3 sm:p-4">
-      <div className="pp-card-report p-6 sm:p-8">
-        <div className="mb-6 flex items-center justify-between gap-3">
-          <p className="pp-kicker inline-flex items-center gap-1.5">
-            <FileText className="h-3.5 w-3.5" strokeWidth={ICON_STROKE} aria-hidden />
-            Beispielbericht
+    <div className="pp-card-report px-6 py-8 sm:px-10">
+      <div className="mb-6 flex items-center justify-between gap-3">
+        <p className="pp-caps text-[#8a7f70]">Beispielbericht</p>
+        <span className="pp-badge-success">
+          <Check className="h-3.5 w-3.5" strokeWidth={2.5} aria-hidden />
+          Starke Passung
+        </span>
+      </div>
+
+      <div className="flex flex-col items-center gap-8 sm:flex-row sm:items-center">
+        <ScoreRing score={3.8} size={150} />
+        <div className="min-w-0 flex-1 text-center sm:text-left">
+          <p className="pp-display text-2xl leading-snug text-[#1a1613]">
+            Teamassistenz für Office Managerin
           </p>
-          <span className="pp-badge-success">
-            <Check className="h-3 w-3" strokeWidth={ICON_STROKE} aria-hidden />
-            Gute Passung
-          </span>
-        </div>
-
-        <p className="font-serif text-[48px] font-semibold leading-none text-[#1c1917]">
-          3,8 <span className="text-lg font-normal text-[#78716c]">von 5,0</span>
-        </p>
-        <p className="mt-3 text-sm text-[#57534e]">Teamassistenz für Office Managerin</p>
-
-        <div className="mt-6 grid grid-cols-2 gap-3">
-          {REPORT_METRICS.map(({ label, value, Icon }) => (
-            <div key={label} className="pp-metric flex items-center gap-3 px-3 py-3">
-              <Icon className="h-4 w-4 shrink-0 text-[#d97706]" strokeWidth={ICON_STROKE} aria-hidden />
-              <div>
-                <p className="text-lg font-semibold leading-none text-[#1c1917]">{value}</p>
-                <p className="mt-1 text-[10px] font-medium uppercase tracking-[0.08em] text-[#78716c]">{label}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="pp-divide">
-          <p className="pp-kicker">Skill-Analyse</p>
-          <p className="mt-4 flex items-center gap-1.5 text-xs font-medium text-[#3d7a5a]">
-            <Check className="h-3.5 w-3.5" strokeWidth={ICON_STROKE} aria-hidden />
-            Nachgewiesen
+          <p className="mt-2 text-sm leading-relaxed text-[#6e665e]">
+            4 von 5 Kernanforderungen gedeckt · 2 Skills nachzureichen · 2 Red Flags in der Ausschreibung
           </p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {['MS Office', 'Terminplanung'].map(skill => (
-              <span key={skill} className="pp-chip-pos">{skill}</span>
-            ))}
+        </div>
+      </div>
+
+      <div className="mt-8 grid grid-cols-2 gap-3.5 lg:grid-cols-4">
+        {[
+          { label: 'CV-Match', value: '4,2' },
+          { label: 'Rolle', value: '3,9' },
+          { label: 'Kultur', value: '3,5' },
+        ].map(item => (
+          <div key={item.label} className="rounded-xl border border-[#ebe3d3] bg-[#faf7f0] p-4">
+            <p className="mb-2 text-[11px] uppercase tracking-[0.06em] text-[#8a7f70]">{item.label}</p>
+            <p className="pp-display text-[26px] leading-none text-[#1a1613]">{item.value}</p>
           </div>
-          <p className="mt-4 flex items-center gap-1.5 text-xs font-medium text-[#b54a4a]">
-            <X className="h-3.5 w-3.5" strokeWidth={ICON_STROKE} aria-hidden />
-            Nicht vorhanden
-          </p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {['Englisch C1', 'SAP'].map(skill => (
-              <span key={skill} className="pp-chip-neg">{skill}</span>
-            ))}
-          </div>
-        </div>
-
-        <div className="pp-divide">
-          <p className="pp-kicker">CV-Formulierungsvorschläge</p>
-          <ul className="mt-4 space-y-3">
-            <li className="pp-metric px-3 py-3">
-              <p className="text-[10px] uppercase tracking-[0.08em] text-[#78716c]">Vorhandener Eintrag</p>
-              <p className="mt-1 text-xs text-[#57534e]">Termine für die Abteilungsleitung gemacht</p>
-              <p className="mt-3 text-[10px] uppercase tracking-[0.08em] text-[#d97706]">Formulierungsvorschlag</p>
-              <p className="mt-1 text-xs text-[#1c1917]">Kalenderführung und Terminkoordination für die Abteilungsleitung übernommen.</p>
-            </li>
-            <li className="pp-metric px-3 py-3">
-              <p className="text-[10px] uppercase tracking-[0.08em] text-[#78716c]">Vorhandener Eintrag</p>
-              <p className="mt-1 text-xs text-[#57534e]">Reisekosten abgerechnet</p>
-              <p className="mt-3 text-[10px] uppercase tracking-[0.08em] text-[#d97706]">Formulierungsvorschlag</p>
-              <p className="mt-1 text-xs text-[#1c1917]">Reisekostenabrechnung für Außentermine eigenständig erstellt und nachgehalten.</p>
-            </li>
-          </ul>
+        ))}
+        <div className="rounded-xl border border-[rgba(217,119,87,0.25)] bg-[rgba(217,119,87,0.06)] p-4">
+          <p className="mb-2 text-[11px] uppercase tracking-[0.06em] text-[#b45539]">Red Flags</p>
+          <p className="pp-display text-[26px] leading-none text-[#b45539]">2</p>
         </div>
       </div>
     </div>
+  )
+}
+
+function SignUpCta({ children, className }: { children: React.ReactNode; className?: string }) {
+  return (
+    <SignUpButton mode="modal" fallbackRedirectUrl={AFTER_AUTH}>
+      <button type="button" className={className ?? 'pp-cta'}>
+        {children}
+      </button>
+    </SignUpButton>
   )
 }
 
@@ -310,186 +276,264 @@ export default function LandingPage() {
     <div className="landing-page-root min-h-screen">
       <PublicSiteHeader variant="landing" />
       <main id="main-content">
-        <section id="hero" className="pp-band-hero pb-10 pt-12 sm:pb-12 sm:pt-16 lg:pt-20">
-          <div className={`${PUBLIC_SHELL} text-center`}>
-            <p className="pp-eyebrow">Stellenanalyse für Bewerbungen in Deutschland</p>
-            <h1 className="font-serif mt-6 text-[clamp(34px,8vw,56px)] font-semibold leading-[1.12] text-[#F5F0E8]">
-              Bewerbungen fundiert vorbereiten.
-            </h1>
-            <p className="mx-auto mt-5 max-w-[560px] text-[17px] leading-relaxed text-[#C4B8AA] sm:text-lg">
-              PrivatePrep prüft eine Stellenanzeige gegen dein Karriereprofil und deinen Lebenslauf.
-              Du bekommst einen Bericht mit Match-Score, fehlenden Skills und Formulierungen,
-              die zur ausgeschriebenen Stelle passen.
-            </p>
-            <SignUpButton mode="modal" fallbackRedirectUrl={AFTER_AUTH}>
-              <button type="button" className="pp-cta mx-auto mt-8 w-full sm:max-w-[280px]">
-                Kostenlos starten
-              </button>
-            </SignUpButton>
-            <p className="mt-3 text-sm italic text-[#8A7F72]">
-              Aktuell kostenfrei nutzbar.
-            </p>
-            <div className="mt-8 flex flex-wrap justify-center gap-2">
-              {AUDIENCE_FIELDS.map(label => (
-                <span key={label} className="pp-tag">{label}</span>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section id="funktionen" className="pp-section pp-band-a">
-          <div className={`${PUBLIC_SHELL} text-center`}>
-            <h2 className="pp-section-title">Was PrivatePrep leistet</h2>
-            <p className="pp-section-lead">
-              Jede Analyse basiert auf deinem Profil und der konkreten Anzeige. Keine Branchenvorlage, kein IT-only-Werkzeug.
-            </p>
-            <div className="mt-8 grid gap-4 text-left sm:grid-cols-2 xl:grid-cols-4">
-              {FEATURES.map(({ title, desc, Icon }) => (
-                <article key={title} className="pp-card p-5 sm:p-6">
-                  <Icon className="pp-icon-accent h-5 w-5" strokeWidth={ICON_STROKE} aria-hidden />
-                  <h3 className="mt-4 text-base font-semibold text-[#F5F0E8]">{title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-[#C4B8AA]">{desc}</p>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section id="ablauf" className="pp-section pp-band-b">
-          <div className={`${PUBLIC_SHELL} text-center`}>
-            <h2 className="pp-section-title">Ablauf in drei Schritten</h2>
-            <p className="pp-section-lead">
-              Das Karriereprofil wird einmalig angelegt. Jede Stellenanzeige wird danach in Sekunden analysiert.
-            </p>
-            <div className="mt-8 grid gap-4 text-left sm:grid-cols-3">
-              {STEPS.map(({ step, title, desc }) => (
-                <article key={step} className="pp-card p-5 sm:p-6">
-                  <span className="pp-step-num">{step}</span>
-                  <h3 className="mt-4 text-base font-semibold text-[#F5F0E8]">{title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-[#C4B8AA]">{desc}</p>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section id="bericht" className="pp-section pp-band-c">
-          <div className={PUBLIC_SHELL}>
-            <p className="text-[11px] font-medium uppercase tracking-[0.6px] text-[#FBBF24]">BEISPIEL</p>
-            <h2 className="mt-2 text-[22px] font-medium text-white">So sieht dein Bericht aus.</h2>
-            <p className="mt-2 max-w-[40rem] text-[14px] leading-[1.6] text-[#C4B8AA]">
-              Ein anonymisiertes Beispiel aus der Kategorie Verwaltung. Deine echte Analyse basiert auf deinem eigenen Karriereprofil und deinem Lebenslauf.
-            </p>
-            <div className="mt-8 grid gap-6 text-left lg:grid-cols-2 lg:items-start lg:gap-8">
-              <ExampleReport />
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-                {DIMENSIONS.map(({ title, desc, Icon }) => (
-                  <article key={title} className="pp-card flex gap-3 p-4 sm:p-5">
-                    <Icon className="mt-0.5 h-4 w-4 shrink-0 text-[#FBBF24]" strokeWidth={ICON_STROKE} aria-hidden />
-                    <div>
-                      <h3 className="text-sm font-semibold text-[#F5F0E8]">{title}</h3>
-                      <p className="mt-1 text-sm leading-relaxed text-[#C4B8AA]">{desc}</p>
-                    </div>
-                  </article>
-                ))}
+        <section id="hero" className="pp-band-hero pb-20 pt-12 sm:pb-24 sm:pt-16 lg:min-h-[720px] lg:pt-8">
+          <div className={`${PUBLIC_SHELL} relative`}>
+            <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_288px] lg:gap-16">
+              <div className="max-w-[780px] pt-4 lg:pt-16">
+                <p className="pp-eyebrow">1 Analyse pro Tag kostenlos · für alle Branchen</p>
+                <h1 className="pp-display mt-9 text-[clamp(2.5rem,7vw,5.125rem)] leading-[0.98] text-[#f5f1eb]">
+                  Passt du zur Stelle?
+                  <br />
+                  <span className="pp-italic text-[#d97757]">In unter einer Minute.</span>
+                </h1>
+                <p className="mt-7 max-w-[640px] text-[18px] leading-[1.55] text-[#c4b8a8] sm:text-[20px]">
+                  Wir prüfen die Stellenanzeige und deinen Lebenslauf. Du bekommst Passungs-Score,
+                  geforderte Skills, Red Flags und konkrete Formulierungsvorschläge mit Begründung.
+                </p>
+                <div className="mt-11 flex flex-col items-start gap-5 sm:flex-row sm:items-center">
+                  <SignUpCta className="pp-cta min-h-[56px] px-8 text-base">
+                    Stellenanzeige einfügen
+                    <ArrowRight className="h-4 w-4" strokeWidth={ICON_STROKE} aria-hidden />
+                  </SignUpCta>
+                  <button
+                    type="button"
+                    onClick={() => scrollToSection('bericht')}
+                    className="pp-text-link bg-transparent"
+                  >
+                    Beispielbericht ansehen
+                  </button>
+                </div>
+                <div className="mt-8 flex flex-wrap gap-2">
+                  {AUDIENCE_FIELDS.map(label => (
+                    <span key={label} className="pp-tag">{label}</span>
+                  ))}
+                </div>
+              </div>
+              <div className="hidden lg:block lg:pt-[88px]">
+                <HeroScoreCard />
               </div>
             </div>
+            <div className="mt-10 lg:hidden">
+              <HeroScoreCard />
+            </div>
           </div>
+          <div className="pp-hero-overlap" aria-hidden />
         </section>
 
-        <section id="ueber" className="pp-section pp-band-a pp-band-from-c py-20">
-          <div className={`${PUBLIC_SHELL} text-center`}>
-            <div className="mx-auto max-w-[640px]">
-              <h2 className="text-[28px] font-medium text-white">Warum PrivatePrep</h2>
-              <p className="mt-8 text-[15px] leading-[1.75] text-[#C4B8AA]">
-                Die meisten Bewerbungen scheitern nicht am Kandidaten. Sie scheitern am Abgleich. Zwischen dem was die Stellenausschreibung fordert und dem was der Lebenslauf zeigt. Zwischen den geforderten Qualifikationen und ihrer Formulierung im Profil.
-              </p>
-              <p className="mt-8 text-[15px] leading-[1.75] text-[#C4B8AA]">
-                PrivatePrep prüft diesen Abgleich. Systematisch, nachvollziehbar, ohne Erfindung. Der Bericht zeigt was passt, was fehlt und welche vorhandenen Erfahrungen sich anders formulieren lassen, damit sie zur konkreten Stelle passen.
-              </p>
-              <p className="mt-8 text-[15px] leading-[1.75] text-[#C4B8AA]">
-                Der Bericht bewertet nicht dich. Er bewertet die Passung zu einer konkreten Stelle. Das ist ein Unterschied, den wir wichtig finden.
-              </p>
+        <section id="bericht" className="pp-section pp-band-light pt-16">
+          <div className={PUBLIC_SHELL}>
+            <p className="pp-caps text-[#b45539]">Der Bericht</p>
+            <h2 className="pp-section-title mt-3.5 max-w-[680px]">
+              Vier Analysen, <span className="pp-italic text-[#b45539]">ein Verdikt.</span>
+            </h2>
+            <p className="mt-5 max-w-[680px] text-lg leading-relaxed text-[#4a4238]">
+              Kein Score-Nebel, keine Buzzwords. Jede Zahl gehört zu einem Modul mit klarer Logik,
+              und du siehst, worauf sie beruht.
+            </p>
+            <div className="mt-11">
+              <ExampleReport />
             </div>
           </div>
         </section>
 
-        <section id="datenschutz-teaser" className="pp-section pp-band-b">
-          <div className={`${PUBLIC_SHELL} text-center`}>
-            <h2 className="text-[28px] font-medium text-white">Deine Daten bleiben deine Daten</h2>
-            <p className="mx-auto mt-3 max-w-[36rem] text-[15px] leading-[1.75] text-[#C4B8AA]">
-              Datenschutz ist bei PrivatePrep in die Grundstruktur eingebaut. Nicht als Feature, sondern als Ausgangspunkt.
-            </p>
-            <div className="mt-8 grid gap-4 text-left md:grid-cols-3">
-              {PRIVACY_CARDS.map(({ title, desc, Icon }) => (
-                <article
-                  key={title}
-                  className="rounded-[12px] border-[0.5px] border-[#3a342e] bg-[#1a1512] p-6"
-                >
-                  <Icon className="h-6 w-6 text-[#FBBF24]" strokeWidth={ICON_STROKE} aria-hidden />
-                  <h3 className="mt-4 text-base font-medium text-white">{title}</h3>
-                  <p className="mt-2 text-[13px] leading-[1.6] text-[#C4B8AA]">{desc}</p>
+        <section id="funktionen" className="pp-section pp-band-dark">
+          <div className={PUBLIC_SHELL}>
+            <p className="pp-caps text-[#d97757]">Was der Bericht prüft</p>
+            <h2 className="pp-section-title mt-3.5 max-w-[640px] text-[#f5f1eb]">
+              Vier Module. <span className="pp-italic text-[#d97757]">Jedes mit klarer Logik.</span>
+            </h2>
+            <div className="mt-11 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+              {FEATURES.map(({ title, desc, Icon }) => (
+                <article key={title} className="pp-card p-[26px]">
+                  <Icon className="h-7 w-7 text-[#d97757]" strokeWidth={1.5} aria-hidden />
+                  <h3 className="pp-display mt-4 text-[22px] text-[#f5f1eb]">{title}</h3>
+                  <p className="mt-2.5 text-sm leading-relaxed text-[#a89e91]">{desc}</p>
                 </article>
               ))}
             </div>
-            <Link
-              to="/datenschutz"
-              className="mt-8 inline-block text-[13px] text-[#D99A16] transition-colors hover:text-[#FBBF24]"
-            >
+          </div>
+        </section>
+
+        <section id="cv-vorschlag" className="pp-section pp-band-light">
+          <div className={PUBLIC_SHELL}>
+            <p className="pp-caps text-[#b45539]">CV-Optimierung</p>
+            <h2 className="pp-section-title mt-4 max-w-[680px]">
+              Von Aufgabe zu <span className="pp-italic text-[#b45539]">Wirkung.</span>
+            </h2>
+            <p className="mt-4 max-w-[680px] text-[17px] leading-relaxed text-[#4a4238]">
+              Jeder Vorschlag zeigt die verbesserte Version und erklärt, warum sie stärker ist.
+            </p>
+            <div className="mt-11 grid gap-6 lg:grid-cols-2">
+              <article className="pp-card-light p-[26px] shadow-none">
+                <p className="pp-caps text-[#8a7f70]">Vorhandener Eintrag</p>
+                <p className="mt-3.5 rounded-lg bg-[#faf7f0] px-3.5 py-3 text-[15px] leading-relaxed text-[#6e665e]">
+                  Termine für die Abteilungsleitung gemacht
+                </p>
+                <p className="pp-caps mt-5 text-[#b45539]">Formulierungsvorschlag</p>
+                <p className="mt-3.5 rounded-lg border-l-[3px] border-[#d97757] bg-[rgba(217,119,87,0.06)] px-3.5 py-3 text-[15px] leading-relaxed text-[#1a1613]">
+                  <span className="pp-hl">Kalenderführung und Terminkoordination</span> für die Abteilungsleitung{' '}
+                  <span className="pp-hl">eigenständig übernommen</span>.
+                </p>
+                <p className="mt-4 border-l-2 border-[#ebe3d3] pl-3 text-[13px] leading-relaxed text-[#8a7f70]">
+                  <span className="font-semibold text-[#b45539]">Warum:</span> Vom Tätigkeitswort zum Wirkungssatz.
+                  ATS-Systeme gewichten spezifische Verben höher als Alltagssprache.
+                </p>
+              </article>
+              <article className="pp-card-light p-[26px] shadow-none">
+                <p className="pp-caps text-[#8a7f70]">Vorhandener Eintrag</p>
+                <p className="mt-3.5 rounded-lg bg-[#faf7f0] px-3.5 py-3 text-[15px] leading-relaxed text-[#6e665e]">
+                  Reisekosten abgerechnet
+                </p>
+                <p className="pp-caps mt-5 text-[#b45539]">Formulierungsvorschlag</p>
+                <p className="mt-3.5 rounded-lg border-l-[3px] border-[#d97757] bg-[rgba(217,119,87,0.06)] px-3.5 py-3 text-[15px] leading-relaxed text-[#1a1613]">
+                  <span className="pp-hl">Reisekostenabrechnung</span> für Außentermine{' '}
+                  <span className="pp-hl">eigenständig erstellt und nachgehalten</span>.
+                </p>
+                <p className="mt-4 border-l-2 border-[#ebe3d3] pl-3 text-[13px] leading-relaxed text-[#8a7f70]">
+                  <span className="font-semibold text-[#b45539]">Warum:</span> Substantivierung als Fachvokabel plus zwei aktive Verben zeigen Verantwortung, nicht Ausführung.
+                </p>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section id="preise" className="pp-section pp-band-dark py-16">
+          <div className={PUBLIC_SHELL}>
+            <p className="pp-caps text-[#d97757]">Preise</p>
+            <h2 className="pp-section-title mt-3 text-[#f5f1eb]">Zwei Wege, dein Tempo.</h2>
+            <div className="mt-8 grid gap-5 lg:grid-cols-2">
+              <article className="flex flex-col justify-between gap-4 rounded-2xl border border-[#3a332d] bg-[#232019] p-[26px] sm:flex-row sm:items-center">
+                <div>
+                  <p className="pp-display text-2xl text-[#f5f1eb]">Kostenlos</p>
+                  <p className="mt-1.5 text-sm text-[#a89e91]">1 Analyse pro Tag · voller Bericht · ohne Kreditkarte</p>
+                </div>
+                <p className="pp-display text-4xl text-[#f5f1eb]">0 €</p>
+              </article>
+              <article className="relative flex flex-col justify-between gap-4 rounded-2xl border border-[#d97757] bg-gradient-to-br from-[#2a2420] to-[#232019] p-[26px] sm:flex-row sm:items-center">
+                <span className="absolute -top-2.5 left-[26px] rounded-full bg-[#d97757] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.05em] text-[#1a1613]">
+                  Empfohlen
+                </span>
+                <div>
+                  <p className="pp-display text-2xl text-[#f5f1eb]">Premium</p>
+                  <p className="mt-1.5 text-sm text-[#a89e91]">Unbegrenzte Analysen · jederzeit kündbar</p>
+                </div>
+                <p className="whitespace-nowrap">
+                  <span className="pp-display text-4xl text-[#f5f1eb]">6,99 €</span>
+                  <span className="text-[13px] text-[#a89e91]"> / Monat</span>
+                </p>
+              </article>
+            </div>
+            <div className="mt-6">
+              <Link to="/preise" className="pp-text-link">
+                Alle Tarifdetails ansehen
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        <section id="starten" className="pp-section pp-band-light">
+          <div className={PUBLIC_SHELL}>
+            <div className="pp-card-beta flex flex-col items-start justify-between gap-6 px-8 py-9 sm:flex-row sm:items-center sm:px-11">
+              <div>
+                <h2 className="pp-display text-[clamp(1.75rem,3vw,2.125rem)] leading-tight text-[#1a1613]">
+                  Bereit? <span className="pp-italic text-[#b45539]">Analyse in unter einer Minute.</span>
+                </h2>
+                <p className="mt-2 text-[15px] text-[#6e665e]">
+                  Konto erstellen, dann analysieren. 1 Analyse pro Tag kostenlos, keine Kreditkarte.
+                </p>
+              </div>
+              <SignUpCta className="pp-cta min-h-[56px] shrink-0 px-8 text-base">
+                Jetzt kostenlos starten
+                <ArrowRight className="h-4 w-4" strokeWidth={ICON_STROKE} aria-hidden />
+              </SignUpCta>
+            </div>
+          </div>
+        </section>
+
+        <section id="ablauf" className="pp-section pp-band-dark">
+          <div className={PUBLIC_SHELL}>
+            <p className="pp-caps text-[#d97757]">Ablauf</p>
+            <h2 className="pp-section-title mt-3.5 text-[#f5f1eb]">
+              Drei Schritte. <span className="pp-italic text-[#d97757]">Profil einmal, Anzeige oft.</span>
+            </h2>
+            <p className="mt-4 max-w-[40rem] text-[17px] leading-relaxed text-[#a89e91]">
+              Das Karriereprofil wird einmalig angelegt. Jede Stellenanzeige wird danach in Sekunden analysiert.
+            </p>
+            <div className="mt-10 grid gap-5 text-left sm:grid-cols-3">
+              {STEPS.map(({ step, title, desc }) => (
+                <article key={step} className="pp-card p-[26px]">
+                  <span className="pp-step-num">{step}</span>
+                  <h3 className="pp-display mt-4 text-[22px] text-[#f5f1eb]">{title}</h3>
+                  <p className="mt-2.5 text-sm leading-relaxed text-[#a89e91]">{desc}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section id="ueber" className="pp-section pp-band-light">
+          <div className={`${PUBLIC_SHELL} max-w-[760px]`}>
+            <p className="pp-caps text-[#b45539]">Warum PrivatePrep</p>
+            <h2 className="pp-section-title mt-3.5">
+              Der Abgleich entscheidet. <span className="pp-italic text-[#b45539]">Nicht das Bauchgefühl.</span>
+            </h2>
+            <p className="mt-8 text-[15px] leading-[1.75] text-[#4a4238]">
+              Die meisten Bewerbungen scheitern nicht am Kandidaten. Sie scheitern am Abgleich. Zwischen dem was die Stellenausschreibung fordert und dem was der Lebenslauf zeigt. Zwischen den geforderten Qualifikationen und ihrer Formulierung im Profil.
+            </p>
+            <p className="mt-6 text-[15px] leading-[1.75] text-[#4a4238]">
+              PrivatePrep prüft diesen Abgleich. Systematisch, nachvollziehbar, ohne Erfindung. Der Bericht zeigt was passt, was fehlt und welche vorhandenen Erfahrungen sich anders formulieren lassen, damit sie zur konkreten Stelle passen.
+            </p>
+            <p className="mt-6 text-[15px] leading-[1.75] text-[#4a4238]">
+              Der Bericht bewertet nicht dich. Er bewertet die Passung zu einer konkreten Stelle. Das ist ein Unterschied, den wir wichtig finden.
+            </p>
+          </div>
+        </section>
+
+        <section id="datenschutz-teaser" className="pp-section pp-band-dark">
+          <div className={PUBLIC_SHELL}>
+            <p className="pp-caps text-[#d97757]">Daten</p>
+            <h2 className="pp-section-title mt-3.5 text-[#f5f1eb]">
+              Deine Daten bleiben <span className="pp-italic text-[#d97757]">deine Daten.</span>
+            </h2>
+            <p className="mt-4 max-w-[36rem] text-[15px] leading-[1.75] text-[#a89e91]">
+              Datenschutz ist bei PrivatePrep in die Grundstruktur eingebaut. Nicht als Extra, sondern als Ausgangspunkt.
+            </p>
+            <div className="mt-10 grid gap-5 text-left md:grid-cols-3">
+              {PRIVACY_CARDS.map(({ title, desc, Icon }) => (
+                <article key={title} className="pp-card p-6">
+                  <Icon className="h-6 w-6 text-[#d97757]" strokeWidth={ICON_STROKE} aria-hidden />
+                  <h3 className="mt-4 text-base font-medium text-[#f5f1eb]">{title}</h3>
+                  <p className="mt-2 text-[13px] leading-[1.6] text-[#a89e91]">{desc}</p>
+                </article>
+              ))}
+            </div>
+            <Link to="/datenschutz" className="pp-text-link mt-8 inline-block">
               Vollständige Datenschutzerklärung lesen
             </Link>
           </div>
         </section>
 
-        <section id="faq" className="pp-section pp-band-c">
-          <div className={`${PUBLIC_SHELL}`}>
-            <div className="mx-auto max-w-[720px] text-center">
-              <h2 className="text-[28px] font-medium text-white">Häufige Fragen</h2>
-              <p className="mt-3 text-[15px] leading-[1.75] text-[#C4B8AA]">
+        <section id="faq" className="pp-section pp-band-light pb-20">
+          <div className={PUBLIC_SHELL}>
+            <div className="mx-auto max-w-[720px]">
+              <p className="pp-caps text-[#b45539]">FAQ</p>
+              <h2 className="pp-section-title mt-3.5">Häufige Fragen</h2>
+              <p className="mt-4 text-[15px] leading-[1.75] text-[#4a4238]">
                 Wenn deine Frage nicht dabei ist, schreib eine kurze Mail an{' '}
-                <a href="mailto:zn.connec.team@gmail.com" className="text-[#C4B8AA] underline-offset-2 hover:text-white hover:underline">
+                <a href="mailto:zn.connec.team@gmail.com" className="text-[#b45539] underline-offset-2 hover:underline">
                   zn.connec.team@gmail.com
-                </a>.
+                </a>
+                .
               </p>
               <FaqList />
-            </div>
-          </div>
-        </section>
-
-        <section id="starten" className="pp-section pp-band-a pp-band-from-c pb-16 sm:pb-20">
-          <div className={`${PUBLIC_SHELL} text-center`}>
-            <h2 className="pp-section-title">Kostenlos ausprobieren</h2>
-            <p className="pp-section-lead">
-              Erstell dein Konto und starte in unter einer Minute. Keine Kreditkarte, kein Vertrag.
-            </p>
-            <div className="pp-card-beta mx-auto mt-8 max-w-[520px] p-6 text-left sm:p-8">
-              <UserPlus className="h-6 w-6 text-[#FBBF24]" strokeWidth={ICON_STROKE} aria-hidden />
-              <h3 className="mt-4 text-lg font-semibold text-[#F5F5F5]">Konto erstellen</h3>
-              <ul className="mt-4 space-y-2.5">
-                {[
-                  'Sofortiger Zugang zur Analyse',
-                  'Keine Kreditkarte erforderlich',
-                  'Analyse in unter einer Minute',
-                ].map(item => (
-                  <li key={item} className="flex items-start gap-2 text-sm text-[#C4B8AA]">
-                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#34D399]" strokeWidth={ICON_STROKE} aria-hidden />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-              <SignUpButton mode="modal" fallbackRedirectUrl={AFTER_AUTH}>
-                <button type="button" className="pp-cta mt-6 w-full">
-                  Kostenlos starten
-                </button>
-              </SignUpButton>
-            </div>
-            <div className="mx-auto mt-12 max-w-[420px] border-t-[0.5px] border-[#3a342e] pt-8">
-              <p className="text-sm font-medium text-white">Noch nicht bereit?</p>
-              <p className="mt-2 text-[13px] leading-relaxed text-[#8A7F72]">
-                Trag dich in unsere Update-Liste ein und erhalte Nachrichten zu neuen Features und Verbesserungen.
-              </p>
-              <div className="mt-5">
-                <NewsletterForm compact />
+              <div className="mt-12 border-t border-[#e8e0d0] pt-8">
+                <p className="text-sm font-medium text-[#1a1613]">Noch nicht bereit?</p>
+                <p className="mt-2 text-[13px] leading-relaxed text-[#8a7f70]">
+                  Trag dich in unsere Update-Liste ein und erhalte Nachrichten zu neuen Funktionen.
+                </p>
+                <div className="mt-5 max-w-[420px]">
+                  <NewsletterForm compact />
+                </div>
               </div>
             </div>
           </div>
