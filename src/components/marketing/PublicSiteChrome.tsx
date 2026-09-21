@@ -7,8 +7,8 @@ const AFTER_AUTH = '/analyze'
 const LANDING_SECTIONS = [
   'hero',
   'funktionen',
-  'bericht',
   'ablauf',
+  'bericht',
   'ueber',
   'datenschutz-teaser',
   'faq',
