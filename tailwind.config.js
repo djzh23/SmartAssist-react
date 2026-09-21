@@ -41,6 +41,8 @@ export default {
       fontFamily: {
         sans:  ['"Space Grotesk"', 'system-ui', 'sans-serif'],
         serif: ['Lora', 'Georgia', 'serif'],
+        display: ['Fraunces', 'Georgia', 'serif'],
+        landing: ['Manrope', 'system-ui', 'sans-serif'],
       },
       boxShadow: {
         'chat': '0 2px 16px rgba(0,0,0,0.08)',
