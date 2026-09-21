@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { SkillGapReport } from '../../api/analyzeClient'
-import { emptySkillGap, requirementCount, scoreCaption, scoreLabel, scorePercent, skillWarning, splitRoleSummary } from './analyzeFormat'
+import { emptySkillGap, requirementCount, reportLead, scoreCaption, scoreLabel, scorePercent, skillWarning, splitRoleSummary, formatRelativeCreated } from './analyzeFormat'
 
 describe('analyzeFormat', () => {
   it('formats German scores and captions', () => {
@@ -35,5 +35,21 @@ describe('analyzeFormat', () => {
       reasonCode: '',
     }
     expect(requirementCount(gap)).toBe(4)
+  })
+
+  it('builds a coverage lead without inventing JD hints', () => {
+    expect(reportLead({
+      covered: 4,
+      total: 5,
+      missing: 2,
+      roleAlignment: 3.9,
+      warningCount: 2,
+      score: 3.8,
+    })).toContain('Du deckst 4 von 5 Kernanforderungen')
+    expect(reportLead({ score: 2.6 })).toContain('klarem Grund')
+  })
+
+  it('formats relative created labels', () => {
+    expect(formatRelativeCreated(new Date().toISOString())).toBe('gerade eben erstellt')
   })
 })

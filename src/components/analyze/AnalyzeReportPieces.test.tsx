@@ -56,6 +56,6 @@ describe('analyze report pieces', () => {
       />,
     )
     expect(screen.getAllByRole('button', { name: 'Vorschlag kopieren' }).length).toBeGreaterThan(0)
-    expect(screen.getAllByText('ASP.NET Core REST APIs entwickelt').length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/ASP\.NET Core REST APIs entwickelt/).length).toBeGreaterThan(0)
   })
 })

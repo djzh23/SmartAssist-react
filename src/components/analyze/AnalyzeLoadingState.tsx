@@ -22,8 +22,8 @@ export default function AnalyzeLoadingState() {
   }, [])
 
   return (
-    <section className="rounded-2xl border border-stone-600/40 bg-app-surface/90 p-5 shadow-landing" aria-live="polite">
-      <p className="text-sm font-semibold text-stone-50">Analyse läuft</p>
+    <section className="rounded-[20px] border border-[#3a332d] bg-[#232019] p-5 sm:p-6" aria-live="polite">
+      <p className="font-display text-lg text-[#f5f1eb]">Analyse läuft</p>
       <ol className="mt-4 space-y-2.5">
         {STEPS.map((label, i) => {
           const done = i < step
@@ -31,13 +31,13 @@ export default function AnalyzeLoadingState() {
           return (
             <li key={label} className="flex items-center gap-2.5 text-sm">
               {done ? (
-                <Check className="h-4 w-4 shrink-0 text-emerald-400" aria-hidden />
+                <Check className="h-4 w-4 shrink-0 text-[#6f8f6d]" aria-hidden />
               ) : current ? (
-                <Loader2 className="h-4 w-4 shrink-0 animate-spin text-amber-400" aria-hidden />
+                <Loader2 className="h-4 w-4 shrink-0 animate-spin text-[#d97757]" aria-hidden />
               ) : (
-                <span className="h-4 w-4 shrink-0 rounded-full border border-stone-600" aria-hidden />
+                <span className="h-4 w-4 shrink-0 rounded-full border border-[#3a332d]" aria-hidden />
               )}
-              <span className={done ? 'text-stone-300' : current ? 'text-stone-50' : 'text-stone-500'}>
+              <span className={done ? 'text-[#cfc6b8]' : current ? 'text-[#f5f1eb]' : 'text-[#8a7f70]'}>
                 {label}
               </span>
             </li>

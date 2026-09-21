@@ -23,10 +23,10 @@ const ANALYZE_PATH = '/analyze'
 type WizardStep = 'step1' | 'step2' | 'step3' | 'success'
 
 const selectCls =
-  'w-full rounded-lg border border-app-border bg-app-surface/60 px-3 py-2.5 text-sm text-stone-100 focus:border-amber-500/50 focus:outline-none focus:ring-1 focus:ring-amber-500/30'
+  'w-full rounded-lg border border-app-border bg-app-surface/60 px-3 py-2.5 text-sm text-stone-100 focus:border-[#d97757] focus:outline-none focus:ring-1 focus:ring-[#d97757]/30'
 
 const inputCls =
-  'w-full rounded-lg border border-app-border bg-app-surface/60 px-3 py-2.5 text-sm text-stone-100 placeholder-stone-600 focus:border-amber-500/50 focus:outline-none focus:ring-1 focus:ring-amber-500/30'
+  'w-full rounded-lg border border-app-border bg-app-surface/60 px-3 py-2.5 text-sm text-stone-100 placeholder-stone-600 focus:border-[#d97757] focus:outline-none focus:ring-1 focus:ring-[#d97757]/30'
 
 interface Props {
   getToken: () => Promise<string | null>
@@ -240,7 +240,7 @@ export default function OnboardingWizard({ getToken, reload, skipOnboarding }: P
             <div className="mx-auto mt-2 h-0.5 max-w-md overflow-hidden rounded-full bg-stone-800">
               <div
                 className={[
-                  'h-full rounded-full bg-amber-500 transition-all duration-500',
+                  'h-full rounded-full bg-[#d97757] transition-all duration-500',
                   stepNumber === 1 ? 'w-1/3' : stepNumber === 2 ? 'w-2/3' : 'w-full',
                 ].join(' ')}
               />
@@ -339,12 +339,12 @@ export default function OnboardingWizard({ getToken, reload, skipOnboarding }: P
                 <>
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                     <button type="button" onClick={() => setCvStepChoice('pdf')} disabled={busy}
-                      className="flex flex-col items-center gap-2.5 rounded-xl border border-app-border bg-app-surface/50 px-4 py-6 text-sm font-medium text-stone-300 transition hover:border-amber-500/40 hover:bg-amber-500/10 hover:text-stone-100">
+                      className="flex flex-col items-center gap-2.5 rounded-xl border border-app-border bg-app-surface/50 px-4 py-6 text-sm font-medium text-stone-300 transition hover:border-[#d97757]/40 hover:bg-[rgba(217,119,87,0.10)] hover:text-stone-100">
                       <FileText size={22} className="text-stone-400" />
                       PDF hochladen
                     </button>
                     <button type="button" onClick={() => setCvStepChoice('paste')} disabled={busy}
-                      className="flex flex-col items-center gap-2.5 rounded-xl border border-app-border bg-app-surface/50 px-4 py-6 text-sm font-medium text-stone-300 transition hover:border-amber-500/40 hover:bg-amber-500/10 hover:text-stone-100">
+                      className="flex flex-col items-center gap-2.5 rounded-xl border border-app-border bg-app-surface/50 px-4 py-6 text-sm font-medium text-stone-300 transition hover:border-[#d97757]/40 hover:bg-[rgba(217,119,87,0.10)] hover:text-stone-100">
                       <Pencil size={22} className="text-stone-400" />
                       Manuell eingeben
                     </button>
@@ -403,8 +403,8 @@ export default function OnboardingWizard({ getToken, reload, skipOnboarding }: P
 
           {step === 'success' && (
             <div className="flex flex-1 flex-col items-center justify-center gap-8 text-center">
-              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-amber-500/10 ring-1 ring-amber-500/30">
-                <CheckCircle2 className="text-amber-400" size={36} />
+              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[rgba(217,119,87,0.10)] ring-1 ring-[#d97757]/30">
+                <CheckCircle2 className="text-[#d97757]" size={36} />
               </div>
               <div className="space-y-2">
                 <h2 className="text-2xl font-bold text-stone-100">Profil gespeichert</h2>

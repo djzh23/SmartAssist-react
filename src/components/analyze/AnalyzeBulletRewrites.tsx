@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Copy, Check, PenLine, ChevronDown } from 'lucide-react'
+import { useState, type ReactNode } from 'react'
+import { Copy, Check, PenLine, ChevronDown, Info } from 'lucide-react'
 import type { BulletRewriteSuggestion } from '../../api/analyzeClient'
 import AnalyzeAccordion from './AnalyzeAccordion'
 
@@ -16,6 +16,38 @@ async function copyText(text: string): Promise<boolean> {
   }
 }
 
+function wordSet(text: string): Set<string> {
+  return new Set(
+    text
+      .toLowerCase()
+      .split(/\s+/)
+      .map(w => w.replace(/[.,;:!?„“"«»()]+/g, ''))
+      .filter(Boolean),
+  )
+}
+
+function markTokens(text: string, other: Set<string>, mode: 'new' | 'gone'): ReactNode {
+  const parts = text.split(/(\s+)/)
+  return parts.map((part, i) => {
+    if (!part.trim()) return part
+    const token = part.toLowerCase().replace(/[.,;:!?„“"«»()]+/g, '')
+    const isDiff = Boolean(token) && !other.has(token)
+    if (!isDiff) return <span key={i}>{part}</span>
+    if (mode === 'gone') {
+      return (
+        <span key={i} className="line-through decoration-[#c4a89e]">
+          {part}
+        </span>
+      )
+    }
+    return (
+      <mark key={i} className="rounded-[3px] bg-[rgba(217,119,87,0.24)] px-[5px] py-0.5 font-semibold text-[#1a1613]">
+        {part}
+      </mark>
+    )
+  })
+}
+
 function BulletCard({
   bullet,
   index,
@@ -27,9 +59,12 @@ function BulletCard({
   copied: boolean
   onCopy: () => void
 }) {
+  const orig = wordSet(bullet.originalBullet)
+  const next = wordSet(bullet.rewrittenBullet)
+
   return (
     <article>
-      <div className="mb-3 flex items-start justify-between gap-3">
+      <div className="mb-3.5 flex items-start justify-between gap-3">
         <p className="text-[11px] uppercase tracking-[0.08em] text-[#8a7f70]">
           CV-Formulierungsvorschlag
         </p>
@@ -45,21 +80,26 @@ function BulletCard({
       </div>
       <div className="rounded-xl bg-[#faf7f0] px-5 py-4">
         <p className="text-[11px] uppercase tracking-[0.08em] text-[#8a7f70]">Vorher</p>
-        <p className="mt-2 text-[15px] leading-relaxed text-[#6e665e]">{bullet.originalBullet}</p>
+        <p className="mt-2 text-[15px] leading-relaxed text-[#6e665e]">
+          {markTokens(bullet.originalBullet, next, 'gone')}
+        </p>
       </div>
       <div className="mt-3 rounded-lg border-l-[3px] border-[#d97757] bg-[rgba(217,119,87,0.06)] px-5 py-4">
         <p className="text-[11px] uppercase tracking-[0.08em] text-[#b45539]">Nachher</p>
-        <p className="mt-2 text-[15px] leading-relaxed text-[#1a1613]">{bullet.rewrittenBullet}</p>
+        <p className="mt-2 text-[15px] leading-relaxed text-[#1a1613]">
+          {markTokens(bullet.rewrittenBullet, orig, 'new')}
+        </p>
       </div>
       {bullet.reasoning ? (
         <div className="mt-3.5 flex gap-3 rounded-[10px] bg-[#f5f1eb] px-4 py-3.5">
+          <Info className="mt-0.5 h-[18px] w-[18px] shrink-0 text-[#b45539]" aria-hidden />
           <p className="text-[13px] leading-relaxed text-[#4a4238]">
             <strong className="font-semibold text-[#b45539]">Warum das stärker ist:</strong>{' '}
             {bullet.reasoning}
           </p>
         </div>
       ) : null}
-      <span className="sr-only">Vorschlag {index + 1}</span>
+      <span className="sr-only">Vorschlag {index + 1}. {bullet.rewrittenBullet}</span>
     </article>
   )
 }

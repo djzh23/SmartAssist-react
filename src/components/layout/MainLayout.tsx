@@ -136,12 +136,7 @@ function MainLayoutShell() {
   }, [])
 
   return (
-    <div className="app-main-shell relative flex h-screen flex-col overflow-hidden bg-app-canvas text-stone-100">
-      <div
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(1200px_520px_at_58%_-12%,rgba(217,119,6,0.18),transparent_60%),radial-gradient(900px_420px_at_24%_18%,rgba(56,189,248,0.08),transparent_58%),linear-gradient(135deg,#120c08_0%,#1a100a_45%,#17110d_100%)]"
-        aria-hidden
-      />
-      <div className="pointer-events-none absolute inset-0 landing-dot-grid opacity-[0.42]" aria-hidden />
+    <div className="app-main-shell relative flex h-screen flex-col overflow-hidden bg-app-canvas text-[#f0ebe0]">
       <div className="relative z-10 flex h-full min-h-0 flex-col">
       <TopNavBar />
 

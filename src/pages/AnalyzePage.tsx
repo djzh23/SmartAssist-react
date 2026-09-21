@@ -12,7 +12,7 @@ import AnalyzeSkillBuckets from '../components/analyze/AnalyzeSkillBuckets'
 import AnalyzeBulletRewrites from '../components/analyze/AnalyzeBulletRewrites'
 import AnalyzeLoadingState from '../components/analyze/AnalyzeLoadingState'
 import AnalyzeRoleSummary from '../components/analyze/AnalyzeRoleSummary'
-import { emptySkillGap, inventedSkillCount, requirementCount, splitRoleSummary } from '../components/analyze/analyzeFormat'
+import { emptySkillGap, inventedSkillCount, requirementCount, splitRoleSummary, formatRelativeCreated, userFacingWarnings } from '../components/analyze/analyzeFormat'
 import { useCareerProfile } from '../hooks/useCareerProfile'
 import {
   analyzeJob,
@@ -49,14 +49,6 @@ function storeReport(userId: string, report: AnalyzeReport): void {
     const entry: StoredReport = { report, storedAt: new Date().toISOString() }
     sessionStorage.setItem(REPORT_KEY_PREFIX + userId, JSON.stringify(entry))
   } catch { /* ignore quota */ }
-}
-
-function formatStoredAt(iso: string): string {
-  try {
-    return new Date(iso).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' })
-  } catch {
-    return ''
-  }
 }
 
 function normalizeGap(gap?: SkillGapReport): SkillGapReport {
@@ -157,19 +149,19 @@ export default function AnalyzePage() {
   const factGateCount = inventedSkillCount(report?.factViolations)
 
   return (
-    <StandardPageContainer className="w-full overflow-x-hidden pb-10 pt-3 sm:py-6">
+    <StandardPageContainer className="w-full max-w-[820px] overflow-x-hidden pb-10 pt-4 sm:py-10">
       {showForm ? (
         <AnalyzeHeader title="Stellenanzeige prüfen" />
       ) : null}
 
       {!profileLoading && !cvReady && showForm && (
-        <div className="mb-5 flex items-start gap-2 rounded-2xl border border-amber-500/30 bg-amber-950/30 px-4 py-3 text-sm text-amber-100">
-          <AlertTriangle size={16} className="mt-0.5 shrink-0" aria-hidden />
+        <div className="mb-5 flex items-start gap-2 rounded-2xl border border-[rgba(217,119,87,0.28)] bg-[rgba(217,119,87,0.08)] px-4 py-3 text-sm text-[#f0ebe0]">
+          <AlertTriangle size={16} className="mt-0.5 shrink-0 text-[#d97757]" aria-hidden />
           <p>
             {cvNeedsReupload
               ? 'Der Lebenslauf liegt nicht in diesem Browser. Bitte unter Profil erneut hochladen, dann analysieren.'
               : 'Ohne Lebenslauf keine Analyse.'}{' '}
-            <Link to="/career-profile" className="font-semibold underline decoration-amber-400/50 underline-offset-2">
+            <Link to="/career-profile" className="font-semibold text-[#e89372] underline decoration-[#d97757]/50 underline-offset-2">
               Profil öffnen
             </Link>
           </p>
@@ -177,10 +169,10 @@ export default function AnalyzePage() {
       )}
 
       {showForm ? (
-        <section className="rounded-2xl border border-stone-600/40 bg-app-surface/90 p-5 shadow-landing">
+        <section className="rounded-[20px] border border-[#3a332d] bg-[#232019] p-5 sm:p-6">
           <label className="block">
-            <span className="text-sm font-medium text-stone-200">Stellenanzeige</span>
-            <p className="mt-1 text-xs text-stone-500">
+            <span className="text-sm font-medium text-[#f5f1eb]">Stellenanzeige</span>
+            <p className="mt-1 text-xs text-[#a89e91]">
               Text der Anzeige einfügen, egal ob Pflege, Vertrieb, Büro, Handwerk oder IT. Eine URL allein reicht nicht. Bitte den Anzeigentext kopieren.
             </p>
             <textarea
@@ -188,11 +180,11 @@ export default function AnalyzePage() {
               onChange={e => setJobText(e.target.value)}
               rows={12}
               placeholder="Stellenanzeige hier einfügen. Den vollständigen Text kopieren, nicht nur den Titel."
-              className="mt-3 w-full rounded-xl border border-app-border bg-black/20 px-3 py-2.5 text-sm text-stone-100 placeholder-stone-600 focus:border-amber-500/50 focus:outline-none focus:ring-1 focus:ring-amber-500/30"
+              className="mt-3 w-full rounded-xl border border-[#3a332d] bg-[#1a1613] px-3 py-2.5 text-sm text-[#f0ebe0] placeholder-[#8a7f70] focus:border-[#d97757] focus:outline-none focus:ring-1 focus:ring-[#d97757]/30"
             />
           </label>
           <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-xs text-stone-500">{lengthHint}</p>
+            <p className="text-xs text-[#a89e91]">{lengthHint}</p>
             <AppCtaButton
               size="lg"
               onClick={() => void runAnalyze()}
@@ -203,7 +195,7 @@ export default function AnalyzePage() {
             </AppCtaButton>
           </div>
           {error && (
-            <p className="mt-3 rounded-lg border border-rose-500/30 bg-rose-950/30 px-3 py-2 text-sm text-rose-100" role="alert">
+            <p className="mt-3 rounded-lg border border-[rgba(217,119,87,0.28)] bg-[rgba(217,119,87,0.08)] px-3 py-2 text-sm text-[#f0ebe0]" role="alert">
               {error}
             </p>
           )}
@@ -211,7 +203,7 @@ export default function AnalyzePage() {
             <button
               type="button"
               onClick={() => setComposing(false)}
-              className="mt-3 text-xs font-medium text-stone-400 underline decoration-stone-600 underline-offset-2 hover:text-stone-200"
+              className="mt-3 text-xs font-medium text-[#a89e91] underline decoration-[#3a332d] underline-offset-2 hover:text-[#f0ebe0]"
             >
               Letztes Ergebnis anzeigen
             </button>
@@ -226,17 +218,13 @@ export default function AnalyzePage() {
       ) : null}
 
       {showReport && report ? (
-        <div className="pp-report-paper px-5 py-6 sm:px-10 sm:py-9">
+        <div className="pp-report-paper px-6 py-9 sm:px-10">
           <AnalyzeHeader
             tone="paper"
             title={role.title}
             subtitle={role.subtitle}
             score={report.globalScore}
-            kicker={
-              reportIsFromPreviousSession
-                ? `Analysebericht${reportStoredAt ? ` · ${formatStoredAt(reportStoredAt)}` : ''}`
-                : 'Analysebericht'
-            }
+            kicker={`Analysebericht · ${formatRelativeCreated(reportIsFromPreviousSession ? reportStoredAt : new Date().toISOString())}`}
           />
 
           <AnalyzeHero
@@ -245,6 +233,8 @@ export default function AnalyzePage() {
             coveredCount={gap.existing.length}
             requirementTotal={requirementCount(gap)}
             missingCount={gap.gap.length}
+            roleAlignment={dims.roleAlignment}
+            warningCount={userFacingWarnings(report.warnings).length}
           />
           <AnalyzeSubDimensions
             cvMatch={dims.cvMatch}

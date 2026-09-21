@@ -216,7 +216,7 @@ function renderSummaryMarkdown(text: string): ReactNode {
       {lines.map((line, i) => {
         if (line.startsWith('### ')) {
           return (
-            <h4 key={i} className="mt-3 mb-1 text-xs font-bold uppercase tracking-wide text-amber-800">
+            <h4 key={i} className="mt-3 mb-1 text-xs font-bold uppercase tracking-wide text-[#b45539]">
               {line.slice(4)}
             </h4>
           )
@@ -238,7 +238,7 @@ function renderSummaryMarkdown(text: string): ReactNode {
         if (line.startsWith('- ') || line.startsWith('• ')) {
           return (
             <div key={i} className="flex gap-2 items-start pl-1">
-              <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" aria-hidden />
+              <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[#faf7f0]0" aria-hidden />
               <span>{renderInline(line.slice(2))}</span>
             </div>
           )
@@ -290,7 +290,7 @@ function HelpModal({ open, onClose }: { open: boolean; onClose: () => void }) {
               className={[
                 'rounded-t-lg px-3 py-2 text-xs font-semibold transition-colors',
                 tab === t.id
-                  ? 'border-b-2 border-amber-600 text-amber-800'
+                  ? 'border-b-2 border-[#d97757] text-[#b45539]'
                   : 'text-stone-600 hover:text-stone-900',
               ].join(' ')}
             >
@@ -306,8 +306,8 @@ function HelpModal({ open, onClose }: { open: boolean; onClose: () => void }) {
                 Analyse. Je vollständiger es ist, desto genauer vergleicht die Stellenanalyse deinen
                 Lebenslauf mit einer Stellenausschreibung.
               </p>
-              <div className="rounded-xl border border-amber-500/25 bg-amber-500/10 p-4 space-y-2">
-                <p className="font-semibold text-amber-900">Was wird verwendet?</p>
+              <div className="rounded-xl border border-[rgba(217,119,87,0.25)] bg-[rgba(217,119,87,0.10)] p-4 space-y-2">
+                <p className="font-semibold text-[#1a1613]">Was wird verwendet?</p>
                 <ul className="space-y-1">
                   {[
                     'Berufsfeld & Level → Grundlage aller Analysen',
@@ -317,7 +317,7 @@ function HelpModal({ open, onClose }: { open: boolean; onClose: () => void }) {
                     'Wunschstellen → präzisere Stellenanalysen',
                   ].map(item => (
                     <li key={item} className="flex gap-2 items-start">
-                      <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />
+                      <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#faf7f0]0" />
                       <span>{item}</span>
                     </li>
                   ))}
@@ -367,10 +367,10 @@ function HelpModal({ open, onClose }: { open: boolean; onClose: () => void }) {
           )}
           {tab === 'jobs' && (
             <div className="space-y-3">
-              <div className="flex gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
-                <Target className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" />
+              <div className="flex gap-3 rounded-xl border border-[rgba(217,119,87,0.28)] bg-[#faf7f0] p-4">
+                <Target className="mt-0.5 h-5 w-5 shrink-0 text-[#b45539]" />
                 <div>
-                  <p className="font-semibold text-amber-900">Wunschstellen halten fest, wonach du suchst</p>
+                  <p className="font-semibold text-[#1a1613]">Wunschstellen halten fest, wonach du suchst</p>
                   <p className="mt-1 text-sm">
                     Speichere Positionen, auf die du dich bewerben möchtest, als Übersicht in deinem
                     Profil.
@@ -384,7 +384,7 @@ function HelpModal({ open, onClose }: { open: boolean; onClose: () => void }) {
                   'Für die Stellenanalyse selbst fügst du den Anzeigentext direkt bei „Analysieren" ein',
                 ].map(item => (
                   <li key={item} className="flex gap-2 items-start">
-                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />
+                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#faf7f0]0" />
                     <span>{item}</span>
                   </li>
                 ))}
@@ -446,7 +446,7 @@ function SummaryModal({
           <div>
             <h2 className="text-base font-semibold text-stone-900">
               KI-Zusammenfassung{' '}
-              <span className="ml-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-xs font-bold text-amber-800">
+              <span className="ml-1 rounded-md border border-[rgba(217,119,87,0.30)] bg-[rgba(217,119,87,0.10)] px-2 py-0.5 text-xs font-bold text-[#b45539]">
                 {langLabel}
               </span>
             </h2>
@@ -468,7 +468,7 @@ function SummaryModal({
             className={[
               'flex items-center gap-1.5 rounded-t-lg px-3 py-2 text-xs font-semibold transition-colors',
               mode === 'preview'
-                ? 'border-b-2 border-amber-600 text-amber-800'
+                ? 'border-b-2 border-[#d97757] text-[#b45539]'
                 : 'text-stone-600 hover:text-stone-900',
             ].join(' ')}
           >
@@ -481,7 +481,7 @@ function SummaryModal({
             className={[
               'flex items-center gap-1.5 rounded-t-lg px-3 py-2 text-xs font-semibold transition-colors',
               mode === 'edit'
-                ? 'border-b-2 border-amber-600 text-amber-800'
+                ? 'border-b-2 border-[#d97757] text-[#b45539]'
                 : 'text-stone-600 hover:text-stone-900',
             ].join(' ')}
           >
@@ -501,7 +501,7 @@ function SummaryModal({
               value={text}
               onChange={e => setText(e.target.value)}
               rows={16}
-              className="w-full rounded-lg border border-stone-400/40 bg-white px-3 py-2.5 text-sm text-stone-900 focus:border-amber-500/50 focus:outline-none focus:ring-1 focus:ring-amber-500/30"
+              className="w-full rounded-lg border border-stone-400/40 bg-white px-3 py-2.5 text-sm text-stone-900 focus:border-[#d97757]/50 focus:outline-none focus:ring-1 focus:ring-[#d97757]/30"
             />
           )}
         </div>
@@ -975,7 +975,7 @@ export default function CareerProfilePage() {
                   <button
                     type="button"
                     onClick={() => setInsightModalOpen(true)}
-                    className="shrink-0 rounded-lg p-1.5 text-amber-400/90 transition hover:bg-white/5 hover:text-amber-300"
+                    className="shrink-0 rounded-lg p-1.5 text-[#d97757] transition hover:bg-white/5 hover:text-[#e89372]"
                     aria-label="Ziele und fehlende Angaben im Detail"
                   >
                     <AlertCircle size={22} strokeWidth={2} aria-hidden />
@@ -1012,7 +1012,7 @@ export default function CareerProfilePage() {
                 <button
                   type="button"
                   onClick={() => setInsightModalOpen(true)}
-                  className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-amber-400 hover:text-amber-300"
+                  className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-[#d97757] hover:text-[#e89372]"
                 >
                   <AlertCircle size={16} aria-hidden />
                   Details zu Zielen und Lücken
@@ -1025,7 +1025,7 @@ export default function CareerProfilePage() {
                 <ul className="mt-2 space-y-1 text-sm text-stone-200">
                   {missingItems.slice(0, 6).map(item => (
                     <li key={item.id} className="flex items-center gap-2">
-                      <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-300" aria-hidden />
+                      <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#e89372]" aria-hidden />
                       {item.label}
                     </li>
                   ))}
@@ -1051,7 +1051,7 @@ export default function CareerProfilePage() {
             <button
               type="button"
               onClick={() => setMobileSection('overview')}
-              className="inline-flex items-center gap-1 text-sm font-semibold text-amber-300 hover:text-amber-200"
+              className="inline-flex items-center gap-1 text-sm font-semibold text-[#e89372] hover:text-[#f0ebe0]"
             >
               <ChevronRight className="rotate-180" size={14} />
               Zur Übersicht
@@ -1061,17 +1061,17 @@ export default function CareerProfilePage() {
 
         {(!isDesktop || activeSection === 'overview') && (
         <div className="hidden gap-6 lg:grid lg:grid-cols-[260px_minmax(0,1fr)] lg:items-start">
-          <aside className="sticky top-[68px] space-y-3 rounded-2xl bg-[#1b120d]/78 p-3.5 shadow-[0_10px_28px_-18px_rgba(0,0,0,0.62)]">
+          <aside className="sticky top-[68px] space-y-3 rounded-2xl border border-[#3a332d] bg-[#232019] p-3.5">
             <ProfileSectionNav items={sectionItems} activeSection={activeSection} onSelect={setActiveSection} />
-            <div className="rounded-xl bg-[#231811]/45 p-3 text-xs text-stone-300">
-              <p className="font-semibold text-amber-200">Warum ist das wichtig?</p>
+            <div className="rounded-xl border border-[#3a332d] bg-[#1a1613] p-3 text-xs text-[#cfc6b8]">
+              <p className="font-semibold text-[#f0ebe0]">Warum ist das wichtig?</p>
               <p className="mt-1">
                 Ein vollständiges Profil verbessert die Qualität der KI-Antworten und Empfehlungen.
               </p>
               <button
                 type="button"
                 onClick={() => setHelpOpen(true)}
-                className="mt-2 inline-flex items-center gap-1 font-semibold text-amber-300 hover:text-amber-200"
+                className="mt-2 inline-flex items-center gap-1 font-semibold text-[#e89372] hover:text-[#f0ebe0]"
               >
                 Mehr erfahren
                 <ChevronRight size={12} />
@@ -1145,7 +1145,7 @@ export default function CareerProfilePage() {
                   <p className="text-stone-400">{completedSections} / {sectionItems.length} Bereiche abgeschlossen</p>
                 </div>
                 <div className="h-2 overflow-hidden rounded-full bg-white/10">
-                  <div className="h-full bg-amber-400" style={{ width: `${Math.round((completedSections / sectionItems.length) * 100)}%` }} />
+                  <div className="h-full bg-[#d97757]" style={{ width: `${Math.round((completedSections / sectionItems.length) * 100)}%` }} />
                 </div>
               </div>
               <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
@@ -1168,17 +1168,17 @@ export default function CareerProfilePage() {
 
         {currentSection !== 'overview' && (
           <div className="lg:grid lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-6">
-        <aside className="hidden lg:block lg:sticky lg:top-[68px] lg:h-fit lg:space-y-3 lg:rounded-2xl lg:bg-[#1b120d]/78 lg:p-3.5 lg:shadow-[0_10px_28px_-18px_rgba(0,0,0,0.62)]">
+        <aside className="hidden lg:block lg:sticky lg:top-[68px] lg:h-fit lg:space-y-3 lg:rounded-2xl lg:border lg:border-[#3a332d] lg:bg-[#232019] lg:p-3.5">
           <ProfileSectionNav items={sectionItems} activeSection={activeSection} onSelect={setActiveSection} />
-          <div className="rounded-xl bg-[#231811]/45 p-3 text-xs text-stone-300">
-            <p className="font-semibold text-amber-200">Warum ist das wichtig?</p>
+          <div className="rounded-xl border border-[#3a332d] bg-[#1a1613] p-3 text-xs text-[#cfc6b8]">
+            <p className="font-semibold text-[#f0ebe0]">Warum ist das wichtig?</p>
             <p className="mt-1">
               Ein vollständiges Profil verbessert die Qualität der KI-Antworten und Empfehlungen.
             </p>
             <button
               type="button"
               onClick={() => setHelpOpen(true)}
-              className="mt-2 inline-flex items-center gap-1 font-semibold text-amber-300 hover:text-amber-200"
+              className="mt-2 inline-flex items-center gap-1 font-semibold text-[#e89372] hover:text-[#f0ebe0]"
             >
               Mehr erfahren
               <ChevronRight size={12} />
@@ -1256,8 +1256,8 @@ export default function CareerProfilePage() {
             </div>
           </div>
         ) : canMarkProfileSetupComplete(profile) ? (
-          <div className="mb-6 rounded-xl border border-amber-600/35 bg-app-parchment px-4 py-3 text-sm text-stone-900">
-            <p className="font-semibold text-amber-950">Daten gespeichert - Setup noch offen</p>
+          <div className="mb-6 rounded-xl border border-[rgba(217,119,87,0.35)] bg-app-parchment px-4 py-3 text-sm text-stone-900">
+            <p className="font-semibold text-[#1a1613]">Daten gespeichert - Setup noch offen</p>
             <p className="mt-2 leading-relaxed text-stone-800">
               Klicke unten, um das Profil als eingerichtet zu markieren - danach entfällt der
               Chat-Hinweis.
@@ -1273,7 +1273,7 @@ export default function CareerProfilePage() {
             </AppCtaButton>
           </div>
         ) : (
-          <div className="mb-6 rounded-xl border border-amber-600/35 bg-app-parchment px-4 py-3 text-sm text-stone-900">
+          <div className="mb-6 rounded-xl border border-[rgba(217,119,87,0.35)] bg-app-parchment px-4 py-3 text-sm text-stone-900">
             <strong className="font-medium">Noch nicht eingerichtet:</strong> Wähle mindestens{' '}
             <strong className="font-medium">Berufsfeld</strong>,{' '}
             <strong className="font-medium">Level</strong> und ein{' '}
@@ -1294,7 +1294,7 @@ export default function CareerProfilePage() {
 
         {/* ── Pending merge hint ─────────────────────────────────────── */}
         {pendingMergedDraftHint && (
-          <div className="mb-4 flex flex-col gap-3 rounded-lg border border-amber-500/35 bg-app-parchment px-4 py-3 text-sm text-stone-900 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mb-4 flex flex-col gap-3 rounded-lg border border-[rgba(217,119,87,0.35)] bg-app-parchment px-4 py-3 text-sm text-stone-900 sm:flex-row sm:items-center sm:justify-between">
             <p>
               PDF-Daten wurden ins Formular übernommen - noch nicht gespeichert. Jetzt alle
               sichtbaren Felder auf dem Server speichern?
@@ -1397,7 +1397,7 @@ export default function CareerProfilePage() {
                 className={[
                   'rounded-full px-3 py-1 text-xs font-medium',
                   profile.goals.includes(g.id)
-                    ? 'bg-amber-500/90 text-black'
+                    ? 'bg-[#d97757] text-black'
                     : 'border border-stone-400/40 bg-stone-200/70 text-stone-800 hover:bg-stone-300/60',
                 ].join(' ')}
               >
@@ -1680,7 +1680,7 @@ export default function CareerProfilePage() {
               </p>
             </div>
             {summaryStale && (
-              <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-800">
+              <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-[rgba(217,119,87,0.35)] bg-[#faf7f0] px-2.5 py-1 text-xs font-medium text-[#b45539]">
                 <AlertTriangle size={11} />
                 Veraltet
               </span>
@@ -1780,12 +1780,12 @@ export default function CareerProfilePage() {
 
         {/* ── Wunschstellen ───────────────────────────────────────────── */}
         {currentSection === 'targets' && (
-        <section className="mb-8 rounded-xl border border-amber-500/35 bg-app-parchment p-5 shadow-landing text-stone-900">
+        <section className="mb-8 rounded-xl border border-[rgba(217,119,87,0.35)] bg-app-parchment p-5 shadow-landing text-stone-900">
           <div className="mb-4 flex items-start gap-3">
-            <Target className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" aria-hidden />
+            <Target className="mt-0.5 h-5 w-5 shrink-0 text-[#b45539]" aria-hidden />
             <div>
               <h2 className="text-sm font-semibold text-stone-900">Wunschstellen (max. 3)</h2>
-              <p className="mt-1 text-xs text-amber-800 font-medium">
+              <p className="mt-1 text-xs text-[#b45539] font-medium">
                 Wichtig für die Stellenanalyse - je mehr Details, desto präziser der Match mit
                 Jobanzeigen im Chat.
               </p>

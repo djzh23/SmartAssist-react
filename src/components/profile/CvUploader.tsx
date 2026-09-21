@@ -24,9 +24,9 @@ interface Props {
 }
 
 const inputCls =
-  'mt-1 w-full rounded-lg border border-stone-400/40 bg-white px-2 py-1.5 text-sm text-stone-900 focus:border-amber-500/50 focus:outline-none focus:ring-1 focus:ring-amber-500/30'
+  'mt-1 w-full rounded-lg border border-stone-400/40 bg-white px-2 py-1.5 text-sm text-stone-900 focus:border-[#d97757] focus:outline-none focus:ring-1 focus:ring-[#d97757]/30'
 const rowInputCls =
-  'rounded-lg border border-stone-400/30 bg-white px-1.5 py-1 text-xs text-stone-900 focus:border-amber-500/50 focus:outline-none focus:ring-1 focus:ring-amber-500/30'
+  'rounded-lg border border-stone-400/30 bg-white px-1.5 py-1 text-xs text-stone-900 focus:border-[#d97757] focus:outline-none focus:ring-1 focus:ring-[#d97757]/30'
 
 function fileToBase64DataPart(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -252,7 +252,7 @@ export default function CvUploader({
                 key={sk}
                 type="button"
                 onClick={() => removeSkill(sk)}
-                className="inline-flex items-center gap-1 rounded-full bg-primary/15 px-2.5 py-1 text-xs font-medium text-amber-800 hover:bg-primary/25"
+                className="inline-flex items-center gap-1 rounded-full bg-primary/15 px-2.5 py-1 text-xs font-medium text-[#b45539] hover:bg-primary/25"
               >
                 {sk}
                 <X size={11} />
@@ -265,7 +265,7 @@ export default function CvUploader({
               onChange={e => setSkillInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addSkill())}
               placeholder="Skill hinzufügen"
-              className="min-w-0 flex-1 rounded-lg border border-stone-400/30 bg-white px-2 py-1 text-sm text-stone-900 focus:border-amber-500/50 focus:outline-none focus:ring-1 focus:ring-amber-500/30"
+              className="min-w-0 flex-1 rounded-lg border border-stone-400/30 bg-white px-2 py-1 text-sm text-stone-900 focus:border-[#d97757] focus:outline-none focus:ring-1 focus:ring-[#d97757]/30"
             />
             <button
               type="button"
@@ -438,7 +438,7 @@ export default function CvUploader({
             }}
             className={[
               'flex w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-stone-400/50 bg-app-parchment px-4 py-10 transition-colors',
-              loading ? 'cursor-wait opacity-70' : 'hover:border-amber-500/50 hover:bg-amber-500/10',
+              loading ? 'cursor-wait opacity-70' : 'hover:border-[#d97757] hover:bg-[rgba(217,119,87,0.10)]',
             ].join(' ')}
           >
             {loading ? (
@@ -479,7 +479,7 @@ export default function CvUploader({
             onChange={e => onCvPasteTextChange(e.target.value)}
             rows={8}
             placeholder="CV-Text hier einfügen…"
-            className="w-full rounded-lg border border-stone-400/40 bg-app-parchment px-3 py-2 text-sm text-stone-900 focus:border-amber-500/50 focus:outline-none focus:ring-1 focus:ring-amber-500/30"
+            className="w-full rounded-lg border border-stone-400/40 bg-app-parchment px-3 py-2 text-sm text-stone-900 focus:border-[#d97757] focus:outline-none focus:ring-1 focus:ring-[#d97757]/30"
           />
           <p className="mt-1 text-[11px] text-stone-600">
             Für automatische Felderkennung nutze PDF.

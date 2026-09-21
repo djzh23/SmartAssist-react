@@ -34,17 +34,17 @@ export default function PageHeader({
   /* ── Title block (shared between render paths) ───────────────────────────── */
   const titleBlock = (
     <div className="flex min-w-0 items-start gap-3">
-      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary-light text-primary">
+      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[rgba(217,119,87,0.16)] text-[#d97757]">
         <Icon className="h-5 w-5" aria-hidden />
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex min-w-0 items-start gap-2">
-          <h1 className="truncate text-2xl font-bold tracking-tight text-stone-50">
+          <h1 className="truncate font-display text-2xl tracking-tight text-[#f5f1eb]">
             {title ?? meta.label}
           </h1>
           {infoSlot ? <div className="shrink-0">{infoSlot}</div> : null}
         </div>
-        <p className="mt-1 text-sm text-stone-400">
+        <p className="mt-1 text-sm text-[#a89e91]">
           {subtitle ?? meta.subtitle}
         </p>
       </div>
@@ -58,7 +58,7 @@ export default function PageHeader({
       return (
         <header
           className={[
-            'hidden sm:block rounded-2xl bg-[#1b120d]/78 px-4 py-4 sm:px-5 shadow-[0_10px_28px_-18px_rgba(0,0,0,0.62)]',
+            'hidden sm:block rounded-2xl border border-[#3a332d] bg-[#232019] px-4 py-4 sm:px-5',
             className ?? '',
           ].join(' ')}
         >
@@ -72,7 +72,7 @@ export default function PageHeader({
         className={[
           // Mobile: no card chrome — actions sit flush at page edge
           // sm+: full card
-          'sm:rounded-2xl sm:bg-[#1b120d]/78 sm:px-5 sm:py-4 sm:shadow-[0_10px_28px_-18px_rgba(0,0,0,0.62)]',
+          'sm:rounded-2xl sm:border sm:border-[#3a332d] sm:bg-[#232019] sm:px-5 sm:py-4',
           className ?? '',
         ].join(' ')}
       >
@@ -95,7 +95,7 @@ export default function PageHeader({
   return (
     <header
       className={[
-        'rounded-2xl bg-[#1b120d]/78 px-4 py-4 sm:px-5 shadow-[0_10px_28px_-18px_rgba(0,0,0,0.62)]',
+        'rounded-2xl border border-[#3a332d] bg-[#232019] px-4 py-4 sm:px-5',
         className ?? '',
       ].join(' ')}
     >

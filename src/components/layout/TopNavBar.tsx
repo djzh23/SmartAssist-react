@@ -61,7 +61,7 @@ function UserAvatarMenu({
       </button>
       {userMenuOpen && (
         <div
-          className="absolute right-0 top-full z-[60] mt-1.5 min-w-[220px] rounded-lg border border-stone-600/50 bg-[#1f1812] py-1 shadow-landing-md"
+          className="absolute right-0 top-full z-[60] mt-1.5 min-w-[220px] rounded-lg border border-[#3a332d] bg-[#232019] py-1 shadow-landing-md"
           role="menu"
         >
           <span
@@ -115,7 +115,7 @@ export default function TopNavBar(_props: Props) {
 
   if (bp === 'mobile') {
     return (
-      <header className="sticky top-0 z-50 flex h-12 flex-shrink-0 items-center justify-between border-b border-sidebar-border bg-sidebar px-3">
+      <header className="sticky top-0 z-50 flex h-12 flex-shrink-0 items-center justify-between border-b border-[#3a332d] bg-[#1a1613] px-3">
         <Link
           to="/analyze"
           aria-label="PrivatePrep"
@@ -143,7 +143,7 @@ export default function TopNavBar(_props: Props) {
   }
 
   return (
-    <header className="sticky top-0 z-50 flex h-[52px] flex-shrink-0 items-center justify-between gap-2 border-b border-stone-600/40 bg-[#1a1208]/92 px-4 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 flex h-[52px] flex-shrink-0 items-center justify-between gap-2 border-b border-[#3a332d] bg-[#1a1613] px-4">
       <Link
         to="/analyze"
         aria-label="PrivatePrep"

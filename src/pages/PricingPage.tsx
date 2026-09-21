@@ -48,11 +48,11 @@ const PLANS: Plan[] = [
     name: 'Premium',
     price: '6,99 €',
     period: '/Monat',
-    icon: <Sparkles size={18} className="text-amber-600" />,
-    accentBorder: 'border-amber-500/45',
-    accentHeader: 'bg-amber-950/35',
+    icon: <Sparkles size={18} className="text-[#d97757]" />,
+    accentBorder: 'border-[#d97757]/45',
+    accentHeader: 'bg-[rgba(217,119,87,0.08)]',
     badgeText: 'BELIEBTESTE WAHL',
-    badgeStyle: 'bg-primary text-white',
+    badgeStyle: 'bg-primary text-[#1a1613]',
     scale: true,
     features: [
       { text: 'Alles aus Free', included: true },
@@ -60,7 +60,7 @@ const PLANS: Plan[] = [
       { text: 'Match-Score, Skill-Lücken, Formulierungen', included: true },
     ],
     buttonLabel: 'Premium starten',
-    buttonStyle: 'bg-primary hover:bg-primary-hover text-white',
+    buttonStyle: 'bg-primary hover:bg-[#e89372] text-[#1a1613]',
   },
 ]
 
@@ -181,22 +181,22 @@ export default function PricingPage() {
   return (
     <div className="relative min-h-0 flex-1 overflow-y-auto bg-transparent">
       <div className="pointer-events-none absolute inset-0 overflow-hidden" style={{ zIndex: 0 }}>
-        <div className="absolute -right-28 top-0 h-80 w-80 rounded-full bg-amber-600/12 blur-3xl" />
-        <div className="absolute -left-28 bottom-0 h-96 w-96 rounded-full bg-amber-500/10 blur-3xl" />
-        <div className="absolute left-1/2 top-14 h-44 w-44 -translate-x-1/2 rotate-45 rounded-[34px] border border-amber-500/18" />
+        <div className="absolute -right-28 top-0 h-80 w-80 rounded-full bg-[#d97757]/12 blur-3xl" />
+        <div className="absolute -left-28 bottom-0 h-96 w-96 rounded-full bg-[#d97757]/10 blur-3xl" />
+        <div className="absolute left-1/2 top-14 h-44 w-44 -translate-x-1/2 rotate-45 rounded-[34px] border border-[#d97757]/18" />
         <div className="absolute right-10 top-52 h-28 w-28 rotate-12 rounded-2xl border border-stone-600/35 bg-stone-900/30" />
       </div>
 
       {toast && (
-        <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 animate-slide-up rounded-2xl border border-amber-500/35 bg-app-surface px-5 py-3 shadow-landing-lg">
+        <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 animate-slide-up rounded-2xl border border-[#d97757]/35 bg-app-surface px-5 py-3 shadow-landing-lg">
           <p className="text-sm font-medium text-stone-200">{toast}</p>
         </div>
       )}
 
       <div className="relative z-10 mx-auto max-w-5xl px-6 py-12">
         <div className="mb-10 text-center">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-400">Preise &amp; Pläne</p>
-          <h1 className="mt-2 text-3xl font-bold tracking-tight text-stone-50 md:text-4xl">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#d97757]">Preise &amp; Pläne</p>
+          <h1 className="mt-2 font-display text-3xl tracking-tight text-[#f5f1eb] md:text-4xl">
             Einfach. Transparent. Fair.
           </h1>
           <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-stone-400">
@@ -205,7 +205,7 @@ export default function PricingPage() {
         </div>
 
         {checkoutCancelled && (
-          <div className="mx-auto mb-6 max-w-2xl rounded-2xl border border-amber-500/35 bg-amber-950/35 px-4 py-3 text-sm text-amber-100">
+          <div className="mx-auto mb-6 max-w-2xl rounded-2xl border border-[#d97757]/35 bg-[rgba(217,119,87,0.08)] px-4 py-3 text-sm text-[#f0ebe0]">
             Der Checkout wurde abgebrochen.
           </div>
         )}
@@ -229,7 +229,7 @@ export default function PricingPage() {
               <div
                 className="pointer-events-none absolute inset-0 opacity-80"
                 style={{
-                  backgroundImage: 'radial-gradient(circle at 88% 0%, rgba(245,158,11,0.1), transparent 50%)',
+                  backgroundImage: 'radial-gradient(circle at 88% 0%, rgba(217,119,87,0.12), transparent 50%)',
                 }}
               />
 

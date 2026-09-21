@@ -19,7 +19,7 @@ export function ProfileCompletenessRing({ value, compact = false }: { value: num
   const offset = c - (pct / 100) * c
   const wrap = compact ? 'relative h-20 w-20' : 'relative h-24 w-24'
   const svgCls = compact ? 'h-20 w-20' : 'h-24 w-24'
-  const labelCls = compact ? 'text-lg font-bold text-amber-100' : 'text-xl font-bold text-amber-100'
+  const labelCls = compact ? 'text-lg font-bold text-[#f5f1eb]' : 'text-xl font-bold text-[#f5f1eb]'
   return (
     <div className={wrap}>
       <svg viewBox="0 0 80 80" className={`${svgCls} -rotate-90`}>
@@ -28,7 +28,7 @@ export function ProfileCompletenessRing({ value, compact = false }: { value: num
           cx="40"
           cy="40"
           r={r}
-          stroke="rgb(245, 158, 11)"
+          stroke="#d97757"
           strokeWidth={stroke}
           fill="none"
           strokeLinecap="round"
@@ -43,15 +43,15 @@ export function ProfileCompletenessRing({ value, compact = false }: { value: num
 
 export function SectionCompletionIndicator({ state }: { state: 'complete' | 'attention' | 'incomplete' }) {
   if (state === 'complete') return <CheckCircle2 size={15} className="text-emerald-400" aria-hidden />
-  if (state === 'attention') return <Dot size={18} className="text-amber-400" aria-hidden />
+  if (state === 'attention') return <Dot size={18} className="text-[#d97757]" aria-hidden />
   return <Circle size={13} className="text-stone-500" aria-hidden />
 }
 
 export function ProfileEmptyState({ title, actionLabel, onAction }: { title: string; actionLabel: string; onAction: () => void }) {
   return (
-    <div className="rounded-xl bg-[#231811]/45 p-3 text-sm text-stone-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+    <div className="rounded-xl border border-[#3a332d] bg-[#1a1613] p-3 text-sm text-[#cfc6b8]">
       <p>{title}</p>
-      <button type="button" onClick={onAction} className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-amber-300 hover:text-amber-200">
+      <button type="button" onClick={onAction} className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-[#e89372] hover:text-[#f0ebe0]">
         {actionLabel}
         <ChevronRight size={12} />
       </button>
@@ -71,9 +71,9 @@ export function ProfileSummaryCard({
   icon: LucideIcon
 }) {
   return (
-    <div className="rounded-xl bg-[#231811]/45 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+    <div className="rounded-xl border border-[#3a332d] bg-[#1a1613] p-3">
       <div className="mb-2 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-stone-400">
-        <Icon size={14} className="text-amber-300" />
+        <Icon size={14} className="text-[#d97757]" />
         {title}
       </div>
       <p className="text-sm font-semibold text-stone-100">{value}</p>
@@ -99,11 +99,11 @@ export function ProfileAreaCard({
     <button
       type="button"
       onClick={onClick}
-      className="group rounded-xl bg-[#231811]/45 p-3 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] transition hover:bg-[#2a1d15]/55"
+      className="group rounded-xl border border-[#3a332d] bg-[#1a1613] p-3 text-left transition hover:border-[#d97757]/40"
     >
       <div className="mb-2 flex items-center justify-between">
         <span className="inline-flex items-center gap-2 text-[11px] font-semibold text-stone-300">
-          <Icon size={14} className="text-amber-300" />
+          <Icon size={14} className="text-[#d97757]" />
           {title}
         </span>
         <ChevronRight size={14} className="text-stone-500 transition group-hover:translate-x-0.5 group-hover:text-stone-300" />
@@ -124,12 +124,12 @@ export function ProfileRecommendationCard({
   onAction: () => void
 }) {
   return (
-    <div className="rounded-xl bg-amber-500/12 px-4 py-3 shadow-[inset_0_0_0_1px_rgba(245,158,11,0.28)]">
+    <div className="rounded-xl bg-[rgba(217,119,87,0.12)] px-4 py-3 shadow-[inset_0_0_0_1px_rgba(217,119,87,0.28)]">
       <div className="flex items-start gap-3">
-        <Sparkles className="mt-0.5 text-amber-300" size={16} />
+        <Sparkles className="mt-0.5 text-[#d97757]" size={16} />
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-amber-100">{title}</p>
-          <p className="mt-1 text-xs text-amber-200/85">{description}</p>
+          <p className="text-sm font-semibold text-[#f5f1eb]">{title}</p>
+          <p className="mt-1 text-xs text-[#cfc6b8]">{description}</p>
         </div>
       </div>
       <AppCtaButton size="sm" onClick={onAction} className="mt-3">
@@ -142,7 +142,7 @@ export function ProfileRecommendationCard({
 
 export function ProfileStatusCard({ children }: { children: ReactNode }) {
   return (
-    <section className="rounded-2xl bg-[#1b120d]/82 p-4 shadow-[0_14px_38px_-26px_rgba(0,0,0,0.7)] sm:p-5">
+    <section className="rounded-2xl border border-[#3a332d] bg-[#232019] p-4 sm:p-5">
       {children}
     </section>
   )
@@ -167,7 +167,7 @@ export function ProfileSectionNav({
           className={[
             'flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm transition',
             activeSection === item.key
-              ? 'bg-amber-500/14 text-amber-100 shadow-[inset_2px_0_0_rgb(245,158,11)]'
+              ? 'bg-[rgba(217,119,87,0.14)] text-[#f5f1eb] shadow-[inset_2px_0_0_#d97757]'
               : 'text-stone-300 hover:bg-white/5',
           ].join(' ')}
         >
@@ -237,7 +237,7 @@ export function ProfileInsightModal({
                     key={label}
                     className="flex items-start gap-2 rounded-lg bg-white/[0.04] px-3 py-2 text-sm text-stone-200 ring-1 ring-white/[0.06]"
                   >
-                    <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-amber-400/80" aria-hidden />
+                    <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-[#d97757]" aria-hidden />
                     {label}
                   </li>
                 ))}
@@ -266,7 +266,7 @@ export function ProfileInsightModal({
                           onGoToSection(item.section)
                           onClose()
                         }}
-                        className="shrink-0 text-xs font-semibold text-amber-400 hover:text-amber-300"
+                        className="shrink-0 text-xs font-semibold text-[#d97757] hover:text-[#e89372]"
                       >
                         Öffnen
                       </button>
@@ -282,10 +282,10 @@ export function ProfileInsightModal({
             )}
           </section>
 
-          <section className="rounded-xl bg-amber-500/10 px-3 py-3 ring-1 ring-amber-400/25">
-            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-amber-200/80">Nächster sinnvoller Schritt</p>
-            <p className="mt-1.5 text-sm font-semibold text-amber-50">{nextAction.title}</p>
-            <p className="mt-1 text-xs leading-relaxed text-amber-100/85">{nextAction.description}</p>
+          <section className="rounded-xl bg-[rgba(217,119,87,0.10)] px-3 py-3 ring-1 ring-[#d97757]/25">
+            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#e89372]">Nächster sinnvoller Schritt</p>
+            <p className="mt-1.5 text-sm font-semibold text-[#f5f1eb]">{nextAction.title}</p>
+            <p className="mt-1 text-xs leading-relaxed text-[#cfc6b8]">{nextAction.description}</p>
             {onGoToSection ? (
               <button
                 type="button"
@@ -293,7 +293,7 @@ export function ProfileInsightModal({
                   onGoToSection(nextAction.section)
                   onClose()
                 }}
-                className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-amber-300 hover:text-amber-200"
+                className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#e89372] hover:text-[#f0ebe0]"
               >
                 Zum Bereich
                 <ChevronRight size={14} aria-hidden />

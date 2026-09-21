@@ -26,7 +26,7 @@ const ANCHOR_IDS = {
 
 function UsageBar({ used, limit }: { used: number; limit: number }) {
   const pct = Math.min(100, limit > 0 && limit !== Infinity ? (used / limit) * 100 : 0)
-  const barColor = pct >= 90 ? 'bg-rose-500' : pct >= 70 ? 'bg-amber-500' : 'bg-emerald-600'
+  const barColor = pct >= 90 ? 'bg-rose-500' : pct >= 70 ? 'bg-[#d97757]' : 'bg-emerald-600'
   const limitLabel = limit === Infinity ? '∞' : String(limit)
   const remainingLabel = limit === Infinity ? '∞' : String(Math.max(0, limit - used))
 
@@ -253,8 +253,8 @@ export default function ProfilePage() {
   return (
     <div id="app-profil-start" className="relative min-h-0 flex-1 overflow-y-auto bg-transparent">
       <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
-        <div className="absolute -right-28 top-0 h-80 w-80 rounded-full bg-amber-600/12 blur-3xl" />
-        <div className="absolute -left-28 bottom-0 h-96 w-96 rounded-full bg-amber-500/10 blur-3xl" />
+        <div className="absolute -right-28 top-0 h-80 w-80 rounded-full bg-[#d97757]/12 blur-3xl" />
+        <div className="absolute -left-28 bottom-0 h-96 w-96 rounded-full bg-[#d97757]/10 blur-3xl" />
       </div>
 
       <div className="relative z-10 mx-auto max-w-3xl space-y-5 px-4 py-6 sm:px-6 sm:py-8">
@@ -331,19 +331,19 @@ export default function ProfilePage() {
         )}
 
         {isUpgradePending && !upgradeSyncNotice && (
-          <div className="rounded-xl border border-amber-200/80 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+          <div className="rounded-xl border border-[rgba(217,119,87,0.28)] bg-[#faf7f0] px-4 py-3 text-sm text-[#1a1613]">
             Temporärer {pendingUpgradePlan === 'pro' ? 'Pro' : 'Premium'}-Zugriff aktiv, während Backend-Bestätigung aussteht.
           </div>
         )}
 
         {upgradeSyncNotice && (
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200/80 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[rgba(217,119,87,0.28)] bg-[#faf7f0] px-4 py-3 text-sm text-[#1a1613]">
             <span className="min-w-0 flex-1">{upgradeSyncNotice}</span>
             <button
               type="button"
               onClick={() => void handleRetryUsageSync()}
               disabled={isSyncingUsage}
-              className="shrink-0 rounded-lg border border-amber-300/80 bg-white px-3 py-1.5 text-xs font-semibold text-amber-900 disabled:opacity-60"
+              className="shrink-0 rounded-lg border border-[rgba(217,119,87,0.35)] bg-white px-3 py-1.5 text-xs font-semibold text-[#b45539] disabled:opacity-60"
             >
               {isSyncingUsage ? 'Synchronisiert…' : 'Jetzt synchronisieren'}
             </button>
@@ -458,7 +458,7 @@ export default function ProfilePage() {
                   sub: 'mit Chat-Nutzung',
                 },
                 {
-                  icon: <Star size={15} className="text-amber-600" aria-hidden />,
+                  icon: <Star size={15} className="text-[#d97757]" aria-hidden />,
                   label: 'Lieblingstool',
                   value: user.favoriteTool ?? '-',
                   sub: 'häufigstes Tool',
@@ -507,7 +507,7 @@ export default function ProfilePage() {
             <div className={`rounded-xl border-2 p-4 ${planColors.border} bg-app-parchment/60`}>
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-stone-400/40 bg-white">
-                  <PlanIcon size={18} className={user.plan === 'premium' ? 'text-amber-600' : 'text-stone-500'} />
+                  <PlanIcon size={18} className={user.plan === 'premium' ? 'text-[#d97757]' : 'text-stone-500'} />
                 </div>
                 <div>
                   <p className="font-bold text-stone-900">{planLabel}</p>
