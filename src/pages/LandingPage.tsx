@@ -19,8 +19,7 @@ import {
   X,
 } from 'lucide-react'
 import { NewsletterForm } from '../components/marketing/NewsletterForm'
-import { PUBLIC_AFTER_AUTH, PUBLIC_SHELL, PublicSiteFooter, PublicSiteHeader, scrollToSection, LANDING_SCROLL_KEY } from '../components/marketing/PublicSiteChrome'
-import { betaModeEnabled } from '../config/env'
+import { PUBLIC_AFTER_AUTH, PUBLIC_SHELL, PublicSiteFooter, PublicSiteHeader, LANDING_SCROLL_KEY } from '../components/marketing/PublicSiteChrome'
 import '../styles/landing.css'
 
 const AFTER_AUTH = PUBLIC_AFTER_AUTH
@@ -255,10 +254,6 @@ function ExampleReport() {
   )
 }
 
-function scrollToId(id: string) {
-  scrollToSection(id, 'smooth')
-}
-
 export default function LandingPage() {
   const { isSignedIn, isLoaded } = useUser()
   const navigate = useNavigate()
@@ -320,25 +315,13 @@ export default function LandingPage() {
               Du bekommst einen Bericht mit Match-Score, fehlenden Skills und Formulierungen,
               die zur ausgeschriebenen Stelle passen.
             </p>
-            {betaModeEnabled ? (
-              <button
-                type="button"
-                onClick={() => scrollToId('starten')}
-                className="pp-cta mx-auto mt-8 w-full sm:max-w-[280px]"
-              >
+            <SignUpButton mode="modal" fallbackRedirectUrl={AFTER_AUTH}>
+              <button type="button" className="pp-cta mx-auto mt-8 w-full sm:max-w-[280px]">
                 Kostenlos starten
               </button>
-            ) : (
-              <SignUpButton mode="modal" fallbackRedirectUrl={AFTER_AUTH}>
-                <button type="button" className="pp-cta mx-auto mt-8 w-full sm:max-w-[280px]">
-                  Kostenlos starten
-                </button>
-              </SignUpButton>
-            )}
+            </SignUpButton>
             <p className="mt-3 text-sm italic text-[#8A7F72]">
-              {betaModeEnabled
-                ? 'Aktuell kostenfrei nutzbar.'
-                : '1 Analyse pro Tag im kostenlosen Tarif. Keine Zahlungsdaten erforderlich.'}
+              Aktuell kostenfrei nutzbar.
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-2">
               {AUDIENCE_FIELDS.map(label => (
