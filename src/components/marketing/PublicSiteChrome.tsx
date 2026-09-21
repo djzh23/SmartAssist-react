@@ -388,14 +388,13 @@ export function PublicSiteFooter() {
               ijd.zouh@yahoo.com
             </a>
             <p className="mt-2 text-[13px] leading-relaxed text-[#8A7F72]">
-              Für Beta-Zugang, Fragen oder Feedback.
+              Für Fragen oder Feedback.
             </p>
           </div>
         </div>
 
         <div className="mt-10 flex flex-col gap-2 border-t-[0.5px] border-[#3a342e] pt-6 text-[12px] text-[#9A9086] sm:flex-row sm:items-center sm:justify-between">
           <p>© 2026 PrivatePrep</p>
-          <p>Geschlossene Beta</p>
         </div>
       </div>
     </footer>

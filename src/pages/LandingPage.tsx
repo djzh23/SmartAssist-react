@@ -326,7 +326,7 @@ export default function LandingPage() {
                 onClick={() => scrollToId('zugang-anfragen')}
                 className="pp-cta mx-auto mt-8 w-full sm:max-w-[280px]"
               >
-                Beta-Zugang anfragen
+                Kostenlos starten
               </button>
             ) : (
               <SignUpButton mode="modal" fallbackRedirectUrl={AFTER_AUTH}>
@@ -337,7 +337,7 @@ export default function LandingPage() {
             )}
             <p className="mt-3 text-sm italic text-[#8A7F72]">
               {betaModeEnabled
-                ? 'Kostenfrei während der Beta. Kein Zahlungsschritt.'
+                ? 'Aktuell kostenfrei nutzbar.'
                 : '1 Analyse pro Tag im kostenlosen Tarif. Keine Zahlungsdaten erforderlich.'}
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-2">
@@ -470,9 +470,9 @@ export default function LandingPage() {
         {betaModeEnabled ? (
           <section id="zugang-anfragen" className="pp-section pp-band-a pp-band-from-c pb-16 sm:pb-20">
             <div className={`${PUBLIC_SHELL} text-center`}>
-              <h2 className="pp-section-title">Zugang anfragen</h2>
+              <h2 className="pp-section-title">Kostenlos ausprobieren</h2>
               <p className="pp-section-lead">
-                Trag deine E-Mail ein. Wir melden uns, sobald ein Platz frei ist.
+                Erstell dein Konto und starte in unter einer Minute.
               </p>
               <div className="pp-card-beta mx-auto mt-8 max-w-[520px] p-6 text-left sm:p-8">
                 <div className="flex items-start gap-3">
@@ -480,9 +480,9 @@ export default function LandingPage() {
                     <Mail className="h-[18px] w-[18px]" strokeWidth={ICON_STROKE} />
                   </span>
                   <div>
-                    <h3 className="text-lg font-semibold text-[#F5F5F5]">Beta-Zugang anfragen</h3>
+                    <h3 className="text-lg font-semibold text-[#F5F5F5]">Kostenlos starten</h3>
                     <p className="mt-1 text-sm leading-relaxed text-[#A8A8A8]">
-                      Kostenfrei während der Beta. Kein Zahlungsschritt.
+                      Aktuell kostenfrei nutzbar.
                     </p>
                   </div>
                 </div>
