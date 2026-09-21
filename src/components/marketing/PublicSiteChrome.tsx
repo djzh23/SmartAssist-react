@@ -382,10 +382,10 @@ export function PublicSiteFooter() {
           <div>
             <p className="text-[12px] font-medium uppercase tracking-[0.6px] text-[#C4B8AA]">Kontakt</p>
             <a
-              href="mailto:ijd.zouh@yahoo.com"
+              href="mailto:zn.connec.team@gmail.com"
               className="mt-4 inline-block text-[13px] text-[#8A7F72] no-underline transition-colors hover:text-white"
             >
-              ijd.zouh@yahoo.com
+              zn.connec.team@gmail.com
             </a>
             <p className="mt-2 text-[13px] leading-relaxed text-[#8A7F72]">
               Für Fragen oder Feedback.

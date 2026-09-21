@@ -441,8 +441,8 @@ export default function LandingPage() {
               <h2 className="text-[28px] font-medium text-white">Häufige Fragen</h2>
               <p className="mt-3 text-[15px] leading-[1.75] text-[#C4B8AA]">
                 Wenn deine Frage nicht dabei ist, schreib eine kurze Mail an{' '}
-                <a href="mailto:ijd.zouh@yahoo.com" className="text-[#C4B8AA] underline-offset-2 hover:text-white hover:underline">
-                  ijd.zouh@yahoo.com
+                <a href="mailto:zn.connec.team@gmail.com" className="text-[#C4B8AA] underline-offset-2 hover:text-white hover:underline">
+                  zn.connec.team@gmail.com
                 </a>.
               </p>
               <FaqList />
