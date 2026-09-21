@@ -16,8 +16,8 @@ const LANDING_SECTIONS = [
 ] as const
 
 const NAV_ITEMS = [
-  { id: 'funktionen', label: 'Funktionen' },
-  { id: 'ablauf', label: 'So funktioniert es' },
+  { id: 'funktionen', label: 'Analyse' },
+  { id: 'ablauf', label: 'Ablauf' },
   { id: 'bericht', label: 'Beispielbericht' },
 ] as const
 export const LANDING_SCROLL_KEY = 'pp-landing-scroll'
