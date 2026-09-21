@@ -1,7 +1,7 @@
 import type { SkillGapReport } from '../../api/analyzeClient'
 import AnalyzeAccordion from './AnalyzeAccordion'
 import { requirementCount } from './analyzeFormat'
-import { ListChecks } from 'lucide-react'
+import { Check, ListChecks, X } from 'lucide-react'
 
 interface Props {
   skillGap: SkillGapReport
@@ -11,18 +11,18 @@ type Tone = 'ok' | 'supported' | 'gap'
 
 function SkillPills({ items, empty, tone }: { items: string[]; empty: string; tone: Tone }) {
   if (!items.length) {
-    return <p className="text-sm text-stone-500">{empty}</p>
+    return <p className="text-sm text-[#8a7f70]">{empty}</p>
   }
   const cls =
     tone === 'ok'
-      ? 'border-emerald-500/25 bg-emerald-500/15 text-emerald-200'
+      ? 'bg-[rgba(111,143,109,0.12)] text-[#4a6448]'
       : tone === 'supported'
-        ? 'border-sky-500/30 bg-sky-500/15 text-sky-200'
-        : 'border-rose-500/30 bg-rose-500/15 text-rose-200'
+        ? 'bg-[rgba(212,165,116,0.16)] text-[#8a6a3a]'
+        : 'bg-[rgba(217,119,87,0.08)] text-[#b45539]'
   return (
-    <ul className="flex flex-wrap gap-1.5">
+    <ul className="flex flex-wrap gap-2">
       {items.map(item => (
-        <li key={item} className={`rounded-full border px-2.5 py-1 text-xs font-medium ${cls}`}>
+        <li key={item} className={`rounded-full px-3 py-1.5 text-[13px] ${cls}`}>
           {item}
         </li>
       ))}
@@ -30,65 +30,29 @@ function SkillPills({ items, empty, tone }: { items: string[]; empty: string; to
   )
 }
 
-function SkillGroups({ stacked, gap }: { stacked: boolean; gap: SkillGapReport }) {
-  const groups: { key: string; label: string; count: number; items: string[]; empty: string; tone: Tone; mark: string }[] = [
-    {
-      key: 'existing',
-      label: 'Im Lebenslauf',
-      count: gap.existing.length,
-      items: gap.existing,
-      empty: 'Keine Treffer',
-      tone: 'ok',
-      mark: '✓',
-    },
-    {
-      key: 'supported',
-      label: 'Indirekt belegt',
-      count: gap.supportedByResume.length,
-      items: gap.supportedByResume,
-      empty: 'Keine Treffer',
-      tone: 'supported',
-      mark: '→',
-    },
-    {
-      key: 'gap',
-      label: 'Fehlt',
-      count: gap.gap.length,
-      items: gap.gap,
-      empty: 'Keine Lücken erkannt',
-      tone: 'gap',
-      mark: '×',
-    },
-  ]
-
-  if (stacked) {
-    return (
-      <div className="space-y-4">
-        {groups.map(g => (
-          <div key={g.key}>
-            <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-stone-400">
-              {g.mark} {g.label} ({g.count})
-            </p>
-            <SkillPills items={g.items} empty={g.empty} tone={g.tone} />
-          </div>
-        ))}
-      </div>
-    )
-  }
-
+function SkillGroups({ gap }: { gap: SkillGapReport }) {
   return (
-    <div className="grid gap-3 lg:grid-cols-3">
-      {groups.map(g => (
-        <div key={g.key} className="rounded-2xl border border-stone-600/40 bg-black/20 p-4">
-          <div className="mb-3 flex items-center justify-between gap-2">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-stone-400">
-              {g.mark} {g.label}
-            </p>
-            <span className="text-xs text-stone-500">{g.count}</span>
-          </div>
-          <SkillPills items={g.items} empty={g.empty} tone={g.tone} />
+    <div>
+      <div className="mb-2.5 flex items-center gap-2.5">
+        <Check className="h-3.5 w-3.5 text-[#5e7a5c]" strokeWidth={2.5} aria-hidden />
+        <p className="text-[13px] text-[#5e7a5c]">Nachgewiesen</p>
+      </div>
+      <SkillPills items={gap.existing} empty="Keine Treffer" tone="ok" />
+
+      {gap.supportedByResume.length > 0 ? (
+        <div className="mt-5">
+          <p className="mb-2.5 text-[13px] text-[#8a6a3a]">Indirekt belegt</p>
+          <SkillPills items={gap.supportedByResume} empty="Keine Treffer" tone="supported" />
         </div>
-      ))}
+      ) : null}
+
+      <div className="mt-5">
+        <div className="mb-2.5 flex items-center gap-2.5">
+          <X className="h-3.5 w-3.5 text-[#b45539]" strokeWidth={2.5} aria-hidden />
+          <p className="text-[13px] text-[#b45539]">Nicht vorhanden</p>
+        </div>
+        <SkillPills items={gap.gap} empty="Keine Lücken erkannt" tone="gap" />
+      </div>
     </div>
   )
 }
@@ -102,24 +66,24 @@ export default function AnalyzeSkillBuckets({ skillGap }: Props) {
 
   return (
     <>
-      <div className="mt-3 lg:hidden">
+      <div className="mt-6 lg:hidden">
         <AnalyzeAccordion
           title="Skill-Analyse"
           subtitle={mobileSubtitle}
           icon={<ListChecks className="h-4 w-4" />}
           defaultOpen
         >
-          <SkillGroups stacked gap={skillGap} />
+          <SkillGroups gap={skillGap} />
         </AnalyzeAccordion>
       </div>
-      <section className="mt-5 hidden lg:block" aria-label="Skill-Analyse">
-        <div className="mb-3 flex items-end justify-between gap-3">
-          <h2 className="text-base font-semibold text-stone-50">Skill-Analyse</h2>
-          <p className="text-xs text-stone-500">
+      <section className="mt-8 hidden border-b border-[#f0e8d5] pb-6 lg:block" aria-label="Skill-Analyse">
+        <div className="mb-3.5 flex items-end justify-between gap-3">
+          <h2 className="text-[11px] uppercase tracking-[0.08em] text-[#8a7f70]">Skill-Analyse</h2>
+          <p className="text-xs text-[#8a7f70]">
             {total === 1 ? '1 Anforderung erkannt' : `${total} Anforderungen erkannt`}
           </p>
         </div>
-        <SkillGroups stacked={false} gap={skillGap} />
+        <SkillGroups gap={skillGap} />
       </section>
     </>
   )

@@ -8,19 +8,19 @@ interface Props {
 export default function AnalyzeFactGateInfo({ count, compact = false }: Props) {
   if (count <= 0) return null
 
+  const body = count === 1 ? '1 erfundene Angabe blockiert' : `${count} erfundene Skills blockiert`
+
   return (
     <div
       className={[
-        'flex items-start gap-2 rounded-2xl border border-emerald-500/30 bg-emerald-950/40 text-emerald-100',
-        compact ? 'px-3 py-2.5' : 'px-4 py-3',
+        'flex items-start gap-2 rounded-full bg-[rgba(111,143,109,0.14)] text-[#5e7a5c]',
+        compact ? 'px-3 py-2' : 'px-4 py-3',
       ].join(' ')}
     >
-      <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" aria-hidden />
+      <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
       <div>
         <p className="text-sm font-semibold">Fact-Gate aktiv</p>
-        <p className="mt-0.5 text-xs leading-relaxed text-emerald-200/80">
-          {count === 1 ? '1 erfundene Angabe blockiert' : `${count} erfundene Skills blockiert`}
-        </p>
+        <p className="mt-0.5 text-xs leading-relaxed text-[#4a6448]">{body}</p>
       </div>
     </div>
   )

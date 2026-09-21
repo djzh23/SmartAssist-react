@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useState, type ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { SignUpButton, useUser } from '@clerk/clerk-react'
 import {
@@ -216,7 +216,7 @@ function ExampleReport() {
   )
 }
 
-function SignUpCta({ children, className }: { children: React.ReactNode; className?: string }) {
+function SignUpCta({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <SignUpButton mode="modal" fallbackRedirectUrl={AFTER_AUTH}>
       <button type="button" className={className ?? 'pp-cta'}>
@@ -424,7 +424,7 @@ export default function LandingPage() {
               </article>
             </div>
             <div className="mt-6">
-              <Link to="/preise" className="pp-text-link">
+              <Link to="/pricing" className="pp-text-link">
                 Alle Tarifdetails ansehen
               </Link>
             </div>

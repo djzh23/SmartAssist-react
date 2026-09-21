@@ -12,7 +12,7 @@ import AnalyzeSkillBuckets from '../components/analyze/AnalyzeSkillBuckets'
 import AnalyzeBulletRewrites from '../components/analyze/AnalyzeBulletRewrites'
 import AnalyzeLoadingState from '../components/analyze/AnalyzeLoadingState'
 import AnalyzeRoleSummary from '../components/analyze/AnalyzeRoleSummary'
-import { emptySkillGap, inventedSkillCount, splitRoleSummary } from '../components/analyze/analyzeFormat'
+import { emptySkillGap, inventedSkillCount, requirementCount, splitRoleSummary } from '../components/analyze/analyzeFormat'
 import { useCareerProfile } from '../hooks/useCareerProfile'
 import {
   analyzeJob,
@@ -226,16 +226,26 @@ export default function AnalyzePage() {
       ) : null}
 
       {showReport && report ? (
-        <div className="space-y-0">
-          <AnalyzeHeader title={role.title} subtitle={role.subtitle} />
+        <div className="pp-report-paper px-5 py-6 sm:px-10 sm:py-9">
+          <AnalyzeHeader
+            tone="paper"
+            title={role.title}
+            subtitle={role.subtitle}
+            score={report.globalScore}
+            kicker={
+              reportIsFromPreviousSession
+                ? `Analysebericht${reportStoredAt ? ` · ${formatStoredAt(reportStoredAt)}` : ''}`
+                : 'Analysebericht'
+            }
+          />
 
-          {reportIsFromPreviousSession ? (
-            <p className="mb-3 text-xs text-stone-500">
-              Letztes Ergebnis{reportStoredAt ? ` vom ${formatStoredAt(reportStoredAt)}` : ''}. Nur in diesem Browser gespeichert.
-            </p>
-          ) : null}
-
-          <AnalyzeHero score={report.globalScore} factGateCount={factGateCount} />
+          <AnalyzeHero
+            score={report.globalScore}
+            factGateCount={factGateCount}
+            coveredCount={gap.existing.length}
+            requirementTotal={requirementCount(gap)}
+            missingCount={gap.gap.length}
+          />
           <AnalyzeSubDimensions
             cvMatch={dims.cvMatch}
             roleAlignment={dims.roleAlignment}
@@ -250,7 +260,7 @@ export default function AnalyzePage() {
           <button
             type="button"
             onClick={startNewAnalysis}
-            className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-amber-600 px-4 py-3.5 text-sm font-semibold text-white transition hover:bg-amber-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-400/50"
+            className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-[#d97757] px-4 py-3.5 text-sm font-semibold text-[#1a1613] transition hover:bg-[#e89372] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#d97757]/50"
           >
             <Plus className="h-4 w-4" aria-hidden />
             Neue Analyse

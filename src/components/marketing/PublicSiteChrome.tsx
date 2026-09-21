@@ -348,13 +348,13 @@ export function PublicSiteFooter() {
           </div>
 
           <div>
-            <p className="text-[12px] font-medium uppercase tracking-[0.6px] text-[#C4B8AA]">Produkt</p>
+            <p className="pp-caps text-[#a89e91]">Produkt</p>
             <ul className="mt-4 space-y-2.5">
               {FOOTER_PRODUCT.map(item => (
                 <li key={item.id}>
                   <Link
                     to={`/#${item.id}`}
-                    className="text-[13px] text-[#8A7F72] no-underline transition-colors hover:text-white"
+                    className="text-[13px] text-[#8a7f72] no-underline transition-colors hover:text-white"
                   >
                     {item.label}
                   </Link>
@@ -364,15 +364,15 @@ export function PublicSiteFooter() {
           </div>
 
           <div>
-            <p className="text-[12px] font-medium uppercase tracking-[0.6px] text-[#C4B8AA]">Rechtliches</p>
+            <p className="pp-caps text-[#a89e91]">Rechtliches</p>
             <ul className="mt-4 space-y-2.5">
               <li>
-                <Link to="/impressum" className="text-[13px] text-[#8A7F72] no-underline transition-colors hover:text-white">
+                <Link to="/impressum" className="text-[13px] text-[#8a7f72] no-underline transition-colors hover:text-white">
                   Impressum
                 </Link>
               </li>
               <li>
-                <Link to="/datenschutz" className="text-[13px] text-[#8A7F72] no-underline transition-colors hover:text-white">
+                <Link to="/datenschutz" className="text-[13px] text-[#8a7f72] no-underline transition-colors hover:text-white">
                   Datenschutz
                 </Link>
               </li>
@@ -380,20 +380,20 @@ export function PublicSiteFooter() {
           </div>
 
           <div>
-            <p className="text-[12px] font-medium uppercase tracking-[0.6px] text-[#C4B8AA]">Kontakt</p>
+            <p className="pp-caps text-[#a89e91]">Kontakt</p>
             <a
               href="mailto:zn.connec.team@gmail.com"
-              className="mt-4 inline-block text-[13px] text-[#8A7F72] no-underline transition-colors hover:text-white"
+              className="mt-4 inline-block text-[13px] text-[#8a7f72] no-underline transition-colors hover:text-white"
             >
               zn.connec.team@gmail.com
             </a>
-            <p className="mt-2 text-[13px] leading-relaxed text-[#8A7F72]">
+            <p className="mt-2 text-[13px] leading-relaxed text-[#8a7f72]">
               Für Fragen oder Feedback.
             </p>
           </div>
         </div>
 
-        <div className="mt-10 flex flex-col gap-2 border-t-[0.5px] border-[#3a342e] pt-6 text-[12px] text-[#9A9086] sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-10 flex flex-col gap-2 border-t border-[#3a332d] pt-6 text-[12px] text-[#9a9086] sm:flex-row sm:items-center sm:justify-between">
           <p>© 2026 PrivatePrep</p>
         </div>
       </div>

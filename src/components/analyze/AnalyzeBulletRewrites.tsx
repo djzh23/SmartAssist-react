@@ -28,24 +28,36 @@ function BulletCard({
   onCopy: () => void
 }) {
   return (
-    <article className="rounded-2xl border border-stone-600/40 bg-black/20 p-4">
-      <div className="flex items-start justify-between gap-3">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-stone-500">Ursprünglich</p>
+    <article>
+      <div className="mb-3 flex items-start justify-between gap-3">
+        <p className="text-[11px] uppercase tracking-[0.08em] text-[#8a7f70]">
+          CV-Formulierungsvorschlag
+        </p>
         <button
           type="button"
           onClick={() => void onCopy()}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-stone-600/50 bg-white/[0.04] px-2 py-1 text-[11px] font-medium text-stone-300 hover:bg-white/[0.08] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-400/50"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-[#e8e0d0] bg-white px-2 py-1 text-[11px] font-medium text-[#4a4238] hover:border-[#d97757] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#d97757]/50"
           aria-label={copied ? 'Kopiert' : 'Vorschlag kopieren'}
         >
-          {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" aria-hidden /> : <Copy className="h-3.5 w-3.5" aria-hidden />}
+          {copied ? <Check className="h-3.5 w-3.5 text-[#5e7a5c]" aria-hidden /> : <Copy className="h-3.5 w-3.5" aria-hidden />}
           {copied ? 'Kopiert' : 'Kopieren'}
         </button>
       </div>
-      <p className="mt-1 text-sm text-stone-400">{bullet.originalBullet}</p>
-      <p className="mt-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-400/90">Umformuliert</p>
-      <p className="mt-1 text-sm font-medium leading-relaxed text-stone-50">{bullet.rewrittenBullet}</p>
+      <div className="rounded-xl bg-[#faf7f0] px-5 py-4">
+        <p className="text-[11px] uppercase tracking-[0.08em] text-[#8a7f70]">Vorher</p>
+        <p className="mt-2 text-[15px] leading-relaxed text-[#6e665e]">{bullet.originalBullet}</p>
+      </div>
+      <div className="mt-3 rounded-lg border-l-[3px] border-[#d97757] bg-[rgba(217,119,87,0.06)] px-5 py-4">
+        <p className="text-[11px] uppercase tracking-[0.08em] text-[#b45539]">Nachher</p>
+        <p className="mt-2 text-[15px] leading-relaxed text-[#1a1613]">{bullet.rewrittenBullet}</p>
+      </div>
       {bullet.reasoning ? (
-        <p className="mt-2 text-xs leading-relaxed text-stone-500">{bullet.reasoning}</p>
+        <div className="mt-3.5 flex gap-3 rounded-[10px] bg-[#f5f1eb] px-4 py-3.5">
+          <p className="text-[13px] leading-relaxed text-[#4a4238]">
+            <strong className="font-semibold text-[#b45539]">Warum das stärker ist:</strong>{' '}
+            {bullet.reasoning}
+          </p>
+        </div>
       ) : null}
       <span className="sr-only">Vorschlag {index + 1}</span>
     </article>
@@ -70,13 +82,13 @@ export default function AnalyzeBulletRewrites({ bullets }: Props) {
 
   return (
     <>
-      <div className="mt-3 lg:hidden">
+      <div className="mt-6 lg:hidden">
         <AnalyzeAccordion
           title="Formulierungen"
           subtitle={count === 1 ? '1 Bullet-Vorschlag bereit' : `${count} Bullet-Vorschläge bereit`}
           icon={<PenLine className="h-4 w-4" />}
         >
-          <ul className="space-y-3">
+          <ul className="space-y-6">
             {bullets.map((b, i) => (
               <li key={`${b.rewrittenBullet}-${i}`}>
                 <BulletCard
@@ -90,16 +102,8 @@ export default function AnalyzeBulletRewrites({ bullets }: Props) {
           </ul>
         </AnalyzeAccordion>
       </div>
-      <section className="mt-5 hidden lg:block" aria-label="Formulierungs-Vorschläge">
-        <div className="mb-3 flex items-end justify-between gap-3">
-          <h2 className="text-base font-semibold text-stone-50">Formulierungs-Vorschläge</h2>
-          <p className="text-xs text-stone-500">
-            {count === 1
-              ? '1 Bullet basierend auf deinem Lebenslauf'
-              : `${count} Bullets basierend auf deinem Lebenslauf`}
-          </p>
-        </div>
-        <ul className="space-y-3">
+      <section className="mt-8 hidden lg:block" aria-label="Formulierungs-Vorschläge">
+        <ul className="space-y-8">
           {desktopVisible.map((b, i) => (
             <li key={`${b.rewrittenBullet}-${i}`}>
               <BulletCard
@@ -115,10 +119,10 @@ export default function AnalyzeBulletRewrites({ bullets }: Props) {
           <button
             type="button"
             onClick={() => setShowAll(true)}
-            className="mt-3 flex w-full items-center justify-between rounded-2xl border border-stone-600/40 bg-app-surface/90 px-4 py-3 text-sm text-stone-300 hover:bg-white/[0.04] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-400/50"
+            className="mt-4 flex w-full items-center justify-between rounded-xl border border-[#e8e0d0] bg-[#faf7f0] px-4 py-3 text-sm text-[#4a4238] hover:border-[#d97757] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#d97757]/50"
           >
             <span>{remaining === 1 ? '1 weiteren Vorschlag anzeigen' : `${remaining} weitere Vorschläge anzeigen`}</span>
-            <ChevronDown className="h-4 w-4 text-stone-500" aria-hidden />
+            <ChevronDown className="h-4 w-4 text-[#8a7f70]" aria-hidden />
           </button>
         ) : null}
       </section>

@@ -1,48 +1,54 @@
 import AnalyzeFactGateInfo from './AnalyzeFactGateInfo'
-import { scoreCaption, scoreLabel, scorePercent } from './analyzeFormat'
+import ScoreRing from '../report/ScoreRing'
+import { scoreCaption } from './analyzeFormat'
 
 interface Props {
   score: number
   factGateCount: number
+  coveredCount?: number
+  requirementTotal?: number
+  missingCount?: number
 }
 
-export default function AnalyzeHero({ score, factGateCount }: Props) {
-  const pct = scorePercent(score)
+export default function AnalyzeHero({
+  score,
+  factGateCount,
+  coveredCount,
+  requirementTotal,
+  missingCount,
+}: Props) {
+  const hasCoverage =
+    typeof coveredCount === 'number' &&
+    typeof requirementTotal === 'number' &&
+    requirementTotal > 0
 
   return (
-    <section className="rounded-2xl border border-stone-600/40 bg-app-surface/90 p-4 shadow-landing sm:p-5">
-      <div className="grid gap-4 lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:items-center lg:gap-6">
-        <div className="text-center lg:text-left">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-500">
-            Gesamt-Match
-          </p>
-          <div className="mt-2 flex items-baseline justify-center gap-2 lg:justify-start">
-            <p className="font-serif text-[40px] font-bold leading-none text-stone-50 sm:text-[44px]">
-              {scoreLabel(score)}
-            </p>
-            <p className="text-sm text-stone-400">von 5,0</p>
-          </div>
+    <section className="flex flex-col gap-8 py-8 sm:flex-row sm:items-center sm:gap-11">
+      <ScoreRing score={score} size={190} caption="von 5,0" />
+      <div className="min-w-0 flex-1">
+        <p className="text-[15px] leading-relaxed text-[#4a4238]">
+          {hasCoverage ? (
+            <>
+              Du deckst{' '}
+              <strong className="font-semibold text-[#1a1613]">
+                {coveredCount} von {requirementTotal}
+              </strong>{' '}
+              Kernanforderungen. {scoreCaption(score)}
+            </>
+          ) : (
+            scoreCaption(score)
+          )}
+        </p>
+        <div className="mt-4 flex flex-wrap gap-2.5">
+          {typeof missingCount === 'number' && missingCount > 0 ? (
+            <span className="rounded-full bg-[rgba(212,165,116,0.16)] px-2.5 py-1 text-xs text-[#8a6a3a]">
+              {missingCount === 1 ? '1 Skill fehlt' : `${missingCount} Skills fehlen`}
+            </span>
+          ) : null}
+          {factGateCount > 0 ? (
+            <AnalyzeFactGateInfo count={factGateCount} compact />
+          ) : null}
         </div>
-        <div>
-          <div
-            className="h-1.5 w-full overflow-hidden rounded-[3px] bg-stone-800"
-            role="progressbar"
-            aria-label="Gesamt-Match"
-            aria-valuemin={1}
-            aria-valuemax={5}
-            aria-valuenow={Number(score.toFixed(1))}
-          >
-            <div className="h-full rounded-[3px] bg-amber-500" style={{ width: `${pct}%` }} />
-          </div>
-          <p className="mt-2.5 text-center text-sm text-stone-300 lg:max-w-sm lg:text-left">
-            {scoreCaption(score)}
-          </p>
-        </div>
-        {factGateCount > 0 ? (
-          <div className="lg:w-56 lg:shrink-0">
-            <AnalyzeFactGateInfo count={factGateCount} />
-          </div>
-        ) : null}
       </div>
     </section>
   )

@@ -17,18 +17,27 @@ export default function AnalyzeWarningBanner({ skillGap, warnings }: Props) {
     skill?.body,
     ...(skill ? extra : extra.slice(1)),
   ].filter(Boolean)
+  const count = (skillGap?.gap ?? []).filter(s => s.trim()).length || extra.length
 
   return (
     <section
-      className="mt-3 flex items-start gap-2.5 rounded-2xl bg-amber-400 px-3.5 py-3 text-stone-950 sm:px-4"
+      className="mt-8 rounded-[14px] border border-[rgba(217,119,87,0.25)] bg-[rgba(217,119,87,0.05)] px-[22px] py-5"
       role="status"
     >
-      <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-      <div className="min-w-0">
-        <p className="text-sm font-semibold leading-snug">{title}</p>
-        {bodyParts.length > 0 ? (
-          <p className="mt-1 text-xs leading-relaxed text-stone-800">{bodyParts.join(' ')}</p>
-        ) : null}
+      <div className="mb-3.5 flex items-center gap-2.5">
+        <AlertTriangle className="h-[18px] w-[18px] shrink-0 text-[#b45539]" aria-hidden />
+        <p className="text-[11px] uppercase tracking-[0.08em] text-[#b45539]">
+          {count === 1 ? '1 Warnzeichen' : `${count} Warnzeichen`}
+        </p>
+      </div>
+      <div className="flex gap-3">
+        <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#b45539]" aria-hidden />
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-[#1a1613]">{title}</p>
+          {bodyParts.length > 0 ? (
+            <p className="mt-1 text-[13px] leading-relaxed text-[#6e665e]">{bodyParts.join(' ')}</p>
+          ) : null}
+        </div>
       </div>
     </section>
   )

@@ -45,11 +45,11 @@ export function NewsletterForm({ compact = false }: { compact?: boolean }) {
           className="pp-input"
         />
       </div>
-      <label className="mt-4 flex items-start gap-2.5 text-sm leading-relaxed text-[#A8A8A8]">
+      <label className="mt-4 flex items-start gap-2.5 text-sm leading-relaxed text-[#8a7f70]">
         <input
           type="checkbox"
           required
-          className="mt-1 h-4 w-4 shrink-0 accent-[#FBBF24]"
+          className="mt-1 h-4 w-4 shrink-0 accent-[#d97757]"
         />
         <span>
           Ich willige ein, dass meine E-Mail für Updates gespeichert wird. Widerruf jederzeit möglich.
