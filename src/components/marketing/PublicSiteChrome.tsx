@@ -295,7 +295,6 @@ export function PublicSiteHeader({ variant }: PublicSiteHeaderProps) {
 
   return (
     <header className="pp-header">
-      <ClosedBetaBanner />
       <nav className={`${PUBLIC_SHELL} relative flex h-16 items-center justify-between gap-3 sm:h-[4.25rem]`}>
         {isLanding ? (
           <button type="button" onClick={() => go('hero')} className="flex min-w-0 items-center gap-2.5">
