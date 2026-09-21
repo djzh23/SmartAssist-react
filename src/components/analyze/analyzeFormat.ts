@@ -6,7 +6,7 @@ export function scoreLabel(n: number): string {
 
 export function scoreCaption(score: number): string {
   if (score < 2.5) return 'Passt derzeit schlecht. Lebenslauf und Anzeige weichen stark voneinander ab.'
-  if (score < 3.5) return 'Bewerbung nur mit klarem Grund empfohlen'
+  if (score < 3.5) return 'Bewerbung nur mit klarem Grund empfohlen.'
   if (score < 4.5) return 'Brauchbare Passung. Lücken vorher prüfen.'
   return 'Gute Passung mit den vorliegenden Angaben.'
 }
@@ -27,6 +27,19 @@ export function emptySkillGap(): SkillGapReport {
   return { existing: [], supportedByResume: [], gap: [], extractedJdSkills: [], reasonCode: '' }
 }
 
+/** Fills gaps in an API answer so partial or older stored reports never break the view. */
+export function normalizeGap(gap?: SkillGapReport): SkillGapReport {
+  const base = emptySkillGap()
+  if (!gap) return base
+  return {
+    existing: gap.existing ?? base.existing,
+    supportedByResume: gap.supportedByResume ?? base.supportedByResume,
+    gap: gap.gap ?? base.gap,
+    extractedJdSkills: gap.extractedJdSkills ?? base.extractedJdSkills,
+    reasonCode: gap.reasonCode ?? base.reasonCode,
+  }
+}
+
 export function requirementCount(gap: SkillGapReport): number {
   const fromJd = gap.extractedJdSkills.map(s => s.trim()).filter(Boolean)
   if (fromJd.length > 0) return new Set(fromJd).size
@@ -34,6 +47,41 @@ export function requirementCount(gap: SkillGapReport): number {
     .map(s => s.trim())
     .filter(Boolean)
   return new Set(union).size
+}
+
+/**
+ * Whether the automatic skill comparison can be trusted.
+ * `unavailable`: nothing was recognised (short posting, no list of requirements).
+ * `partial`: something was recognised but the extractor flagged its result as incomplete.
+ */
+export type SkillGapState = 'ok' | 'partial' | 'unavailable'
+
+export function skillGapState(gap: SkillGapReport): SkillGapState {
+  if (gap.existing.length + gap.supportedByResume.length + gap.gap.length === 0) return 'unavailable'
+  const reason = gap.reasonCode.trim()
+  return reason !== '' && reason !== 'ok' ? 'partial' : 'ok'
+}
+
+export type LevelTone = 'good' | 'mid' | 'low'
+
+/** Plain-language reading of a 1 to 5 score. Higher is better. */
+export function scoreLevel(score: number): { word: string; tone: LevelTone } {
+  if (score >= 4.5) return { word: 'Sehr gut', tone: 'good' }
+  if (score >= 3.5) return { word: 'Gut', tone: 'good' }
+  if (score >= 2.5) return { word: 'Teilweise', tone: 'mid' }
+  return { word: 'Gering', tone: 'low' }
+}
+
+/** Warning signs run the other way: 1 means nothing found, 5 means many. */
+export function warningLevel(score: number): { word: string; tone: LevelTone } {
+  if (score < 1.5) return { word: 'Keine Auffälligkeiten', tone: 'good' }
+  if (score < 2.5) return { word: 'Wenige Hinweise', tone: 'mid' }
+  return { word: 'Deutliche Warnsignale', tone: 'low' }
+}
+
+/** Model text may abbreviate the posting as "JD". Users do not know that word. */
+export function plainGerman(text: string | null | undefined): string {
+  return (text ?? '').replace(/\bJDs\b/g, 'Stellenanzeigen').replace(/\bJD\b/g, 'Stellenanzeige')
 }
 
 export function splitRoleSummary(raw: string | undefined): { title: string; subtitle?: string } {
@@ -108,29 +156,22 @@ export function reportLead(options: {
   score: number
 }): string {
   const { covered, total, missing = 0, roleAlignment, warningCount = 0, score } = options
-  const head: string[] = []
-  if (typeof covered === 'number' && typeof total === 'number' && total > 0) {
-    head.push(`Du deckst ${covered} von ${total} Kernanforderungen`)
-  }
-  if (typeof roleAlignment === 'number' && roleAlignment >= 3.5) {
-    head.push('hast klare Rollenpassung')
-  }
+  const sentences: string[] = []
 
-  const tails: string[] = []
-  if (missing === 1) tails.push('ein Skill fehlt')
-  else if (missing > 1) tails.push(`${missing} Skills fehlen`)
-  if (warningCount > 0) tails.push('die Anzeige enthält Warnzeichen')
+  const hasCoverage = typeof covered === 'number' && typeof total === 'number' && total > 0
+  const roleFits = typeof roleAlignment === 'number' && roleAlignment >= 3.5
+  const coverage = `Dein Lebenslauf belegt ${covered} von ${total} Anforderungen der Stellenanzeige`
+  if (hasCoverage && roleFits) sentences.push(`${coverage}, und die Rolle passt zu deinem Profil.`)
+  else if (hasCoverage) sentences.push(`${coverage}.`)
+  else if (roleFits) sentences.push('Die Rolle passt zu deinem Profil.')
 
-  let lead = ''
-  if (head.length > 0) {
-    lead = head.join(', ')
-    if (tails.length === 1) lead += `, aber ${tails[0]}`
-    else if (tails.length > 1) lead += `, aber ${tails.slice(0, -1).join(', ')} und ${tails[tails.length - 1]}`
-    lead += '.'
-  } else if (tails.length > 0) {
-    lead = `${tails.join(', ')}.`
-  }
+  const issues: string[] = []
+  if (missing === 1) issues.push('eine Anforderung fehlt im Lebenslauf')
+  else if (missing > 1) issues.push(`${missing} Anforderungen fehlen im Lebenslauf`)
+  if (warningCount === 1) issues.push('die Anzeige enthält ein Warnzeichen')
+  else if (warningCount > 1) issues.push('die Anzeige enthält Warnzeichen')
+  if (issues.length > 0) sentences.push(`Zu prüfen: ${issues.join(' und ')}.`)
 
-  const caption = scoreCaption(score)
-  return [lead, caption].filter(Boolean).join(' ')
+  sentences.push(scoreCaption(score))
+  return sentences.join(' ')
 }

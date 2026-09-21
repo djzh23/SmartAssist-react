@@ -23,7 +23,7 @@ export default function AnalyzeWarningBanner({ skillGap, warnings }: Props) {
 
   return (
     <section
-      className="mt-6 rounded-[14px] border border-[rgba(217,119,87,0.25)] bg-[rgba(217,119,87,0.05)] px-[22px] py-5"
+      className="rounded-[14px] border border-[rgba(217,119,87,0.25)] bg-[rgba(217,119,87,0.05)] px-[22px] py-5"
       role="status"
     >
       <div className="mb-3.5 flex items-center gap-2.5">

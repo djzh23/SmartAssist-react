@@ -6,6 +6,7 @@ import { reportLead } from './analyzeFormat'
 interface Props {
   score: number
   factGateCount: number
+  /** Only set when the automatic skill comparison is reliable. */
   coveredCount?: number
   requirementTotal?: number
   missingCount?: number
@@ -34,32 +35,33 @@ export default function AnalyzeHero({
   const roleFit = typeof roleAlignment === 'number' && roleAlignment >= 3.5
 
   return (
-    <section className="flex flex-col gap-8 py-8 sm:flex-row sm:items-center sm:gap-11">
-      <ScoreRing score={score} size={190} caption="VON 5,0" />
+    <section
+      className="flex flex-col items-center gap-5 text-center sm:flex-row sm:gap-7 sm:text-left"
+      aria-label="Gesamtbewertung"
+    >
+      <ScoreRing score={score} size={150} caption="VON 5,0" />
       <div className="min-w-0 flex-1">
         <p className="text-[15px] leading-relaxed text-[#4a4238]">{lead}</p>
-        <div className="mt-4 flex flex-wrap gap-2.5">
+        <div className="mt-3 flex flex-wrap justify-center gap-2 sm:justify-start">
           {roleFit ? (
             <span className="inline-flex items-center gap-1.5 rounded-full bg-[rgba(111,143,109,0.14)] px-[11px] py-[5px] text-xs text-[#5e7a5c]">
               <Check className="h-3 w-3" strokeWidth={2.5} aria-hidden />
-              Erfahrung passt
+              Rolle passt
             </span>
           ) : null}
           {missingCount > 0 ? (
             <span className="inline-flex items-center gap-1.5 rounded-full bg-[rgba(212,165,116,0.16)] px-[11px] py-[5px] text-xs text-[#8a6a3a]">
               <AlertCircle className="h-3 w-3" aria-hidden />
-              {missingCount === 1 ? '1 Skill fehlt' : `${missingCount} Skills fehlen`}
+              {missingCount === 1 ? '1 Anforderung fehlt' : `${missingCount} Anforderungen fehlen`}
             </span>
           ) : null}
           {warningCount > 0 ? (
             <span className="inline-flex items-center gap-1.5 rounded-full bg-[rgba(217,119,87,0.12)] px-[11px] py-[5px] text-xs text-[#b45539]">
               <AlertTriangle className="h-3 w-3" aria-hidden />
-              {warningCount === 1 ? '1 Red Flag' : `${warningCount} Red Flags`}
+              {warningCount === 1 ? '1 Warnzeichen' : `${warningCount} Warnzeichen`}
             </span>
           ) : null}
-          {factGateCount > 0 ? (
-            <AnalyzeFactGateInfo count={factGateCount} compact />
-          ) : null}
+          {factGateCount > 0 ? <AnalyzeFactGateInfo count={factGateCount} compact /> : null}
         </div>
       </div>
     </section>

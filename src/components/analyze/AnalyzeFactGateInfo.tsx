@@ -15,7 +15,7 @@ export default function AnalyzeFactGateInfo({ count, compact = false }: Props) {
       <div className="inline-flex items-center gap-1.5 rounded-full bg-[rgba(111,143,109,0.14)] px-[11px] py-[5px] text-xs text-[#5e7a5c]">
         <ShieldCheck className="h-3.5 w-3.5 shrink-0" aria-hidden />
         <span>
-          <span className="font-semibold">Fact-Gate aktiv</span>
+          <span className="font-semibold">Faktenprüfung aktiv</span>
           <span className="ml-1 text-[#4a6448]">{body}</span>
         </span>
       </div>
@@ -26,7 +26,7 @@ export default function AnalyzeFactGateInfo({ count, compact = false }: Props) {
     <div className="flex items-start gap-2 rounded-full bg-[rgba(111,143,109,0.14)] px-4 py-3 text-[#5e7a5c]">
       <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
       <div>
-        <p className="text-sm font-semibold">Fact-Gate aktiv</p>
+        <p className="text-sm font-semibold">Faktenprüfung aktiv</p>
         <p className="mt-0.5 text-xs leading-relaxed text-[#4a6448]">{body}</p>
       </div>
     </div>

@@ -66,7 +66,7 @@ function BulletCard({
     <article>
       <div className="mb-3.5 flex items-start justify-between gap-3">
         <p className="text-[11px] uppercase tracking-[0.08em] text-[#8a7f70]">
-          CV-Formulierungsvorschlag
+          Vorschlag für deinen Lebenslauf
         </p>
         <button
           type="button"
@@ -122,10 +122,10 @@ export default function AnalyzeBulletRewrites({ bullets }: Props) {
 
   return (
     <>
-      <div className="mt-6 lg:hidden">
+      <div className="lg:hidden">
         <AnalyzeAccordion
-          title="Formulierungen"
-          subtitle={count === 1 ? '1 Bullet-Vorschlag bereit' : `${count} Bullet-Vorschläge bereit`}
+          title="Formulierungen für deinen Lebenslauf"
+          subtitle={count === 1 ? '1 Vorschlag bereit' : `${count} Vorschläge bereit`}
           icon={<PenLine className="h-4 w-4" />}
         >
           <ul className="space-y-6">
@@ -142,7 +142,7 @@ export default function AnalyzeBulletRewrites({ bullets }: Props) {
           </ul>
         </AnalyzeAccordion>
       </div>
-      <section className="mt-8 hidden lg:block" aria-label="Formulierungs-Vorschläge">
+      <section className="hidden lg:block" aria-label="Formulierungsvorschläge">
         <ul className="space-y-8">
           {desktopVisible.map((b, i) => (
             <li key={`${b.rewrittenBullet}-${i}`}>

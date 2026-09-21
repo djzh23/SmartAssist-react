@@ -10,7 +10,7 @@ export default function AnalyzeRoleSummary({ text }: Props) {
   if (!trimmed) return null
 
   return (
-    <div className="mt-6 lg:hidden">
+    <div className="lg:hidden">
       <AnalyzeAccordion
         title="Rollenbeschreibung"
         subtitle="Zusammenfassung der Anzeige"

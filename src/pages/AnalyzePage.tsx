@@ -1,18 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '@clerk/clerk-react'
-import { AlertTriangle, Plus } from 'lucide-react'
+import { AlertTriangle } from 'lucide-react'
 import AppCtaButton from '../components/ui/AppCtaButton'
 import StandardPageContainer from '../components/layout/StandardPageContainer'
 import AnalyzeHeader from '../components/analyze/AnalyzeHeader'
-import AnalyzeHero from '../components/analyze/AnalyzeHero'
-import AnalyzeSubDimensions from '../components/analyze/AnalyzeSubDimensions'
-import AnalyzeWarningBanner from '../components/analyze/AnalyzeWarningBanner'
-import AnalyzeSkillBuckets from '../components/analyze/AnalyzeSkillBuckets'
-import AnalyzeBulletRewrites from '../components/analyze/AnalyzeBulletRewrites'
+import AnalyzeReportView from '../components/analyze/AnalyzeReportView'
 import AnalyzeLoadingState from '../components/analyze/AnalyzeLoadingState'
-import AnalyzeRoleSummary from '../components/analyze/AnalyzeRoleSummary'
-import { emptySkillGap, inventedSkillCount, requirementCount, splitRoleSummary, formatRelativeCreated, userFacingWarnings } from '../components/analyze/analyzeFormat'
+import { formatRelativeCreated, plainGerman } from '../components/analyze/analyzeFormat'
 import { useCareerProfile } from '../hooks/useCareerProfile'
 import {
   analyzeJob,
@@ -21,7 +16,6 @@ import {
   MIN_JD_CHARS,
   MAX_JD_CHARS,
   type AnalyzeReport,
-  type SkillGapReport,
 } from '../api/analyzeClient'
 import { UsageLimitError } from '../api/agentClient'
 import { isCachedCvReady, readCachedCv } from '../utils/cvSessionCache'
@@ -49,18 +43,6 @@ function storeReport(userId: string, report: AnalyzeReport): void {
     const entry: StoredReport = { report, storedAt: new Date().toISOString() }
     sessionStorage.setItem(REPORT_KEY_PREFIX + userId, JSON.stringify(entry))
   } catch { /* ignore quota */ }
-}
-
-function normalizeGap(gap?: SkillGapReport): SkillGapReport {
-  const base = emptySkillGap()
-  if (!gap) return base
-  return {
-    existing: gap.existing ?? [],
-    supportedByResume: gap.supportedByResume ?? [],
-    gap: gap.gap ?? [],
-    extractedJdSkills: gap.extractedJdSkills ?? [],
-    reasonCode: gap.reasonCode ?? '',
-  }
 }
 
 export default function AnalyzePage() {
@@ -130,8 +112,10 @@ export default function AnalyzePage() {
         setError('Profil unvollständig. Bitte Lebenslauf in diesem Browser erneut hochladen.')
       } else if (e instanceof AnalyzeApiError && (e.errorCode === 'cv_stale' || e.errorCode === 'cv_hash_mismatch')) {
         setError('Der Lebenslauf in diesem Browser stimmt nicht mehr. Bitte unter Profil erneut hochladen.')
+      } else if (e instanceof AnalyzeApiError && e.errorCode === 'jd_too_short') {
+        setError('Die Stellenanzeige ist zu kurz. Bitte den vollständigen Text der Anzeige einfügen.')
       } else {
-        setError(e instanceof Error ? e.message : 'Analyse fehlgeschlagen.')
+        setError(e instanceof Error ? plainGerman(e.message) : 'Analyse fehlgeschlagen.')
       }
     } finally {
       setBusy(false)
@@ -143,19 +127,18 @@ export default function AnalyzePage() {
     setError(null)
   }
 
-  const role = splitRoleSummary(report?.roleSummary)
-  const dims = report?.dimensions ?? { cvMatch: 0, roleAlignment: 0, culture: 0, redFlags: 0 }
-  const gap = normalizeGap(report?.skillGap)
-  const factGateCount = inventedSkillCount(report?.factViolations)
-
+  // No overflow on this flex child: it would shrink to the height of <main> and scroll on its own,
+  // which shows up as a second scrollbar and a "framed" report.
   return (
-    <StandardPageContainer className="w-full max-w-[820px] overflow-x-hidden pb-10 pt-4 sm:py-10">
+    <StandardPageContainer className="w-full max-w-[1120px] pb-10 pt-4 sm:py-8">
       {showForm ? (
-        <AnalyzeHeader title="Stellenanzeige prüfen" />
+        <div className="mx-auto w-full max-w-[820px]">
+          <AnalyzeHeader title="Stellenanzeige prüfen" />
+        </div>
       ) : null}
 
       {!profileLoading && !cvReady && showForm && (
-        <div className="mb-5 flex items-start gap-2 rounded-2xl border border-[rgba(217,119,87,0.28)] bg-[rgba(217,119,87,0.08)] px-4 py-3 text-sm text-[#f0ebe0]">
+        <div className="mx-auto mb-5 flex w-full max-w-[820px] items-start gap-2 rounded-2xl border border-[rgba(217,119,87,0.28)] bg-[rgba(217,119,87,0.08)] px-4 py-3 text-sm text-[#f0ebe0]">
           <AlertTriangle size={16} className="mt-0.5 shrink-0 text-[#d97757]" aria-hidden />
           <p>
             {cvNeedsReupload
@@ -169,7 +152,7 @@ export default function AnalyzePage() {
       )}
 
       {showForm ? (
-        <section className="rounded-[20px] border border-[#3a332d] bg-[#232019] p-5 sm:p-6">
+        <section className="mx-auto w-full max-w-[820px] rounded-[20px] border border-[#3a332d] bg-[#232019] p-5 sm:p-6">
           <label className="block">
             <span className="text-sm font-medium text-[#f5f1eb]">Stellenanzeige</span>
             <p className="mt-1 text-xs text-[#a89e91]">
@@ -212,50 +195,17 @@ export default function AnalyzePage() {
       ) : null}
 
       {busy ? (
-        <div className="mt-4">
+        <div className="mx-auto mt-4 w-full max-w-[820px]">
           <AnalyzeLoadingState />
         </div>
       ) : null}
 
       {showReport && report ? (
-        <div className="pp-report-paper px-6 py-9 sm:px-10">
-          <AnalyzeHeader
-            tone="paper"
-            title={role.title}
-            subtitle={role.subtitle}
-            score={report.globalScore}
-            kicker={`Analysebericht · ${formatRelativeCreated(reportIsFromPreviousSession ? reportStoredAt : new Date().toISOString())}`}
-          />
-
-          <AnalyzeHero
-            score={report.globalScore}
-            factGateCount={factGateCount}
-            coveredCount={gap.existing.length}
-            requirementTotal={requirementCount(gap)}
-            missingCount={gap.gap.length}
-            roleAlignment={dims.roleAlignment}
-            warningCount={userFacingWarnings(report.warnings).length}
-          />
-          <AnalyzeSubDimensions
-            cvMatch={dims.cvMatch}
-            roleAlignment={dims.roleAlignment}
-            culture={dims.culture}
-            redFlags={dims.redFlags}
-          />
-          <AnalyzeWarningBanner skillGap={gap} warnings={report.warnings} />
-          <AnalyzeSkillBuckets skillGap={gap} />
-          <AnalyzeBulletRewrites bullets={report.bullets ?? []} />
-          <AnalyzeRoleSummary text={report.roleSummary ?? ''} />
-
-          <button
-            type="button"
-            onClick={startNewAnalysis}
-            className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-[#d97757] px-4 py-3.5 text-sm font-semibold text-[#1a1613] transition hover:bg-[#e89372] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#d97757]/50"
-          >
-            <Plus className="h-4 w-4" aria-hidden />
-            Neue Analyse
-          </button>
-        </div>
+        <AnalyzeReportView
+          report={report}
+          createdLabel={formatRelativeCreated(reportIsFromPreviousSession ? reportStoredAt : new Date().toISOString())}
+          onNewAnalysis={startNewAnalysis}
+        />
       ) : null}
     </StandardPageContainer>
   )
