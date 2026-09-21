@@ -12,7 +12,7 @@ const LANDING_SECTIONS = [
   'ueber',
   'datenschutz-teaser',
   'faq',
-  'zugang-anfragen',
+  'starten',
 ] as const
 
 const NAV_ITEMS = [

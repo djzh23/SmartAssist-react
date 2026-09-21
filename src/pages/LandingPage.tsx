@@ -7,13 +7,13 @@ import {
   ChevronDown,
   FileCheck,
   ListChecks,
-  Mail,
   Pencil,
   Shield,
   ShieldCheck,
   ShieldOff,
   Target,
   TriangleAlert,
+  UserPlus,
   UserRound,
   Users,
   X,
@@ -323,7 +323,7 @@ export default function LandingPage() {
             {betaModeEnabled ? (
               <button
                 type="button"
-                onClick={() => scrollToId('zugang-anfragen')}
+                onClick={() => scrollToId('starten')}
                 className="pp-cta mx-auto mt-8 w-full sm:max-w-[280px]"
               >
                 Kostenlos starten
@@ -467,32 +467,44 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {betaModeEnabled ? (
-          <section id="zugang-anfragen" className="pp-section pp-band-a pp-band-from-c pb-16 sm:pb-20">
-            <div className={`${PUBLIC_SHELL} text-center`}>
-              <h2 className="pp-section-title">Kostenlos ausprobieren</h2>
-              <p className="pp-section-lead">
-                Erstell dein Konto und starte in unter einer Minute.
+        <section id="starten" className="pp-section pp-band-a pp-band-from-c pb-16 sm:pb-20">
+          <div className={`${PUBLIC_SHELL} text-center`}>
+            <h2 className="pp-section-title">Kostenlos ausprobieren</h2>
+            <p className="pp-section-lead">
+              Erstell dein Konto und starte in unter einer Minute. Keine Kreditkarte, kein Vertrag.
+            </p>
+            <div className="pp-card-beta mx-auto mt-8 max-w-[520px] p-6 text-left sm:p-8">
+              <UserPlus className="h-6 w-6 text-[#FBBF24]" strokeWidth={ICON_STROKE} aria-hidden />
+              <h3 className="mt-4 text-lg font-semibold text-[#F5F5F5]">Konto erstellen</h3>
+              <ul className="mt-4 space-y-2.5">
+                {[
+                  'Sofortiger Zugang zur Analyse',
+                  'Keine Kreditkarte erforderlich',
+                  'Analyse in unter einer Minute',
+                ].map(item => (
+                  <li key={item} className="flex items-start gap-2 text-sm text-[#C4B8AA]">
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#34D399]" strokeWidth={ICON_STROKE} aria-hidden />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+              <SignUpButton mode="modal" fallbackRedirectUrl={AFTER_AUTH}>
+                <button type="button" className="pp-cta mt-6 w-full">
+                  Kostenlos starten
+                </button>
+              </SignUpButton>
+            </div>
+            <div className="mx-auto mt-12 max-w-[420px] border-t-[0.5px] border-[#3a342e] pt-8">
+              <p className="text-sm font-medium text-white">Noch nicht bereit?</p>
+              <p className="mt-2 text-[13px] leading-relaxed text-[#8A7F72]">
+                Trag dich in unsere Update-Liste ein und erhalte Nachrichten zu neuen Features und Verbesserungen.
               </p>
-              <div className="pp-card-beta mx-auto mt-8 max-w-[520px] p-6 text-left sm:p-8">
-                <div className="flex items-start gap-3">
-                  <span className="pp-mail-badge" aria-hidden>
-                    <Mail className="h-[18px] w-[18px]" strokeWidth={ICON_STROKE} />
-                  </span>
-                  <div>
-                    <h3 className="text-lg font-semibold text-[#F5F5F5]">Kostenlos starten</h3>
-                    <p className="mt-1 text-sm leading-relaxed text-[#A8A8A8]">
-                      Aktuell kostenfrei nutzbar.
-                    </p>
-                  </div>
-                </div>
-                <div className="mt-6">
-                  <NewsletterForm />
-                </div>
+              <div className="mt-5">
+                <NewsletterForm compact />
               </div>
             </div>
-          </section>
-        ) : null}
+          </div>
+        </section>
       </main>
       <PublicSiteFooter />
     </div>
