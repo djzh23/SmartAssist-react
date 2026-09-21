@@ -2,6 +2,8 @@ import { Link } from 'react-router-dom'
 import { PublicSiteFooter, PublicSiteHeader } from '../components/marketing/PublicSiteChrome'
 import '../styles/landing.css'
 
+const CONTACT_EMAIL = 'zn.connec.team@gmail.com'
+
 export default function ImpressumPage() {
   return (
     <div className="landing-page-root min-h-screen text-stone-100">
@@ -13,8 +15,8 @@ export default function ImpressumPage() {
         <article className="legal-prose mt-8">
           <p>
             Diese Anwendung befindet sich in einer geschlossenen Beta-Phase.
-            Die vollständige Anschrift wird vor dem öffentlichen Launch ergänzt.
-            Für Rückfragen: <a href="mailto:zouh.ijd@gmail.com">zouh.ijd@gmail.com</a>
+            Die ladungsfähige Anschrift wird in Kürze ergänzt und an dieser Stelle veröffentlicht.
+            Bis dahin erreichst du uns per E-Mail.
           </p>
 
           <h2>Anbieter</h2>
@@ -22,7 +24,7 @@ export default function ImpressumPage() {
 
           <h2>Kontakt</h2>
           <p>
-            E-Mail: <a href="mailto:zouh.ijd@gmail.com">zouh.ijd@gmail.com</a>
+            E-Mail: <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
           </p>
 
           <h2>Umsatzsteuer</h2>

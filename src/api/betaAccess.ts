@@ -1,5 +1,5 @@
 export const BETA_ACCESS_MESSAGE =
-  'Aktuell nur für eingeladene Beta-Tester verfügbar. Wenn du eingeladen sein solltest: melde dich unter ijd.zouh@yahoo.com.'
+  'Aktuell nur für eingeladene Beta-Tester verfügbar. Wenn du eingeladen sein solltest: melde dich unter zn.connec.team@gmail.com.'
 
 export class BetaAccessRequiredError extends Error {
   readonly code = 'beta_access_required'

@@ -1,7 +1,7 @@
 # PrivatePrep Frontend
 
 > Status: geschlossene Beta. Live-URL nicht öffentlich verlinkt. Für Zugang:
-> ijd.zouh@yahoo.com
+> zn.connec.team@gmail.com
 
 React-Oberfläche für PrivatePrep: Onboarding, Profil, CV-Upload und die
 Match-Analyse gegen eine Stellenausschreibung.
@@ -30,7 +30,7 @@ Free- und Premium-Zugriff.
 ## Live-Zugang
 
 Aktuell nur für eingeladene Beta-Tester über [betweenatna.com](https://betweenatna.com).
-Anfragen für Beta-Zugang: ijd.zouh@yahoo.com
+Anfragen für Beta-Zugang: zn.connec.team@gmail.com
 
 ## Lokale Entwicklung
 

@@ -20,10 +20,11 @@ export default function DatenschutzPage() {
           <h2>Verantwortlicher</h2>
           <p>
             Zouhair Ijaad<br />
-            [STRASSE UND HAUSNUMMER]<br />
-            [PLZ] Hamburg-Langenhorn<br />
             Deutschland<br />
-            E-Mail: <a href="mailto:ijd.zouh@yahoo.com">ijd.zouh@yahoo.com</a>
+            E-Mail: <a href="mailto:zn.connec.team@gmail.com">zn.connec.team@gmail.com</a>
+          </p>
+          <p>
+            Die ladungsfähige Anschrift wird in Kürze ergänzt und an dieser Stelle veröffentlicht.
           </p>
 
           <h2>Zweck und Rechtsgrundlage der Datenverarbeitung</h2>
@@ -104,7 +105,7 @@ export default function DatenschutzPage() {
 
           <h2>Kontakt bei Datenschutz-Fragen</h2>
           <p>
-            E-Mail: <a href="mailto:ijd.zouh@yahoo.com">ijd.zouh@yahoo.com</a>
+            E-Mail: <a href="mailto:zn.connec.team@gmail.com">zn.connec.team@gmail.com</a>
           </p>
 
           <h2>Hinweis zur Beta-Phase</h2>
@@ -124,21 +125,3 @@ export default function DatenschutzPage() {
     </div>
   )
 }
-
-/*
-Anleitung für Zouhair:
-1. Adresse ausfüllen (identisch zum Impressum)
-2. Datum in der Stand-Zeile prüfen (Format: 2026-09-20)
-3. Prüfen ob alle genannten Auftragsverarbeiter tatsächlich aktiv sind.
-   Gemini ist in V1 nicht aktiv und steht deshalb nicht als Dienst.
-4. AVVs in den Dashboards akzeptieren:
-   - Groq: console.groq.com, Settings, Data Processing Addendum
-   - Clerk: dashboard.clerk.com, Settings, Legal
-   - Stripe: dashboard.stripe.com, Settings, Compliance
-   - Render: render.com, Team Settings, Compliance
-   - Vercel: vercel.com/dashboard, Settings, Security
-   - Supabase: supabase.com/dashboard, Organization Settings, Legal
-   - Pirsch nur wenn Analytics an ist
-5. Diesen Kommentar entfernen
-6. Erst DANN live pushen
-*/
