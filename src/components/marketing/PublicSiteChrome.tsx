@@ -323,10 +323,10 @@ export function PublicSiteHeader({ variant }: PublicSiteHeaderProps) {
 }
 
 const FOOTER_PRODUCT = [
-  { id: 'funktionen', label: 'Funktionen' },
-  { id: 'ablauf', label: 'So funktioniert es' },
+  { id: 'funktionen', label: 'Analyse' },
+  { id: 'ablauf', label: 'Ablauf' },
   { id: 'bericht', label: 'Beispielbericht' },
-  { id: 'ueber', label: 'Über PrivatePrep' },
+  { id: 'ueber', label: 'Warum PrivatePrep' },
   { id: 'faq', label: 'FAQ' },
 ] as const
 
@@ -341,9 +341,6 @@ export function PublicSiteFooter() {
             </div>
             <p className="mt-4 text-[13px] leading-relaxed text-[#8A7F72]">
               Deutsche KI-Bewerbungsanalyse für alle Branchen.
-            </p>
-            <p className="mt-2 text-[13px] leading-relaxed text-[#8A7F72]">
-              Ein Projekt aus Hamburg.
             </p>
           </div>
 
