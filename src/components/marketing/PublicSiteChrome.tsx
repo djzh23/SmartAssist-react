@@ -2,7 +2,6 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate, useNavigationType } from 'react-router-dom'
 import { SignInButton, SignUpButton } from '@clerk/clerk-react'
 import { Menu, X } from 'lucide-react'
-import { betaModeEnabled } from '../../config/env'
 
 const AFTER_AUTH = '/analyze'
 const LANDING_SECTIONS = [
@@ -20,8 +19,6 @@ const NAV_ITEMS = [
   { id: 'funktionen', label: 'Funktionen' },
   { id: 'ablauf', label: 'So funktioniert es' },
   { id: 'bericht', label: 'Beispielbericht' },
-  { id: 'datenschutz-teaser', label: 'Datenschutz' },
-  { id: 'faq', label: 'FAQ' },
 ] as const
 export const LANDING_SCROLL_KEY = 'pp-landing-scroll'
 
@@ -150,11 +147,9 @@ function LandingNavLinks({
 
 function HeaderCtas({
   stacked,
-  onBeta,
   onSignedIn,
 }: {
   stacked: boolean
-  onBeta: () => void
   onSignedIn?: () => void
 }) {
   return (
@@ -168,24 +163,14 @@ function HeaderCtas({
           Anmelden
         </button>
       </SignInButton>
-      {betaModeEnabled ? (
+      <SignUpButton mode="modal" fallbackRedirectUrl={AFTER_AUTH}>
         <button
           type="button"
-          onClick={onBeta}
           className={stacked ? 'pp-cta w-full min-h-11' : 'pp-cta pp-cta-nav'}
         >
-          Beta anfragen
+          Kostenlos starten
         </button>
-      ) : (
-        <SignUpButton mode="modal" fallbackRedirectUrl={AFTER_AUTH}>
-          <button
-            type="button"
-            className={stacked ? 'pp-cta w-full min-h-11' : 'pp-cta pp-cta-nav'}
-          >
-            Kostenlos starten
-          </button>
-        </SignUpButton>
-      )}
+      </SignUpButton>
     </div>
   )
 }
@@ -310,7 +295,7 @@ export function PublicSiteHeader({ variant }: PublicSiteHeaderProps) {
           <div className="hidden items-center lg:flex">
             <LandingNavLinks isLanding={isLanding} activeId={activeId} onGo={go} />
           </div>
-          <HeaderCtas stacked={false} onBeta={() => go('zugang-anfragen')} />
+          <HeaderCtas stacked={false} />
           <button
             type="button"
             className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-[#F5F5F5] lg:hidden"
@@ -328,7 +313,6 @@ export function PublicSiteHeader({ variant }: PublicSiteHeaderProps) {
             <LandingNavLinks isLanding={isLanding} onNavigate={closeMenu} stacked activeId={activeId} onGo={go} />
             <HeaderCtas
               stacked
-              onBeta={() => go('zugang-anfragen')}
               onSignedIn={closeMenu}
             />
           </div>
