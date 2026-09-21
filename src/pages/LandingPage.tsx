@@ -6,6 +6,7 @@ import {
   Check,
   ChevronDown,
   FileCheck,
+  FileText,
   ListChecks,
   Pencil,
   Shield,
@@ -185,70 +186,75 @@ const DIMENSIONS = [
 
 function ExampleReport() {
   return (
-    <div className="pp-card-report p-6 sm:p-8">
-      <div className="mb-6 flex items-center justify-between gap-3">
-        <p className="pp-kicker">Beispielbericht</p>
-        <span className="pp-badge-success">
-          <Check className="h-3 w-3" strokeWidth={ICON_STROKE} aria-hidden />
-          Gute Passung
-        </span>
-      </div>
+    <div className="rounded-[22px] bg-[#faf7f2] p-3 sm:p-4">
+      <div className="pp-card-report p-6 sm:p-8">
+        <div className="mb-6 flex items-center justify-between gap-3">
+          <p className="pp-kicker inline-flex items-center gap-1.5">
+            <FileText className="h-3.5 w-3.5" strokeWidth={ICON_STROKE} aria-hidden />
+            Beispielbericht
+          </p>
+          <span className="pp-badge-success">
+            <Check className="h-3 w-3" strokeWidth={ICON_STROKE} aria-hidden />
+            Gute Passung
+          </span>
+        </div>
 
-      <p className="font-serif text-[48px] font-semibold leading-none text-[#F5F5F5]">
-        3,8 <span className="text-lg font-normal text-[#737373]">von 5,0</span>
-      </p>
-      <p className="mt-3 text-sm text-[#A8A8A8]">Teamassistenz für Office Managerin</p>
+        <p className="font-serif text-[48px] font-semibold leading-none text-[#1c1917]">
+          3,8 <span className="text-lg font-normal text-[#78716c]">von 5,0</span>
+        </p>
+        <p className="mt-3 text-sm text-[#57534e]">Teamassistenz für Office Managerin</p>
 
-      <div className="mt-6 grid grid-cols-2 gap-3">
-        {REPORT_METRICS.map(({ label, value, Icon }) => (
-          <div key={label} className="pp-metric flex items-center gap-3 px-3 py-3">
-            <Icon className="h-4 w-4 shrink-0 text-[#FBBF24]" strokeWidth={ICON_STROKE} aria-hidden />
-            <div>
-              <p className="text-lg font-semibold leading-none text-[#F5F5F5]">{value}</p>
-              <p className="mt-1 text-[10px] font-medium uppercase tracking-[0.08em] text-[#737373]">{label}</p>
+        <div className="mt-6 grid grid-cols-2 gap-3">
+          {REPORT_METRICS.map(({ label, value, Icon }) => (
+            <div key={label} className="pp-metric flex items-center gap-3 px-3 py-3">
+              <Icon className="h-4 w-4 shrink-0 text-[#d97706]" strokeWidth={ICON_STROKE} aria-hidden />
+              <div>
+                <p className="text-lg font-semibold leading-none text-[#1c1917]">{value}</p>
+                <p className="mt-1 text-[10px] font-medium uppercase tracking-[0.08em] text-[#78716c]">{label}</p>
+              </div>
             </div>
+          ))}
+        </div>
+
+        <div className="pp-divide">
+          <p className="pp-kicker">Skill-Analyse</p>
+          <p className="mt-4 flex items-center gap-1.5 text-xs font-medium text-[#3d7a5a]">
+            <Check className="h-3.5 w-3.5" strokeWidth={ICON_STROKE} aria-hidden />
+            Nachgewiesen
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {['MS Office', 'Terminplanung'].map(skill => (
+              <span key={skill} className="pp-chip-pos">{skill}</span>
+            ))}
           </div>
-        ))}
-      </div>
-
-      <div className="pp-divide">
-        <p className="pp-kicker">Skill-Analyse</p>
-        <p className="mt-4 flex items-center gap-1.5 text-xs font-medium text-[#34D399]">
-          <Check className="h-3.5 w-3.5" strokeWidth={ICON_STROKE} aria-hidden />
-          Nachgewiesen
-        </p>
-        <div className="mt-2 flex flex-wrap gap-2">
-          {['MS Office', 'Terminplanung'].map(skill => (
-            <span key={skill} className="pp-chip-pos">{skill}</span>
-          ))}
+          <p className="mt-4 flex items-center gap-1.5 text-xs font-medium text-[#b54a4a]">
+            <X className="h-3.5 w-3.5" strokeWidth={ICON_STROKE} aria-hidden />
+            Nicht vorhanden
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {['Englisch C1', 'SAP'].map(skill => (
+              <span key={skill} className="pp-chip-neg">{skill}</span>
+            ))}
+          </div>
         </div>
-        <p className="mt-4 flex items-center gap-1.5 text-xs font-medium text-[#FB7185]">
-          <X className="h-3.5 w-3.5" strokeWidth={ICON_STROKE} aria-hidden />
-          Nicht vorhanden
-        </p>
-        <div className="mt-2 flex flex-wrap gap-2">
-          {['Englisch C1', 'SAP'].map(skill => (
-            <span key={skill} className="pp-chip-neg">{skill}</span>
-          ))}
-        </div>
-      </div>
 
-      <div className="pp-divide">
-        <p className="pp-kicker">CV-Formulierungsvorschläge</p>
-        <ul className="mt-4 space-y-3">
-          <li className="pp-metric px-3 py-3">
-            <p className="text-[10px] uppercase tracking-[0.08em] text-[#737373]">Vorhandener Eintrag</p>
-            <p className="mt-1 text-xs text-[#A8A8A8]">Termine für die Abteilungsleitung gemacht</p>
-            <p className="mt-3 text-[10px] uppercase tracking-[0.08em] text-[#D99A16]">Formulierungsvorschlag</p>
-            <p className="mt-1 text-xs text-[#F5F5F5]">Kalenderführung und Terminkoordination für die Abteilungsleitung übernommen.</p>
-          </li>
-          <li className="pp-metric px-3 py-3">
-            <p className="text-[10px] uppercase tracking-[0.08em] text-[#737373]">Vorhandener Eintrag</p>
-            <p className="mt-1 text-xs text-[#A8A8A8]">Reisekosten abgerechnet</p>
-            <p className="mt-3 text-[10px] uppercase tracking-[0.08em] text-[#D99A16]">Formulierungsvorschlag</p>
-            <p className="mt-1 text-xs text-[#F5F5F5]">Reisekostenabrechnung für Außentermine eigenständig erstellt und nachgehalten.</p>
-          </li>
-        </ul>
+        <div className="pp-divide">
+          <p className="pp-kicker">CV-Formulierungsvorschläge</p>
+          <ul className="mt-4 space-y-3">
+            <li className="pp-metric px-3 py-3">
+              <p className="text-[10px] uppercase tracking-[0.08em] text-[#78716c]">Vorhandener Eintrag</p>
+              <p className="mt-1 text-xs text-[#57534e]">Termine für die Abteilungsleitung gemacht</p>
+              <p className="mt-3 text-[10px] uppercase tracking-[0.08em] text-[#d97706]">Formulierungsvorschlag</p>
+              <p className="mt-1 text-xs text-[#1c1917]">Kalenderführung und Terminkoordination für die Abteilungsleitung übernommen.</p>
+            </li>
+            <li className="pp-metric px-3 py-3">
+              <p className="text-[10px] uppercase tracking-[0.08em] text-[#78716c]">Vorhandener Eintrag</p>
+              <p className="mt-1 text-xs text-[#57534e]">Reisekosten abgerechnet</p>
+              <p className="mt-3 text-[10px] uppercase tracking-[0.08em] text-[#d97706]">Formulierungsvorschlag</p>
+              <p className="mt-1 text-xs text-[#1c1917]">Reisekostenabrechnung für Außentermine eigenständig erstellt und nachgehalten.</p>
+            </li>
+          </ul>
+        </div>
       </div>
     </div>
   )

@@ -212,10 +212,42 @@ html {
 }
 
 .pp-card-report {
-  background: var(--pp-surface);
-  border: 1px solid var(--pp-border);
-  border-radius: 18px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.28);
+  background: #ffffff;
+  color: #1c1917;
+  border: 1px solid rgba(28, 25, 23, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 10px 32px rgba(28, 25, 23, 0.08);
+}
+
+.pp-card-report .pp-kicker {
+  color: #78716c;
+}
+
+.pp-card-report .pp-metric {
+  background: #f4efe8;
+  border: 1px solid rgba(28, 25, 23, 0.06);
+}
+
+.pp-card-report .pp-divide {
+  border-top-color: #e8e0d6;
+}
+
+.pp-card-report .pp-chip-pos {
+  color: #3d7a5a;
+  background: #e8f3ec;
+  border-color: transparent;
+}
+
+.pp-card-report .pp-chip-neg {
+  color: #b54a4a;
+  background: #f8e8e6;
+  border-color: transparent;
+}
+
+.pp-card-report .pp-badge-success {
+  color: #3d7a5a;
+  background: #e8f3ec;
+  border-color: transparent;
 }
 
 .pp-card-mini {
