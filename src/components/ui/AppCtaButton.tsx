@@ -2,10 +2,10 @@ import type { ButtonHTMLAttributes, ReactNode } from 'react'
 import { Loader2 } from 'lucide-react'
 
 /**
- * Shared "amber pill" action button used across the app.
+ * Shared terracotta action button used across the app.
  *
  * Variants:
- * - `primary`   — amber fill, black text (default)
+ * - `primary`   — terracotta fill, ink text (default)
  * - `secondary` — glass outline, light text
  * - `ghost`     — text-only, subtle hover
  * - `danger`    — rose fill, white text
@@ -24,7 +24,7 @@ const sizeClasses: Record<AppCtaSize, string> = {
 
 const variantClasses: Record<AppCtaVariant, string> = {
   primary:
-    'rounded-full bg-amber-500/90 font-semibold text-black shadow-lg shadow-black/20 transition hover:bg-amber-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-400/50 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50',
+    'rounded-xl bg-[#d97757] font-semibold text-[#1a1613] transition hover:bg-[#e89372] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#d97757]/50 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50',
   secondary:
     'rounded-full bg-white/[0.06] font-semibold text-stone-200 ring-1 ring-white/[0.12] shadow-sm transition hover:bg-white/[0.1] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/25 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50',
   ghost:

@@ -173,16 +173,16 @@ export function getPlanLabel(plan: PlanType): string {
 export function getPlanColors(plan: PlanType): { badge: string; border: string; button: string } {
   if (plan === 'premium') {
     return {
-      badge: 'bg-amber-100 text-amber-700 border-amber-200',
-      border: 'border-amber-400',
-      button: 'bg-primary hover:bg-primary-hover text-white',
+      badge: 'bg-[#faf7f0] text-[#b45539] border-[#ebe3d3]',
+      border: 'border-[#d97757]',
+      button: 'bg-primary hover:bg-[#e89372] text-[#1a1613]',
     }
   }
   if (plan === 'pro') {
     return {
-      badge: 'bg-amber-100 text-amber-700 border-amber-200',
-      border: 'border-amber-400',
-      button: 'bg-amber-500 hover:bg-amber-600 text-white',
+      badge: 'bg-[#faf7f0] text-[#b45539] border-[#ebe3d3]',
+      border: 'border-[#d97757]',
+      button: 'bg-primary hover:bg-[#e89372] text-[#1a1613]',
     }
   }
   return {
@@ -430,8 +430,8 @@ export function useUserPlan(): UserPlanState {
   const planColorMap: Record<PlanType, string> = {
     anonymous: '#6B7280',
     free: '#6B7280',
-    premium: '#D97706',
-    pro: '#D97706',
+    premium: '#d97757',
+    pro: '#d97757',
   }
 
   const firstName = user?.firstName ?? null

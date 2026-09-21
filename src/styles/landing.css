@@ -451,6 +451,24 @@ html {
   font-family: "Manrope", system-ui, sans-serif;
 }
 
+.app-main-shell {
+  background: #1a1613;
+  color: #f0ebe0;
+  font-family: "Manrope", system-ui, sans-serif;
+}
+
+.app-main-shell .pp-wordmark {
+  color: #f0ebe0;
+  font-family: "Fraunces", Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+}
+
+.app-main-shell .pp-wordmark span {
+  color: #d97757;
+  font-weight: 400;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .pp-cta,
   .pp-nav-link,

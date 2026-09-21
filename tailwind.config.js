@@ -9,33 +9,31 @@ export default {
       },
       colors: {
         primary: {
-          DEFAULT: '#D97706',   // amber-600 — vanilla gold
-          hover:   '#B45309',   // amber-700 — deep gold
-          light:   '#FFFBEB',   // amber-50  — cream vanilla
+          DEFAULT: '#d97757',
+          hover:   '#b45539',
+          light:   '#faf7f0',
         },
         dark: {
-          DEFAULT: '#1C1200',   // warm near-black
-          mid:     '#2D1C08',   // mid dark warm
-          light:   '#3D2A10',   // lighter dark warm
+          DEFAULT: '#1a1613',
+          mid:     '#232019',
+          light:   '#3a332d',
         },
-        /** Logged-in app shell — aligned with landing `.landing-page-root` (#120c08) */
         app: {
-          canvas:    '#120c08',
-          surface:   '#1a1512',
-          muted:     '#14110e',
-          raised:    '#1f1a16',
-          border:    'rgba(168, 162, 158, 0.35)',
-          /** Warm cream “kachel” panels on dark sepia — high-contrast body text */
-          parchment:     '#faf6ee',
-          parchmentDeep: '#f3ebe0',
+          canvas:    '#1a1613',
+          surface:   '#232019',
+          muted:     '#1a1613',
+          raised:    '#2a2420',
+          border:    '#3a332d',
+          parchment:     '#faf7f0',
+          parchmentDeep: '#f5f1eb',
         },
         sidebar: {
-          DEFAULT: '#14110e',
-          hover:   'rgba(251, 191, 36, 0.08)',
-          active:  'rgba(251, 191, 36, 0.14)',
-          border:  'rgba(168, 162, 158, 0.22)',
-          muted:   '#a8a29e',
-          text:    '#e7e5e4',
+          DEFAULT: '#1a1613',
+          hover:   'rgba(217, 119, 87, 0.10)',
+          active:  'rgba(217, 119, 87, 0.16)',
+          border:  '#3a332d',
+          muted:   '#a89e91',
+          text:    '#f0ebe0',
         },
       },
       fontFamily: {
@@ -52,7 +50,7 @@ export default {
         'landing-md': 'inset 0 1px 0 0 rgb(255 251 235 / 6.5%), 0 16px 44px -10px rgb(0 0 0 / 50%)',
         'landing-lg': 'inset 0 1px 0 0 rgb(255 251 235 / 7%), 0 22px 50px -12px rgb(0 0 0 / 52%)',
         'landing-promo':
-          'inset 0 1px 0 0 rgb(255 251 235 / 7%), 0 22px 50px -12px rgb(0 0 0 / 55%), 0 0 36px -8px rgb(245 158 11 / 16%)',
+          'inset 0 1px 0 0 rgb(255 251 235 / 7%), 0 22px 50px -12px rgb(0 0 0 / 55%), 0 0 36px -8px rgb(217 119 87 / 16%)',
       },
       animation: {
         'fade-in':   'fadeIn 0.18s ease',
