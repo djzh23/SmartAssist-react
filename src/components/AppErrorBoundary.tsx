@@ -27,7 +27,7 @@ export class AppErrorBoundary extends Component<Props, State> {
       return (
         <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-[#0a0a0a] px-6">
           <div className="flex items-center gap-2">
-            <img src="/logo-nav.webp" alt="" className="pp-brand-mark h-9 w-9" width={36} height={36} />
+            <img src="/logo-mark.svg" alt="" className="pp-brand-mark h-9 w-9" width={36} height={36} />
             <span className="pp-wordmark text-xl">Private<span>Prep</span></span>
           </div>
           <div className="flex max-w-md flex-col items-center gap-3 rounded-xl border border-red-200 bg-white p-6 text-center shadow-sm">

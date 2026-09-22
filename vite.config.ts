@@ -1,6 +1,45 @@
 /// <reference types="vitest/config" />
-import { defineConfig, loadEnv } from 'vite'
+import { copyFileSync, existsSync } from 'node:fs'
+import { join } from 'node:path'
+import { defineConfig, loadEnv, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
+
+const BRAND_ICON_FILES = [
+  'favicon.ico',
+  'favicon-16x16.png',
+  'favicon-32x32.png',
+  'apple-touch-icon.png',
+  'android-chrome-192x192.png',
+  'android-chrome-512x512.png',
+  'maskable-icon-512x512.png',
+] as const
+
+function installBrandIconsPlugin(): Plugin {
+  const sync = () => {
+    const srcDir = join(process.cwd(), 'public', 'icons-logos-favicon')
+    const destDir = join(process.cwd(), 'public')
+    for (const name of BRAND_ICON_FILES) {
+      const from = join(srcDir, name)
+      if (!existsSync(from)) continue
+      copyFileSync(from, join(destDir, name))
+    }
+    const chrome512 = join(srcDir, 'android-chrome-512x512.png')
+    if (existsSync(chrome512)) {
+      copyFileSync(chrome512, join(destDir, 'logo.png'))
+      copyFileSync(chrome512, join(destDir, 'favicon.png'))
+    }
+  }
+
+  return {
+    name: 'install-brand-icons',
+    buildStart() {
+      sync()
+    },
+    configureServer() {
+      sync()
+    },
+  }
+}
 
 const LOCAL_API_DEFAULT = 'http://localhost:5108'
 
@@ -33,7 +72,7 @@ export default defineConfig(({ mode }) => {
   const backendUrl = resolveDevApiProxyTarget(mode, env)
 
   return {
-    plugins: [react()],
+    plugins: [react(), installBrandIconsPlugin()],
     test: {
       environment: 'jsdom',
       globals: true,

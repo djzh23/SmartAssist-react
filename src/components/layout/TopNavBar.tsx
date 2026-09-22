@@ -123,7 +123,7 @@ export default function TopNavBar(_props: Props) {
           className="flex min-w-0 flex-1 items-center gap-2 no-underline hover:opacity-90"
         >
           <img
-            src="/logo-nav.webp"
+            src="/logo-mark.svg"
             alt=""
             className="pp-brand-mark h-10 w-10"
             width={40}
@@ -152,7 +152,7 @@ export default function TopNavBar(_props: Props) {
           className="flex flex-shrink-0 items-center gap-2 rounded-lg py-1 pr-2 no-underline hover:opacity-90"
         >
           <img
-            src="/logo-nav.webp"
+            src="/logo-mark.svg"
             alt=""
             className="pp-brand-mark h-10 w-10"
             width={40}

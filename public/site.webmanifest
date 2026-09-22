@@ -11,17 +11,23 @@
   "dir": "ltr",
   "orientation": "any",
   "categories": ["business", "productivity", "education"],
-  "background_color": "#0d0800",
+  "background_color": "#faf7f2",
   "theme_color": "#d97706",
   "icons": [
     {
-      "src": "/favicon.png",
+      "src": "/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/android-chrome-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/favicon.png",
+      "src": "/maskable-icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
