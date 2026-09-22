@@ -41,6 +41,7 @@ import {
   type AnonymousSummaryLanguage,
 } from '../api/profileClient'
 import CvUploader from '../components/profile/CvUploader'
+import CvMergeOrReplaceModal from '../components/career-profile/CvMergeOrReplaceModal'
 import PageHeader from '../components/layout/PageHeader'
 import AppCtaButton from '../components/ui/AppCtaButton'
 import StandardPageContainer from '../components/layout/StandardPageContainer'
@@ -191,6 +192,39 @@ function describeMergeResult(result: MergeResult): string | null {
 
   if (parts.length === 0) return 'Übernommen. Alle Einträge aus dem neuen CV waren bereits in deinem Profil vorhanden.'
   return `Übernommen: ${parts.join(', ')} neu hinzugefügt. Bestehende Einträge bleiben erhalten.`
+}
+
+/** True once the profile has CV-derived data that a new upload could accidentally mix with. */
+function hasExistingCvData(profile: CareerProfile): boolean {
+  return (
+    (profile.skills?.length ?? 0) > 0 ||
+    (profile.experience?.length ?? 0) > 0 ||
+    (profile.educationEntries?.length ?? 0) > 0 ||
+    (profile.languages?.length ?? 0) > 0
+  )
+}
+
+/**
+ * Replaces skills, experience, education and languages with the new CV's data instead of adding
+ * to the old ones — for a deliberate career pivot (e.g. software development -> nursing), where
+ * merging the two would produce an incoherent profile the analysis would then read from.
+ */
+function replaceParsedDraftIntoProfile(profile: CareerProfile, draft: ParsedCvData): CareerProfile {
+  const effField = (draft.field?.trim() || profile.field)?.trim() || profile.field
+  const effLevel = (draft.level?.trim() || profile.level)?.trim() || profile.level
+
+  return {
+    ...profile,
+    field: effField ?? null,
+    fieldLabel: CAREER_FIELDS.find(f => f.value === effField)?.label ?? profile.fieldLabel,
+    level: effLevel ?? null,
+    levelLabel: CAREER_LEVELS.find(l => l.value === effLevel)?.label ?? profile.levelLabel,
+    currentRole: draft.currentRole?.trim() || profile.currentRole,
+    skills: draft.skills ?? [],
+    experience: draft.experience?.filter(e => (e.title ?? '').trim() || (e.company ?? '').trim()) ?? [],
+    educationEntries: draft.education?.filter(e => (e.degree ?? '').trim() || (e.institution ?? '').trim()) ?? [],
+    languages: draft.languages?.filter(l => (l.name ?? '').trim()) ?? [],
+  }
 }
 
 // ─── markdown renderer ───────────────────────────────────────────────────────
@@ -544,6 +578,9 @@ export default function CareerProfilePage() {
   const [summaryStale, setSummaryStale] = useState(false)
   const [pendingMergedDraftHint, setPendingMergedDraftHint] = useState(false)
   const [mergeSummaryHint, setMergeSummaryHint] = useState<string | null>(null)
+  /** A newly parsed CV that conflicts with existing profile data, awaiting the user's merge/replace choice. */
+  const [pendingCvChoice, setPendingCvChoice] = useState<{ draft: ParsedCvData; origin: 'apply' | 'manual' } | null>(null)
+  const [showStoryReminder, setShowStoryReminder] = useState(false)
   /** Which language the user wants to generate next */
   const [selectedGenLang, setSelectedGenLang] = useState<AnonymousSummaryLanguage>('de')
   /** Which language summary is open in the modal (null = closed) */
@@ -692,20 +729,26 @@ export default function CareerProfilePage() {
     }
   }
 
-  const saveParsedDraftToProfile = async (draft: ParsedCvData) => {
+  const applyParsedDraft = async (draft: ParsedCvData, mode: 'merge' | 'replace') => {
     if (!profile) return
     const token = await getToken()
     if (!token) throw new Error('Nicht angemeldet')
     setSaving(true)
     setError(null)
     try {
-      const result = mergeParsedDraftIntoProfile(profile, draft)
-      await updateFullProfile(token, result.profile)
+      if (mode === 'merge') {
+        const result = mergeParsedDraftIntoProfile(profile, draft)
+        await updateFullProfile(token, result.profile)
+        setMergeSummaryHint(describeMergeResult(result))
+      } else {
+        await updateFullProfile(token, replaceParsedDraftIntoProfile(profile, draft))
+        setMergeSummaryHint('Profil ersetzt: Skills, Erfahrung, Ausbildung und Sprachen kommen jetzt aus dem neuen Lebenslauf.')
+        setShowStoryReminder(true)
+      }
       await load()
       setDataEntryTab('manual')
       setSummaryStale(true)
       setPendingMergedDraftHint(false)
-      setMergeSummaryHint(describeMergeResult(result))
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Speichern fehlgeschlagen'
       setError(msg)
@@ -715,10 +758,40 @@ export default function CareerProfilePage() {
     }
   }
 
-  const applyManualDraftLocally = (draft: ParsedCvData) => {
-    setProfile(prev => (prev ? mergeParsedDraftIntoProfile(prev, draft).profile : null))
+  const applyManualDraftLocally = (draft: ParsedCvData, mode: 'merge' | 'replace') => {
+    setProfile(prev => {
+      if (!prev) return null
+      return mode === 'merge' ? mergeParsedDraftIntoProfile(prev, draft).profile : replaceParsedDraftIntoProfile(prev, draft)
+    })
     setDataEntryTab('manual')
     setPendingMergedDraftHint(true)
+    if (mode === 'replace') setShowStoryReminder(true)
+  }
+
+  /** Entry point for "Alles übernehmen". Asks first when a new CV could mix with existing profile data. */
+  const requestApplyParsed = async (draft: ParsedCvData) => {
+    if (profile && hasExistingCvData(profile)) {
+      setPendingCvChoice({ draft, origin: 'apply' })
+      return
+    }
+    await applyParsedDraft(draft, 'merge')
+  }
+
+  /** Entry point for "Im Formular bearbeiten". Same conflict check as requestApplyParsed. */
+  const requestManualAdjust = (draft: ParsedCvData) => {
+    if (profile && hasExistingCvData(profile)) {
+      setPendingCvChoice({ draft, origin: 'manual' })
+      return
+    }
+    applyManualDraftLocally(draft, 'merge')
+  }
+
+  const resolveCvChoice = async (mode: 'merge' | 'replace') => {
+    if (!pendingCvChoice) return
+    const { draft, origin } = pendingCvChoice
+    setPendingCvChoice(null)
+    if (origin === 'apply') await applyParsedDraft(draft, mode)
+    else applyManualDraftLocally(draft, mode)
   }
 
   const persistFullProfileFromState = async () => {
@@ -895,6 +968,13 @@ export default function CareerProfilePage() {
   return (
     <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden bg-transparent">
       {helpOpen && <HelpModal open={helpOpen} onClose={() => setHelpOpen(false)} />}
+      <CvMergeOrReplaceModal
+        open={pendingCvChoice !== null}
+        draft={pendingCvChoice?.draft ?? null}
+        onCancel={() => setPendingCvChoice(null)}
+        onMerge={() => void resolveCvChoice('merge')}
+        onReplace={() => void resolveCvChoice('replace')}
+      />
       <ProfileInsightModal
         open={insightModalOpen}
         onClose={() => setInsightModalOpen(false)}
@@ -1232,8 +1312,8 @@ export default function CareerProfilePage() {
               levelOptions={CAREER_LEVELS}
               cvPasteText={cvPasteForUploader}
               onCvPasteTextChange={setCvPasteForUploader}
-              onApplyParsed={saveParsedDraftToProfile}
-              onManualAdjust={applyManualDraftLocally}
+              onApplyParsed={requestApplyParsed}
+              onManualAdjust={requestManualAdjust}
             />
           )}
           {dataEntryTab === 'manual' && (
@@ -1324,6 +1404,36 @@ export default function CareerProfilePage() {
             >
               ×
             </button>
+          </div>
+        )}
+
+        {/* ── Story reminder after a profile replace ───────────────────── */}
+        {showStoryReminder && (
+          <div className="mb-4 flex flex-col gap-3 rounded-lg border border-[rgba(217,119,87,0.35)] bg-app-parchment px-4 py-3 text-sm text-stone-900 sm:flex-row sm:items-center sm:justify-between">
+            <p>
+              Dein Profil zeigt jetzt einen neuen Werdegang. Passt deine Story noch dazu, oder sollte
+              sie angepasst werden?
+            </p>
+            <div className="flex shrink-0 items-center gap-2">
+              <AppCtaButton
+                type="button"
+                onClick={() => {
+                  setActiveSection('basis')
+                  setMobileSection('basis')
+                  setShowStoryReminder(false)
+                }}
+              >
+                Story ansehen
+              </AppCtaButton>
+              <button
+                type="button"
+                onClick={() => setShowStoryReminder(false)}
+                className="p-2 text-stone-700/70 hover:text-stone-900"
+                aria-label="Hinweis schließen"
+              >
+                ×
+              </button>
+            </div>
           </div>
         )}
 
