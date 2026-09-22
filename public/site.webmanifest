@@ -12,7 +12,7 @@
   "orientation": "any",
   "categories": ["business", "productivity", "education"],
   "background_color": "#faf7f2",
-  "theme_color": "#d97706",
+  "theme_color": "#d97757",
   "icons": [
     {
       "src": "/android-chrome-192x192.png",

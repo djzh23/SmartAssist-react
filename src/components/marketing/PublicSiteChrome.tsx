@@ -65,20 +65,19 @@ function hashForSection(id: string) {
 
 function BrandMark() {
   return (
-    <>
-      <span className="pp-brand-mark inline-flex">
+    <span className="pp-brand-lockup">
+      <span className="pp-brand-mark">
         <img
           src="/logo-mark.svg"
           alt=""
-          className="h-11 w-11 shrink-0 sm:h-12 sm:w-12"
-          width={48}
-          height={48}
+          width={28}
+          height={28}
         />
       </span>
       <span className="pp-wordmark text-[16px] sm:text-[18px]">
         Private<span>Prep</span>
       </span>
-    </>
+    </span>
   )
 }
 
@@ -284,11 +283,11 @@ export function PublicSiteHeader({ variant }: PublicSiteHeaderProps) {
     <header className="pp-header">
       <nav className={`${PUBLIC_SHELL} relative flex h-16 items-center justify-between gap-3 sm:h-[4.25rem]`}>
         {isLanding ? (
-          <button type="button" onClick={() => go('hero')} className="flex min-w-0 items-center gap-2.5">
+          <button type="button" onClick={() => go('hero')} className="flex min-w-0 items-end">
             <BrandMark />
           </button>
         ) : (
-          <Link to="/" className="flex min-w-0 items-center gap-2.5">
+          <Link to="/" className="flex min-w-0 items-end">
             <BrandMark />
           </Link>
         )}
@@ -339,7 +338,7 @@ export function PublicSiteFooter() {
       <div className={`${PUBLIC_SHELL} py-[60px]`}>
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-end">
               <BrandMark />
             </div>
             <p className="mt-4 text-[13px] leading-relaxed text-[#a89e91]">

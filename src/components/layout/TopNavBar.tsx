@@ -120,14 +120,14 @@ export default function TopNavBar(_props: Props) {
         <Link
           to="/analyze"
           aria-label="PrivatePrep"
-          className="flex min-w-0 flex-1 items-center gap-2 no-underline hover:opacity-90"
+          className="flex min-w-0 flex-1 items-end gap-2 no-underline hover:opacity-90"
         >
           <img
             src="/logo-mark.svg"
             alt=""
-            className="pp-brand-mark h-10 w-10"
-            width={40}
-            height={40}
+            className="pp-brand-mark h-7 w-7 translate-y-[2px]"
+            width={28}
+            height={28}
             decoding="async"
           />
           <span className="pp-wordmark truncate text-sm">Private<span>Prep</span></span>
@@ -149,14 +149,14 @@ export default function TopNavBar(_props: Props) {
         <Link
           to="/analyze"
           aria-label="PrivatePrep"
-          className="flex flex-shrink-0 items-center gap-2 rounded-lg py-1 pr-2 no-underline hover:opacity-90"
+          className="flex flex-shrink-0 items-end gap-2 rounded-lg py-1 pr-2 no-underline hover:opacity-90"
         >
           <img
             src="/logo-mark.svg"
             alt=""
-            className="pp-brand-mark h-10 w-10"
-            width={40}
-            height={40}
+            className="pp-brand-mark h-7 w-7 translate-y-[2px]"
+            width={28}
+            height={28}
             decoding="async"
           />
           <span className="pp-wordmark text-[15px]">Private<span>Prep</span></span>

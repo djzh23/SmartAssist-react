@@ -63,6 +63,8 @@ html {
 
 .pp-brand-mark {
   display: inline-flex;
+  align-items: flex-end;
+  line-height: 0;
 }
 
 .pp-brand-mark img {
@@ -77,7 +79,7 @@ html {
 }
 
 .pp-wordmark span {
-  color: #fbbf24;
+  color: #d97757;
   font-weight: 700;
 }
 
@@ -86,11 +88,32 @@ html {
   font-family: var(--pp-display);
   font-weight: 400;
   letter-spacing: -0.02em;
+  line-height: 1;
 }
 
 .landing-page-root .pp-wordmark span {
   color: #d97757;
   font-weight: 400;
+}
+
+.pp-brand-lockup {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.pp-brand-lockup .pp-brand-mark img {
+  width: 1.7rem;
+  height: 1.7rem;
+}
+
+.pp-header .pp-brand-lockup .pp-wordmark {
+  padding-bottom: 3px;
+  border-bottom: 2px solid #d97757;
+}
+
+.pp-header .pp-brand-lockup .pp-brand-mark img {
+  transform: translateY(3px);
 }
 
 .pp-nav-link {
