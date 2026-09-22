@@ -122,6 +122,7 @@ export default function CvUploader({
     }
     setLoading(true)
     setError(null)
+    const clearSteps = runLoadSteps()
     try {
       const token = await getToken()
       if (!token) throw new Error('Nicht angemeldet')
@@ -134,10 +135,14 @@ export default function CvUploader({
         })
       }
       onCvPasteTextChange('')
+      // Same structured review as a PDF upload: nothing lands in the profile unconfirmed.
+      setDraft(normalizeParsed(registered.parsed))
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Speichern fehlgeschlagen')
     } finally {
+      clearSteps()
       setLoading(false)
+      setLoadStep(0)
     }
   }
 
@@ -145,7 +150,6 @@ export default function CvUploader({
     const s = skillInput.trim()
     if (!s || !draft) return
     if (draft.skills.includes(s)) return
-    if (draft.skills.length >= 15) return
     setDraft({ ...draft, skills: [...draft.skills, s] })
     setSkillInput('')
   }

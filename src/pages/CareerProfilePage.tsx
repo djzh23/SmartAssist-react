@@ -659,7 +659,8 @@ export default function CareerProfilePage() {
   const addSkill = async () => {
     const t = skillDraft.trim()
     if (!t || !profile) return
-    const next = [...profile.skills, t].slice(0, 30)
+    if (profile.skills.some(s => norm(s) === norm(t))) { setSkillDraft(''); return }
+    const next = [...profile.skills, t]
     setSkillDraft('')
     const token = await getToken()
     if (!token) return
@@ -1149,7 +1150,7 @@ export default function CareerProfilePage() {
                 </div>
               </div>
               <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                <ProfileAreaCard title="Skills" value={`${profile.skills.length} / 30`} status={profile.skills.length > 0 ? 'gepflegt' : 'ausstehend'} icon={Sparkles} onClick={() => setActiveSection('skills')} />
+                <ProfileAreaCard title="Skills" value={`${profile.skills.length} Einträge`} status={profile.skills.length > 0 ? 'gepflegt' : 'ausstehend'} icon={Sparkles} onClick={() => setActiveSection('skills')} />
                 <ProfileAreaCard title="Erfahrung" value={`${profile.experience.length} Einträge`} status={profile.experience.length > 0 ? 'vorhanden' : 'fehlt'} icon={BriefcaseBusiness} onClick={() => setActiveSection('experience')} />
                 <ProfileAreaCard title="Ausbildung" value={`${profile.educationEntries.length} Einträge`} status={profile.educationEntries.length > 0 ? 'vorhanden' : 'fehlt'} icon={GraduationCap} onClick={() => setActiveSection('education')} />
                 <ProfileAreaCard title="Sprachen" value={`${profile.languages.length} Sprachen`} status={profile.languages.length > 0 ? 'vorhanden' : 'fehlt'} icon={Languages} onClick={() => setActiveSection('languages')} />
@@ -1429,7 +1430,7 @@ export default function CareerProfilePage() {
         {/* ── Skills ─────────────────────────────────────────────────── */}
         {currentSection === 'skills' && (
         <section className="mb-8 rounded-xl border border-stone-400/40 bg-app-parchment p-5 shadow-landing text-stone-900">
-          <h2 className="mb-3 text-sm font-semibold text-stone-900">Skills (max. 30)</h2>
+          <h2 className="mb-3 text-sm font-semibold text-stone-900">Skills</h2>
           <div className="mb-3 flex flex-wrap gap-2">
             {profile.skills.map(s => (
               <span

@@ -122,6 +122,29 @@ export default function OnboardingWizard({ getToken, reload, skipOnboarding }: P
     await updateFullProfile(token, { story: trimmed })
   }
 
+  /**
+   * Merges whatever the AI extracted from the CV into the career profile, additively (never wipes
+   * a field the user already filled in step 1 unless the CV actually found something for it). This
+   * is what makes "onboarding fills the career profile" true regardless of PDF upload vs. pasted text.
+   */
+  const mergeParsedCvIntoProfile = async (token: string, parsed: ParsedCvData) => {
+    const experience = parsed.experience.filter(e => (e.title ?? '').trim() || (e.company ?? '').trim())
+    const education = parsed.education.filter(e => (e.degree ?? '').trim() || (e.institution ?? '').trim())
+    const languages = parsed.languages.filter(l => (l.name ?? '').trim())
+    if (parsed.skills.length === 0 && experience.length === 0 && education.length === 0 && languages.length === 0) {
+      return
+    }
+
+    const fresh = await fetchProfile(token)
+    await updateFullProfile(token, {
+      ...fresh,
+      skills: parsed.skills.length > 0 ? parsed.skills : fresh.skills,
+      experience: experience.length > 0 ? experience : fresh.experience,
+      educationEntries: education.length > 0 ? education : fresh.educationEntries,
+      languages: languages.length > 0 ? languages : fresh.languages,
+    })
+  }
+
   const finishOnboarding = async (includeCv: boolean) => {
     setFormError(null)
     setBusy(true)
@@ -147,6 +170,7 @@ export default function OnboardingWizard({ getToken, reload, skipOnboarding }: P
             length: registered.contentLength,
           })
         }
+        await mergeParsedCvIntoProfile(token, registered.parsed)
       }
       await reload()
       setStep('success')
@@ -178,32 +202,8 @@ export default function OnboardingWizard({ getToken, reload, skipOnboarding }: P
         currentRole: effRole,
         goals: ['new_job'],
       })
-
-      const fresh = await fetchProfile(token)
-      await updateFullProfile(token, {
-        ...fresh,
-        field: effField,
-        fieldLabel: effFieldLabel,
-        level: effLevel,
-        levelLabel: effLevelLabel,
-        currentRole: effRole ?? fresh.currentRole,
-        story: story.trim() || fresh.story,
-        skills: parsed.skills.length > 0 ? parsed.skills : fresh.skills,
-        experience:
-          parsed.experience.filter(e => (e.title ?? '').trim() || (e.company ?? '').trim())
-            .length > 0
-            ? parsed.experience.filter(e => (e.title ?? '').trim() || (e.company ?? '').trim())
-            : fresh.experience,
-        educationEntries:
-          parsed.education.filter(e => (e.degree ?? '').trim() || (e.institution ?? '').trim())
-            .length > 0
-            ? parsed.education.filter(e => (e.degree ?? '').trim() || (e.institution ?? '').trim())
-            : fresh.educationEntries,
-        languages:
-          parsed.languages.filter(l => (l.name ?? '').trim()).length > 0
-            ? parsed.languages.filter(l => (l.name ?? '').trim())
-            : fresh.languages,
-      })
+      await persistStory(token)
+      await mergeParsedCvIntoProfile(token, parsed)
 
       await reload()
       setStep('success')
@@ -410,9 +410,18 @@ export default function OnboardingWizard({ getToken, reload, skipOnboarding }: P
                 <h2 className="text-2xl font-bold text-stone-100">Profil gespeichert</h2>
                 <p className="text-sm text-stone-400">Als Nächstes: Stellenanzeige einfügen und analysieren.</p>
               </div>
-              <AppCtaButton size="lg" onClick={() => navigate(ANALYZE_PATH, { replace: true })}>
-                Zur Analyse
-              </AppCtaButton>
+              <div className="flex flex-col items-center gap-3">
+                <AppCtaButton size="lg" onClick={() => navigate(ANALYZE_PATH, { replace: true })}>
+                  Zur Analyse
+                </AppCtaButton>
+                <button
+                  type="button"
+                  onClick={() => navigate('/career-profile', { replace: true })}
+                  className="py-1 text-sm text-stone-500 hover:text-stone-300"
+                >
+                  Karriereprofil ansehen und ergänzen
+                </button>
+              </div>
             </div>
           )}
         </main>

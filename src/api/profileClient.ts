@@ -132,6 +132,8 @@ export interface CvUploadResult {
   contentHash: string
   contentLength: number
   extractedText: string
+  /** Structured data the AI extracted from the pasted text, same shape as the PDF upload. */
+  parsed: ParsedCvData
 }
 
 export async function uploadCv(token: string, text: string): Promise<CvUploadResult> {
@@ -151,6 +153,7 @@ export async function uploadCv(token: string, text: string): Promise<CvUploadRes
     contentHash,
     contentLength: body.contentLength ?? extractedText.length,
     extractedText,
+    parsed: { skills: [], experience: [], education: [], languages: [], ...body.parsed },
   }
 }
 
