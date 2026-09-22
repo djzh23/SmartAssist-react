@@ -5,6 +5,8 @@ import AnalyzeAccordion from './AnalyzeAccordion'
 
 interface Props {
   bullets: BulletRewriteSuggestion[]
+  /** True when the model's rewrites were withheld because they made claims the résumé does not back up. */
+  blockedByFactCheck?: boolean
 }
 
 async function copyText(text: string): Promise<boolean> {
@@ -104,7 +106,25 @@ function BulletCard({
   )
 }
 
-export default function AnalyzeBulletRewrites({ bullets }: Props) {
+function EmptyState({ blockedByFactCheck }: { blockedByFactCheck: boolean }) {
+  return (
+    <div className="flex gap-3 rounded-[10px] bg-[#f5f1eb] px-4 py-3.5">
+      <Info className="mt-0.5 h-[18px] w-[18px] shrink-0 text-[#b45539]" aria-hidden />
+      <div>
+        <p className="text-sm font-semibold text-[#1a1613]">
+          {blockedByFactCheck ? 'Formulierungsvorschläge zurückgehalten' : 'Keine Formulierungsvorschläge'}
+        </p>
+        <p className="mt-1 text-[13px] leading-relaxed text-[#4a4238]">
+          {blockedByFactCheck
+            ? 'Die vorgeschlagenen Formulierungen enthielten Angaben, die im Lebenslauf nicht belegt waren. Damit nichts Falsches im Lebenslauf landet, zeigen wir sie hier nicht an.'
+            : 'Für diesen Lebenslauf und diese Anzeige konnte aktuell kein passender Formulierungsvorschlag abgeleitet werden.'}
+        </p>
+      </div>
+    </div>
+  )
+}
+
+export default function AnalyzeBulletRewrites({ bullets, blockedByFactCheck = false }: Props) {
   const [copied, setCopied] = useState<number | null>(null)
   const [showAll, setShowAll] = useState(false)
   const count = bullets.length
@@ -118,7 +138,23 @@ export default function AnalyzeBulletRewrites({ bullets }: Props) {
     window.setTimeout(() => setCopied(current => (current === index ? null : current)), 1600)
   }
 
-  if (count === 0) return null
+  if (count === 0) {
+    return (
+      <>
+        <div className="lg:hidden">
+          <AnalyzeAccordion title="Formulierungen für deinen Lebenslauf" subtitle="Kein Vorschlag" icon={<PenLine className="h-4 w-4" />}>
+            <EmptyState blockedByFactCheck={blockedByFactCheck} />
+          </AnalyzeAccordion>
+        </div>
+        <section className="hidden lg:block" aria-label="Formulierungsvorschläge">
+          <p className="text-[11px] uppercase tracking-[0.08em] text-[#8a7f70]">Formulierungen für deinen Lebenslauf</p>
+          <div className="mt-4">
+            <EmptyState blockedByFactCheck={blockedByFactCheck} />
+          </div>
+        </section>
+      </>
+    )
+  }
 
   return (
     <>

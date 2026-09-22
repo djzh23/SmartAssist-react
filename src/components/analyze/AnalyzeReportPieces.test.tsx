@@ -62,6 +62,20 @@ describe('analyze report pieces', () => {
     expect(screen.getAllByRole('button', { name: 'Vorschlag kopieren' }).length).toBeGreaterThan(0)
     expect(screen.getAllByText(/ASP\.NET Core REST APIs entwickelt/).length).toBeGreaterThan(0)
   })
+
+  it('explains instead of silently disappearing when no bullet was rewritten', () => {
+    render(<AnalyzeBulletRewrites bullets={[]} />)
+
+    expect(screen.getAllByText('Keine Formulierungsvorschläge').length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/kein passender Formulierungsvorschlag/).length).toBeGreaterThan(0)
+  })
+
+  it('explains that suggestions were withheld because they were not backed by the résumé', () => {
+    render(<AnalyzeBulletRewrites bullets={[]} blockedByFactCheck />)
+
+    expect(screen.getAllByText('Formulierungsvorschläge zurückgehalten').length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/nicht belegt waren/).length).toBeGreaterThan(0)
+  })
 })
 
 describe('skill comparison that found nothing', () => {
@@ -157,6 +171,19 @@ describe('report view', () => {
     expect(text).not.toMatch(/red flag/i)
     expect(text).toContain('Die Stellenanzeige verlangt Terminkoordination.')
     expect(text).toContain('Die Stellenanzeige nennt kein Gehalt.')
+  })
+
+  it('tells the user why no CV rewrite was blocked by the fact check, instead of just omitting it', () => {
+    const blocked: AnalyzeReport = {
+      ...report,
+      bullets: [],
+      roleSummary: '',
+      factViolations: [{ violationType: 'InventedSkill', snippet: 'Kubernetes', reason: 'nicht im Lebenslauf' }],
+    }
+
+    render(<AnalyzeReportView report={blocked} createdLabel="gerade eben erstellt" onNewAnalysis={() => {}} />)
+
+    expect(screen.getAllByText('Formulierungsvorschläge zurückgehalten').length).toBeGreaterThan(0)
   })
 
   it('offers a new analysis at the top and keeps the score in reach', () => {

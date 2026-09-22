@@ -37,6 +37,7 @@ export default function AnalyzeReportView({ report, createdLabel, onNewAnalysis 
   const warnings = userFacingWarnings(report.warnings).map(plainGerman)
   const hasHints = skillWarning(gap) !== null || warnings.length > 0
   const bullets = (report.bullets ?? []).map(b => ({ ...b, reasoning: plainGerman(b.reasoning) }))
+  const bulletsBlockedByFactCheck = bullets.length === 0 && (report.factViolations ?? []).length > 0
 
   const coveredCount = skillsReliable ? gap.existing.length : undefined
   const requirementTotal = skillsReliable ? requirementCount(gap) : undefined
@@ -87,11 +88,9 @@ export default function AnalyzeReportView({ report, createdLabel, onNewAnalysis 
         <AnalyzeWarningBanner skillGap={gap} warnings={warnings} />
       </div>
 
-      {bullets.length > 0 ? (
-        <div className="mt-8">
-          <AnalyzeBulletRewrites bullets={bullets} />
-        </div>
-      ) : null}
+      <div className="mt-8">
+        <AnalyzeBulletRewrites bullets={bullets} blockedByFactCheck={bulletsBlockedByFactCheck} />
+      </div>
       {(report.roleSummary ?? '').trim() ? (
         <div className="mt-6">
           <AnalyzeRoleSummary text={plainGerman(report.roleSummary)} />
