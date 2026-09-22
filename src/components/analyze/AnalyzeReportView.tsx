@@ -38,6 +38,7 @@ export default function AnalyzeReportView({ report, createdLabel, onNewAnalysis 
   const hasHints = skillWarning(gap) !== null || warnings.length > 0
   const bullets = (report.bullets ?? []).map(b => ({ ...b, reasoning: plainGerman(b.reasoning) }))
   const bulletsBlockedByFactCheck = bullets.length === 0 && (report.factViolations ?? []).length > 0
+  const unverifiedBullets = (report.unverifiedBullets ?? []).map(b => ({ ...b, reasoning: plainGerman(b.reasoning) }))
 
   const coveredCount = skillsReliable ? gap.existing.length : undefined
   const requirementTotal = skillsReliable ? requirementCount(gap) : undefined
@@ -68,7 +69,7 @@ export default function AnalyzeReportView({ report, createdLabel, onNewAnalysis 
           factGateCount={inventedSkillCount(report.factViolations)}
           coveredCount={coveredCount}
           requirementTotal={requirementTotal}
-          missingCount={gap.gap.length}
+          missingSkills={gap.gap}
           roleAlignment={dims.roleAlignment}
           warningCount={warnings.length}
         />
@@ -89,7 +90,11 @@ export default function AnalyzeReportView({ report, createdLabel, onNewAnalysis 
       </div>
 
       <div className="mt-8">
-        <AnalyzeBulletRewrites bullets={bullets} blockedByFactCheck={bulletsBlockedByFactCheck} />
+        <AnalyzeBulletRewrites
+          bullets={bullets}
+          blockedByFactCheck={bulletsBlockedByFactCheck}
+          unverifiedBullets={unverifiedBullets}
+        />
       </div>
       {(report.roleSummary ?? '').trim() ? (
         <div className="mt-6">

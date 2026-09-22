@@ -9,7 +9,8 @@ interface Props {
   /** Only set when the automatic skill comparison is reliable. */
   coveredCount?: number
   requirementTotal?: number
-  missingCount?: number
+  /** Names of the missing requirements, so the lead sentence can say which ones instead of just a count. */
+  missingSkills?: string[]
   roleAlignment?: number
   warningCount?: number
 }
@@ -19,14 +20,15 @@ export default function AnalyzeHero({
   factGateCount,
   coveredCount,
   requirementTotal,
-  missingCount = 0,
+  missingSkills = [],
   roleAlignment,
   warningCount = 0,
 }: Props) {
+  const missingCount = missingSkills.length
   const lead = reportLead({
     covered: coveredCount,
     total: requirementTotal,
-    missing: missingCount,
+    missingSkills,
     roleAlignment,
     warningCount,
     score,

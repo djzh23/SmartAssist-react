@@ -5,17 +5,17 @@ export function scoreLabel(n: number): string {
 }
 
 export function scoreCaption(score: number): string {
-  if (score < 2.5) return 'Passt derzeit schlecht. Lebenslauf und Anzeige weichen stark voneinander ab.'
+  if (score < 2.5) return 'Passt aktuell schlecht: Lebenslauf und Stellenanzeige weichen deutlich voneinander ab.'
   if (score < 3.5) return 'Bewerbung nur mit klarem Grund empfohlen.'
-  if (score < 4.5) return 'Brauchbare Passung. Lücken vorher prüfen.'
-  return 'Gute Passung mit den vorliegenden Angaben.'
+  if (score < 4.5) return 'Gute Grundlage für eine Bewerbung. Lücken vorher prüfen.'
+  return 'Starke Übereinstimmung mit den vorliegenden Angaben.'
 }
 
 export function scoreBadge(score: number): string {
-  if (score < 2.5) return 'Schwache Passung'
-  if (score < 3.5) return 'Eingeschränkte Passung'
-  if (score < 4.5) return 'Brauchbare Passung'
-  return 'Gute Passung'
+  if (score < 2.5) return 'Passt kaum'
+  if (score < 3.5) return 'Passt teilweise'
+  if (score < 4.5) return 'Passt gut'
+  return 'Passt sehr gut'
 }
 
 export function scorePercent(score: number): number {
@@ -147,15 +147,23 @@ export function formatRelativeCreated(iso: string | null | undefined): string {
   }
 }
 
+/** Natural German list: "A", "A und B", "A, B und C". */
+export function joinGerman(items: string[]): string {
+  if (items.length === 0) return ''
+  if (items.length === 1) return items[0]
+  return `${items.slice(0, -1).join(', ')} und ${items[items.length - 1]}`
+}
+
 export function reportLead(options: {
   covered?: number
   total?: number
-  missing?: number
+  /** Names of the missing requirements, not just a count — the user should not have to look further to know which ones. */
+  missingSkills?: string[]
   roleAlignment?: number
   warningCount?: number
   score: number
 }): string {
-  const { covered, total, missing = 0, roleAlignment, warningCount = 0, score } = options
+  const { covered, total, missingSkills = [], roleAlignment, warningCount = 0, score } = options
   const sentences: string[] = []
 
   const hasCoverage = typeof covered === 'number' && typeof total === 'number' && total > 0
@@ -166,10 +174,10 @@ export function reportLead(options: {
   else if (roleFits) sentences.push('Die Rolle passt zu deinem Profil.')
 
   const issues: string[] = []
-  if (missing === 1) issues.push('eine Anforderung fehlt im Lebenslauf')
-  else if (missing > 1) issues.push(`${missing} Anforderungen fehlen im Lebenslauf`)
+  if (missingSkills.length === 1) issues.push(`${missingSkills[0]} fehlt im Lebenslauf`)
+  else if (missingSkills.length > 1) issues.push(`${joinGerman(missingSkills)} fehlen im Lebenslauf`)
   if (warningCount === 1) issues.push('die Anzeige enthält ein Warnzeichen')
-  else if (warningCount > 1) issues.push('die Anzeige enthält Warnzeichen')
+  else if (warningCount > 1) issues.push(`die Anzeige enthält ${warningCount} Warnzeichen`)
   if (issues.length > 0) sentences.push(`Zu prüfen: ${issues.join(' und ')}.`)
 
   sentences.push(scoreCaption(score))

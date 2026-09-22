@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import AnalyzeHero from './AnalyzeHero'
 import AnalyzeWarningBanner from './AnalyzeWarningBanner'
@@ -75,6 +75,27 @@ describe('analyze report pieces', () => {
 
     expect(screen.getAllByText('Formulierungsvorschläge zurückgehalten').length).toBeGreaterThan(0)
     expect(screen.getAllByText(/nicht belegt waren/).length).toBeGreaterThan(0)
+    expect(screen.queryByRole('button', { name: 'Trotzdem anzeigen' })).not.toBeInTheDocument()
+  })
+
+  it('offers withheld suggestions behind a button instead of never showing them', () => {
+    render(
+      <AnalyzeBulletRewrites
+        bullets={[]}
+        blockedByFactCheck
+        unverifiedBullets={[
+          { originalBullet: 'APIs gebaut', rewrittenBullet: 'Kubernetes-Cluster betrieben', reasoning: 'nicht im Lebenslauf belegt' },
+        ]}
+      />,
+    )
+
+    expect(screen.queryAllByText(/Kubernetes-Cluster betrieben/).length).toBe(0)
+
+    const reveal = screen.getAllByRole('button', { name: 'Trotzdem anzeigen' })[0]
+    fireEvent.click(reveal)
+
+    expect(screen.getAllByText(/Kubernetes-Cluster betrieben/).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/Nicht geprüft/).length).toBeGreaterThan(0)
   })
 })
 
@@ -124,7 +145,7 @@ describe('score breakdown', () => {
 
     expect(screen.getByText('Fähigkeiten und Erfahrung')).toBeInTheDocument()
     expect(screen.getByText('Dein Lebenslauf belegt 4 von 5 Anforderungen der Stellenanzeige.')).toBeInTheDocument()
-    expect(screen.getByText('Passung zur Rolle')).toBeInTheDocument()
+    expect(screen.getByText('Eignung für die Rolle')).toBeInTheDocument()
     expect(screen.getByText('Arbeitsumfeld')).toBeInTheDocument()
   })
 
@@ -184,6 +205,23 @@ describe('report view', () => {
     render(<AnalyzeReportView report={blocked} createdLabel="gerade eben erstellt" onNewAnalysis={() => {}} />)
 
     expect(screen.getAllByText('Formulierungsvorschläge zurückgehalten').length).toBeGreaterThan(0)
+  })
+
+  it('lets the user reveal an unverified rewrite from the full report', () => {
+    const blocked: AnalyzeReport = {
+      ...report,
+      bullets: [],
+      roleSummary: '',
+      factViolations: [{ violationType: 'InventedSkill', snippet: 'Kubernetes', reason: 'nicht im Lebenslauf' }],
+      unverifiedBullets: [
+        { originalBullet: 'APIs gebaut', rewrittenBullet: 'Kubernetes-Cluster betrieben', reasoning: 'nicht im Lebenslauf belegt' },
+      ],
+    }
+
+    render(<AnalyzeReportView report={blocked} createdLabel="gerade eben erstellt" onNewAnalysis={() => {}} />)
+    fireEvent.click(screen.getAllByRole('button', { name: 'Trotzdem anzeigen' })[0])
+
+    expect(screen.getAllByText(/Kubernetes-Cluster betrieben/).length).toBeGreaterThan(0)
   })
 
   it('offers a new analysis at the top and keeps the score in reach', () => {

@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react'
-import { Copy, Check, PenLine, ChevronDown, Info } from 'lucide-react'
+import { Copy, Check, PenLine, ChevronDown, Info, AlertTriangle } from 'lucide-react'
 import type { BulletRewriteSuggestion } from '../../api/analyzeClient'
 import AnalyzeAccordion from './AnalyzeAccordion'
 
@@ -7,6 +7,8 @@ interface Props {
   bullets: BulletRewriteSuggestion[]
   /** True when the model's rewrites were withheld because they made claims the résumé does not back up. */
   blockedByFactCheck?: boolean
+  /** The withheld rewrites themselves, offered behind a "show anyway" button, never shown automatically. */
+  unverifiedBullets?: BulletRewriteSuggestion[]
 }
 
 async function copyText(text: string): Promise<boolean> {
@@ -106,29 +108,66 @@ function BulletCard({
   )
 }
 
-function EmptyState({ blockedByFactCheck }: { blockedByFactCheck: boolean }) {
+function EmptyState({
+  blockedByFactCheck,
+  canReveal,
+  onReveal,
+}: {
+  blockedByFactCheck: boolean
+  canReveal: boolean
+  onReveal: () => void
+}) {
   return (
-    <div className="flex gap-3 rounded-[10px] bg-[#f5f1eb] px-4 py-3.5">
-      <Info className="mt-0.5 h-[18px] w-[18px] shrink-0 text-[#b45539]" aria-hidden />
-      <div>
-        <p className="text-sm font-semibold text-[#1a1613]">
-          {blockedByFactCheck ? 'Formulierungsvorschläge zurückgehalten' : 'Keine Formulierungsvorschläge'}
-        </p>
-        <p className="mt-1 text-[13px] leading-relaxed text-[#4a4238]">
-          {blockedByFactCheck
-            ? 'Die vorgeschlagenen Formulierungen enthielten Angaben, die im Lebenslauf nicht belegt waren. Damit nichts Falsches im Lebenslauf landet, zeigen wir sie hier nicht an.'
-            : 'Für diesen Lebenslauf und diese Anzeige konnte aktuell kein passender Formulierungsvorschlag abgeleitet werden.'}
-        </p>
+    <div>
+      <div className="flex gap-3 rounded-[10px] bg-[#f5f1eb] px-4 py-3.5">
+        <Info className="mt-0.5 h-[18px] w-[18px] shrink-0 text-[#b45539]" aria-hidden />
+        <div>
+          <p className="text-sm font-semibold text-[#1a1613]">
+            {blockedByFactCheck ? 'Formulierungsvorschläge zurückgehalten' : 'Keine Formulierungsvorschläge'}
+          </p>
+          <p className="mt-1 text-[13px] leading-relaxed text-[#4a4238]">
+            {blockedByFactCheck
+              ? 'Die vorgeschlagenen Formulierungen enthielten Angaben, die im Lebenslauf nicht belegt waren.'
+              : 'Für diesen Lebenslauf und diese Anzeige konnte aktuell kein passender Formulierungsvorschlag abgeleitet werden.'}
+            {canReveal ? ' Willst du dich trotzdem bewerben und brauchst die Formulierungen, kannst du sie dir ansehen – prüfe sie dann selbst gegen deinen Lebenslauf.' : ''}
+          </p>
+        </div>
       </div>
+      {canReveal ? (
+        <button
+          type="button"
+          onClick={onReveal}
+          className="mt-3 w-full rounded-xl border border-[#e8e0d0] bg-white px-4 py-2.5 text-sm font-medium text-[#4a4238] hover:border-[#d97757] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#d97757]/50"
+        >
+          Trotzdem anzeigen
+        </button>
+      ) : null}
     </div>
   )
 }
 
-export default function AnalyzeBulletRewrites({ bullets, blockedByFactCheck = false }: Props) {
+function UnverifiedNotice() {
+  return (
+    <div className="mb-5 flex gap-3 rounded-[10px] border border-[#e8c9a0] bg-[rgba(212,165,116,0.12)] px-4 py-3.5">
+      <AlertTriangle className="mt-0.5 h-[18px] w-[18px] shrink-0 text-[#8a6a3a]" aria-hidden />
+      <p className="text-[13px] leading-relaxed text-[#4a4238]">
+        <strong className="font-semibold text-[#8a6a3a]">Nicht geprüft:</strong> Diese Formulierungen wurden nicht mit
+        deinem Lebenslauf abgeglichen. Kontrolliere selbst, ob alles stimmt, bevor du sie verwendest.
+      </p>
+    </div>
+  )
+}
+
+export default function AnalyzeBulletRewrites({ bullets, blockedByFactCheck = false, unverifiedBullets = [] }: Props) {
   const [copied, setCopied] = useState<number | null>(null)
   const [showAll, setShowAll] = useState(false)
-  const count = bullets.length
-  const desktopVisible = showAll ? bullets : bullets.slice(0, 1)
+  const [revealed, setRevealed] = useState(false)
+
+  const showingUnverified = bullets.length === 0 && revealed
+  const shown = showingUnverified ? unverifiedBullets : bullets
+  const count = shown.length
+  const canReveal = bullets.length === 0 && !revealed && blockedByFactCheck && unverifiedBullets.length > 0
+  const desktopVisible = showAll ? shown : shown.slice(0, 1)
   const remaining = Math.max(0, count - 1)
 
   const handleCopy = async (index: number, text: string) => {
@@ -143,13 +182,13 @@ export default function AnalyzeBulletRewrites({ bullets, blockedByFactCheck = fa
       <>
         <div className="lg:hidden">
           <AnalyzeAccordion title="Formulierungen für deinen Lebenslauf" subtitle="Kein Vorschlag" icon={<PenLine className="h-4 w-4" />}>
-            <EmptyState blockedByFactCheck={blockedByFactCheck} />
+            <EmptyState blockedByFactCheck={blockedByFactCheck} canReveal={canReveal} onReveal={() => setRevealed(true)} />
           </AnalyzeAccordion>
         </div>
         <section className="hidden lg:block" aria-label="Formulierungsvorschläge">
           <p className="text-[11px] uppercase tracking-[0.08em] text-[#8a7f70]">Formulierungen für deinen Lebenslauf</p>
           <div className="mt-4">
-            <EmptyState blockedByFactCheck={blockedByFactCheck} />
+            <EmptyState blockedByFactCheck={blockedByFactCheck} canReveal={canReveal} onReveal={() => setRevealed(true)} />
           </div>
         </section>
       </>
@@ -161,11 +200,13 @@ export default function AnalyzeBulletRewrites({ bullets, blockedByFactCheck = fa
       <div className="lg:hidden">
         <AnalyzeAccordion
           title="Formulierungen für deinen Lebenslauf"
-          subtitle={count === 1 ? '1 Vorschlag bereit' : `${count} Vorschläge bereit`}
+          subtitle={showingUnverified ? 'Nicht geprüft' : count === 1 ? '1 Vorschlag bereit' : `${count} Vorschläge bereit`}
           icon={<PenLine className="h-4 w-4" />}
+          defaultOpen={showingUnverified}
         >
+          {showingUnverified ? <UnverifiedNotice /> : null}
           <ul className="space-y-6">
-            {bullets.map((b, i) => (
+            {shown.map((b, i) => (
               <li key={`${b.rewrittenBullet}-${i}`}>
                 <BulletCard
                   bullet={b}
@@ -179,6 +220,7 @@ export default function AnalyzeBulletRewrites({ bullets, blockedByFactCheck = fa
         </AnalyzeAccordion>
       </div>
       <section className="hidden lg:block" aria-label="Formulierungsvorschläge">
+        {showingUnverified ? <UnverifiedNotice /> : null}
         <ul className="space-y-8">
           {desktopVisible.map((b, i) => (
             <li key={`${b.rewrittenBullet}-${i}`}>

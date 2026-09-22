@@ -41,6 +41,8 @@ export interface AnalyzeReport {
   modelUsed?: string | null
   inputTokens?: number | null
   outputTokens?: number | null
+  /** Set only when FactGate withheld `bullets`: the same rewrites, not checked against the CV. */
+  unverifiedBullets?: BulletRewriteSuggestion[] | null
 }
 
 export interface AnalyzeUsageMeta {

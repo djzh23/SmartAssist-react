@@ -3,10 +3,12 @@ import type { SkillGapReport } from '../../api/analyzeClient'
 import {
   emptySkillGap,
   formatRelativeCreated,
+  joinGerman,
   normalizeGap,
   plainGerman,
   reportLead,
   requirementCount,
+  scoreBadge,
   scoreCaption,
   scoreLabel,
   scoreLevel,
@@ -55,14 +57,48 @@ describe('analyzeFormat', () => {
   it('formats relative created labels', () => {
     expect(formatRelativeCreated(new Date().toISOString())).toBe('gerade eben erstellt')
   })
+
+  it('joins a German list naturally', () => {
+    expect(joinGerman([])).toBe('')
+    expect(joinGerman(['C#'])).toBe('C#')
+    expect(joinGerman(['C#', 'SQL'])).toBe('C# und SQL')
+    expect(joinGerman(['C#', 'SQL', 'Docker'])).toBe('C#, SQL und Docker')
+  })
+
+  it('badges the score without the word "Passung"', () => {
+    expect(scoreBadge(2.0)).toBe('Passt kaum')
+    expect(scoreBadge(3.0)).toBe('Passt teilweise')
+    expect(scoreBadge(4.0)).toBe('Passt gut')
+    expect(scoreBadge(4.8)).toBe('Passt sehr gut')
+  })
 })
 
 describe('reportLead', () => {
-  it('names the coverage, the fitting role and what to check, as full sentences', () => {
-    const lead = reportLead({ covered: 4, total: 5, missing: 1, roleAlignment: 3.9, warningCount: 2, score: 3.8 })
+  it('names which requirement is missing instead of only counting it', () => {
+    const lead = reportLead({
+      covered: 4,
+      total: 5,
+      missingSkills: ['Führerschein Klasse B'],
+      roleAlignment: 3.9,
+      warningCount: 2,
+      score: 3.8,
+    })
 
     expect(lead).toContain('Dein Lebenslauf belegt 4 von 5 Anforderungen der Stellenanzeige, und die Rolle passt zu deinem Profil.')
-    expect(lead).toContain('Zu prüfen: eine Anforderung fehlt im Lebenslauf und die Anzeige enthält Warnzeichen.')
+    expect(lead).toContain('Zu prüfen: Führerschein Klasse B fehlt im Lebenslauf und die Anzeige enthält 2 Warnzeichen.')
+  })
+
+  it('names all missing requirements, not just the count, when there is more than one', () => {
+    const lead = reportLead({
+      covered: 0,
+      total: 2,
+      missingSkills: ['Backend-Erfahrung', 'Datenbank-Kenntnisse'],
+      roleAlignment: 2,
+      warningCount: 1,
+      score: 2.0,
+    })
+
+    expect(lead).toContain('Zu prüfen: Backend-Erfahrung und Datenbank-Kenntnisse fehlen im Lebenslauf und die Anzeige enthält ein Warnzeichen.')
   })
 
   it('never starts with a lower-case fragment when only the role fits', () => {
@@ -77,7 +113,14 @@ describe('reportLead', () => {
   })
 
   it('does not use the words "JD" or "Red Flags"', () => {
-    const lead = reportLead({ covered: 1, total: 3, missing: 2, roleAlignment: 4, warningCount: 1, score: 3 })
+    const lead = reportLead({
+      covered: 1,
+      total: 3,
+      missingSkills: ['ITIL', 'PRINCE2'],
+      roleAlignment: 4,
+      warningCount: 1,
+      score: 3,
+    })
 
     expect(lead).not.toMatch(/\bJD\b/)
     expect(lead).not.toMatch(/red flag/i)

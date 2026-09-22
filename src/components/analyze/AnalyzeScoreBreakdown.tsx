@@ -89,12 +89,14 @@ export default function AnalyzeScoreBreakdown({
 
   return (
     <section aria-label="Bewertung im Detail">
-      <p className="text-[11px] uppercase tracking-[0.08em] text-[#8a7f70]">So setzt sich die Bewertung zusammen</p>
-      <p className="mt-1 text-[13px] text-[#6e665e]">Bezogen auf die Stellenanzeige. 1 ist schwach, 5 ist sehr stark.</p>
+      <p className="text-[11px] uppercase tracking-[0.08em] text-[#8a7f70]">Wie die Bewertung zustande kommt</p>
+      <p className="mt-1 text-[13px] text-[#6e665e]">
+        Vier Bereiche im Vergleich zur Stellenanzeige, von 1 (passt kaum) bis 5 (passt sehr gut).
+      </p>
       <ul className="mt-5 space-y-5">
         <ScoreRow title="Fähigkeiten und Erfahrung" value={cvMatch} text={skillsText} />
         <ScoreRow
-          title="Passung zur Rolle"
+          title="Eignung für die Rolle"
           value={roleAlignment}
           text="Wie gut die Stelle zu deinen Zielen und deinem bisherigen Weg passt."
         />
