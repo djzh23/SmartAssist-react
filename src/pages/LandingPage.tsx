@@ -58,7 +58,7 @@ const STEPS = [
   {
     step: '1',
     title: 'Karriereprofil anlegen',
-    desc: 'Berufsfeld, Erfahrungsstand und Ziele einmal hinterlegen. Der Lebenslauf kommt als PDF oder Text dazu. Dieses Profil ist die Vergleichsbasis für jede folgende Analyse.',
+    desc: 'Berufsfeld, Erfahrungsstand und Ziele einmal hinterlegen. Lebenslauf als PDF oder Text und deine Story in eigenen Worten kommen dazu. Zusammen bilden sie dein Karriereprofil – die Vergleichsbasis für jede folgende Analyse.',
   },
   {
     step: '2',
