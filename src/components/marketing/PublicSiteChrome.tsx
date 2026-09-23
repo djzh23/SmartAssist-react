@@ -3,7 +3,9 @@ import { Link, useLocation, useNavigate, useNavigationType } from 'react-router-
 import { SignInButton, SignUpButton } from '@clerk/clerk-react'
 import { Menu, X } from 'lucide-react'
 
-const AFTER_AUTH = '/analyze'
+// Inbox is the main workflow surface; Analyze stays reachable as a fast path from there
+// (or from context-specific CTAs like the blog's "check this posting now" button).
+const AFTER_AUTH = '/inbox'
 const LANDING_SECTIONS = [
   'hero',
   'bericht',
