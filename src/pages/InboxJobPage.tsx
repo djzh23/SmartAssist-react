@@ -1,4 +1,303 @@
-// Placeholder. The full detail page (editing, delete, analyze) is added in Phase 4.
+import { useCallback, useEffect, useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useAuth } from '@clerk/clerk-react'
+import { AlertTriangle, ArrowLeft, ExternalLink, X } from 'lucide-react'
+import StandardPageContainer from '../components/layout/StandardPageContainer'
+import AppCtaButton from '../components/ui/AppCtaButton'
+import {
+  deleteInboxJob,
+  fetchInboxJob,
+  inboxSourceLabel,
+  updateInboxJob,
+  type InboxJob,
+} from '../api/inboxClient'
+
+const TITLE_MAX = 500
+const COMPANY_MAX = 300
+
+function formatRelativeTime(iso: string): string {
+  const then = new Date(iso).getTime()
+  if (!Number.isFinite(then)) return ''
+  const diffMs = Date.now() - then
+  const diffHours = diffMs / (1000 * 60 * 60)
+  if (diffHours < 1) return 'vor wenigen Minuten'
+  if (diffHours < 24) return `vor ${Math.floor(diffHours)} Stunden`
+  const diffDays = Math.floor(diffHours / 24)
+  if (diffDays === 1) return 'gestern'
+  if (diffDays < 7) return `vor ${diffDays} Tagen`
+  return new Date(iso).toLocaleDateString('de-DE')
+}
+
+function DeleteConfirmDialog({ onCancel, onConfirm, busy }: { onCancel: () => void; onConfirm: () => void; busy: boolean }) {
+  return (
+    <div className="fixed inset-0 z-[95] flex items-end justify-center sm:items-center" role="dialog" aria-modal="true" aria-labelledby="delete-inbox-job-title">
+      <button type="button" className="absolute inset-0 bg-black/55" aria-label="Abbrechen" onClick={onCancel} />
+      <div className="relative z-10 w-full max-w-sm rounded-t-2xl border border-white/10 bg-[#1a140f] p-5 shadow-2xl sm:rounded-2xl">
+        <div className="mb-3 flex items-start justify-between gap-3">
+          <h2 id="delete-inbox-job-title" className="text-base font-semibold text-stone-100">
+            Job wirklich loeschen?
+          </h2>
+          <button type="button" onClick={onCancel} className="rounded-lg p-1 text-stone-400 hover:bg-white/5 hover:text-stone-100" aria-label="Abbrechen">
+            <X size={18} aria-hidden />
+          </button>
+        </div>
+        <p className="mb-5 text-sm leading-relaxed text-stone-400">
+          Diese Aktion kann nicht rueckgaengig gemacht werden.
+        </p>
+        <div className="flex gap-2">
+          <AppCtaButton variant="secondary" onClick={onCancel} className="flex-1" disabled={busy}>
+            Abbrechen
+          </AppCtaButton>
+          <AppCtaButton variant="danger" onClick={onConfirm} className="flex-1" loading={busy}>
+            Loeschen
+          </AppCtaButton>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+type LoadState =
+  | { kind: 'loading' }
+  | { kind: 'not-found' }
+  | { kind: 'error' }
+  | { kind: 'ready'; job: InboxJob }
+
 export default function InboxJobPage() {
-  return <div className="px-4 py-6 text-stone-300">Job Details</div>
+  const { id } = useParams<{ id: string }>()
+  const { getToken } = useAuth()
+  const navigate = useNavigate()
+
+  const [state, setState] = useState<LoadState>({ kind: 'loading' })
+  const [title, setTitle] = useState('')
+  const [company, setCompany] = useState('')
+  const [rawText, setRawText] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
+  const [savedJustNow, setSavedJustNow] = useState(false)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+
+  const load = useCallback(async () => {
+    if (!id) return
+    setState({ kind: 'loading' })
+    try {
+      const token = await getToken()
+      if (!token) throw new Error('Nicht angemeldet.')
+      const job = await fetchInboxJob(id, token)
+      setState({ kind: 'ready', job })
+      setTitle(job.title)
+      setCompany(job.company)
+      setRawText(job.rawText)
+      setSavedJustNow(false)
+    } catch (e) {
+      if (e instanceof Error && /404|nicht gefunden/i.test(e.message)) {
+        setState({ kind: 'not-found' })
+      } else {
+        setState({ kind: 'error' })
+      }
+    }
+  }, [id, getToken])
+
+  useEffect(() => {
+    void load()
+  }, [load])
+
+  if (state.kind === 'loading') {
+    return (
+      <StandardPageContainer className="w-full max-w-[760px] pt-3 pb-6 sm:py-6">
+        <div className="animate-pulse rounded-2xl border border-[#3a332d] bg-[#232019] p-5">
+          <div className="h-5 w-1/3 rounded bg-white/10" />
+          <div className="mt-4 h-10 w-full rounded bg-white/[0.06]" />
+          <div className="mt-3 h-10 w-full rounded bg-white/[0.06]" />
+          <div className="mt-3 h-40 w-full rounded bg-white/[0.05]" />
+        </div>
+      </StandardPageContainer>
+    )
+  }
+
+  if (state.kind === 'not-found') {
+    return (
+      <StandardPageContainer className="w-full max-w-[760px] pt-3 pb-6 sm:py-6">
+        <div className="flex flex-col items-center gap-3 rounded-2xl border border-[#3a332d] bg-[#232019] px-6 py-14 text-center">
+          <AlertTriangle size={24} className="text-[#d97757]" aria-hidden />
+          <p className="text-sm text-[#f0ebe0]">Dieser Job existiert nicht mehr.</p>
+          <Link to="/inbox" className="text-sm font-medium text-[#d97757] hover:text-[#e89372]">
+            Zurueck zur Inbox
+          </Link>
+        </div>
+      </StandardPageContainer>
+    )
+  }
+
+  if (state.kind === 'error') {
+    return (
+      <StandardPageContainer className="w-full max-w-[760px] pt-3 pb-6 sm:py-6">
+        <div className="flex flex-col items-center gap-3 rounded-2xl border border-rose-900/40 bg-rose-950/20 px-6 py-12 text-center">
+          <AlertTriangle size={24} className="text-rose-400" aria-hidden />
+          <p className="text-sm text-rose-200">Fehler beim Laden. Bitte erneut versuchen.</p>
+          <AppCtaButton size="sm" variant="secondary" onClick={() => void load()}>
+            Erneut versuchen
+          </AppCtaButton>
+        </div>
+      </StandardPageContainer>
+    )
+  }
+
+  const { job } = state
+  const dirty = title.trim() !== job.title || company.trim() !== job.company || rawText !== job.rawText
+  const titleValid = title.trim().length > 0 && title.length <= TITLE_MAX
+  const companyValid = company.trim().length > 0 && company.length <= COMPANY_MAX
+
+  const handleSave = async () => {
+    if (!dirty || !titleValid || !companyValid) return
+    setSaving(true)
+    setSaveError(null)
+    try {
+      const token = await getToken()
+      if (!token) throw new Error('Nicht angemeldet.')
+      const updated = await updateInboxJob(job.id, { title: title.trim(), company: company.trim(), rawText }, token)
+      setState({ kind: 'ready', job: updated })
+      setTitle(updated.title)
+      setCompany(updated.company)
+      setRawText(updated.rawText)
+      setSavedJustNow(true)
+      window.setTimeout(() => setSavedJustNow(false), 3000)
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message : 'Speichern fehlgeschlagen.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    setDeleting(true)
+    setDeleteError(null)
+    try {
+      const token = await getToken()
+      if (!token) throw new Error('Nicht angemeldet.')
+      await deleteInboxJob(job.id, token)
+      navigate('/inbox', { replace: true })
+    } catch (e) {
+      setDeleteError(e instanceof Error ? e.message : 'Loeschen fehlgeschlagen.')
+      setDeleting(false)
+      setConfirmingDelete(false)
+    }
+  }
+
+  return (
+    <StandardPageContainer className="w-full max-w-[760px] pt-3 pb-6 sm:py-6">
+      <Link
+        to="/inbox"
+        className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-[#a89e91] hover:text-[#f5f1eb]"
+      >
+        <ArrowLeft size={16} aria-hidden />
+        Zurueck zur Inbox
+      </Link>
+
+      <div className="rounded-2xl border border-[#3a332d] bg-[#232019] p-5 sm:p-6">
+        <h1 className="mb-4 text-lg font-semibold text-[#f5f1eb]">Job Details</h1>
+
+        <div className="flex flex-col gap-4">
+          <label className="block">
+            <span className="text-sm font-medium text-[#f5f1eb]">Titel</span>
+            <input
+              type="text"
+              value={title}
+              onChange={e => setTitle(e.target.value)}
+              maxLength={TITLE_MAX}
+              className="mt-1.5 w-full rounded-lg border border-[#3a332d] bg-[#1a1613] px-3 py-2.5 text-sm text-[#f5f1eb] focus:border-[#d97757] focus:outline-none focus:ring-1 focus:ring-[#d97757]/40"
+            />
+          </label>
+
+          <label className="block">
+            <span className="text-sm font-medium text-[#f5f1eb]">Firma</span>
+            <input
+              type="text"
+              value={company}
+              onChange={e => setCompany(e.target.value)}
+              maxLength={COMPANY_MAX}
+              className="mt-1.5 w-full rounded-lg border border-[#3a332d] bg-[#1a1613] px-3 py-2.5 text-sm text-[#f5f1eb] focus:border-[#d97757] focus:outline-none focus:ring-1 focus:ring-[#d97757]/40"
+            />
+          </label>
+
+          <div className="grid gap-3 text-sm sm:grid-cols-2">
+            {job.location ? (
+              <div>
+                <p className="text-xs uppercase tracking-wide text-[#8a7f70]">Standort</p>
+                <p className="mt-0.5 text-[#c9c0b3]">{job.location}</p>
+              </div>
+            ) : null}
+            <div>
+              <p className="text-xs uppercase tracking-wide text-[#8a7f70]">Quelle</p>
+              <p className="mt-0.5 text-[#c9c0b3]">
+                {inboxSourceLabel(job.sourceKind)}
+                {job.sourceUrl ? (
+                  <a
+                    href={job.sourceUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="ml-1.5 inline-flex items-center gap-1 text-[#d97757] hover:text-[#e89372]"
+                  >
+                    Original oeffnen
+                    <ExternalLink size={12} aria-hidden />
+                  </a>
+                ) : null}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-wide text-[#8a7f70]">Gespeichert</p>
+              <p className="mt-0.5 text-[#c9c0b3]">{formatRelativeTime(job.extractedAt)}</p>
+            </div>
+          </div>
+
+          <label className="block">
+            <span className="text-sm font-medium text-[#f5f1eb]">Beschreibung</span>
+            <textarea
+              value={rawText}
+              onChange={e => setRawText(e.target.value)}
+              className="mt-1.5 min-h-[300px] w-full rounded-lg border border-[#3a332d] bg-[#1a1613] px-3 py-2.5 text-sm leading-relaxed text-[#f5f1eb] focus:border-[#d97757] focus:outline-none focus:ring-1 focus:ring-[#d97757]/40"
+            />
+          </label>
+
+          {saveError ? <p className="text-sm text-rose-400">{saveError}</p> : null}
+          {savedJustNow ? <p className="text-sm text-[#8fae8c]">Aenderungen gespeichert.</p> : null}
+          {deleteError ? <p className="text-sm text-rose-400">{deleteError}</p> : null}
+
+          <div className="flex flex-wrap gap-2">
+            <AppCtaButton
+              variant="secondary"
+              onClick={() => void handleSave()}
+              disabled={!dirty || !titleValid || !companyValid || saving}
+              loading={saving}
+            >
+              Aenderungen speichern
+            </AppCtaButton>
+            <AppCtaButton variant="danger" onClick={() => setConfirmingDelete(true)} disabled={saving || deleting}>
+              Loeschen
+            </AppCtaButton>
+          </div>
+        </div>
+
+        <div className="my-5 h-px bg-[#3a332d]" />
+
+        <AppCtaButton
+          size="lg"
+          className="w-full"
+          onClick={() => navigate(`/analyze?inbox=${encodeURIComponent(job.id)}`)}
+        >
+          Diese Stelle analysieren
+        </AppCtaButton>
+      </div>
+
+      {confirmingDelete ? (
+        <DeleteConfirmDialog
+          busy={deleting}
+          onCancel={() => setConfirmingDelete(false)}
+          onConfirm={() => void handleDelete()}
+        />
+      ) : null}
+    </StandardPageContainer>
+  )
 }
