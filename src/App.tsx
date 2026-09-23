@@ -15,6 +15,8 @@ const OnboardingPage = lazy(() => import('./pages/OnboardingPage'))
 const PricingPage = lazy(() => import('./pages/PricingPage'))
 const CareerProfilePage = lazy(() => import('./pages/CareerProfilePage'))
 const AnalyzePage = lazy(() => import('./pages/AnalyzePage'))
+const InboxPage = lazy(() => import('./pages/InboxPage'))
+const InboxJobPage = lazy(() => import('./pages/InboxJobPage'))
 const ImpressumPage = lazy(() => import('./pages/ImpressumPage'))
 const DatenschutzPage = lazy(() => import('./pages/DatenschutzPage'))
 const BlogIndexPage = lazy(() => import('./pages/BlogIndexPage'))
@@ -100,6 +102,22 @@ function AppRoutes() {
           element={(
             <Suspense fallback={<RouteFallback />}>
               <ProfilePage />
+            </Suspense>
+          )}
+        />
+        <Route
+          path="/inbox"
+          element={(
+            <Suspense fallback={<RouteFallback />}>
+              <InboxPage />
+            </Suspense>
+          )}
+        />
+        <Route
+          path="/inbox/:id"
+          element={(
+            <Suspense fallback={<RouteFallback />}>
+              <InboxJobPage />
             </Suspense>
           )}
         />

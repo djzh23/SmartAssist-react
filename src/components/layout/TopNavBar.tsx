@@ -5,6 +5,7 @@ import { User } from 'lucide-react'
 import { MAIN_NAV_ITEMS } from '../../config/mainNavigation'
 import { useUserPlan } from '../../hooks/useUserPlan'
 import { useBreakpoint } from '../../hooks/useBreakpoint'
+import { useInboxNewCount } from '../../hooks/useInboxNewCount'
 
 // onMenuClick/menuOpen kept in Props so MainLayout can still pass them without type error
 interface Props {
@@ -113,6 +114,7 @@ function UserAvatarMenu({
 export default function TopNavBar(_props: Props) {
   const bp = useBreakpoint()
   const { planLabel, planColor, initials, email } = useUserPlan()
+  const inboxNewCount = useInboxNewCount()
 
   if (bp === 'mobile') {
     return (
@@ -180,6 +182,14 @@ export default function TopNavBar(_props: Props) {
               >
                 <Icon size={16} aria-hidden />
                 {item.label}
+                {item.key === 'inbox' && inboxNewCount > 0 ? (
+                  <span
+                    className="ml-0.5 inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#d97757] px-1 text-[10px] font-bold leading-none text-[#1a1613]"
+                    aria-label={`${inboxNewCount} neue Stellen in der Inbox`}
+                  >
+                    {inboxNewCount > 99 ? '99+' : inboxNewCount}
+                  </span>
+                ) : null}
               </NavLink>
             )
           })}

@@ -1,6 +1,7 @@
 import {
   ClipboardList,
   FileSearch,
+  Inbox,
   Tag,
   LayoutDashboard,
   FolderOpen,
@@ -13,6 +14,7 @@ import type { LucideIcon } from 'lucide-react'
 export type MainNavPageKey =
   | 'analyze'
   | 'careerProfile'
+  | 'inbox'
   | 'pricing'
   | 'overview'
   | 'applications'
@@ -37,6 +39,14 @@ export const MAIN_NAV_ITEMS: MainNavItemMeta[] = [
     subtitle: 'Stellenanzeige prüfen: Match-Score, Skill-Lücken und Formulierungen. Für jede Branche.',
     icon: FileSearch,
     matchesPath: pathname => pathname === '/analyze' || pathname.startsWith('/analyze/'),
+  },
+  {
+    key: 'inbox',
+    route: '/inbox',
+    label: 'Inbox',
+    subtitle: 'Mit der Browser-Erweiterung gesammelte Stellenanzeigen pruefen, bearbeiten und analysieren.',
+    icon: Inbox,
+    matchesPath: pathname => pathname.startsWith('/inbox'),
   },
   {
     key: 'careerProfile',

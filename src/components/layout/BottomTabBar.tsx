@@ -1,7 +1,10 @@
 import { NavLink } from 'react-router-dom'
-import { ClipboardList, FileSearch, Tag } from 'lucide-react'
+import { ClipboardList, FileSearch, Inbox, Tag } from 'lucide-react'
+import { useInboxNewCount } from '../../hooks/useInboxNewCount'
 
 export default function BottomTabBar() {
+  const inboxNewCount = useInboxNewCount()
+
   const tabClass = (active: boolean) =>
     [
       'flex min-h-[44px] min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-0.5 rounded-lg py-1 text-[10px] font-medium transition-transform duration-100 active:scale-95',
@@ -21,6 +24,24 @@ export default function BottomTabBar() {
             <>
               <FileSearch size={20} strokeWidth={isActive ? 2.5 : 2} aria-hidden />
               <span>Analyse</span>
+            </>
+          )}
+        </NavLink>
+        <NavLink to="/inbox" className={({ isActive }) => tabClass(isActive)}>
+          {({ isActive }) => (
+            <>
+              <span className="relative">
+                <Inbox size={20} strokeWidth={isActive ? 2.5 : 2} aria-hidden />
+                {inboxNewCount > 0 ? (
+                  <span
+                    className="absolute -right-1.5 -top-1.5 inline-flex h-[15px] min-w-[15px] items-center justify-center rounded-full bg-[#d97757] px-1 text-[9px] font-bold leading-none text-[#1a1613]"
+                    aria-label={`${inboxNewCount} neue Stellen in der Inbox`}
+                  >
+                    {inboxNewCount > 99 ? '99+' : inboxNewCount}
+                  </span>
+                ) : null}
+              </span>
+              <span>Inbox</span>
             </>
           )}
         </NavLink>
