@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@clerk/clerk-react'
-import { AlertTriangle } from 'lucide-react'
+import { AlertTriangle, Inbox as InboxIcon } from 'lucide-react'
 import AppCtaButton from '../components/ui/AppCtaButton'
 import StandardPageContainer from '../components/layout/StandardPageContainer'
 import AnalyzeHeader from '../components/analyze/AnalyzeHeader'
-import AnalyzeInboxList from '../components/analyze/AnalyzeInboxList'
 import AnalyzeReportView from '../components/analyze/AnalyzeReportView'
 import AnalyzeLoadingState from '../components/analyze/AnalyzeLoadingState'
 import { formatRelativeCreated, plainGerman } from '../components/analyze/analyzeFormat'
@@ -19,7 +18,7 @@ import {
   type AnalyzeReport,
 } from '../api/analyzeClient'
 import { UsageLimitError } from '../api/agentClient'
-import { deleteInboxJob, fetchInboxJob, listInboxJobs, type InboxJobListItem } from '../api/inboxClient'
+import { fetchInboxJob } from '../api/inboxClient'
 import { isCachedCvReady, readCachedCv } from '../utils/cvSessionCache'
 
 const REPORT_KEY_PREFIX = 'privateprep_last_analyze_report_'
@@ -54,9 +53,7 @@ export default function AnalyzePage() {
   const { profile, loading: profileLoading } = useCareerProfile()
   const [jobText, setJobText] = useState('')
   const [activeJob, setActiveJob] = useState<{ id: string; title: string; company: string } | null>(null)
-  const [inboxJobs, setInboxJobs] = useState<InboxJobListItem[]>([])
   const [loadedInboxId, setLoadedInboxId] = useState<string | null>(null)
-  const [inboxLoadingId, setInboxLoadingId] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [report, setReport] = useState<AnalyzeReport | null>(null)
@@ -74,24 +71,6 @@ export default function AnalyzePage() {
       setComposing(false)
     }
   }, [authLoaded, userId])
-
-  useEffect(() => {
-    if (!authLoaded || !userId) return
-    let cancelled = false
-    void (async () => {
-      try {
-        const token = await getToken()
-        if (!token || cancelled) return
-        const jobs = await listInboxJobs(token)
-        if (!cancelled) setInboxJobs(jobs)
-      } catch {
-        // Empty inbox stays hidden. A later analyze action surfaces the real error.
-      }
-    })()
-    return () => {
-      cancelled = true
-    }
-  }, [authLoaded, userId, getToken])
 
   const cachedCv = userId ? readCachedCv(userId) : null
   const cvReady = isCachedCvReady(cachedCv, profile?.cvContentHash)
@@ -146,13 +125,11 @@ export default function AnalyzePage() {
       }
     } finally {
       setBusy(false)
-      setInboxLoadingId(null)
     }
   }
 
   const openInboxJob = async (id: string) => {
     setError(null)
-    setInboxLoadingId(id)
     try {
       const token = await getToken()
       if (!token) throw new Error('Bitte erneut anmelden.')
@@ -163,8 +140,6 @@ export default function AnalyzePage() {
       setSearchParams({}, { replace: true })
     } catch (e) {
       setError(e instanceof Error ? plainGerman(e.message) : 'Stelle konnte nicht geladen werden.')
-    } finally {
-      setInboxLoadingId(null)
     }
   }
 
@@ -175,19 +150,6 @@ export default function AnalyzePage() {
     // openInboxJob is recreated each render; the query param is the trigger.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authLoaded, inboxId, loadedInboxId])
-
-  const removeInboxJob = async (id: string) => {
-    setError(null)
-    try {
-      const token = await getToken()
-      if (!token) throw new Error('Bitte erneut anmelden.')
-      await deleteInboxJob(id, token)
-      setInboxJobs(current => current.filter(job => job.id !== id))
-      if (activeJob?.id === id) setActiveJob(null)
-    } catch (e) {
-      setError(e instanceof Error ? plainGerman(e.message) : 'Stelle konnte nicht entfernt werden.')
-    }
-  }
 
   const startNewAnalysis = () => {
     setComposing(true)
@@ -201,18 +163,11 @@ export default function AnalyzePage() {
     <StandardPageContainer className="w-full max-w-[1120px] pb-10 pt-4 sm:py-8">
       {showForm ? (
         <div className="mx-auto w-full max-w-[820px]">
-          <AnalyzeHeader title="Stellenanzeige prüfen" />
+          <AnalyzeHeader
+            title="Stellenanzeige prüfen"
+            subtitle="Füge eine Stellenanzeige ein, um deine Passung zu prüfen."
+          />
         </div>
-      ) : null}
-
-      {showForm ? (
-        <AnalyzeInboxList
-          jobs={inboxJobs}
-          activeId={activeJob?.id ?? inboxId}
-          loadingId={inboxLoadingId}
-          onOpen={id => void openInboxJob(id)}
-          onDelete={id => void removeInboxJob(id)}
-        />
       ) : null}
 
       {!profileLoading && !cvReady && showForm && (
@@ -280,6 +235,29 @@ export default function AnalyzePage() {
               Letztes Ergebnis anzeigen
             </button>
           ) : null}
+        </section>
+      ) : null}
+
+      {showForm ? (
+        <section className="mx-auto mt-4 w-full max-w-[820px] rounded-2xl border border-[#3a332d] bg-[#232019]/60 p-4 sm:p-5">
+          <div className="flex items-start gap-3">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[rgba(217,119,87,0.14)] text-[#d97757]">
+              <InboxIcon size={18} aria-hidden />
+            </span>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-[#f5f1eb]">Tipp</p>
+              <p className="mt-1 text-sm leading-relaxed text-[#a89e91]">
+                Du kannst auch die Browser-Erweiterung nutzen, um Jobs automatisch von LinkedIn und anderen
+                Portalen in deine Inbox zu sammeln.
+              </p>
+              <Link
+                to="/inbox"
+                className="mt-2 inline-block text-sm font-medium text-[#d97757] hover:text-[#e89372]"
+              >
+                Zur Inbox
+              </Link>
+            </div>
+          </div>
         </section>
       ) : null}
 
