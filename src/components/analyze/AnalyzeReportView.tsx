@@ -23,13 +23,14 @@ interface Props {
   /** Relative creation time shown above the title, e.g. "vor 2 Min. erstellt". */
   createdLabel: string
   onNewAnalysis: () => void
+  sourceLabel?: string
 }
 
 /**
  * The finished analysis. Mobile first: everything stacks in reading order. From `lg` on, the overall score
  * sits next to its breakdown and the skill comparison next to the hints, so the key result fits on one screen.
  */
-export default function AnalyzeReportView({ report, createdLabel, onNewAnalysis }: Props) {
+export default function AnalyzeReportView({ report, createdLabel, onNewAnalysis, sourceLabel }: Props) {
   const role = splitRoleSummary(plainGerman(report.roleSummary))
   const dims = report.dimensions ?? { cvMatch: 0, roleAlignment: 0, culture: 0, redFlags: 0 }
   const gap = normalizeGap(report.skillGap)
@@ -50,7 +51,7 @@ export default function AnalyzeReportView({ report, createdLabel, onNewAnalysis 
         title={role.title}
         subtitle={role.subtitle}
         score={report.globalScore}
-        kicker={`Analysebericht · ${createdLabel}`}
+        kicker={sourceLabel ? `${sourceLabel} · ${createdLabel}` : `Analysebericht · ${createdLabel}`}
         action={
           <button
             type="button"

@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@clerk/clerk-react'
 import { AlertTriangle } from 'lucide-react'
 import AppCtaButton from '../components/ui/AppCtaButton'
 import StandardPageContainer from '../components/layout/StandardPageContainer'
 import AnalyzeHeader from '../components/analyze/AnalyzeHeader'
+import AnalyzeInboxList from '../components/analyze/AnalyzeInboxList'
 import AnalyzeReportView from '../components/analyze/AnalyzeReportView'
 import AnalyzeLoadingState from '../components/analyze/AnalyzeLoadingState'
 import { formatRelativeCreated, plainGerman } from '../components/analyze/analyzeFormat'
@@ -13,11 +14,12 @@ import {
   analyzeJob,
   AnalyzeApiError,
   jobDescriptionLengthOk,
-  MIN_JD_CHARS,
   MAX_JD_CHARS,
+  MIN_JD_CHARS,
   type AnalyzeReport,
 } from '../api/analyzeClient'
 import { UsageLimitError } from '../api/agentClient'
+import { deleteInboxJob, fetchInboxJob, listInboxJobs, type InboxJobListItem } from '../api/inboxClient'
 import { isCachedCvReady, readCachedCv } from '../utils/cvSessionCache'
 
 const REPORT_KEY_PREFIX = 'privateprep_last_analyze_report_'
@@ -47,8 +49,14 @@ function storeReport(userId: string, report: AnalyzeReport): void {
 
 export default function AnalyzePage() {
   const { getToken, userId, isLoaded: authLoaded } = useAuth()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const inboxId = searchParams.get('inbox')
   const { profile, loading: profileLoading } = useCareerProfile()
   const [jobText, setJobText] = useState('')
+  const [activeJob, setActiveJob] = useState<{ id: string; title: string; company: string } | null>(null)
+  const [inboxJobs, setInboxJobs] = useState<InboxJobListItem[]>([])
+  const [loadedInboxId, setLoadedInboxId] = useState<string | null>(null)
+  const [inboxLoadingId, setInboxLoadingId] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [report, setReport] = useState<AnalyzeReport | null>(null)
@@ -67,6 +75,24 @@ export default function AnalyzePage() {
     }
   }, [authLoaded, userId])
 
+  useEffect(() => {
+    if (!authLoaded || !userId) return
+    let cancelled = false
+    void (async () => {
+      try {
+        const token = await getToken()
+        if (!token || cancelled) return
+        const jobs = await listInboxJobs(token)
+        if (!cancelled) setInboxJobs(jobs)
+      } catch {
+        // Empty inbox stays hidden. A later analyze action surfaces the real error.
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [authLoaded, userId, getToken])
+
   const cachedCv = userId ? readCachedCv(userId) : null
   const cvReady = isCachedCvReady(cachedCv, profile?.cvContentHash)
   const cvNeedsReupload = Boolean(profile?.cvContentHash?.trim()) && !cvReady
@@ -82,7 +108,7 @@ export default function AnalyzePage() {
   const showReport = Boolean(report) && !busy && !composing
   const showForm = !busy && (!report || composing)
 
-  const runAnalyze = async () => {
+  const runAnalyze = async (text: string, source?: { id: string; title: string; company: string }) => {
     setError(null)
     if (!cvReady) {
       setError(cvNeedsReupload
@@ -90,7 +116,7 @@ export default function AnalyzePage() {
         : 'Bitte zuerst einen Lebenslauf im Profil hinterlegen.')
       return
     }
-    if (!jdOk) {
+    if (!jobDescriptionLengthOk(text)) {
       setError(`Stellenanzeige muss zwischen ${MIN_JD_CHARS} und ${MAX_JD_CHARS} Zeichen lang sein.`)
       return
     }
@@ -99,8 +125,9 @@ export default function AnalyzePage() {
       const token = await getToken()
       if (!token) throw new Error('Bitte erneut anmelden.')
       if (!cachedCv) throw new Error('Bitte zuerst einen Lebenslauf im Profil hinterlegen.')
-      const { report: next } = await analyzeJob(jobText.trim(), token, { text: cachedCv.text, hash: cachedCv.hash })
+      const { report: next } = await analyzeJob(text.trim(), token, { text: cachedCv.text, hash: cachedCv.hash })
       setReport(next)
+      setActiveJob(source ?? null)
       setReportIsFromPreviousSession(false)
       setReportStoredAt(null)
       setComposing(false)
@@ -119,11 +146,52 @@ export default function AnalyzePage() {
       }
     } finally {
       setBusy(false)
+      setInboxLoadingId(null)
+    }
+  }
+
+  const openInboxJob = async (id: string) => {
+    setError(null)
+    setInboxLoadingId(id)
+    try {
+      const token = await getToken()
+      if (!token) throw new Error('Bitte erneut anmelden.')
+      const job = await fetchInboxJob(id, token)
+      setJobText(job.rawText)
+      setActiveJob({ id: job.id, title: job.title, company: job.company })
+      setComposing(true)
+      setSearchParams({}, { replace: true })
+    } catch (e) {
+      setError(e instanceof Error ? plainGerman(e.message) : 'Stelle konnte nicht geladen werden.')
+    } finally {
+      setInboxLoadingId(null)
+    }
+  }
+
+  useEffect(() => {
+    if (!authLoaded || !inboxId || inboxId === loadedInboxId) return
+    setLoadedInboxId(inboxId)
+    void openInboxJob(inboxId)
+    // openInboxJob is recreated each render; the query param is the trigger.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authLoaded, inboxId, loadedInboxId])
+
+  const removeInboxJob = async (id: string) => {
+    setError(null)
+    try {
+      const token = await getToken()
+      if (!token) throw new Error('Bitte erneut anmelden.')
+      await deleteInboxJob(id, token)
+      setInboxJobs(current => current.filter(job => job.id !== id))
+      if (activeJob?.id === id) setActiveJob(null)
+    } catch (e) {
+      setError(e instanceof Error ? plainGerman(e.message) : 'Stelle konnte nicht entfernt werden.')
     }
   }
 
   const startNewAnalysis = () => {
     setComposing(true)
+    setActiveJob(null)
     setError(null)
   }
 
@@ -135,6 +203,16 @@ export default function AnalyzePage() {
         <div className="mx-auto w-full max-w-[820px]">
           <AnalyzeHeader title="Stellenanzeige prüfen" />
         </div>
+      ) : null}
+
+      {showForm ? (
+        <AnalyzeInboxList
+          jobs={inboxJobs}
+          activeId={activeJob?.id ?? inboxId}
+          loadingId={inboxLoadingId}
+          onOpen={id => void openInboxJob(id)}
+          onDelete={id => void removeInboxJob(id)}
+        />
       ) : null}
 
       {!profileLoading && !cvReady && showForm && (
@@ -154,9 +232,13 @@ export default function AnalyzePage() {
       {showForm ? (
         <section className="mx-auto w-full max-w-[820px] rounded-[20px] border border-[#3a332d] bg-[#232019] p-5 sm:p-6">
           <label className="block">
-            <span className="text-sm font-medium text-[#f5f1eb]">Stellenanzeige</span>
+            <span className="text-sm font-medium text-[#f5f1eb]">
+              {activeJob ? activeJob.title : 'Stellenanzeige'}
+            </span>
             <p className="mt-1 text-xs text-[#a89e91]">
-              Text der Anzeige einfügen, egal ob Pflege, Vertrieb, Büro, Handwerk oder IT. Eine URL allein reicht nicht. Bitte den Anzeigentext kopieren.
+              {activeJob
+                ? `${activeJob.company}. Text aus der Erweiterung. Erst wenn du Analysieren drückst, startet die Prüfung.`
+                : 'Text der Anzeige einfügen, egal ob Pflege, Vertrieb, Büro, Handwerk oder IT. Eine URL allein reicht nicht. Bitte den Anzeigentext kopieren.'}
             </p>
             <textarea
               value={jobText}
@@ -170,7 +252,7 @@ export default function AnalyzePage() {
             <p className="text-xs text-[#a89e91]">{lengthHint}</p>
             <AppCtaButton
               size="lg"
-              onClick={() => void runAnalyze()}
+              onClick={() => void runAnalyze(jobText, activeJob ?? undefined)}
               disabled={busy || !jdOk || !cvReady}
               loading={busy}
             >
@@ -205,6 +287,7 @@ export default function AnalyzePage() {
           report={report}
           createdLabel={formatRelativeCreated(reportIsFromPreviousSession ? reportStoredAt : new Date().toISOString())}
           onNewAnalysis={startNewAnalysis}
+          sourceLabel={activeJob ? `${activeJob.title} · ${activeJob.company}` : undefined}
         />
       ) : null}
     </StandardPageContainer>
