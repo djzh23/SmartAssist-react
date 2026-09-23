@@ -197,7 +197,7 @@ export default function InboxJobPage() {
       </Link>
 
       <div className="rounded-2xl border border-[#3a332d] bg-[#232019] p-5 sm:p-6">
-        <h1 className="mb-4 text-lg font-semibold text-[#f5f1eb]">Job Details</h1>
+        <h1 className="mb-4 text-lg font-semibold text-[#f5f1eb]">Job-Details</h1>
 
         <div className="flex flex-col gap-4">
           <label className="block">

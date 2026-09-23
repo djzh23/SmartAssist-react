@@ -69,7 +69,16 @@ function EmptyState() {
       </div>
       <h2 className="text-lg font-semibold text-[#f5f1eb]">Deine Inbox ist leer</h2>
       <p className="max-w-sm text-sm leading-relaxed text-[#a89e91]">
-        Speichere Jobs mit einem Klick von LinkedIn und anderen Job Portalen direkt hier.
+        Speichere Jobs mit einem Klick von LinkedIn und anderen Job-Portalen direkt hier.
+      </p>
+      <div className="group relative mt-1">
+        <AppCtaButton disabled>Browser-Erweiterung installieren</AppCtaButton>
+        <span className="pointer-events-none absolute left-1/2 top-full z-10 mt-2 w-max -translate-x-1/2 rounded-lg bg-[#1a1613] px-2.5 py-1.5 text-xs text-[#f0ebe0] opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
+          Bald verfügbar
+        </span>
+      </div>
+      <p className="max-w-sm text-xs text-[#8a7f70]">
+        Alternativ kannst du Jobs auch weiterhin manuell in der Analyse-Seite einfügen.
       </p>
     </div>
   )
