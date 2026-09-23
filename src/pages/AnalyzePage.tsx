@@ -236,9 +236,16 @@ export default function AnalyzePage() {
               {activeJob ? activeJob.title : 'Stellenanzeige'}
             </span>
             <p className="mt-1 text-xs text-[#a89e91]">
-              {activeJob
-                ? `${activeJob.company}. Text aus der Erweiterung. Erst wenn du Analysieren drückst, startet die Prüfung.`
-                : 'Text der Anzeige einfügen, egal ob Pflege, Vertrieb, Büro, Handwerk oder IT. Eine URL allein reicht nicht. Bitte den Anzeigentext kopieren.'}
+              {activeJob ? (
+                <>
+                  {activeJob.company}. Text aus deiner Inbox übernommen. Erst wenn du Analysieren drückst, startet die Prüfung.{' '}
+                  <Link to={`/inbox/${activeJob.id}`} className="font-medium text-[#d97757] hover:text-[#e89372]">
+                    Zur Detailansicht
+                  </Link>
+                </>
+              ) : (
+                'Text der Anzeige einfügen, egal ob Pflege, Vertrieb, Büro, Handwerk oder IT. Eine URL allein reicht nicht. Bitte den Anzeigentext kopieren.'
+              )}
             </p>
             <textarea
               value={jobText}
