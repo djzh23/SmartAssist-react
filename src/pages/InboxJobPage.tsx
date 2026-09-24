@@ -135,6 +135,11 @@ export default function InboxJobPage() {
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [showReportPlaceholder, setShowReportPlaceholder] = useState(false)
   const [confirmingReanalyze, setConfirmingReanalyze] = useState(false)
+  // The backend does not return an updatedAt (deliberately, InboxJobResponse only exposes
+  // extractedAt/analyzedAt). Without a server timestamp to compare against analyzedAt, the only
+  // trustworthy signal for "the text changed since the last analysis" is what happened in this
+  // browser session: editing right now (dirty), or having saved an edit since the job was loaded.
+  const [savedSinceLoad, setSavedSinceLoad] = useState(false)
 
   const load = useCallback(async () => {
     if (!id) return
@@ -148,6 +153,7 @@ export default function InboxJobPage() {
       setCompany(job.company)
       setRawText(job.rawText)
       setSavedJustNow(false)
+      setSavedSinceLoad(false)
     } catch (e) {
       if (e instanceof Error && /404|nicht gefunden/i.test(e.message)) {
         setState({ kind: 'not-found' })
@@ -207,9 +213,11 @@ export default function InboxJobPage() {
   const titleValid = title.trim().length > 0 && title.length <= TITLE_MAX
   const companyValid = company.trim().length > 0 && company.length <= COMPANY_MAX
   const isAnalyzed = job.status === InboxJobStatus.Analyzed
-  // TODO(Phase 4): replace with a real analyzedAt/updatedAt comparison. Disabled for now so the
-  // button never lies about being able to start a fresh analysis it can't actually justify yet.
-  const canReanalyze = false
+  // The backend has no updatedAt to compare against analyzedAt (see savedSinceLoad above), so we
+  // track the "text changed since the last analysis" signal ourselves for this session: either the
+  // user is mid-edit right now (dirty), or they already saved an edit since this job was loaded
+  // (savedSinceLoad, which survives the save resetting dirty back to false).
+  const canReanalyze = dirty || savedSinceLoad
 
   const handleSave = async () => {
     if (!dirty || !titleValid || !companyValid) return
@@ -224,6 +232,7 @@ export default function InboxJobPage() {
       setCompany(updated.company)
       setRawText(updated.rawText)
       setSavedJustNow(true)
+      setSavedSinceLoad(true)
       window.setTimeout(() => setSavedJustNow(false), 3000)
     } catch (e) {
       setSaveError(e instanceof Error ? e.message : 'Speichern fehlgeschlagen.')
