@@ -59,31 +59,6 @@ function DeleteConfirmDialog({ onCancel, onConfirm, busy }: { onCancel: () => vo
   )
 }
 
-function ReportPlaceholderDialog({ onClose }: { onClose: () => void }) {
-  return (
-    <div className="fixed inset-0 z-[95] flex items-end justify-center sm:items-center" role="dialog" aria-modal="true" aria-labelledby="report-placeholder-title">
-      <button type="button" className="absolute inset-0 bg-black/55" aria-label="Schliessen" onClick={onClose} />
-      <div className="relative z-10 w-full max-w-sm rounded-t-2xl border border-white/10 bg-[#1a140f] p-5 shadow-2xl sm:rounded-2xl">
-        <div className="mb-3 flex items-start justify-between gap-3">
-          <h2 id="report-placeholder-title" className="text-base font-semibold text-stone-100">
-            Bericht noch nicht abrufbar
-          </h2>
-          <button type="button" onClick={onClose} className="rounded-lg p-1 text-stone-400 hover:bg-white/5 hover:text-stone-100" aria-label="Schliessen">
-            <X size={18} aria-hidden />
-          </button>
-        </div>
-        <p className="mb-5 text-sm leading-relaxed text-stone-400">
-          Berichte werden ab einer der naechsten Versionen dauerhaft gespeichert. Aktuell ist der
-          Bericht nur direkt nach der Analyse auf der Analyse Seite sichtbar.
-        </p>
-        <AppCtaButton variant="secondary" onClick={onClose} className="w-full">
-          Verstanden
-        </AppCtaButton>
-      </div>
-    </div>
-  )
-}
-
 function ReanalyzeConfirmDialog({ onCancel, onConfirm }: { onCancel: () => void; onConfirm: () => void }) {
   return (
     <div className="fixed inset-0 z-[95] flex items-end justify-center sm:items-center" role="dialog" aria-modal="true" aria-labelledby="reanalyze-title">
@@ -134,7 +109,6 @@ export default function InboxJobPage() {
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
-  const [showReportPlaceholder, setShowReportPlaceholder] = useState(false)
   const [confirmingReanalyze, setConfirmingReanalyze] = useState(false)
   // The backend does not return an updatedAt (deliberately, InboxJobResponse only exposes
   // extractedAt/analyzedAt). Without a server timestamp to compare against analyzedAt, the only
@@ -375,7 +349,7 @@ export default function InboxJobPage() {
               <Check size={16} strokeWidth={2.5} aria-hidden />
               Diese Stelle wurde bereits analysiert
             </p>
-            <AppCtaButton size="lg" className="w-full" onClick={() => setShowReportPlaceholder(true)}>
+            <AppCtaButton size="lg" className="w-full" onClick={() => navigate(`/inbox/${job.id}/report`)}>
               Analyse-Ergebnis oeffnen
             </AppCtaButton>
             <AppCtaButton
@@ -394,8 +368,6 @@ export default function InboxJobPage() {
           </div>
         )}
       </div>
-
-      {showReportPlaceholder ? <ReportPlaceholderDialog onClose={() => setShowReportPlaceholder(false)} /> : null}
 
       {confirmingReanalyze ? (
         <ReanalyzeConfirmDialog
