@@ -12,6 +12,7 @@ import {
   InboxJobStatus,
   type InboxJob,
 } from '../api/inboxClient'
+import { invalidateInboxCount } from '../hooks/useInboxNewCount'
 
 const TITLE_MAX = 500
 const COMPANY_MAX = 300
@@ -248,6 +249,7 @@ export default function InboxJobPage() {
       const token = await getToken()
       if (!token) throw new Error('Nicht angemeldet.')
       await deleteInboxJob(job.id, token)
+      invalidateInboxCount()
       navigate('/inbox', { replace: true })
     } catch (e) {
       setDeleteError(e instanceof Error ? e.message : 'Loeschen fehlgeschlagen.')
