@@ -12,6 +12,7 @@ import {
   InboxJobStatus,
   type InboxJob,
 } from '../api/inboxClient'
+import { analyzeJob } from '../api/analyzeClient'
 import { getReport } from '../api/reportsClient'
 import { invalidateInboxCount } from '../hooks/useInboxNewCount'
 import { readCachedCv } from '../utils/cvSessionCache'
@@ -113,6 +114,8 @@ export default function InboxJobPage() {
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [confirmingReanalyze, setConfirmingReanalyze] = useState(false)
+  const [reanalyzing, setReanalyzing] = useState(false)
+  const [reanalyzeError, setReanalyzeError] = useState<string | null>(null)
   // null while the hash comparison against the stored report is still running (or hasn't started
   // yet for a job that isn't analyzed). true/false once it resolves. See the effect below.
   const [hashesUnchanged, setHashesUnchanged] = useState<boolean | null>(null)
@@ -286,8 +289,9 @@ export default function InboxJobPage() {
     }
   }
 
-  // Same Option B flow as Paket 3: no backend analyze trigger exists yet, so this hands the raw
-  // text to the Analyze page via the ?inbox= prefill instead of calling anything here.
+  // First-time analysis still goes through the Analyze page's own form (Option B from Paket 3):
+  // the user reviews/edits the text there before submitting. AnalyzePage then auto-navigates to
+  // this job's report page once the analysis succeeds (Prompt B Session 2, Phase 5).
   const handleAnalyze = () => {
     navigate(`/analyze?inbox=${encodeURIComponent(job.id)}`)
   }
@@ -295,6 +299,28 @@ export default function InboxJobPage() {
   const handleReanalyze = () => {
     if (!canReanalyze) return
     setConfirmingReanalyze(true)
+  }
+
+  // Reanalysis, unlike the first-time flow above, calls analyze directly from here instead of
+  // bouncing through the Analyze page - the text is already known and confirmed, there is nothing
+  // left for the user to review before submitting.
+  const handleConfirmReanalyze = async () => {
+    setConfirmingReanalyze(false)
+    setReanalyzeError(null)
+    setReanalyzing(true)
+    try {
+      const token = await getToken()
+      if (!token) throw new Error('Nicht angemeldet.')
+      const cachedCv = readCachedCv(userId)
+      if (!cachedCv) {
+        throw new Error('Der Lebenslauf liegt nicht in diesem Browser. Bitte unter Profil erneut hochladen.')
+      }
+      await analyzeJob(job.rawText.trim(), token, { text: cachedCv.text, hash: cachedCv.hash }, job.id)
+      navigate(`/inbox/${job.id}/report`)
+    } catch (e) {
+      setReanalyzeError(e instanceof Error ? e.message : 'Analyse fehlgeschlagen.')
+      setReanalyzing(false)
+    }
   }
 
   return (
@@ -410,18 +436,21 @@ export default function InboxJobPage() {
               size="sm"
               variant="secondary"
               onClick={handleReanalyze}
-              disabled={!canReanalyze || checkingReanalyze}
-              loading={checkingReanalyze}
+              disabled={!canReanalyze || checkingReanalyze || reanalyzing}
+              loading={checkingReanalyze || reanalyzing}
               title={
-                checkingReanalyze
-                  ? 'Pruefe, ob sich Text oder Lebenslauf seit der letzten Analyse geaendert haben...'
-                  : canReanalyze
-                    ? 'Text oder Lebenslauf wurden geaendert. Neue Analyse mit dem aktuellen Stand starten.'
-                    : 'Text und Lebenslauf sind unveraendert seit der letzten Analyse. Keine neue Analyse noetig.'
+                reanalyzing
+                  ? 'Analyse laeuft...'
+                  : checkingReanalyze
+                    ? 'Pruefe, ob sich Text oder Lebenslauf seit der letzten Analyse geaendert haben...'
+                    : canReanalyze
+                      ? 'Text oder Lebenslauf wurden geaendert. Neue Analyse mit dem aktuellen Stand starten.'
+                      : 'Text und Lebenslauf sind unveraendert seit der letzten Analyse. Keine neue Analyse noetig.'
               }
             >
-              {checkingReanalyze ? 'Pruefe...' : 'Analyse aktualisieren'}
+              {reanalyzing ? 'Analyse laeuft...' : checkingReanalyze ? 'Pruefe...' : 'Analyse aktualisieren'}
             </AppCtaButton>
+            {reanalyzeError ? <p className="text-sm text-rose-400">{reanalyzeError}</p> : null}
           </div>
         )}
       </div>
@@ -429,10 +458,7 @@ export default function InboxJobPage() {
       {confirmingReanalyze ? (
         <ReanalyzeConfirmDialog
           onCancel={() => setConfirmingReanalyze(false)}
-          onConfirm={() => {
-            setConfirmingReanalyze(false)
-            handleAnalyze()
-          }}
+          onConfirm={() => void handleConfirmReanalyze()}
         />
       ) : null}
 
