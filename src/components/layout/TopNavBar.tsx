@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { SignOutButton } from '@clerk/clerk-react'
-import { User } from 'lucide-react'
+import { Puzzle, User } from 'lucide-react'
 import { MAIN_NAV_ITEMS } from '../../config/mainNavigation'
 import { useUserPlan } from '../../hooks/useUserPlan'
 import { useBreakpoint } from '../../hooks/useBreakpoint'
@@ -94,6 +94,18 @@ function UserAvatarMenu({
           >
             <User size={16} className="text-stone-400" aria-hidden />
             Konto
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-stone-200 hover:bg-white/6"
+            onClick={() => {
+              setUserMenuOpen(false)
+              navigate('/erweiterung')
+            }}
+          >
+            <Puzzle size={16} className="text-stone-400" aria-hidden />
+            Browser-Erweiterung
           </button>
           <div className="my-1 h-px bg-stone-600/40" />
           <SignOutButton>
