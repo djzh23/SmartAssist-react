@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useUser, useAuth } from '@clerk/clerk-react'
-import { getAgentUsage } from '../api/client'
+import { getAgentUsage } from '../api/agentClient'
 
 const USAGE_EVENT = 'privateprep_usage_updated'
 const PLAN_EVENT = 'privateprep_plan_updated'
