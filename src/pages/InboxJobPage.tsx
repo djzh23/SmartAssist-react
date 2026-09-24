@@ -12,7 +12,10 @@ import {
   InboxJobStatus,
   type InboxJob,
 } from '../api/inboxClient'
+import { getReport } from '../api/reportsClient'
 import { invalidateInboxCount } from '../hooks/useInboxNewCount'
+import { readCachedCv } from '../utils/cvSessionCache'
+import { sha256Hex } from '../utils/textHash'
 
 const TITLE_MAX = 500
 const COMPANY_MAX = 300
@@ -96,7 +99,7 @@ type LoadState =
 
 export default function InboxJobPage() {
   const { id } = useParams<{ id: string }>()
-  const { getToken } = useAuth()
+  const { getToken, userId } = useAuth()
   const navigate = useNavigate()
 
   const [state, setState] = useState<LoadState>({ kind: 'loading' })
@@ -110,11 +113,9 @@ export default function InboxJobPage() {
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [confirmingReanalyze, setConfirmingReanalyze] = useState(false)
-  // The backend does not return an updatedAt (deliberately, InboxJobResponse only exposes
-  // extractedAt/analyzedAt). Without a server timestamp to compare against analyzedAt, the only
-  // trustworthy signal for "the text changed since the last analysis" is what happened in this
-  // browser session: editing right now (dirty), or having saved an edit since the job was loaded.
-  const [savedSinceLoad, setSavedSinceLoad] = useState(false)
+  // null while the hash comparison against the stored report is still running (or hasn't started
+  // yet for a job that isn't analyzed). true/false once it resolves. See the effect below.
+  const [hashesUnchanged, setHashesUnchanged] = useState<boolean | null>(null)
 
   const load = useCallback(async () => {
     if (!id) return
@@ -128,7 +129,6 @@ export default function InboxJobPage() {
       setCompany(job.company)
       setRawText(job.rawText)
       setSavedJustNow(false)
-      setSavedSinceLoad(false)
     } catch (e) {
       if (e instanceof Error && /404|nicht gefunden/i.test(e.message)) {
         setState({ kind: 'not-found' })
@@ -141,6 +141,61 @@ export default function InboxJobPage() {
   useEffect(() => {
     void load()
   }, [load])
+
+  // Real hash comparison (Prompt B Session 2) replaces the earlier session-local dirty/saved
+  // heuristic: the backend now stores the exact CV/JD hashes it analyzed, so we can directly check
+  // whether either one still matches instead of guessing from in-session edit history.
+  useEffect(() => {
+    if (state.kind !== 'ready') return
+    const currentJob = state.job
+
+    if (currentJob.status !== InboxJobStatus.Analyzed || !currentJob.analysisReportId) {
+      setHashesUnchanged(null)
+      return
+    }
+
+    let cancelled = false
+    setHashesUnchanged(null)
+
+    const check = async () => {
+      try {
+        const token = await getToken()
+        if (!token) {
+          if (!cancelled) setHashesUnchanged(false)
+          return
+        }
+        // job.analysisReportId is trusted here (Analyzed status implies it is set); if the report
+        // itself is gone (e.g. deleted through a different tab), fall back to "changed" so the
+        // button never stays stuck disabled on a report that no longer exists.
+        const report = await getReport(currentJob.analysisReportId!, token)
+        const currentJdHash = await sha256Hex(currentJob.rawText.trim())
+        if (currentJdHash !== report.jdHash) {
+          if (!cancelled) setHashesUnchanged(false)
+          return
+        }
+
+        // CV hash: compare against whatever CV this browser has cached for the current analyze
+        // flow (src/utils/cvSessionCache.ts). If nothing is cached here, we cannot prove the CV is
+        // unchanged, so we do not claim it is - same "do not lie in the safe direction" reasoning
+        // as the JD check.
+        const cachedCv = readCachedCv(userId)
+        if (!cachedCv) {
+          if (!cancelled) setHashesUnchanged(false)
+          return
+        }
+        if (!cancelled) setHashesUnchanged(cachedCv.hash === report.cvHash)
+      } catch {
+        // Report fetch failed (network, 404 if deleted concurrently, ...): do not block a
+        // legitimate reanalysis on our own inability to check.
+        if (!cancelled) setHashesUnchanged(false)
+      }
+    }
+
+    void check()
+    return () => {
+      cancelled = true
+    }
+  }, [state, getToken, userId])
 
   if (state.kind === 'loading') {
     return (
@@ -188,11 +243,11 @@ export default function InboxJobPage() {
   const titleValid = title.trim().length > 0 && title.length <= TITLE_MAX
   const companyValid = company.trim().length > 0 && company.length <= COMPANY_MAX
   const isAnalyzed = job.status === InboxJobStatus.Analyzed
-  // The backend has no updatedAt to compare against analyzedAt (see savedSinceLoad above), so we
-  // track the "text changed since the last analysis" signal ourselves for this session: either the
-  // user is mid-edit right now (dirty), or they already saved an edit since this job was loaded
-  // (savedSinceLoad, which survives the save resetting dirty back to false).
-  const canReanalyze = dirty || savedSinceLoad
+  // Editing right now always counts as "changed" without waiting for the hash check (it would
+  // compare the last-saved text anyway, not what's currently in the textarea). Otherwise, defer to
+  // the real CV/JD hash comparison from the effect above.
+  const checkingReanalyze = !dirty && isAnalyzed && hashesUnchanged === null
+  const canReanalyze = dirty || hashesUnchanged === false
 
   const handleSave = async () => {
     if (!dirty || !titleValid || !companyValid) return
@@ -207,7 +262,6 @@ export default function InboxJobPage() {
       setCompany(updated.company)
       setRawText(updated.rawText)
       setSavedJustNow(true)
-      setSavedSinceLoad(true)
       window.setTimeout(() => setSavedJustNow(false), 3000)
     } catch (e) {
       setSaveError(e instanceof Error ? e.message : 'Speichern fehlgeschlagen.')
@@ -356,14 +410,17 @@ export default function InboxJobPage() {
               size="sm"
               variant="secondary"
               onClick={handleReanalyze}
-              disabled={!canReanalyze}
+              disabled={!canReanalyze || checkingReanalyze}
+              loading={checkingReanalyze}
               title={
-                canReanalyze
-                  ? 'Text wurde geaendert. Neue Analyse mit dem aktuellen Text starten.'
-                  : 'Der Text ist unveraendert seit der letzten Analyse. Keine neue Analyse noetig.'
+                checkingReanalyze
+                  ? 'Pruefe, ob sich Text oder Lebenslauf seit der letzten Analyse geaendert haben...'
+                  : canReanalyze
+                    ? 'Text oder Lebenslauf wurden geaendert. Neue Analyse mit dem aktuellen Stand starten.'
+                    : 'Text und Lebenslauf sind unveraendert seit der letzten Analyse. Keine neue Analyse noetig.'
               }
             >
-              Analyse aktualisieren
+              {checkingReanalyze ? 'Pruefe...' : 'Analyse aktualisieren'}
             </AppCtaButton>
           </div>
         )}
