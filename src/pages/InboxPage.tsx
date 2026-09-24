@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@clerk/clerk-react'
-import { AlertTriangle, ExternalLink, Inbox as InboxIcon } from 'lucide-react'
+import { AlertTriangle, Check, ExternalLink, Inbox as InboxIcon } from 'lucide-react'
 import PageHeader from '../components/layout/PageHeader'
 import StandardPageContainer from '../components/layout/StandardPageContainer'
 import AppCtaButton from '../components/ui/AppCtaButton'
@@ -172,7 +172,9 @@ export default function InboxPage() {
         <ul className="flex flex-col gap-3">
           {visibleJobs.map(job => {
             const badge = statusBadge(job.status)
+            const isAnalyzed = job.status === InboxJobStatus.Analyzed
             const relative = formatRelativeTime(job.extractedAt)
+            const analyzedRelative = job.analyzedAt ? formatRelativeTime(job.analyzedAt) : null
             const metaParts = [job.location, inboxSourceLabel(job.sourceKind), relative].filter(Boolean)
 
             return (
@@ -180,20 +182,31 @@ export default function InboxPage() {
                 <button
                   type="button"
                   onClick={() => navigate(`/inbox/${job.id}`)}
-                  className="w-full rounded-2xl border border-[#3a332d] bg-[#232019] p-4 text-left transition hover:border-[#d97757]/50 hover:bg-[#28241d] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#d97757]/50"
+                  className={[
+                    'w-full rounded-2xl border p-4 text-left transition hover:bg-[#28241d] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#d97757]/50',
+                    isAnalyzed
+                      ? 'border-[#3a4a37] bg-[#1f2419] hover:border-[#6f8f6d]/50'
+                      : 'border-[#3a332d] bg-[#232019] hover:border-[#d97757]/50',
+                  ].join(' ')}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="truncate font-medium text-[#f5f1eb]">{job.title}</p>
                       <p className="mt-0.5 text-sm text-[#a89e91]">{job.company}</p>
                     </div>
-                    <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ${badge.className}`}>
+                    <span className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold ${badge.className}`}>
+                      {isAnalyzed ? <Check size={12} strokeWidth={2.5} aria-hidden /> : null}
                       {badge.label}
                     </span>
                   </div>
-                  {metaParts.length > 0 ? (
+                  {metaParts.length > 0 || analyzedRelative ? (
                     <p className="mt-2 flex flex-wrap items-center gap-x-1.5 text-xs text-[#8a7f70]">
                       {metaParts.join(' · ')}
+                      {analyzedRelative ? (
+                        <span className="text-[#8fae8c]">
+                          {metaParts.length > 0 ? ' · ' : ''}Analysiert {analyzedRelative}
+                        </span>
+                      ) : null}
                     </p>
                   ) : null}
                   <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-[#c9c0b3]">
