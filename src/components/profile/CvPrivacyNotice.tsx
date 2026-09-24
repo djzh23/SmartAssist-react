@@ -8,8 +8,9 @@ export default function CvPrivacyNotice() {
       <p>
         Beim PDF-Upload und bei der Stellenanalyse wird der Lebenslauf-Text einmalig an unser KI-Modell
         übermittelt (Groq Inc., USA). Auf unseren Servern speichern wir den Text nicht, nur einen Prüfwert
-        (Hash) und die Zeichenzahl. In diesem Browser bleibt der Text, bis du den Tab schließt. Der
-        Analysebericht liegt ebenfalls nur in diesem Browser, nicht in deinem Konto auf dem Server.
+        (Hash) und die Zeichenzahl. Auf diesem Gerät bleibt der Text in diesem Browser, auch in einem
+        neuen Tab, bis du die Website-Daten löschst. Ein Bericht zu einer Inbox-Stelle liegt in deinem
+        Konto. Eine Analyse ohne Inbox-Stelle bleibt in diesem Browser, bis du den Tab schließt.
       </p>
       <p>
         Bitte entferne vor dem Upload persönliche Kontaktdaten (Name, Adresse, Telefon, E-Mail) aus dem

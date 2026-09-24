@@ -15,9 +15,9 @@ import {
 type FilterKey = 'all' | 'new' | 'analyzed'
 
 const FILTERS: Array<{ key: FilterKey; label: string }> = [
-  { key: 'all', label: 'Alle' },
   { key: 'new', label: 'Neu' },
   { key: 'analyzed', label: 'Analysiert' },
+  { key: 'all', label: 'Alle' },
 ]
 
 /** Matches PrivatePrep/Controllers/InboxController.cs InboxJobResponse.ExtractedAt formatting expectations. */
@@ -102,7 +102,7 @@ export default function InboxPage() {
   const [jobs, setJobs] = useState<InboxJobListItem[] | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
-  const [filter, setFilter] = useState<FilterKey>('all')
+  const [filter, setFilter] = useState<FilterKey>('new')
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -166,7 +166,11 @@ export default function InboxPage() {
         <EmptyState />
       ) : visibleJobs.length === 0 ? (
         <p className="rounded-2xl border border-[#3a332d] bg-[#232019] px-6 py-10 text-center text-sm text-[#a89e91]">
-          Keine Jobs in diesem Filter.
+          {filter === 'new'
+            ? 'Keine neuen Stellen. Analysierte Eintraege findest du unter Analysiert.'
+            : filter === 'analyzed'
+              ? 'Noch keine analysierten Stellen.'
+              : 'Keine Jobs in diesem Filter.'}
         </p>
       ) : (
         <ul className="flex flex-col gap-3">

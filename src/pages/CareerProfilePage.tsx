@@ -1188,7 +1188,7 @@ export default function CareerProfilePage() {
                     details={
                       cvOnThisBrowser
                         ? (profile.cvUploadedAt ? `Zuletzt aktualisiert ${formatDateTime(profile.cvUploadedAt)}` : 'Bereit für die Analyse')
-                        : 'In diesem Browser erneut hochladen'
+                        : 'Auf diesem Geraet fehlt der Text. Einmal hochladen, dann gilt er fuer alle Tabs.'
                     }
                     icon={FileText}
                   />

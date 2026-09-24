@@ -92,7 +92,7 @@ export default function AnalyzePage() {
     setError(null)
     if (!cvReady) {
       setError(cvNeedsReupload
-        ? 'Der Lebenslauf liegt nicht in diesem Browser. Bitte unter Profil erneut hochladen.'
+        ? 'Der Lebenslauf fehlt auf diesem Geraet. Einmal unter Profil hochladen, dann gilt er fuer alle Tabs.'
         : 'Bitte zuerst einen Lebenslauf im Profil hinterlegen.')
       return
     }
@@ -126,9 +126,9 @@ export default function AnalyzePage() {
       if (e instanceof UsageLimitError) {
         setError(e.message || 'Tageslimit erreicht. Mit Premium unbegrenzt analysieren.')
       } else if (e instanceof AnalyzeApiError && (e.errorCode === 'profile_incomplete' || e.errorCode === 'cv_missing' || e.errorCode === 'cv_not_uploaded')) {
-        setError('Profil unvollständig. Bitte Lebenslauf in diesem Browser erneut hochladen.')
+        setError('Profil unvollständig. Bitte Lebenslauf unter Profil hochladen.')
       } else if (e instanceof AnalyzeApiError && (e.errorCode === 'cv_stale' || e.errorCode === 'cv_hash_mismatch')) {
-        setError('Der Lebenslauf in diesem Browser stimmt nicht mehr. Bitte unter Profil erneut hochladen.')
+        setError('Der Lebenslauf auf diesem Geraet stimmt nicht mehr mit dem Profil. Bitte unter Profil ersetzen oder ergaenzen.')
       } else if (e instanceof AnalyzeApiError && e.errorCode === 'jd_too_short') {
         setError('Die Stellenanzeige ist zu kurz. Bitte den vollständigen Text der Anzeige einfügen.')
       } else {
@@ -186,7 +186,7 @@ export default function AnalyzePage() {
           <AlertTriangle size={16} className="mt-0.5 shrink-0 text-[#d97757]" aria-hidden />
           <p>
             {cvNeedsReupload
-              ? 'Der Lebenslauf liegt nicht in diesem Browser. Bitte unter Profil erneut hochladen, dann analysieren.'
+              ? 'Der Lebenslauf fehlt auf diesem Geraet. Einmal unter Profil hochladen, dann gilt er fuer alle Tabs.'
               : 'Ohne Lebenslauf keine Analyse.'}{' '}
             <Link to="/career-profile" className="font-semibold text-[#e89372] underline decoration-[#d97757]/50 underline-offset-2">
               Profil öffnen

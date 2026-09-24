@@ -209,10 +209,8 @@ export default function InboxJobPage() {
           return
         }
 
-        // CV hash: compare against whatever CV this browser has cached for the current analyze
-        // flow (src/utils/cvSessionCache.ts). If nothing is cached here, we cannot prove the CV is
-        // unchanged, so we do not claim it is - same "do not lie in the safe direction" reasoning
-        // as the JD check.
+        // CV hash: compare against the CV this origin has in localStorage (shared across tabs).
+        // If nothing is cached here, we cannot prove the CV is unchanged.
         const cachedCv = readCachedCv(userId)
         if (!cachedCv) {
           if (!cancelled) setHashesUnchanged(false)
@@ -345,7 +343,7 @@ export default function InboxJobPage() {
       if (!token) throw new Error('Nicht angemeldet.')
       const cachedCv = readCachedCv(userId)
       if (!cachedCv) {
-        throw new Error('Der Lebenslauf liegt nicht in diesem Browser. Bitte unter Profil erneut hochladen.')
+        throw new Error('Der Lebenslauf fehlt auf diesem Geraet. Einmal unter Profil hochladen, dann gilt er fuer alle Tabs.')
       }
       await analyzeJob(job.rawText.trim(), token, { text: cachedCv.text, hash: cachedCv.hash }, job.id)
       navigate(`/inbox/${job.id}/report`)

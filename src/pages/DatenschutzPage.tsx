@@ -39,7 +39,7 @@ export default function DatenschutzPage() {
           <ul>
             <li>Konto-Daten über Clerk (Nutzer-ID, je nach Einstellung E-Mail-Adresse)</li>
             <li>Karriereprofil: Berufsfeld, Skills, Erfahrung, Ausbildung, Sprachen, optionale Story, KI-Zusammenfassung</li>
-            <li>Lebenslauf-Text bei Upload und Analyse: nur in diesem Browser. Auf dem Server: SHA-256-Prüfwert und Zeichenzahl</li>
+            <li>Lebenslauf-Text bei Upload und Analyse: auf diesem Gerät in diesem Browser (alle Tabs). Auf dem Server: SHA-256-Prüfwert und Zeichenzahl</li>
             <li>Stellenausschreibungen, die du zur Analyse einfügst: nur für die laufende Anfrage</li>
             <li>Analysebericht: in diesem Browser (sessionStorage), nicht im Konto auf dem Server</li>
             <li>Nutzungszähler für das Tageslimit und grobe Token-Zähler</li>
@@ -50,7 +50,7 @@ export default function DatenschutzPage() {
           <h2>Speicherdauer</h2>
           <ul>
             <li>Lebenslauf-Text auf unseren Servern: nicht dauerhaft. Es bleibt ein SHA-256-Hash zur Wiedererkennung sowie die Zeichenzahl.</li>
-            <li>Lebenslauf-Text im Browser: bis der Tab geschlossen wird.</li>
+            <li>Lebenslauf-Text im Browser: auf diesem Gerät, bis du die Website-Daten löschst.</li>
             <li>Analysebericht im Browser: bis der Tab geschlossen wird oder du ihn ausblendest.</li>
             <li>Konto-Daten, Story und Profil-Angaben: bis zur Löschung deines Kontos.</li>
           </ul>
