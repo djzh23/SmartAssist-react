@@ -62,6 +62,8 @@ function SkeletonCard() {
 }
 
 function EmptyState() {
+  const navigate = useNavigate()
+
   return (
     <div className="flex flex-col items-center gap-3 rounded-2xl border border-[#3a332d] bg-[#232019] px-6 py-14 text-center">
       <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[rgba(217,119,87,0.14)] text-[#d97757]">
@@ -71,12 +73,9 @@ function EmptyState() {
       <p className="max-w-sm text-sm leading-relaxed text-[#a89e91]">
         Speichere Jobs mit einem Klick von LinkedIn und anderen Job-Portalen direkt hier.
       </p>
-      <div className="group relative mt-1">
-        <AppCtaButton disabled>Browser-Erweiterung installieren</AppCtaButton>
-        <span className="pointer-events-none absolute left-1/2 top-full z-10 mt-2 w-max -translate-x-1/2 rounded-lg bg-[#1a1613] px-2.5 py-1.5 text-xs text-[#f0ebe0] opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
-          Bald verfügbar
-        </span>
-      </div>
+      <AppCtaButton className="mt-1" onClick={() => navigate('/erweiterung')}>
+        Browser-Erweiterung installieren
+      </AppCtaButton>
       <p className="max-w-sm text-xs text-[#8a7f70]">
         Alternativ kannst du Jobs auch weiterhin manuell in der Analyse-Seite einfügen.
       </p>

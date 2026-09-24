@@ -361,6 +361,14 @@ export function PublicSiteFooter() {
                   </Link>
                 </li>
               ))}
+              <li>
+                <Link
+                  to="/erweiterung"
+                  className="text-[13px] text-[#8a7f72] no-underline transition-colors hover:text-white"
+                >
+                  Browser-Erweiterung
+                </Link>
+              </li>
             </ul>
           </div>
 

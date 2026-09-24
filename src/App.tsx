@@ -18,6 +18,7 @@ const AnalyzePage = lazy(() => import('./pages/AnalyzePage'))
 const InboxPage = lazy(() => import('./pages/InboxPage'))
 const InboxJobPage = lazy(() => import('./pages/InboxJobPage'))
 const InboxJobReportPage = lazy(() => import('./pages/InboxJobReportPage'))
+const ExtensionPage = lazy(() => import('./pages/ExtensionPage'))
 const ImpressumPage = lazy(() => import('./pages/ImpressumPage'))
 const DatenschutzPage = lazy(() => import('./pages/DatenschutzPage'))
 const BlogIndexPage = lazy(() => import('./pages/BlogIndexPage'))
@@ -169,6 +170,14 @@ function AppRoutes() {
         element={(
           <Suspense fallback={<RouteFallback />}>
             <BlogPostPage />
+          </Suspense>
+        )}
+      />
+      <Route
+        path="/erweiterung"
+        element={(
+          <Suspense fallback={<RouteFallback />}>
+            <ExtensionPage />
           </Suspense>
         )}
       />
