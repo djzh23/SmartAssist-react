@@ -22,17 +22,21 @@ export default function ExtensionPage() {
             Erweiterung herunterladen (.zip)
           </a>
           <p className="text-xs text-stone-500">
-            Version 0.1.2 · Beta, noch nicht im Chrome Web Store
+            Version 0.1.3 · Beta, noch nicht im Chrome Web Store
           </p>
         </div>
 
         <article className="legal-prose mt-8">
           <h2>Was macht die Erweiterung?</h2>
           <p>
-            Wenn du auf LinkedIn eine Stellenanzeige offen hast, speichert dir die Erweiterung Titel, Firma
-            und den vollständigen Text der Anzeige mit einem Klick in deine PrivatePrep-Inbox. Du musst
-            nichts markieren oder kopieren. Von dort aus kannst du die Stelle in Ruhe prüfen und analysieren
-            lassen, wann immer du willst.
+            Wenn du eine Stellenanzeige offen hast, speichert dir die Erweiterung Titel, Firma und den
+            vollständigen Text der Anzeige mit einem Klick in deine PrivatePrep-Inbox. Du musst nichts
+            markieren oder kopieren. Von dort aus kannst du die Stelle in Ruhe prüfen und analysieren
+            lassen, wann immer du willst. Auf LinkedIn ist die Erkennung am zuverlässigsten. Auf anderen
+            Job-Portalen (StepStone, Indeed und den meisten anderen) funktioniert es meistens ebenfalls
+            gut, weil dort oft die gleichen standardisierten Auszeichnungen im Seitencode stecken, die
+            die Erweiterung ausliest. Die Qualität kann dort aber schwanken, du kannst Titel, Firma und
+            Text danach jederzeit in deiner Inbox nachbearbeiten.
           </p>
 
           <h2>Aktueller Stand: Beta</h2>
@@ -53,7 +57,7 @@ export default function ExtensionPage() {
             von Browser-Erweiterung in einer für echte Nutzer verfügbaren Form. Auf dem Handy nutzt du
             PrivatePrep einfach direkt über die Webseite und fügst den Anzeigentext manuell in{' '}
             <Link to="/analyze">Analyse</Link> oder deine <Link to="/inbox">Inbox</Link> ein. Das funktioniert
-            genauso gut, nur eben ohne die automatische Übernahme von LinkedIn.
+            genauso gut, nur eben ohne die automatische Übernahme von der Seite.
           </p>
 
           <h2>Installation, Schritt für Schritt</h2>
@@ -78,7 +82,7 @@ export default function ExtensionPage() {
           <h2>So nutzt du sie</h2>
           <ol>
             <li>Bei PrivatePrep eingeloggt sein, im selben Browser.</li>
-            <li>Eine Stellenanzeige auf LinkedIn öffnen.</li>
+            <li>Eine Stellenanzeige öffnen, egal ob auf LinkedIn oder einem anderen Job-Portal.</li>
             <li>Auf das PrivatePrep-Icon in der Symbolleiste klicken.</li>
             <li>Auf "In PrivatePrep speichern" klicken.</li>
           </ol>
@@ -88,16 +92,22 @@ export default function ExtensionPage() {
 
           <h2>Was die Erweiterung liest, und was nicht</h2>
           <p>
-            Die Erweiterung liest ausschließlich deine bestehende, eingeloggte PrivatePrep-Sitzung, um dich
-            gegenüber dem Server zu authentifizieren, sowie den Text der gerade geöffneten LinkedIn-Anzeige.
-            Sie liest keine Passwörter, verfolgt dein Surfverhalten nicht und hat keinen Zugriff auf andere
-            Webseiten als LinkedIn-Stellenanzeigen und PrivatePrep selbst. Mehr dazu in der{' '}
+            Die Erweiterung liest deine bestehende, eingeloggte PrivatePrep-Sitzung, um dich gegenüber
+            dem Server zu authentifizieren. Den Inhalt einer Webseite liest sie ausschließlich in dem
+            Moment, in dem du auf ihr Icon klickst, und nur auf der gerade aktiven Seite in diesem Tab,
+            egal welches Portal das ist. Sie läuft nicht dauerhaft im Hintergrund mit und liest keine
+            anderen Tabs. Auf LinkedIns Job-Seiten ist sie zusätzlich passiv aktiv, damit die Erkennung
+            dort zuverlässiger klappt. Sie liest keine Passwörter, verfolgt dein Surfverhalten nicht und
+            schickt die ausgelesenen Daten ausschließlich an PrivatePrep, nie an Dritte. Mehr dazu in der{' '}
             <Link to="/datenschutz">Datenschutzerklärung</Link>.
           </p>
 
           <h2>Bekannte Einschränkungen</h2>
           <ul>
-            <li>Aktuell nur LinkedIn-Stellenanzeigen. Andere Job-Portale folgen später.</li>
+            <li>
+              LinkedIn wird am zuverlässigsten erkannt. Auf anderen Portalen funktioniert eine
+              allgemeinere Erkennung, die Qualität kann dort schwanken.
+            </li>
             <li>Noch nicht im Chrome Web Store, daher der Umweg über den Entwicklermodus.</li>
             <li>Kein Mobile-Support (siehe oben).</li>
           </ul>
