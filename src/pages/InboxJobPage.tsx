@@ -13,7 +13,7 @@ import {
   type InboxJob,
 } from '../api/inboxClient'
 import { analyzeJob } from '../api/analyzeClient'
-import { getReport } from '../api/reportsClient'
+import { deleteReport, getReport } from '../api/reportsClient'
 import { invalidateInboxCount } from '../hooks/useInboxNewCount'
 import { readCachedCv } from '../utils/cvSessionCache'
 import { sha256Hex } from '../utils/textHash'
@@ -55,7 +55,36 @@ function DeleteConfirmDialog({ onCancel, onConfirm, busy }: { onCancel: () => vo
             Abbrechen
           </AppCtaButton>
           <AppCtaButton variant="danger" onClick={onConfirm} className="flex-1" loading={busy}>
-            Loeschen
+            Job loeschen
+          </AppCtaButton>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function DeleteAnalysisConfirmDialog({ onCancel, onConfirm, busy }: { onCancel: () => void; onConfirm: () => void; busy: boolean }) {
+  return (
+    <div className="fixed inset-0 z-[95] flex items-end justify-center sm:items-center" role="dialog" aria-modal="true" aria-labelledby="delete-analysis-title">
+      <button type="button" className="absolute inset-0 bg-black/55" aria-label="Abbrechen" onClick={onCancel} />
+      <div className="relative z-10 w-full max-w-sm rounded-t-2xl border border-white/10 bg-[#1a140f] p-5 shadow-2xl sm:rounded-2xl">
+        <div className="mb-3 flex items-start justify-between gap-3">
+          <h2 id="delete-analysis-title" className="text-base font-semibold text-stone-100">
+            Analyse loeschen?
+          </h2>
+          <button type="button" onClick={onCancel} className="rounded-lg p-1 text-stone-400 hover:bg-white/5 hover:text-stone-100" aria-label="Abbrechen">
+            <X size={18} aria-hidden />
+          </button>
+        </div>
+        <p className="mb-5 text-sm leading-relaxed text-stone-400">
+          Der Job bleibt in der Inbox und kann neu analysiert werden.
+        </p>
+        <div className="flex gap-2">
+          <AppCtaButton variant="secondary" onClick={onCancel} className="flex-1" disabled={busy}>
+            Abbrechen
+          </AppCtaButton>
+          <AppCtaButton variant="danger" onClick={onConfirm} className="flex-1" loading={busy}>
+            Analyse loeschen
           </AppCtaButton>
         </div>
       </div>
@@ -116,6 +145,9 @@ export default function InboxJobPage() {
   const [confirmingReanalyze, setConfirmingReanalyze] = useState(false)
   const [reanalyzing, setReanalyzing] = useState(false)
   const [reanalyzeError, setReanalyzeError] = useState<string | null>(null)
+  const [confirmingDeleteAnalysis, setConfirmingDeleteAnalysis] = useState(false)
+  const [deletingAnalysis, setDeletingAnalysis] = useState(false)
+  const [deleteAnalysisError, setDeleteAnalysisError] = useState<string | null>(null)
   // null while the hash comparison against the stored report is still running (or hasn't started
   // yet for a job that isn't analyzed). true/false once it resolves. See the effect below.
   const [hashesUnchanged, setHashesUnchanged] = useState<boolean | null>(null)
@@ -323,6 +355,26 @@ export default function InboxJobPage() {
     }
   }
 
+  // Separate from handleDelete: this removes only the analysis, not the job. The backend resets
+  // the job's Status/AnalyzedAt/AnalysisReportId as part of the delete, so a reload picks that up.
+  const handleDeleteAnalysis = async () => {
+    if (!job.analysisReportId) return
+    setDeletingAnalysis(true)
+    setDeleteAnalysisError(null)
+    try {
+      const token = await getToken()
+      if (!token) throw new Error('Nicht angemeldet.')
+      await deleteReport(job.analysisReportId, token)
+      invalidateInboxCount()
+      setConfirmingDeleteAnalysis(false)
+      await load()
+    } catch (e) {
+      setDeleteAnalysisError(e instanceof Error ? e.message : 'Loeschen fehlgeschlagen.')
+    } finally {
+      setDeletingAnalysis(false)
+    }
+  }
+
   return (
     <StandardPageContainer className="w-full max-w-[760px] pt-3 pb-6 sm:py-6">
       <Link
@@ -400,7 +452,6 @@ export default function InboxJobPage() {
 
           {saveError ? <p className="text-sm text-rose-400">{saveError}</p> : null}
           {savedJustNow ? <p className="text-sm text-[#8fae8c]">Aenderungen gespeichert.</p> : null}
-          {deleteError ? <p className="text-sm text-rose-400">{deleteError}</p> : null}
 
           <div className="flex flex-wrap gap-2">
             <AppCtaButton
@@ -410,9 +461,6 @@ export default function InboxJobPage() {
               loading={saving}
             >
               Aenderungen speichern
-            </AppCtaButton>
-            <AppCtaButton variant="danger" onClick={() => setConfirmingDelete(true)} disabled={saving || deleting}>
-              Loeschen
             </AppCtaButton>
           </div>
         </div>
@@ -453,7 +501,43 @@ export default function InboxJobPage() {
             {reanalyzeError ? <p className="text-sm text-rose-400">{reanalyzeError}</p> : null}
           </div>
         )}
+
+        <div className="my-5 h-px bg-[#3a332d]" />
+
+        <div className="flex flex-col items-center gap-2">
+          <p className="text-xs uppercase tracking-wide text-[#8a7f70]">Weitere Aktionen</p>
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            {isAnalyzed ? (
+              <AppCtaButton
+                variant="secondary"
+                size="sm"
+                onClick={() => setConfirmingDeleteAnalysis(true)}
+                disabled={deletingAnalysis}
+              >
+                Analyse loeschen
+              </AppCtaButton>
+            ) : null}
+            <AppCtaButton
+              variant="danger"
+              size="sm"
+              onClick={() => setConfirmingDelete(true)}
+              disabled={saving || deleting}
+            >
+              Job loeschen
+            </AppCtaButton>
+          </div>
+          {deleteAnalysisError ? <p className="text-sm text-rose-400">{deleteAnalysisError}</p> : null}
+          {deleteError ? <p className="text-sm text-rose-400">{deleteError}</p> : null}
+        </div>
       </div>
+
+      {confirmingDeleteAnalysis ? (
+        <DeleteAnalysisConfirmDialog
+          busy={deletingAnalysis}
+          onCancel={() => setConfirmingDeleteAnalysis(false)}
+          onConfirm={() => void handleDeleteAnalysis()}
+        />
+      ) : null}
 
       {confirmingReanalyze ? (
         <ReanalyzeConfirmDialog
