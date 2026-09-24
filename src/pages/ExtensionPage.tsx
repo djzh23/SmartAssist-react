@@ -22,7 +22,7 @@ export default function ExtensionPage() {
             Erweiterung herunterladen (.zip)
           </a>
           <p className="text-xs text-stone-500">
-            Version 0.1.3 · Beta, noch nicht im Chrome Web Store
+            Version 0.1.4 · Beta, noch nicht im Chrome Web Store
           </p>
         </div>
 
