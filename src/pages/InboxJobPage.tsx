@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '@clerk/clerk-react'
-import { AlertTriangle, ArrowLeft, ExternalLink, X } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, Check, ExternalLink, X } from 'lucide-react'
 import StandardPageContainer from '../components/layout/StandardPageContainer'
 import AppCtaButton from '../components/ui/AppCtaButton'
 import {
@@ -9,6 +9,7 @@ import {
   fetchInboxJob,
   inboxSourceLabel,
   updateInboxJob,
+  InboxJobStatus,
   type InboxJob,
 } from '../api/inboxClient'
 
@@ -57,6 +58,60 @@ function DeleteConfirmDialog({ onCancel, onConfirm, busy }: { onCancel: () => vo
   )
 }
 
+function ReportPlaceholderDialog({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-[95] flex items-end justify-center sm:items-center" role="dialog" aria-modal="true" aria-labelledby="report-placeholder-title">
+      <button type="button" className="absolute inset-0 bg-black/55" aria-label="Schliessen" onClick={onClose} />
+      <div className="relative z-10 w-full max-w-sm rounded-t-2xl border border-white/10 bg-[#1a140f] p-5 shadow-2xl sm:rounded-2xl">
+        <div className="mb-3 flex items-start justify-between gap-3">
+          <h2 id="report-placeholder-title" className="text-base font-semibold text-stone-100">
+            Bericht noch nicht abrufbar
+          </h2>
+          <button type="button" onClick={onClose} className="rounded-lg p-1 text-stone-400 hover:bg-white/5 hover:text-stone-100" aria-label="Schliessen">
+            <X size={18} aria-hidden />
+          </button>
+        </div>
+        <p className="mb-5 text-sm leading-relaxed text-stone-400">
+          Berichte werden ab einer der naechsten Versionen dauerhaft gespeichert. Aktuell ist der
+          Bericht nur direkt nach der Analyse auf der Analyse Seite sichtbar.
+        </p>
+        <AppCtaButton variant="secondary" onClick={onClose} className="w-full">
+          Verstanden
+        </AppCtaButton>
+      </div>
+    </div>
+  )
+}
+
+function ReanalyzeConfirmDialog({ onCancel, onConfirm }: { onCancel: () => void; onConfirm: () => void }) {
+  return (
+    <div className="fixed inset-0 z-[95] flex items-end justify-center sm:items-center" role="dialog" aria-modal="true" aria-labelledby="reanalyze-title">
+      <button type="button" className="absolute inset-0 bg-black/55" aria-label="Abbrechen" onClick={onCancel} />
+      <div className="relative z-10 w-full max-w-sm rounded-t-2xl border border-white/10 bg-[#1a140f] p-5 shadow-2xl sm:rounded-2xl">
+        <div className="mb-3 flex items-start justify-between gap-3">
+          <h2 id="reanalyze-title" className="text-base font-semibold text-stone-100">
+            Analyse aktualisieren?
+          </h2>
+          <button type="button" onClick={onCancel} className="rounded-lg p-1 text-stone-400 hover:bg-white/5 hover:text-stone-100" aria-label="Abbrechen">
+            <X size={18} aria-hidden />
+          </button>
+        </div>
+        <p className="mb-5 text-sm leading-relaxed text-stone-400">
+          Die alte Analyse wird ersetzt. Das verbraucht eine deiner taeglichen Analysen. Fortfahren?
+        </p>
+        <div className="flex gap-2">
+          <AppCtaButton variant="secondary" onClick={onCancel} className="flex-1">
+            Abbrechen
+          </AppCtaButton>
+          <AppCtaButton variant="primary" onClick={onConfirm} className="flex-1">
+            Fortfahren
+          </AppCtaButton>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 type LoadState =
   | { kind: 'loading' }
   | { kind: 'not-found' }
@@ -78,6 +133,8 @@ export default function InboxJobPage() {
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [showReportPlaceholder, setShowReportPlaceholder] = useState(false)
+  const [confirmingReanalyze, setConfirmingReanalyze] = useState(false)
 
   const load = useCallback(async () => {
     if (!id) return
@@ -149,6 +206,10 @@ export default function InboxJobPage() {
   const dirty = title.trim() !== job.title || company.trim() !== job.company || rawText !== job.rawText
   const titleValid = title.trim().length > 0 && title.length <= TITLE_MAX
   const companyValid = company.trim().length > 0 && company.length <= COMPANY_MAX
+  const isAnalyzed = job.status === InboxJobStatus.Analyzed
+  // TODO(Phase 4): replace with a real analyzedAt/updatedAt comparison. Disabled for now so the
+  // button never lies about being able to start a fresh analysis it can't actually justify yet.
+  const canReanalyze = false
 
   const handleSave = async () => {
     if (!dirty || !titleValid || !companyValid) return
@@ -184,6 +245,17 @@ export default function InboxJobPage() {
       setDeleting(false)
       setConfirmingDelete(false)
     }
+  }
+
+  // Same Option B flow as Paket 3: no backend analyze trigger exists yet, so this hands the raw
+  // text to the Analyze page via the ?inbox= prefill instead of calling anything here.
+  const handleAnalyze = () => {
+    navigate(`/analyze?inbox=${encodeURIComponent(job.id)}`)
+  }
+
+  const handleReanalyze = () => {
+    if (!canReanalyze) return
+    setConfirmingReanalyze(true)
   }
 
   return (
@@ -282,14 +354,47 @@ export default function InboxJobPage() {
 
         <div className="my-5 h-px bg-[#3a332d]" />
 
-        <AppCtaButton
-          size="lg"
-          className="w-full"
-          onClick={() => navigate(`/analyze?inbox=${encodeURIComponent(job.id)}`)}
-        >
-          Diese Stelle analysieren
-        </AppCtaButton>
+        {!isAnalyzed ? (
+          <AppCtaButton size="lg" className="w-full" onClick={handleAnalyze}>
+            Diese Stelle analysieren
+          </AppCtaButton>
+        ) : (
+          <div className="flex flex-col items-center gap-3">
+            <p className="inline-flex items-center gap-1.5 text-sm font-medium text-[#8fae8c]">
+              <Check size={16} strokeWidth={2.5} aria-hidden />
+              Diese Stelle wurde bereits analysiert
+            </p>
+            <AppCtaButton size="lg" className="w-full" onClick={() => setShowReportPlaceholder(true)}>
+              Analyse-Ergebnis oeffnen
+            </AppCtaButton>
+            <AppCtaButton
+              size="sm"
+              variant="secondary"
+              onClick={handleReanalyze}
+              disabled={!canReanalyze}
+              title={
+                canReanalyze
+                  ? 'Text wurde geaendert. Neue Analyse mit dem aktuellen Text starten.'
+                  : 'Der Text ist unveraendert seit der letzten Analyse. Keine neue Analyse noetig.'
+              }
+            >
+              Analyse aktualisieren
+            </AppCtaButton>
+          </div>
+        )}
       </div>
+
+      {showReportPlaceholder ? <ReportPlaceholderDialog onClose={() => setShowReportPlaceholder(false)} /> : null}
+
+      {confirmingReanalyze ? (
+        <ReanalyzeConfirmDialog
+          onCancel={() => setConfirmingReanalyze(false)}
+          onConfirm={() => {
+            setConfirmingReanalyze(false)
+            handleAnalyze()
+          }}
+        />
+      ) : null}
 
       {confirmingDelete ? (
         <DeleteConfirmDialog
