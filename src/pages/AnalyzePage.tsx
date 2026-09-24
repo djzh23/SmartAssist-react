@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@clerk/clerk-react'
 import { AlertTriangle, Inbox as InboxIcon } from 'lucide-react'
 import AppCtaButton from '../components/ui/AppCtaButton'
@@ -48,6 +48,7 @@ function storeReport(userId: string, report: AnalyzeReport): void {
 
 export default function AnalyzePage() {
   const { getToken, userId, isLoaded: authLoaded } = useAuth()
+  const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const inboxId = searchParams.get('inbox')
   const { profile, loading: profileLoading } = useCareerProfile()
@@ -104,9 +105,19 @@ export default function AnalyzePage() {
       const token = await getToken()
       if (!token) throw new Error('Bitte erneut anmelden.')
       if (!cachedCv) throw new Error('Bitte zuerst einen Lebenslauf im Profil hinterlegen.')
-      const { report: next } = await analyzeJob(text.trim(), token, { text: cachedCv.text, hash: cachedCv.hash })
+      const { report: next } = await analyzeJob(text.trim(), token, { text: cachedCv.text, hash: cachedCv.hash }, source?.id)
+
+      if (source) {
+        // Came from the inbox: the report is now persisted server side under that job, so land on
+        // its permanent page instead of showing it inline here. Ad-hoc analyses (no source) keep
+        // the existing inline flow below - option A from the brief, saving the report inline stays
+        // out of scope for this session.
+        navigate(`/inbox/${source.id}/report`)
+        return
+      }
+
       setReport(next)
-      setActiveJob(source ?? null)
+      setActiveJob(null)
       setReportIsFromPreviousSession(false)
       setReportStoredAt(null)
       setComposing(false)

@@ -76,7 +76,8 @@ export async function analyzeJob(
   jobDescription: string,
   token: string,
   cv: { text: string; hash: string },
-): Promise<{ report: AnalyzeReport; usage: AnalyzeUsageMeta }> {
+  inboxJobId?: string,
+): Promise<{ report: AnalyzeReport; reportId: string; usage: AnalyzeUsageMeta }> {
   const res = await fetch(`${BASE}/api/agent/analyze`, {
     method: 'POST',
     headers: authHeaders(token),
@@ -84,6 +85,7 @@ export async function analyzeJob(
       jobDescription,
       cvText: cv.text,
       cvContentHash: cv.hash,
+      ...(inboxJobId ? { inboxJobId } : {}),
     }),
   })
 
@@ -114,9 +116,12 @@ export async function analyzeJob(
     throw new AnalyzeApiError(errorCode, message, res.status)
   }
 
-  const report = (await res.json()) as AnalyzeReport
+  // Backend response is the AnalyzeReport fields flattened together with reportId (AnalyzeResponse
+  // inherits from AnalyzeReport server side precisely so this stays one flat object, not nested).
+  const { reportId, ...report } = (await res.json()) as AnalyzeReport & { reportId: string }
   return {
-    report,
+    report: report as AnalyzeReport,
+    reportId,
     usage: {
       usageToday: headerNumber(res, 'X-Usage-Today'),
       usageLimit: res.headers.get('X-Usage-Limit') ?? undefined,
