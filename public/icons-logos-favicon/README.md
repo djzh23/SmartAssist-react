@@ -23,7 +23,7 @@ Diese Dateien bilden die Basis fuer alle anderen Groessen. Wenn du das Icon spae
 - `maskable-icon-512x512.png` — Android Adaptive Icons (Icon passt sich der Systemform an)
 - `site.webmanifest` — PWA-Konfiguration fuer Android und Chrome
 
-## Installation im SmartAssist-react Repo
+## Installation im privateprep-frontend Repo
 
 ### Schritt 1: Dateien nach public/ kopieren
 
@@ -34,7 +34,7 @@ Wenn dort schon alte Favicon-Dateien liegen (`favicon.ico`, `logo.svg` etc.), er
 Ziel-Struktur:
 
 ```
-SmartAssist-react/
+privateprep-frontend/
   public/
     favicon.ico
     favicon-16x16.png
@@ -51,7 +51,7 @@ Die SVG-Quelldateien (`logo-mark.svg` und `logo-mark-padded.svg`) kommen zusaetz
 
 ### Schritt 2: HTML-Head-Tags in index.html eintragen
 
-Oeffne `index.html` (im Root des SmartAssist-react Repos). Zwischen `<head>` und `</head>` sind vermutlich schon Favicon-Tags. Ersetz sie durch diese Version:
+Oeffne `index.html` (im Root des privateprep-frontend Repos). Zwischen `<head>` und `</head>` sind vermutlich schon Favicon-Tags. Ersetz sie durch diese Version:
 
 ```html
 <!-- Favicon -->
