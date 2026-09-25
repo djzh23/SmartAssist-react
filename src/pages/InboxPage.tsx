@@ -11,6 +11,7 @@ import {
   listInboxJobs,
   type InboxJobListItem,
 } from '../api/inboxClient'
+import { waitForAuthToken } from '../utils/waitForAuthToken'
 
 type FilterKey = 'all' | 'new' | 'analyzed'
 
@@ -107,7 +108,7 @@ export default function InboxPage() {
     setLoading(true)
     setError(false)
     try {
-      const token = await getToken()
+      const token = await waitForAuthToken(getToken)
       if (!token) throw new Error('Nicht angemeldet.')
       const list = await listInboxJobs(token)
       setJobs(list)

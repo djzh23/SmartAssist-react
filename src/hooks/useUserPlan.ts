@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useUser, useAuth } from '@clerk/clerk-react'
 import { getAgentUsage } from '../api/agentClient'
+import { waitForAuthToken } from '../utils/waitForAuthToken'
 
 const USAGE_EVENT = 'privateprep_usage_updated'
 const PLAN_EVENT = 'privateprep_plan_updated'
@@ -350,7 +351,7 @@ export function useUserPlan(): UserPlanState {
     try {
       for (let attempt = 0; attempt <= retries; attempt++) {
         try {
-          const token = await getToken()
+          const token = isSignedIn ? await waitForAuthToken(getToken) : await getToken()
           if (isSignedIn && !token) {
             throw new Error('Missing auth token while signed in. Cannot sync usage.')
           }

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useAuth, useUser } from '@clerk/clerk-react'
 import { fetchProfile, skipOnboardingApi, type CareerProfile } from '../api/profileClient'
 import type { ProfileContextToggles } from '../types'
+import { waitForAuthToken } from '../utils/waitForAuthToken'
 
 function togglesKey(userId: string | null): string {
   return userId ? `privateprep_profile_toggles_${userId}` : 'privateprep_profile_toggles_guest'
@@ -50,7 +51,7 @@ export function useCareerProfile() {
     setLoading(true)
     setError(null)
     try {
-      const token = await getToken()
+      const token = await waitForAuthToken(getToken)
       if (!token) {
         setProfile(null)
         return
@@ -82,7 +83,7 @@ export function useCareerProfile() {
   )
 
   const skipOnboarding = useCallback(async () => {
-    const token = await getToken()
+    const token = await waitForAuthToken(getToken)
     if (!token) throw new Error('Nicht angemeldet')
     await skipOnboardingApi(token)
     await loadProfile()

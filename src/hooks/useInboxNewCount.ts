@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '@clerk/clerk-react'
-import { InboxJobStatus, listInboxJobs } from '../api/inboxClient'
+import { countNewInboxJobs } from '../api/inboxClient'
+import { waitForAuthToken } from '../utils/waitForAuthToken'
 
 const CACHE_MS = 30_000
 const INVALIDATE_EVENT = 'privateprep_inbox_count_invalidated'
@@ -24,10 +25,9 @@ export function invalidateInboxCount(): void {
 }
 
 async function fetchNewCount(getToken: () => Promise<string | null>): Promise<number> {
-  const token = await getToken()
-  if (!token) return 0
-  const jobs = await listInboxJobs(token)
-  return jobs.filter(job => job.status === InboxJobStatus.New).length
+  const token = await waitForAuthToken(getToken)
+  if (!token) throw new Error('token_unavailable')
+  return countNewInboxJobs(token)
 }
 
 /**

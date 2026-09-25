@@ -64,6 +64,22 @@ describe('useCareerProfile', () => {
       localStorage.removeItem(k)
   })
 
+  it('waits_for_clerk_token_before_fetching_profile', async () => {
+    mockGetToken
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce('jwt-late')
+    fetchProfile.mockResolvedValue(minimalProfile())
+
+    const { result } = renderHook(() => useCareerProfile())
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false)
+    })
+
+    expect(fetchProfile).toHaveBeenCalledWith('jwt-late')
+    expect(result.current.profile?.userId).toBe('user_test_1')
+  })
+
   it('loads_profile_when_signed_in', async () => {
     fetchProfile.mockResolvedValue(minimalProfile())
 

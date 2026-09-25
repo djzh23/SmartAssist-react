@@ -61,6 +61,15 @@ export async function listInboxJobs(token: string): Promise<InboxJobListItem[]> 
   return (await res.json()) as InboxJobListItem[]
 }
 
+export async function countNewInboxJobs(token: string): Promise<number> {
+  const res = await fetch(`${BASE}/api/inbox/count?status=New`, {
+    headers: authHeaders(token),
+  })
+  if (!res.ok) throw new Error(await readApiError(res, 'Inbox-Zaehler konnte nicht geladen werden.'))
+  const data = await res.json() as { count?: number }
+  return Number.isFinite(data.count) ? Number(data.count) : 0
+}
+
 export async function fetchInboxJob(id: string, token: string): Promise<InboxJob> {
   const res = await fetch(`${BASE}/api/inbox/${encodeURIComponent(id)}`, {
     headers: authHeaders(token),
