@@ -7,6 +7,9 @@ import AnalyzeWarningBanner from './AnalyzeWarningBanner'
 import AnalyzeSkillBuckets from './AnalyzeSkillBuckets'
 import AnalyzeBulletRewrites from './AnalyzeBulletRewrites'
 import AnalyzeRoleSummary from './AnalyzeRoleSummary'
+import AnalyzeVerdict from './AnalyzeVerdict'
+import AnalyzeActionPlan from './AnalyzeActionPlan'
+import AnalyzeSectionFindings from './AnalyzeSectionFindings'
 import {
   inventedSkillCount,
   normalizeGap,
@@ -64,6 +67,15 @@ export default function AnalyzeReportView({ report, createdLabel, onNewAnalysis,
         }
       />
 
+      {(report.verdictHeadline || report.verdictParagraph) ? (
+        <div className="mt-6">
+          <AnalyzeVerdict
+            headline={report.verdictHeadline}
+            paragraph={report.verdictParagraph}
+          />
+        </div>
+      ) : null}
+
       <div className="mt-7 grid gap-8 lg:grid-cols-[5fr_7fr] lg:gap-12">
         <AnalyzeHero
           score={report.globalScore}
@@ -82,6 +94,7 @@ export default function AnalyzeReportView({ report, createdLabel, onNewAnalysis,
           coveredCount={coveredCount}
           requirementTotal={requirementTotal}
           warningCount={warnings.length}
+          reasons={report.dimensionReasons}
         />
       </div>
 
@@ -90,6 +103,12 @@ export default function AnalyzeReportView({ report, createdLabel, onNewAnalysis,
         <AnalyzeWarningBanner skillGap={gap} warnings={warnings} />
       </div>
 
+      {report.actionPlan && report.actionPlan.length > 0 ? (
+        <div className="mt-8">
+          <AnalyzeActionPlan items={report.actionPlan} />
+        </div>
+      ) : null}
+
       <div className="mt-8">
         <AnalyzeBulletRewrites
           bullets={bullets}
@@ -97,6 +116,13 @@ export default function AnalyzeReportView({ report, createdLabel, onNewAnalysis,
           unverifiedBullets={unverifiedBullets}
         />
       </div>
+
+      {report.sectionFindings && report.sectionFindings.length > 0 ? (
+        <div className="mt-8">
+          <AnalyzeSectionFindings findings={report.sectionFindings} />
+        </div>
+      ) : null}
+
       {(report.roleSummary ?? '').trim() ? (
         <div className="mt-6">
           <AnalyzeRoleSummary text={plainGerman(report.roleSummary)} />

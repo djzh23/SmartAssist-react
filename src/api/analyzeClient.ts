@@ -21,12 +21,41 @@ export interface BulletRewriteSuggestion {
   originalBullet: string
   rewrittenBullet: string
   reasoning: string
+  evidenceLine?: string   // v2 — the CV line the rewrite is based on
 }
 
 export interface FactGateViolation {
   violationType: string
   snippet: string
   reason: string
+}
+
+// ── v2 additions (all optional; older reports and v1 responses stay valid) ─
+
+export interface DimensionReasons {
+  cvMatch?: string
+  roleAlignment?: string
+  culture?: string
+  redFlags?: string
+}
+
+export interface SectionFinding {
+  /** ID from the model's fixed set: profile | technical_skills | experience |
+   *  education | certificates | languages | it_kenntnisse | other */
+  section: string
+  /** German display label, e.g. "Technische Skills". */
+  label: string
+  observation: string
+  action: string
+}
+
+export interface ActionPlanItem {
+  /** 1-based, contiguous. Higher = lower priority. */
+  priority: number
+  action: string
+  /** null for multi-day / ongoing (Sprachkurs, Zertifikat). */
+  effortMinutes?: number | null
+  impact?: 'high' | 'medium' | 'low' | null
 }
 
 export interface AnalyzeReport {
@@ -43,6 +72,13 @@ export interface AnalyzeReport {
   outputTokens?: number | null
   /** Set only when FactGate withheld `bullets`: the same rewrites, not checked against the CV. */
   unverifiedBullets?: BulletRewriteSuggestion[] | null
+
+  // v2 — optional so older stored reports keep rendering
+  dimensionReasons?: DimensionReasons
+  verdictHeadline?: string
+  verdictParagraph?: string
+  sectionFindings?: SectionFinding[]
+  actionPlan?: ActionPlanItem[]
 }
 
 export interface AnalyzeUsageMeta {

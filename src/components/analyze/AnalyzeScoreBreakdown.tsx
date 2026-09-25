@@ -1,5 +1,6 @@
 import { Check } from 'lucide-react'
-import { scoreLabel, scoreLevel, scorePercent, warningLevel, type LevelTone } from './analyzeFormat'
+import type { DimensionReasons } from '../../api/analyzeClient'
+import { plainGerman, scoreLabel, scoreLevel, scorePercent, warningLevel, type LevelTone } from './analyzeFormat'
 
 interface Props {
   cvMatch: number
@@ -10,6 +11,7 @@ interface Props {
   coveredCount?: number
   requirementTotal?: number
   warningCount: number
+  reasons?: DimensionReasons   // v2 — model-generated per-dimension reasons
 }
 
 const TONE_TEXT: Record<LevelTone, string> = {
@@ -81,6 +83,7 @@ export default function AnalyzeScoreBreakdown({
   coveredCount,
   requirementTotal,
   warningCount,
+  reasons,
 }: Props) {
   const skillsText =
     typeof coveredCount === 'number' && typeof requirementTotal === 'number' && requirementTotal > 0
@@ -94,16 +97,20 @@ export default function AnalyzeScoreBreakdown({
         Vier Bereiche im Vergleich zur Stellenanzeige, von 1 (passt kaum) bis 5 (passt sehr gut).
       </p>
       <ul className="mt-5 space-y-5">
-        <ScoreRow title="Fähigkeiten und Erfahrung" value={cvMatch} text={skillsText} />
+        <ScoreRow
+          title="Fähigkeiten und Erfahrung"
+          value={cvMatch}
+          text={plainGerman(reasons?.cvMatch) || skillsText}
+        />
         <ScoreRow
           title="Eignung für die Rolle"
           value={roleAlignment}
-          text="Wie gut die Stelle zu deinen Zielen und deinem bisherigen Weg passt."
+          text={plainGerman(reasons?.roleAlignment) || 'Wie gut die Stelle zu deinen Zielen und deinem bisherigen Weg passt.'}
         />
         <ScoreRow
           title="Arbeitsumfeld"
           value={culture}
-          text="Was die Anzeige über Team, Arbeitsweise und Rahmenbedingungen erkennen lässt."
+          text={plainGerman(reasons?.culture) || 'Was die Anzeige über Team, Arbeitsweise und Rahmenbedingungen erkennen lässt.'}
         />
         <WarningRow score={redFlags} count={warningCount} />
       </ul>
