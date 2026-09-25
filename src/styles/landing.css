@@ -588,3 +588,35 @@ html {
   text-decoration: underline;
   text-underline-offset: 2px;
 }
+
+.legal-prose details {
+  margin-top: 0.85rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0.75rem;
+  padding: 0.65rem 0.9rem;
+}
+
+.legal-prose summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--pp-text);
+}
+
+.legal-prose details p {
+  margin-top: 0.55rem;
+}
+
+.legal-address-placeholder {
+  display: inline-block;
+  margin: 0.15rem 0;
+  border: 1px dashed rgb(251 191 36 / 0.7);
+  border-radius: 0.35rem;
+  padding: 0.05rem 0.4rem;
+  color: rgb(253 230 138);
+  background: rgb(69 26 3 / 0.45);
+}
+
+.legal-address-note {
+  font-size: 0.85rem;
+  color: rgb(214 211 209);
+}

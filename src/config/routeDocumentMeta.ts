@@ -35,14 +35,14 @@ const ROUTE_META: MetaEntry[] = [
   {
     pattern: '/impressum',
     end: true,
-    title: `Impressum | ${SITE_TITLE_SUFFIX}`,
-    description: 'Impressum von PrivatePrep auf betweenatna.de.',
+    title: `Impressum · ${SITE_TITLE_SUFFIX}`,
+    description: 'Impressum von PrivatePrep, dem Tool für KI-gestützte Bewerbungsanalyse.',
   },
   {
     pattern: '/datenschutz',
     end: true,
-    title: `Datenschutz | ${SITE_TITLE_SUFFIX}`,
-    description: 'Datenschutzhinweise zu Konto, Lebenslauf und Stellenanalyse bei PrivatePrep.',
+    title: `Datenschutzerklärung · ${SITE_TITLE_SUFFIX}`,
+    description: 'Datenschutzerklärung von PrivatePrep. Auftragsverarbeiter, Speicherdauer und deine Rechte.',
   },
   {
     pattern: '/analyze',
