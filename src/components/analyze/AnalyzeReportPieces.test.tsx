@@ -6,6 +6,9 @@ import AnalyzeSkillBuckets from './AnalyzeSkillBuckets'
 import AnalyzeBulletRewrites from './AnalyzeBulletRewrites'
 import AnalyzeScoreBreakdown from './AnalyzeScoreBreakdown'
 import AnalyzeReportView from './AnalyzeReportView'
+import AnalyzeVerdict from './AnalyzeVerdict'
+import AnalyzeActionPlan from './AnalyzeActionPlan'
+import AnalyzeSectionFindings from './AnalyzeSectionFindings'
 import type { AnalyzeReport } from '../../api/analyzeClient'
 import { emptySkillGap } from './analyzeFormat'
 
@@ -229,5 +232,131 @@ describe('report view', () => {
 
     expect(screen.getAllByRole('button', { name: /Neue Analyse/ }).length).toBe(2)
     expect(screen.getByText('4,4')).toBeInTheDocument()
+  })
+
+  it('renders a v1 report unchanged when no v2 field is present', () => {
+    render(<AnalyzeReportView report={report} createdLabel="gerade eben erstellt" onNewAnalysis={() => {}} />)
+
+    expect(screen.queryByLabelText('Bewerbungs-Empfehlung')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Konkrete nächste Schritte')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Analyse nach Lebenslauf-Bereichen')).not.toBeInTheDocument()
+    // The heuristic lead sentence is the only narrative a v1 report has, so it must stay.
+    expect(screen.getByText(/Gute Grundlage für eine Bewerbung/)).toBeInTheDocument()
+  })
+
+  it('drops the heuristic lead once the model supplies its own verdict', () => {
+    const v2: AnalyzeReport = {
+      ...report,
+      verdictHeadline: 'Bewerbbar mit gezielten Anpassungen.',
+      verdictParagraph: 'Der Werdegang bringt die verlangte Praxis mit.',
+    }
+
+    render(<AnalyzeReportView report={v2} createdLabel="gerade eben erstellt" onNewAnalysis={() => {}} />)
+
+    expect(screen.getByText('Bewerbbar mit gezielten Anpassungen.')).toBeInTheDocument()
+    expect(screen.queryByText(/Gute Grundlage für eine Bewerbung/)).not.toBeInTheDocument()
+  })
+})
+
+describe('v2 blocks', () => {
+  it('AnalyzeVerdict renders both parts and survives the empty state', () => {
+    const { container } = render(<AnalyzeVerdict headline="" paragraph={null} />)
+    expect(container).toBeEmptyDOMElement()
+
+    render(<AnalyzeVerdict headline="Bewerbbar mit Anpassungen." paragraph="Die JD verlangt SQL." />)
+    expect(screen.getByText('Bewerbbar mit Anpassungen.')).toBeInTheDocument()
+    expect(screen.getByText('Die Stellenanzeige verlangt SQL.')).toBeInTheDocument()
+  })
+
+  it('AnalyzeActionPlan sorts by priority and labels effort and impact', () => {
+    const { container } = render(<AnalyzeActionPlan items={[]} />)
+    expect(container).toBeEmptyDOMElement()
+
+    render(
+      <AnalyzeActionPlan
+        items={[
+          { priority: 2, action: 'Profilsatz umschreiben.', effortMinutes: 180, impact: 'medium' },
+          { priority: 1, action: 'Skill-Reihenfolge ändern.', effortMinutes: 5, impact: 'high' },
+          { priority: 3, action: 'Sprachkurs starten.', effortMinutes: null, impact: 'low' },
+        ]}
+      />,
+    )
+
+    const steps = screen.getAllByRole('listitem').map(li => li.textContent ?? '')
+    expect(steps[0]).toContain('Skill-Reihenfolge ändern.')
+    expect(steps[0]).toContain('5 Min.')
+    expect(steps[0]).toContain('Hoher Hebel')
+    expect(steps[1]).toContain('3 Std.')
+    expect(steps[2]).toContain('länger')
+    expect(steps[2]).toContain('Kleiner Hebel')
+  })
+
+  it('AnalyzeActionPlan omits the impact chip for an unknown impact value', () => {
+    render(
+      <AnalyzeActionPlan
+        items={[{ priority: 1, action: 'Irgendwas tun.', effortMinutes: 10, impact: null }]}
+      />,
+    )
+
+    // Not a bare /Hebel/: the section subtitle contains that word too.
+    expect(screen.queryByText(/(Hoher|Mittlerer|Kleiner) Hebel/)).not.toBeInTheDocument()
+  })
+
+  it('AnalyzeSectionFindings shows observation and action, and skips half-empty findings', () => {
+    const { container } = render(<AnalyzeSectionFindings findings={[]} />)
+    expect(container).toBeEmptyDOMElement()
+
+    render(
+      <AnalyzeSectionFindings
+        findings={[
+          {
+            section: 'technical_skills',
+            label: 'Technische Skills',
+            observation: 'Die JD verlangt zuerst C#.',
+            action: 'Reihenfolge umsortieren.',
+          },
+          { section: 'other', label: 'Sonstiges', observation: 'Etwas', action: '   ' },
+        ]}
+      />,
+    )
+
+    expect(screen.getByText('Die Stellenanzeige verlangt zuerst C#.')).toBeInTheDocument()
+    expect(screen.getByText('Reihenfolge umsortieren.')).toBeInTheDocument()
+    expect(screen.queryByText('Sonstiges')).not.toBeInTheDocument()
+  })
+})
+
+describe('per-bullet fact check', () => {
+  const bullets = [
+    { originalBullet: 'APIs gebaut', rewrittenBullet: 'REST APIs entwickelt', reasoning: 'passt' },
+    { originalBullet: 'APIs gebaut', rewrittenBullet: 'Kubernetes betrieben', reasoning: 'passt' },
+  ]
+
+  it('marks only the flagged rewrite instead of the whole pane', () => {
+    render(<AnalyzeBulletRewrites bullets={bullets} unverifiedIndices={[0]} />)
+
+    expect(screen.queryAllByText(/Nicht geprüft:/)).toHaveLength(0)
+    // Desktop shows the first rewrite and hides the rest behind a button, so exactly one note
+    // is on screen; after expanding, the clean second rewrite must still carry none.
+    expect(screen.getAllByText(/Nicht mit Lebenslauf abgeglichen/)).toHaveLength(1)
+
+    fireEvent.click(screen.getByRole('button', { name: /1 weiteren Vorschlag anzeigen/ }))
+
+    expect(screen.getAllByText(/Nicht mit Lebenslauf abgeglichen/)).toHaveLength(1)
+    expect(screen.getAllByText(/Kubernetes betrieben/).length).toBeGreaterThan(0)
+  })
+
+  it('falls back to the pane-wide notice when every rewrite is flagged', () => {
+    render(<AnalyzeBulletRewrites bullets={bullets} unverifiedIndices={[0, 1]} />)
+
+    expect(screen.getAllByText(/Nicht geprüft:/).length).toBeGreaterThan(0)
+    expect(screen.queryAllByText(/Nicht mit Lebenslauf abgeglichen/)).toHaveLength(0)
+  })
+
+  it('marks nothing when the backend sent no indices', () => {
+    render(<AnalyzeBulletRewrites bullets={bullets} />)
+
+    expect(screen.queryAllByText(/Nicht mit Lebenslauf abgeglichen/)).toHaveLength(0)
+    expect(screen.queryAllByText(/Nicht geprüft:/)).toHaveLength(0)
   })
 })

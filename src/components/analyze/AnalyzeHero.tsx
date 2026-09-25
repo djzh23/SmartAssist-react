@@ -13,6 +13,11 @@ interface Props {
   missingSkills?: string[]
   roleAlignment?: number
   warningCount?: number
+  /**
+   * v2: suppress the computed lead sentence. Set when the model returned its own
+   * verdict paragraph, which says the same thing better and sits above this block.
+   */
+  hideLead?: boolean
 }
 
 export default function AnalyzeHero({
@@ -23,16 +28,19 @@ export default function AnalyzeHero({
   missingSkills = [],
   roleAlignment,
   warningCount = 0,
+  hideLead = false,
 }: Props) {
   const missingCount = missingSkills.length
-  const lead = reportLead({
-    covered: coveredCount,
-    total: requirementTotal,
-    missingSkills,
-    roleAlignment,
-    warningCount,
-    score,
-  })
+  const lead = hideLead
+    ? ''
+    : reportLead({
+        covered: coveredCount,
+        total: requirementTotal,
+        missingSkills,
+        roleAlignment,
+        warningCount,
+        score,
+      })
 
   const roleFit = typeof roleAlignment === 'number' && roleAlignment >= 3.5
 
@@ -43,8 +51,13 @@ export default function AnalyzeHero({
     >
       <ScoreRing score={score} size={150} caption="VON 5,0" />
       <div className="min-w-0 flex-1">
-        <p className="text-[15px] leading-relaxed text-[#4a4238]">{lead}</p>
-        <div className="mt-3 flex flex-wrap justify-center gap-2 sm:justify-start">
+        {lead ? <p className="text-[15px] leading-relaxed text-[#4a4238]">{lead}</p> : null}
+        <div
+          className={[
+            'flex flex-wrap justify-center gap-2 sm:justify-start',
+            lead ? 'mt-3' : '',
+          ].join(' ')}
+        >
           {roleFit ? (
             <span className="inline-flex items-center gap-1.5 rounded-full bg-[rgba(111,143,109,0.14)] px-[11px] py-[5px] text-xs text-[#5e7a5c]">
               <Check className="h-3 w-3" strokeWidth={2.5} aria-hidden />

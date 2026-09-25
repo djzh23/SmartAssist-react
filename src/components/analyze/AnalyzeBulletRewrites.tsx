@@ -9,6 +9,11 @@ interface Props {
   blockedByFactCheck?: boolean
   /** The withheld rewrites themselves, offered behind a "show anyway" button, never shown automatically. */
   unverifiedBullets?: BulletRewriteSuggestion[]
+  /**
+   * v2 — positions in `bullets` that failed their own fact check. Those get an inline note instead
+   * of the pane-wide banner, so one questionable rewrite does not cast doubt on the others.
+   */
+  unverifiedIndices?: number[] | null
 }
 
 async function copyText(text: string): Promise<boolean> {
@@ -52,16 +57,29 @@ function markTokens(text: string, other: Set<string>, mode: 'new' | 'gone'): Rea
   })
 }
 
+function InlineUnverifiedNote() {
+  return (
+    <div className="mt-3.5 flex gap-2.5 rounded-[10px] bg-[rgba(212,165,116,0.16)] px-4 py-3">
+      <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#8a6a3a]" aria-hidden />
+      <p className="text-[13px] leading-relaxed text-[#8a6a3a]">
+        Nicht mit Lebenslauf abgeglichen — bitte selbst prüfen.
+      </p>
+    </div>
+  )
+}
+
 function BulletCard({
   bullet,
   index,
   copied,
   onCopy,
+  unverified = false,
 }: {
   bullet: BulletRewriteSuggestion
   index: number
   copied: boolean
   onCopy: () => void
+  unverified?: boolean
 }) {
   const orig = wordSet(bullet.originalBullet)
   const next = wordSet(bullet.rewrittenBullet)
@@ -103,6 +121,7 @@ function BulletCard({
           </p>
         </div>
       ) : null}
+      {unverified ? <InlineUnverifiedNote /> : null}
       <span className="sr-only">Vorschlag {index + 1}. {bullet.rewrittenBullet}</span>
     </article>
   )
@@ -158,7 +177,12 @@ function UnverifiedNotice() {
   )
 }
 
-export default function AnalyzeBulletRewrites({ bullets, blockedByFactCheck = false, unverifiedBullets = [] }: Props) {
+export default function AnalyzeBulletRewrites({
+  bullets,
+  blockedByFactCheck = false,
+  unverifiedBullets = [],
+  unverifiedIndices,
+}: Props) {
   const [copied, setCopied] = useState<number | null>(null)
   const [showAll, setShowAll] = useState(false)
   const [revealed, setRevealed] = useState(false)
@@ -166,6 +190,13 @@ export default function AnalyzeBulletRewrites({ bullets, blockedByFactCheck = fa
   const showingUnverified = bullets.length === 0 && revealed
   const shown = showingUnverified ? unverifiedBullets : bullets
   const count = shown.length
+  // Indices address `bullets`, so they mean nothing while the withheld set is on screen.
+  const flagged = new Set(showingUnverified ? [] : unverifiedIndices ?? [])
+  // Nothing passed: one banner over the whole pane says it better than the same note repeated
+  // under every rewrite, and it keeps the pre-v2 look for that case.
+  const allFlagged = count > 0 && flagged.size >= count
+  const paneWideNotice = showingUnverified || allFlagged
+  const markInline = (i: number) => !paneWideNotice && flagged.has(i)
   const canReveal = bullets.length === 0 && !revealed && blockedByFactCheck && unverifiedBullets.length > 0
   const desktopVisible = showAll ? shown : shown.slice(0, 1)
   const remaining = Math.max(0, count - 1)
@@ -200,11 +231,11 @@ export default function AnalyzeBulletRewrites({ bullets, blockedByFactCheck = fa
       <div className="lg:hidden">
         <AnalyzeAccordion
           title="Formulierungen für deinen Lebenslauf"
-          subtitle={showingUnverified ? 'Nicht geprüft' : count === 1 ? '1 Vorschlag bereit' : `${count} Vorschläge bereit`}
+          subtitle={paneWideNotice ? 'Nicht geprüft' : count === 1 ? '1 Vorschlag bereit' : `${count} Vorschläge bereit`}
           icon={<PenLine className="h-4 w-4" />}
           defaultOpen={showingUnverified}
         >
-          {showingUnverified ? <UnverifiedNotice /> : null}
+          {paneWideNotice ? <UnverifiedNotice /> : null}
           <ul className="space-y-6">
             {shown.map((b, i) => (
               <li key={`${b.rewrittenBullet}-${i}`}>
@@ -213,6 +244,7 @@ export default function AnalyzeBulletRewrites({ bullets, blockedByFactCheck = fa
                   index={i}
                   copied={copied === i}
                   onCopy={() => void handleCopy(i, b.rewrittenBullet)}
+                  unverified={markInline(i)}
                 />
               </li>
             ))}
@@ -220,7 +252,7 @@ export default function AnalyzeBulletRewrites({ bullets, blockedByFactCheck = fa
         </AnalyzeAccordion>
       </div>
       <section className="hidden lg:block" aria-label="Formulierungsvorschläge">
-        {showingUnverified ? <UnverifiedNotice /> : null}
+        {paneWideNotice ? <UnverifiedNotice /> : null}
         <ul className="space-y-8">
           {desktopVisible.map((b, i) => (
             <li key={`${b.rewrittenBullet}-${i}`}>
@@ -229,6 +261,7 @@ export default function AnalyzeBulletRewrites({ bullets, blockedByFactCheck = fa
                 index={i}
                 copied={copied === i}
                 onCopy={() => void handleCopy(i, b.rewrittenBullet)}
+                unverified={markInline(i)}
               />
             </li>
           ))}

@@ -115,6 +115,53 @@ export function skillWarning(gap: SkillGapReport | undefined): { title: string; 
   }
 }
 
+/** "3 Skill-Lücken erkannt: A, B, C" — a roll-up the specifics below it already say. */
+const SKILL_GAP_SUMMARY = /^\s*\d+\s*skill[-\s]?(?:l(?:ü|ue)cken|gaps?)\s*(?:erkannt|detected|found)/i
+/** "Fehlend: Microsoft SQL Server (Muss-Kriterium) — ..." names one concrete gap. */
+const SKILL_GAP_SPECIFIC = /^\s*(?:fehlend|missing)\s*:/i
+
+/** The skill names a summary warning lists after its colon, if any. */
+function summarySkillNames(summary: string): string[] {
+  const colon = summary.indexOf(':')
+  if (colon < 0) return []
+  return summary
+    .slice(colon + 1)
+    .split(/[,;]|\bund\b|\band\b/i)
+    .map(s => s.trim().replace(/[.!]+$/, ''))
+    .filter(s => s.length >= 2)
+}
+
+/**
+ * Drops a roll-up warning when the specific ones below it already name the same gaps.
+ * The model sometimes emits both ("3 Skill-Lücken erkannt: SQL Server, Apache, ERP" plus
+ * one "Fehlend: ..." per skill), which makes the user read the same thing twice. A summary
+ * whose skills nothing else mentions is kept — it is then the only place they appear.
+ */
+export function dedupeSkillWarnings(list: string[]): string[] {
+  const specifics = list.filter(w => SKILL_GAP_SPECIFIC.test(w))
+  if (specifics.length === 0) return list
+
+  return list.filter(w => {
+    if (!SKILL_GAP_SUMMARY.test(w)) return true
+    const names = summarySkillNames(w)
+    if (names.length === 0) return true
+    return !names.some(name => specifics.some(s => s.toLowerCase().includes(name.toLowerCase())))
+  })
+}
+
+/**
+ * Whether the locally derived skill-gap hint would only repeat the model's own warnings.
+ * `skillWarning()` builds its text from `gap.gap`, so when "Fehlend: X" warnings already
+ * name those skills, showing both puts the same gap in the panel twice.
+ */
+export function skillSummaryIsRedundant(missingSkills: string[], warnings: string[]): boolean {
+  const named = missingSkills.map(s => s.trim()).filter(Boolean)
+  if (named.length === 0) return false
+  const specifics = warnings.filter(w => SKILL_GAP_SPECIFIC.test(w))
+  if (specifics.length === 0) return false
+  return named.every(name => specifics.some(s => s.toLowerCase().includes(name.toLowerCase())))
+}
+
 export function userFacingWarnings(warnings: string[] | undefined): string[] {
   return (warnings ?? []).filter(w => {
     const t = w.trim()

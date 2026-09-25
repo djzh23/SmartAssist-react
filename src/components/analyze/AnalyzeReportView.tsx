@@ -85,6 +85,7 @@ export default function AnalyzeReportView({ report, createdLabel, onNewAnalysis,
           missingSkills={gap.gap}
           roleAlignment={dims.roleAlignment}
           warningCount={warnings.length}
+          hideLead={Boolean(report.verdictParagraph)}
         />
         <AnalyzeScoreBreakdown
           cvMatch={dims.cvMatch}
@@ -114,6 +115,7 @@ export default function AnalyzeReportView({ report, createdLabel, onNewAnalysis,
           bullets={bullets}
           blockedByFactCheck={bulletsBlockedByFactCheck}
           unverifiedBullets={unverifiedBullets}
+          unverifiedIndices={report.unverifiedBulletIndices}
         />
       </div>
 

@@ -1,6 +1,11 @@
 import { AlertTriangle } from 'lucide-react'
 import type { SkillGapReport } from '../../api/analyzeClient'
-import { skillWarning, userFacingWarnings } from './analyzeFormat'
+import {
+  dedupeSkillWarnings,
+  skillSummaryIsRedundant,
+  skillWarning,
+  userFacingWarnings,
+} from './analyzeFormat'
 
 interface Props {
   skillGap?: SkillGapReport
@@ -8,8 +13,10 @@ interface Props {
 }
 
 export default function AnalyzeWarningBanner({ skillGap, warnings }: Props) {
-  const skill = skillWarning(skillGap)
-  const extra = userFacingWarnings(warnings)
+  const extra = dedupeSkillWarnings(userFacingWarnings(warnings))
+  // The derived hint and the model's own "Fehlend: X" lines describe the same gaps, so only
+  // one of them belongs in the panel.
+  const skill = skillSummaryIsRedundant(skillGap?.gap ?? [], extra) ? null : skillWarning(skillGap)
   if (!skill && extra.length === 0) return null
 
   const items: { title: string; body?: string }[] = []

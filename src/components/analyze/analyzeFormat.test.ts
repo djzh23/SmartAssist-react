@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { SkillGapReport } from '../../api/analyzeClient'
 import {
+  dedupeSkillWarnings,
   emptySkillGap,
   formatRelativeCreated,
   joinGerman,
@@ -14,6 +15,7 @@ import {
   scoreLevel,
   scorePercent,
   skillGapState,
+  skillSummaryIsRedundant,
   skillWarning,
   splitRoleSummary,
   warningLevel,
@@ -176,5 +178,63 @@ describe('plainGerman', () => {
   it('leaves other words alone', () => {
     expect(plainGerman('JDK und JDBC bleiben')).toBe('JDK und JDBC bleiben')
     expect(plainGerman(undefined)).toBe('')
+  })
+})
+
+describe('dedupeSkillWarnings', () => {
+  const summary = '3 Skill-Lücken erkannt: SQL Server, Apache, ERP'
+  const specifics = [
+    'Fehlend: Microsoft SQL Server (Muss-Kriterium) — im Anschreiben adressieren.',
+    'Fehlend: Apache HTTPD — Grundlagen nachziehen.',
+    'Fehlend: ERP — über das Vereins-Projekt annähern.',
+  ]
+
+  it('drops the summary when the specifics already name those skills', () => {
+    const result = dedupeSkillWarnings([summary, ...specifics])
+
+    expect(result).not.toContain(summary)
+    expect(result).toHaveLength(3)
+  })
+
+  it('keeps the summary when it is the only warning', () => {
+    expect(dedupeSkillWarnings([summary])).toEqual([summary])
+  })
+
+  it('keeps specifics when there is no summary', () => {
+    expect(dedupeSkillWarnings(specifics)).toEqual(specifics)
+  })
+
+  it('keeps a summary about other skills than the specifics name', () => {
+    const otherSummary = '2 Skill-Lücken erkannt: Kubernetes, Terraform'
+
+    const result = dedupeSkillWarnings([otherSummary, specifics[0]])
+
+    expect(result).toContain(otherSummary)
+  })
+
+  it('leaves unrelated warnings untouched', () => {
+    const unrelated = 'Englisch B2 im Lebenslauf, C1 gefordert.'
+
+    expect(dedupeSkillWarnings([unrelated, ...specifics])).toContain(unrelated)
+    expect(dedupeSkillWarnings([])).toEqual([])
+  })
+})
+
+describe('skillSummaryIsRedundant', () => {
+  it('is redundant when every missing skill already has its own warning', () => {
+    const warnings = ['Fehlend: SQL Server — nachziehen.', 'Fehlend: Apache — nachziehen.']
+
+    expect(skillSummaryIsRedundant(['SQL Server', 'Apache'], warnings)).toBe(true)
+  })
+
+  it('is not redundant when a missing skill appears nowhere else', () => {
+    const warnings = ['Fehlend: SQL Server — nachziehen.']
+
+    expect(skillSummaryIsRedundant(['SQL Server', 'Apache'], warnings)).toBe(false)
+  })
+
+  it('is not redundant without missing skills or without specific warnings', () => {
+    expect(skillSummaryIsRedundant([], ['Fehlend: SQL Server'])).toBe(false)
+    expect(skillSummaryIsRedundant(['SQL Server'], ['Team wird nicht beschrieben.'])).toBe(false)
   })
 })

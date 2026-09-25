@@ -72,6 +72,11 @@ export interface AnalyzeReport {
   outputTokens?: number | null
   /** Set only when FactGate withheld `bullets`: the same rewrites, not checked against the CV. */
   unverifiedBullets?: BulletRewriteSuggestion[] | null
+  /**
+   * v2 — positions in `bullets` that failed their own fact check. Those rewrites are still shown
+   * and marked individually, instead of withholding all of them because one was wrong.
+   */
+  unverifiedBulletIndices?: number[] | null
 
   // v2 — optional so older stored reports keep rendering
   dimensionReasons?: DimensionReasons
