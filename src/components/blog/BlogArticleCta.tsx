@@ -18,17 +18,17 @@ export default function BlogArticleCta() {
         {isSignedIn ? (
           <Link
             to="/analyze"
-            className="inline-flex min-h-[44px] items-center justify-center rounded-2xl bg-gradient-to-r from-amber-400 to-amber-500 px-6 text-sm font-bold text-amber-950"
+            className="inline-flex min-h-[44px] w-full items-center justify-center rounded-2xl bg-gradient-to-r from-amber-400 to-amber-500 px-6 text-sm font-bold text-amber-950 sm:w-auto"
           >
-            Zur Stellenanalyse
+            Zur Analyse
           </Link>
         ) : (
           <SignUpButton mode="modal" fallbackRedirectUrl="/analyze">
             <button
               type="button"
-              className="inline-flex min-h-[44px] items-center justify-center rounded-2xl bg-gradient-to-r from-amber-400 to-amber-500 px-6 text-sm font-bold text-amber-950"
+              className="inline-flex min-h-[44px] w-full items-center justify-center rounded-2xl bg-gradient-to-r from-amber-400 to-amber-500 px-6 text-sm font-bold text-amber-950 sm:w-auto"
             >
-              Kostenlos starten und Anzeige prüfen
+              Anzeige prüfen
             </button>
           </SignUpButton>
         )}

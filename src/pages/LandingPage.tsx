@@ -218,11 +218,13 @@ function ExampleReport() {
 
 function SignUpCta({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <SignUpButton mode="modal" fallbackRedirectUrl={AFTER_AUTH}>
-      <button type="button" className={className ?? 'pp-cta'}>
-        {children}
-      </button>
-    </SignUpButton>
+    <div className="w-full min-w-0 sm:w-auto [&>*]:block [&>*]:w-full sm:[&>*]:w-auto">
+      <SignUpButton mode="modal" fallbackRedirectUrl={AFTER_AUTH}>
+        <button type="button" className={className ?? 'pp-cta'}>
+          {children}
+        </button>
+      </SignUpButton>
+    </div>
   )
 }
 
@@ -290,17 +292,17 @@ export default function LandingPage() {
                   Wir prüfen die Stellenanzeige und deinen Lebenslauf. Du bekommst Passungs-Score,
                   geforderte Skills, Red Flags und konkrete Formulierungsvorschläge mit Begründung.
                 </p>
-                <div className="mt-11 flex flex-col items-start gap-5 sm:flex-row sm:items-center">
-                  <SignUpCta className="pp-cta min-h-[56px] px-8 text-base">
-                    Stellenanzeige einfügen
+                <div className="mt-11 flex w-full flex-col items-stretch gap-3 sm:w-auto sm:flex-row sm:items-center sm:gap-5">
+                  <SignUpCta className="pp-cta w-full min-h-[52px] px-5 text-base sm:w-auto sm:min-h-[56px] sm:px-8">
+                    Anzeige prüfen
                     <ArrowRight className="h-4 w-4" strokeWidth={ICON_STROKE} aria-hidden />
                   </SignUpCta>
                   <button
                     type="button"
                     onClick={() => scrollToSection('bericht')}
-                    className="pp-text-link bg-transparent"
+                    className="pp-text-link bg-transparent self-start sm:self-auto"
                   >
-                    Beispielbericht ansehen
+                    Beispiel
                   </button>
                 </div>
                 <div className="mt-8 flex flex-wrap gap-2">
@@ -417,7 +419,7 @@ export default function LandingPage() {
                   <p className="pp-display text-2xl text-[#f5f1eb]">Premium</p>
                   <p className="mt-1.5 text-sm text-[#a89e91]">Unbegrenzte Analysen · jederzeit kündbar</p>
                 </div>
-                <p className="whitespace-nowrap">
+                <p className="sm:whitespace-nowrap">
                   <span className="pp-display text-4xl text-[#f5f1eb]">6,99 €</span>
                   <span className="text-[13px] text-[#a89e91]"> / Monat</span>
                 </p>
@@ -433,8 +435,8 @@ export default function LandingPage() {
 
         <section id="starten" className="pp-section pp-band-light">
           <div className={PUBLIC_SHELL}>
-            <div className="pp-card-beta flex flex-col items-start justify-between gap-6 px-8 py-9 sm:flex-row sm:items-center sm:px-11">
-              <div>
+            <div className="pp-card-beta flex flex-col items-stretch justify-between gap-6 px-5 py-8 sm:flex-row sm:items-center sm:px-11 sm:py-9">
+              <div className="min-w-0">
                 <h2 className="pp-display text-[clamp(1.75rem,3vw,2.125rem)] leading-tight text-[#1a1613]">
                   Bereit? <span className="pp-italic text-[#b45539]">Analyse in unter einer Minute.</span>
                 </h2>
@@ -442,8 +444,8 @@ export default function LandingPage() {
                   Konto erstellen, dann analysieren. 1 Analyse pro Tag kostenlos, keine Kreditkarte.
                 </p>
               </div>
-              <SignUpCta className="pp-cta min-h-[56px] shrink-0 px-8 text-base">
-                Jetzt kostenlos starten
+              <SignUpCta className="pp-cta w-full min-h-[52px] px-5 text-base sm:w-auto sm:min-h-[56px] sm:shrink-0 sm:px-8">
+                Kostenlos starten
                 <ArrowRight className="h-4 w-4" strokeWidth={ICON_STROKE} aria-hidden />
               </SignUpCta>
             </div>

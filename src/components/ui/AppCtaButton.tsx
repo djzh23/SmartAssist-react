@@ -41,7 +41,7 @@ export function appCtaButtonClasses(options?: {
   const variant = options?.variant ?? 'primary'
   const size = options?.size ?? 'md'
   return [
-    'inline-flex items-center justify-center',
+    'inline-flex max-w-full min-w-0 items-center justify-center text-center',
     sizeClasses[size],
     variantClasses[variant],
     options?.className,

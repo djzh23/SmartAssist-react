@@ -187,17 +187,17 @@ export default function InboxJobReportPage() {
 
       <div className="mx-auto mt-6 w-full max-w-[820px]">
         <div className="mb-4 h-px bg-[#3a332d]" />
-        <div className="flex flex-wrap items-center justify-center gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-center">
           {job ? (
-            <AppCtaButton variant="secondary" onClick={() => navigate(`/inbox/${jobId}`)}>
-              Zurueck zum Job
+            <AppCtaButton variant="secondary" className="w-full sm:w-auto" onClick={() => navigate(`/inbox/${jobId}`)}>
+              Zum Job
             </AppCtaButton>
           ) : null}
-          <AppCtaButton variant="secondary" onClick={() => navigate('/inbox')}>
-            Zur Inbox
+          <AppCtaButton variant="secondary" className="w-full sm:w-auto" onClick={() => navigate('/inbox')}>
+            Inbox
           </AppCtaButton>
-          <AppCtaButton variant="danger" onClick={() => setConfirmingDelete(true)} disabled={deleting}>
-            Analyse loeschen
+          <AppCtaButton variant="danger" className="w-full sm:w-auto" onClick={() => setConfirmingDelete(true)} disabled={deleting}>
+            Bericht löschen
           </AppCtaButton>
         </div>
         {deleteError ? <p className="mt-2 text-center text-sm text-rose-400">{deleteError}</p> : null}

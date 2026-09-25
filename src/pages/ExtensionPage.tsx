@@ -14,7 +14,7 @@ const USE_STEPS = [
 ] as const
 
 const INSTALL_STEPS = [
-  { step: '1', title: 'ZIP laden', desc: 'Oben auf „Erweiterung herunterladen“ klicken.' },
+  { step: '1', title: 'ZIP laden', desc: 'Oben auf „ZIP laden“ klicken.' },
   { step: '2', title: 'Entpacken', desc: 'Rechtsklick auf die Datei, dann „Alle extrahieren“.' },
   { step: '3', title: 'Seite öffnen', desc: 'In Chrome chrome://extensions, in Edge edge://extensions.' },
   { step: '4', title: 'Entwicklermodus', desc: 'Schalter oben rechts einschalten.' },
@@ -31,10 +31,10 @@ export default function ExtensionPage() {
           Stelle offen, Icon klicken, fertig. Titel, Firma und Anzeigentext liegen danach in deiner Inbox.
         </p>
 
-        <div className="mt-6 flex flex-wrap items-center gap-3 rounded-2xl border border-[#3a332d] bg-[#232019] p-4">
-          <a href={EXTENSION_ZIP_URL} download className={appCtaButtonClasses({ size: 'lg' })}>
+        <div className="mt-6 flex flex-col items-stretch gap-3 rounded-2xl border border-[#3a332d] bg-[#232019] p-4 sm:flex-row sm:flex-wrap sm:items-center">
+          <a href={EXTENSION_ZIP_URL} download className={appCtaButtonClasses({ size: 'lg', className: 'w-full sm:w-auto' })}>
             <Download size={16} aria-hidden />
-            Erweiterung herunterladen (.zip)
+            ZIP laden
           </a>
           <p className="text-xs text-stone-500">
             Version 0.1.4 · Beta, noch nicht im Chrome Web Store

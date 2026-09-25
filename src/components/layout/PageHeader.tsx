@@ -84,7 +84,7 @@ export default function PageHeader({
           </div>
         </div>
         {/* Mobile — actions only, compact row */}
-        <div className="flex flex-wrap items-center gap-2 sm:hidden">
+        <div className="flex w-full min-w-0 flex-col gap-2 sm:hidden">
           {actions}
         </div>
       </header>
@@ -102,7 +102,7 @@ export default function PageHeader({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         {titleBlock}
         {actions ? (
-          <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
+          <div className="flex w-full min-w-0 flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
             {actions}
           </div>
         ) : null}

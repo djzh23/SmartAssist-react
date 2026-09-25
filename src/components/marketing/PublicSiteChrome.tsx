@@ -171,7 +171,7 @@ function HeaderCtas({
           type="button"
           className={stacked ? 'pp-cta w-full min-h-11' : 'pp-cta pp-cta-nav'}
         >
-          Kostenlos starten
+          Starten
         </button>
       </SignUpButton>
     </div>

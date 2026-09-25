@@ -1064,23 +1064,22 @@ export default function CareerProfilePage() {
             </button>
           )}
           actions={(
-            <>
-              <div className="flex flex-wrap items-end gap-x-3 gap-y-1.5 sm:items-center">
-                <AppCtaButton
-                  type="button"
-                  size="sm"
-                  onClick={() => window.print()}
-                  className="inline-flex items-center gap-1.5"
-                >
-                  <FileText size={14} aria-hidden />
-                  <span className="hidden sm:inline">Profil als </span>PDF exportieren
-                </AppCtaButton>
-                <div className="min-w-0 sm:text-right">
-                  <p className="text-[10px] font-bold uppercase tracking-wide text-stone-500">Letzte Aktualisierung</p>
-                  <p className="text-xs font-medium tabular-nums text-stone-200">{formatDateTime(profile.updatedAt)}</p>
-                </div>
+            <div className="flex w-full min-w-0 flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:gap-3">
+              <AppCtaButton
+                type="button"
+                size="sm"
+                onClick={() => window.print()}
+                className="w-full sm:w-auto"
+                aria-label="Profil als PDF exportieren"
+              >
+                <FileText size={14} aria-hidden />
+                PDF
+              </AppCtaButton>
+              <div className="hidden min-w-0 sm:block sm:text-right">
+                <p className="text-[10px] font-bold uppercase tracking-wide text-stone-500">Letzte Aktualisierung</p>
+                <p className="text-xs font-medium tabular-nums text-stone-200">{formatDateTime(profile.updatedAt)}</p>
               </div>
-            </>
+            </div>
           )}
         />
 
@@ -1247,7 +1246,7 @@ export default function CareerProfilePage() {
                   onClick={() => setActiveSection(nextAction.section)}
                   className="inline-flex items-center gap-1"
                 >
-                  Profil verbessern
+                  Weiter
                   <ChevronRight size={12} />
                 </AppCtaButton>
               </div>
@@ -1271,7 +1270,7 @@ export default function CareerProfilePage() {
                       className="inline-flex items-center gap-1.5 text-xs font-semibold text-rose-300 hover:text-rose-200 disabled:opacity-50"
                     >
                       <Trash2 size={13} aria-hidden />
-                      Lebenslauf-Daten löschen
+                      CV löschen
                     </button>
                   </div>
                 ) : (
@@ -1375,10 +1374,10 @@ export default function CareerProfilePage() {
                 disabled={saving}
                 loading={saving}
                 onClick={() => void handleClearCvDerived()}
-                className="mt-3 inline-flex items-center gap-1.5"
+                className="mt-3 w-full sm:w-auto"
               >
                 <Trash2 size={14} aria-hidden />
-                Lebenslauf-Daten löschen
+                CV löschen
               </AppCtaButton>
             </div>
           ) : null}
@@ -1393,7 +1392,7 @@ export default function CareerProfilePage() {
                   : 'text-stone-600 hover:text-stone-900',
               ].join(' ')}
             >
-              PDF hochladen &amp; erkennen
+              PDF
             </button>
             <button
               type="button"
@@ -1405,7 +1404,7 @@ export default function CareerProfilePage() {
                   : 'text-stone-600 hover:text-stone-900',
               ].join(' ')}
             >
-              Manuell ausfüllen
+              Manuell
             </button>
           </div>
           {dataEntryTab === 'pdf' && (
@@ -1450,10 +1449,10 @@ export default function CareerProfilePage() {
               type="button"
               disabled={markSetupBusy || saving}
               onClick={() => void handleMarkSetupComplete()}
-              className="mt-3 inline-flex items-center justify-center gap-2 disabled:opacity-50"
+              className="mt-3 w-full sm:w-auto"
             >
               {markSetupBusy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
-              Profil als eingerichtet markieren
+              Einrichten
             </AppCtaButton>
           </div>
         ) : (
@@ -1631,9 +1630,9 @@ export default function CareerProfilePage() {
                   levelLabel: CAREER_LEVELS.find(l => l.value === level)?.label ?? profile.levelLabel ?? null,
                   currentRole: profile.currentRole?.trim() || null,
                 })}
-              className="inline-flex items-center justify-center rounded-xl border border-stone-400/50 bg-app-parchment px-4 py-2.5 text-sm font-medium text-stone-900 shadow-sm hover:bg-app-parchmentDeep disabled:opacity-50"
+              className="inline-flex w-full items-center justify-center rounded-xl border border-stone-400/50 bg-app-parchment px-4 py-2.5 text-sm font-medium text-stone-900 shadow-sm hover:bg-app-parchmentDeep disabled:opacity-50 sm:w-auto"
             >
-              Änderungen speichern
+              Speichern
             </button>
           </div>
         </section>
@@ -1657,18 +1656,18 @@ export default function CareerProfilePage() {
               </span>
             ))}
           </div>
-          <div className="flex gap-2">
+          <div className="flex min-w-0 flex-col gap-2 sm:flex-row">
             <input
               value={skillDraft}
               onChange={e => setSkillDraft(e.target.value)}
               placeholder="z. B. Kundenberatung, MS Office, Schichtleitung"
-              className="flex-1 rounded-lg border border-stone-300 px-3 py-2 text-sm"
+              className="min-w-0 w-full flex-1 rounded-lg border border-stone-300 px-3 py-2 text-sm"
               onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), void addSkill())}
             />
             <AppCtaButton
               type="button"
               onClick={() => void addSkill()}
-              className="inline-flex items-center gap-1.5"
+              className="w-full sm:w-auto"
             >
               <Plus size={18} aria-hidden />
               Hinzufügen
@@ -1735,20 +1734,21 @@ export default function CareerProfilePage() {
               </div>
             </div>
           ))}
-          <div className="flex flex-wrap gap-2">
+          <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:flex-wrap">
             <button
               type="button"
               onClick={() => setProfile({ ...profile, experience: [...(profile.experience ?? []), emptyExp()] })}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-stone-400/40 bg-app-parchment px-4 py-2 text-sm font-medium text-primary shadow-sm hover:bg-primary-light/40"
+              className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-stone-400/40 bg-app-parchment px-4 py-2 text-sm font-medium text-primary shadow-sm hover:bg-primary-light/40 sm:w-auto"
             >
               <Plus size={18} aria-hidden />
-              Eintrag hinzufügen
+              Hinzufügen
             </button>
             <AppCtaButton
               type="button"
+              className="w-full sm:w-auto"
               onClick={() => void saveProfilePatch({ experience: profile.experience ?? [] })}
             >
-              Änderungen speichern
+              Speichern
             </AppCtaButton>
           </div>
         </section>
@@ -1802,7 +1802,7 @@ export default function CareerProfilePage() {
               </div>
             </div>
           ))}
-          <div className="flex flex-wrap gap-2">
+          <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:flex-wrap">
             <button
               type="button"
               onClick={() =>
@@ -1810,16 +1810,17 @@ export default function CareerProfilePage() {
                   ...profile,
                   educationEntries: [...(profile.educationEntries ?? []), emptyEdu()],
                 })}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-stone-400/40 bg-app-parchment px-4 py-2 text-sm font-medium text-primary shadow-sm hover:bg-primary-light/40"
+              className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-stone-400/40 bg-app-parchment px-4 py-2 text-sm font-medium text-primary shadow-sm hover:bg-primary-light/40 sm:w-auto"
             >
               <Plus size={18} aria-hidden />
-              Eintrag hinzufügen
+              Hinzufügen
             </button>
             <AppCtaButton
               type="button"
+              className="w-full sm:w-auto"
               onClick={() => void saveProfilePatch({ educationEntries: profile.educationEntries ?? [] })}
             >
-              Änderungen speichern
+              Speichern
             </AppCtaButton>
           </div>
         </section>
@@ -1830,7 +1831,7 @@ export default function CareerProfilePage() {
         <section className="mb-8 rounded-xl border border-stone-400/40 bg-app-parchment p-5 shadow-landing text-stone-900">
           <h2 className="mb-3 text-sm font-semibold text-stone-900">Sprachen</h2>
           {(profile.languages ?? []).map((lang, i) => (
-            <div key={i} className="mb-2 flex gap-2">
+            <div key={i} className="mb-2 flex min-w-0 flex-col gap-2 sm:flex-row">
               <input
                 placeholder="Sprache"
                 value={lang.name ?? ''}
@@ -1839,7 +1840,7 @@ export default function CareerProfilePage() {
                   next[i] = { ...next[i], name: e.target.value }
                   setProfile({ ...profile, languages: next })
                 }}
-                className="flex-1 rounded border border-stone-300 px-2 py-1 text-sm"
+                className="min-w-0 w-full flex-1 rounded border border-stone-300 px-2 py-1 text-sm"
               />
               <input
                 placeholder="Level"
@@ -1849,7 +1850,7 @@ export default function CareerProfilePage() {
                   next[i] = { ...next[i], level: e.target.value }
                   setProfile({ ...profile, languages: next })
                 }}
-                className="w-28 rounded border border-stone-300 px-2 py-1 text-sm"
+                className="min-w-0 w-full rounded border border-stone-300 px-2 py-1 text-sm sm:w-28"
               />
               <button
                 type="button"
@@ -1861,21 +1862,22 @@ export default function CareerProfilePage() {
               </button>
             </div>
           ))}
-          <div className="flex flex-wrap gap-2">
+          <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:flex-wrap">
             <button
               type="button"
               onClick={() =>
                 setProfile({ ...profile, languages: [...(profile.languages ?? []), emptyLang()] })}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-stone-400/40 bg-app-parchment px-4 py-2 text-sm font-medium text-primary shadow-sm hover:bg-primary-light/40"
+              className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-stone-400/40 bg-app-parchment px-4 py-2 text-sm font-medium text-primary shadow-sm hover:bg-primary-light/40 sm:w-auto"
             >
               <Plus size={18} aria-hidden />
-              Sprache hinzufügen
+              Hinzufügen
             </button>
             <AppCtaButton
               type="button"
+              className="w-full sm:w-auto"
               onClick={() => void saveProfilePatch({ languages: profile.languages ?? [] })}
             >
-              Änderungen speichern
+              Speichern
             </AppCtaButton>
           </div>
         </section>
@@ -1908,36 +1910,39 @@ export default function CareerProfilePage() {
           )}
 
           {/* Language selector + generate */}
-          <div className="mb-5 flex flex-wrap items-center gap-3">
-            <div className="inline-flex rounded-lg border border-stone-400/45 bg-app-parchmentDeep p-0.5 text-xs font-semibold">
+          <div className="mb-5 flex min-w-0 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+            <div className="inline-flex w-full rounded-lg border border-stone-400/45 bg-app-parchmentDeep p-0.5 text-xs font-semibold sm:w-auto">
               <button
                 type="button"
                 onClick={() => setSelectedGenLang('de')}
+                aria-label="Deutsch"
                 className={[
-                  'rounded-md px-4 py-2 transition-colors',
+                  'flex-1 rounded-md px-3 py-2 transition-colors sm:flex-none sm:px-4',
                   selectedGenLang === 'de' ? 'bg-app-parchment text-stone-900 shadow-sm' : 'text-stone-600 hover:text-stone-900',
                 ].join(' ')}
               >
-                Deutsch (DE)
+                DE
               </button>
               <button
                 type="button"
                 onClick={() => setSelectedGenLang('en')}
+                aria-label="English"
                 className={[
-                  'rounded-md px-4 py-2 transition-colors',
+                  'flex-1 rounded-md px-3 py-2 transition-colors sm:flex-none sm:px-4',
                   selectedGenLang === 'en' ? 'bg-app-parchment text-stone-900 shadow-sm' : 'text-stone-600 hover:text-stone-900',
                 ].join(' ')}
               >
-                English (EN)
+                EN
               </button>
             </div>
             <AppCtaButton
+              className="w-full sm:w-auto"
               onClick={() => void generateSummaryForLang(selectedGenLang)}
               disabled={saving || cvSummaryLoading || !canGenerate}
               loading={cvSummaryLoading}
             >
               {!cvSummaryLoading && <Sparkles className="h-4 w-4 shrink-0" aria-hidden />}
-              {cvSummaryLoading ? 'Erstelle…' : 'Zusammenfassung erstellen'}
+              {cvSummaryLoading ? 'Erstelle…' : 'Erstellen'}
             </AppCtaButton>
           </div>
 
@@ -1982,7 +1987,7 @@ export default function CareerProfilePage() {
                   </button>
                 ) : (
                   <p className="text-xs text-stone-500">
-                    Sprache wählen &amp; „Zusammenfassung erstellen" klicken.
+                    Sprache wählen und auf Erstellen tippen.
                   </p>
                 )}
               </div>
@@ -2052,6 +2057,7 @@ export default function CareerProfilePage() {
               />
               <AppCtaButton
                 type="button"
+                className="w-full md:w-auto"
                 onClick={() => void addJob()}
                 disabled={saving || !jobTitle.trim()}
               >

@@ -73,8 +73,8 @@ function EmptyState() {
       <p className="max-w-sm text-sm leading-relaxed text-[#a89e91]">
         Speichere Jobs mit einem Klick von LinkedIn und anderen Job-Portalen direkt hier.
       </p>
-      <AppCtaButton className="mt-1" onClick={() => navigate('/erweiterung')}>
-        Browser-Erweiterung installieren
+      <AppCtaButton className="mt-1 w-full max-w-xs" onClick={() => navigate('/erweiterung')}>
+        Erweiterung holen
       </AppCtaButton>
       <p className="max-w-sm text-xs text-[#8a7f70]">
         Alternativ kannst du Jobs auch weiterhin manuell in der Analyse-Seite einfügen.
@@ -134,7 +134,7 @@ export default function InboxPage() {
         className="mb-4 sm:mb-6"
         actions={
           jobs && jobs.length > 0 ? (
-            <div className="flex gap-1.5 rounded-full bg-white/[0.05] p-1">
+            <div className="flex w-full min-w-0 flex-wrap gap-1.5 rounded-full bg-white/[0.05] p-1 sm:w-auto">
               {FILTERS.map(f => (
                 <button
                   key={f.key}

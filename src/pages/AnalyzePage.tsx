@@ -226,6 +226,7 @@ export default function AnalyzePage() {
             <p className="text-xs text-[#a89e91]">{lengthHint}</p>
             <AppCtaButton
               size="lg"
+              className="w-full sm:w-auto"
               onClick={() => void runAnalyze(jobText, activeJob ?? undefined)}
               disabled={busy || !jdOk || !cvReady}
               loading={busy}

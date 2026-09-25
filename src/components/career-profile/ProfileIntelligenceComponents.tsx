@@ -132,8 +132,8 @@ export function ProfileRecommendationCard({
           <p className="mt-1 text-xs text-[#cfc6b8]">{description}</p>
         </div>
       </div>
-      <AppCtaButton size="sm" onClick={onAction} className="mt-3">
-        Weiter zum nächsten Schritt
+      <AppCtaButton size="sm" onClick={onAction} className="mt-3 w-full sm:w-auto">
+        Weiter
         <ChevronRight size={12} />
       </AppCtaButton>
     </div>

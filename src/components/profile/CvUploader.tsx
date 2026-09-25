@@ -364,6 +364,7 @@ export default function CvUploader({
 
         <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
           <AppCtaButton
+            className="w-full sm:w-auto"
             loading={applyBusy}
             onClick={() => {
               void (async () => {
@@ -379,14 +380,14 @@ export default function CvUploader({
               })()
             }}
           >
-            {applyBusy ? 'Speichern…' : 'Alles übernehmen'}
+            {applyBusy ? 'Speichern…' : 'Übernehmen'}
           </AppCtaButton>
           <AppCtaButton
             variant="ghost"
-            className="!text-stone-700 hover:!bg-app-parchmentDeep"
+            className="w-full !text-stone-700 hover:!bg-app-parchmentDeep sm:w-auto"
             onClick={() => onManualAdjust(draft)}
           >
-            Im Formular bearbeiten (speichert nicht automatisch)
+            Erst prüfen
           </AppCtaButton>
           <button
             type="button"

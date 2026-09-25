@@ -458,7 +458,7 @@ export default function InboxJobPage() {
               disabled={!dirty || !titleValid || !companyValid || saving}
               loading={saving}
             >
-              Aenderungen speichern
+              Speichern
             </AppCtaButton>
           </div>
         </div>
@@ -467,7 +467,7 @@ export default function InboxJobPage() {
 
         {!isAnalyzed ? (
           <AppCtaButton size="lg" className="w-full" onClick={handleAnalyze}>
-            Diese Stelle analysieren
+            Analysieren
           </AppCtaButton>
         ) : (
           <div className="flex flex-col items-center gap-3">
@@ -476,7 +476,7 @@ export default function InboxJobPage() {
               Diese Stelle wurde bereits analysiert
             </p>
             <AppCtaButton size="lg" className="w-full" onClick={() => navigate(`/inbox/${job.id}/report`)}>
-              Analyse-Ergebnis oeffnen
+              Ergebnis
             </AppCtaButton>
             <AppCtaButton
               size="sm"
