@@ -45,6 +45,12 @@ const ROUTE_META: MetaEntry[] = [
     description: 'Datenschutzerklärung von PrivatePrep. Auftragsverarbeiter, Speicherdauer und deine Rechte.',
   },
   {
+    pattern: '/erweiterung',
+    end: true,
+    title: `Browser-Erweiterung · ${SITE_TITLE_SUFFIX}`,
+    description: 'Stellenanzeigen mit einem Klick in die PrivatePrep-Inbox speichern. Chrome und Edge, Desktop.',
+  },
+  {
     pattern: '/analyze',
     end: true,
     title: `Stellenanalyse | ${SITE_TITLE_SUFFIX}`,

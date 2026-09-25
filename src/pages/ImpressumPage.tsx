@@ -15,13 +15,9 @@ export default function ImpressumPage() {
         <article className="legal-prose mt-8">
           <h2>Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV</h2>
           <p>
-            Zouhair Ijaad<br />
-            Langenhorn<br />
-            <span className="legal-address-placeholder">Langenhorn </span>
+            Zouhair Ijaad
             <br />
-            <span className="legal-address-placeholder">22415</span>
-            {' '}
-            Hamburg
+            Langenhorn 22415 Hamburg
             <br />
             Deutschland
           </p>
@@ -29,9 +25,6 @@ export default function ImpressumPage() {
             E-Mail:
             {' '}
             <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
-          </p>
-          <p className="legal-address-note">
-            Straße und Postleitzahl trägt der Betreiber selbst ein. Hier stehen bewusst Platzhalter.
           </p>
 
           <h2>Über dieses Angebot</h2>

@@ -247,12 +247,12 @@ export async function updateFullProfile(token: string, profile: Partial<CareerPr
   if (!res.ok) throw new Error(await readError(res, `Profile update failed (${res.status})`))
 }
 
-export async function deleteCareerProfile(token: string): Promise<void> {
-  const res = await fetch(`${API_BASE}/api/profile`, {
+export async function clearCvDerivedData(token: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/api/profile/cv`, {
     method: 'DELETE',
     headers: { Authorization: `Bearer ${token}` },
   })
-  if (!res.ok) throw new Error(await readError(res, `Profile delete failed (${res.status})`))
+  if (!res.ok) throw new Error(await readError(res, 'Lebenslauf-Daten konnten nicht gelöscht werden.'))
 }
 
 export async function fetchOnboardingDraft(token: string): Promise<OnboardingDraft> {

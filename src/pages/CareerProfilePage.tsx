@@ -32,6 +32,7 @@ import type {
 } from '../api/profileClient'
 import {
   addTargetJob,
+  clearCvDerivedData,
   completeOnboarding,
   fetchAnonymousCvSummary,
   fetchProfile,
@@ -68,6 +69,8 @@ import {
 import { useMediaQuery } from '../hooks/useMediaQuery'
 import { CAREER_FIELDS, CAREER_GOALS, CAREER_LEVELS } from '../config/careerOptions'
 import { isCachedCvReady, readCachedCv } from '../utils/cvSessionCache'
+import { clearLocalCvDerivedState, PENDING_CV_PARSED_KEY } from '../utils/clearCvDerivedState'
+import { useAppUi } from '../context/AppUiContext'
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -93,7 +96,7 @@ function emptyLang(): ProfileLanguage {
   return { name: '', level: '' }
 }
 
-const PENDING_CV_KEY = 'privateprep_pending_cv_parsed'
+const PENDING_CV_KEY = PENDING_CV_PARSED_KEY
 
 const norm = (s: string | null | undefined) => (s ?? '').trim().toLowerCase()
 
@@ -560,6 +563,7 @@ function SummaryModal({
 
 export default function CareerProfilePage() {
   const { getToken, isLoaded, userId } = useAuth()
+  const { requestConfirm, showToast } = useAppUi()
   const mergedPendingCv = useRef(false)
   const desktopContentRef = useRef<HTMLDivElement | null>(null)
 
@@ -587,6 +591,7 @@ export default function CareerProfilePage() {
   const [summaryModalLang, setSummaryModalLang] = useState<'de' | 'en' | null>(null)
   const [helpOpen, setHelpOpen] = useState(false)
   const [insightModalOpen, setInsightModalOpen] = useState(false)
+  const [cvClearedNotice, setCvClearedNotice] = useState(false)
   const [activeSection, setActiveSection] = useState<CareerSectionKey>('overview')
   const [mobileSection, setMobileSection] = useState<CareerSectionKey>('overview')
   const isDesktop = useMediaQuery('(min-width: 1024px)')
@@ -749,6 +754,7 @@ export default function CareerProfilePage() {
       setDataEntryTab('manual')
       setSummaryStale(true)
       setPendingMergedDraftHint(false)
+      setCvClearedNotice(false)
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Speichern fehlgeschlagen'
       setError(msg)
@@ -792,6 +798,49 @@ export default function CareerProfilePage() {
     setPendingCvChoice(null)
     if (origin === 'apply') await applyParsedDraft(draft, mode)
     else applyManualDraftLocally(draft, mode)
+  }
+
+  const handleClearCvDerived = async () => {
+    const confirmed = await requestConfirm({
+      title: 'Lebenslauf-Daten löschen?',
+      message:
+        'Damit startest du mit einem leeren CV-Stand.\n\n'
+        + 'Gelöscht werden:\n'
+        + '• der Lebenslauf-Text in diesem Browser\n'
+        + '• Skills, Erfahrung, Ausbildung und Sprachen aus dem letzten CV\n'
+        + '• die KI-Zusammenfassung\n'
+        + '• der Prüfwert auf dem Server\n\n'
+        + 'Berufsfeld, Ziele und Wunschstellen bleiben.\n'
+        + 'Ohne neuen Lebenslauf startet keine Analyse.',
+      confirmLabel: 'Ja, Daten löschen',
+      cancelLabel: 'Abbrechen',
+      danger: true,
+    })
+    if (!confirmed) return
+    const token = await getToken()
+    if (!token) return
+    setSaving(true)
+    setError(null)
+    try {
+      await clearCvDerivedData(token)
+      clearLocalCvDerivedState(userId)
+      setPendingCvChoice(null)
+      setMergeSummaryHint(null)
+      setShowStoryReminder(false)
+      setPendingMergedDraftHint(false)
+      setCvPasteForUploader('')
+      setSummaryStale(false)
+      await load()
+      setCvClearedNotice(true)
+      setDataEntryTab('pdf')
+      setActiveSection('basis')
+      setMobileSection('basis')
+      showToast('Lebenslauf-Daten sind gelöscht. Lade jetzt einen neuen Lebenslauf hoch.', 'success')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Löschen fehlgeschlagen')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const persistFullProfileFromState = async () => {
@@ -962,6 +1011,7 @@ export default function CareerProfilePage() {
   const localCv = readCachedCv(userId)
   const cvOnThisBrowser = isCachedCvReady(localCv, profile.cvContentHash)
   const hasCv = Boolean(profile.cvContentHash?.trim()) || cvOnThisBrowser
+  const canClearCvData = hasCv || hasExistingCvData(profile)
   const mobileIsDetail = mobileSection !== 'overview'
   const currentSection = isDesktop ? activeSection : mobileSection
 
@@ -1033,6 +1083,27 @@ export default function CareerProfilePage() {
             </>
           )}
         />
+
+        {cvClearedNotice && !hasCv && !hasExistingCvData(profile) ? (
+          <div
+            role="status"
+            className="mb-4 rounded-xl border border-emerald-600/35 bg-emerald-950/25 px-4 py-3 text-sm text-emerald-100"
+          >
+            <p className="font-semibold text-emerald-50">Lebenslauf-Daten sind leer</p>
+            <p className="mt-1 leading-relaxed text-emerald-100/90">
+              In diesem Profil und in diesem Browser liegt kein CV mehr. Skills, Erfahrung, Ausbildung
+              und Sprachen aus dem alten Lebenslauf sind entfernt. Lade jetzt einen neuen Lebenslauf
+              hoch. Ohne neuen CV startet keine Analyse.
+            </p>
+            <button
+              type="button"
+              onClick={() => setCvClearedNotice(false)}
+              className="mt-2 text-xs font-semibold text-emerald-200 underline underline-offset-2 hover:text-white"
+            >
+              Hinweis schließen
+            </button>
+          </div>
+        ) : null}
 
         <ProfileStatusCard>
           {/* Mobile: kompakter Ring, Kurz-Hinweis, Info-Modal */}
@@ -1182,16 +1253,27 @@ export default function CareerProfilePage() {
               </div>
               <div className="grid gap-3 md:grid-cols-3">
                 {hasCv ? (
-                  <ProfileSummaryCard
-                    title="Aktiver Lebenslauf"
-                    value="Hochgeladen"
-                    details={
-                      cvOnThisBrowser
-                        ? (profile.cvUploadedAt ? `Zuletzt aktualisiert ${formatDateTime(profile.cvUploadedAt)}` : 'Bereit für die Analyse')
-                        : 'Auf diesem Geraet fehlt der Text. Einmal hochladen, dann gilt er fuer alle Tabs.'
-                    }
-                    icon={FileText}
-                  />
+                  <div className="space-y-2">
+                    <ProfileSummaryCard
+                      title="Aktiver Lebenslauf"
+                      value="Hochgeladen"
+                      details={
+                        cvOnThisBrowser
+                          ? (profile.cvUploadedAt ? `Zuletzt aktualisiert ${formatDateTime(profile.cvUploadedAt)}` : 'Bereit für die Analyse')
+                          : 'Auf diesem Geraet fehlt der Text. Einmal hochladen, dann gilt er fuer alle Tabs.'
+                      }
+                      icon={FileText}
+                    />
+                    <button
+                      type="button"
+                      disabled={saving}
+                      onClick={() => void handleClearCvDerived()}
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-rose-300 hover:text-rose-200 disabled:opacity-50"
+                    >
+                      <Trash2 size={13} aria-hidden />
+                      Lebenslauf-Daten löschen
+                    </button>
+                  </div>
                 ) : (
                   <ProfileEmptyState
                     title="Kein aktiver Lebenslauf"
@@ -1279,6 +1361,27 @@ export default function CareerProfilePage() {
             PDF hochladen → KI erkennt Felder automatisch und befüllt das Formular.
             Oder manuell direkt in den Abschnitten unten ausfüllen.
           </p>
+          {canClearCvData ? (
+            <div className="mb-4 rounded-lg border border-rose-300/50 bg-rose-50/80 px-3 py-3">
+              <p className="text-sm font-semibold text-rose-950">Neuen Lebenslauf vorbereiten</p>
+              <p className="mt-1 text-sm leading-relaxed text-rose-900/90">
+                Löscht den aktuellen CV-Text, die daraus eingetragenen Felder und den Server-Prüfwert.
+                Danach ist eine Analyse erst wieder möglich, wenn du einen neuen Lebenslauf hochlädst.
+              </p>
+              <AppCtaButton
+                type="button"
+                variant="danger"
+                size="sm"
+                disabled={saving}
+                loading={saving}
+                onClick={() => void handleClearCvDerived()}
+                className="mt-3 inline-flex items-center gap-1.5"
+              >
+                <Trash2 size={14} aria-hidden />
+                Lebenslauf-Daten löschen
+              </AppCtaButton>
+            </div>
+          ) : null}
           <div className="mb-4 flex rounded-lg border border-stone-400/40 bg-app-parchmentDeep p-0.5 text-xs font-semibold sm:text-sm">
             <button
               type="button"

@@ -26,13 +26,7 @@ export default function DatenschutzPage() {
           <p>
             Zouhair Ijaad
             <br />
-            Langenhorn
-            <br />
-            <span className="legal-address-placeholder">Langenhorn</span>
-            <br />
-            <span className="legal-address-placeholder">22415</span>
-            {' '}
-            Hamburg
+            Langenhorn 22415 Hamburg
             <br />
             Deutschland
           </p>
@@ -44,9 +38,6 @@ export default function DatenschutzPage() {
             Support-Anfragen:
             {' '}
             <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
-          </p>
-          <p className="legal-address-note">
-            Straße und Postleitzahl trägt der Betreiber selbst ein. Hier stehen bewusst Platzhalter.
           </p>
 
           <h2>Zwecke der Verarbeitung</h2>

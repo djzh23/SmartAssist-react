@@ -20,8 +20,9 @@ import {
 import { UsageLimitError } from '../api/agentClient'
 import { fetchInboxJob } from '../api/inboxClient'
 import { isCachedCvReady, readCachedCv } from '../utils/cvSessionCache'
+import { LAST_ANALYZE_REPORT_PREFIX } from '../utils/clearCvDerivedState'
 
-const REPORT_KEY_PREFIX = 'privateprep_last_analyze_report_'
+const REPORT_KEY_PREFIX = LAST_ANALYZE_REPORT_PREFIX
 
 interface StoredReport {
   report: AnalyzeReport

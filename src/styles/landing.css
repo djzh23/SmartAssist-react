@@ -605,18 +605,3 @@ html {
 .legal-prose details p {
   margin-top: 0.55rem;
 }
-
-.legal-address-placeholder {
-  display: inline-block;
-  margin: 0.15rem 0;
-  border: 1px dashed rgb(251 191 36 / 0.7);
-  border-radius: 0.35rem;
-  padding: 0.05rem 0.4rem;
-  color: rgb(253 230 138);
-  background: rgb(69 26 3 / 0.45);
-}
-
-.legal-address-note {
-  font-size: 0.85rem;
-  color: rgb(214 211 209);
-}

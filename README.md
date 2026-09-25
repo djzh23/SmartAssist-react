@@ -60,11 +60,10 @@ npm test
 ## Deploy-Prozess
 
 Vor jedem Deploy wird die Release-Checkliste im Backend-Repo durchgegangen.
-Siehe [PrivatePrep docs/deployment/RELEASE-CHECKLIST.md](https://github.com/djzh23/PrivatePrep/blob/v1-focus/docs/deployment/RELEASE-CHECKLIST.md)
-und [docs/BRANCHES.md](https://github.com/djzh23/PrivatePrep/blob/v1-focus/docs/BRANCHES.md).
+Siehe [PrivatePrep docs/deployment/RELEASE-CHECKLIST.md](https://github.com/djzh23/PrivatePrep/blob/main/docs/deployment/RELEASE-CHECKLIST.md)
+und [docs/BRANCHES.md](https://github.com/djzh23/PrivatePrep/blob/main/docs/BRANCHES.md).
 
-Live kommt aktuell von Branch `v1-focus` (Vercel). GitHub Actions Production
-Deploy läuft nur bei Push auf `main`.
+Live kommt von Branch `main` (Vercel).
 
 ## Verwandte Repos
 

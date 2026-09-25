@@ -232,15 +232,13 @@ export function PublicSiteHeader({ variant }: PublicSiteHeaderProps) {
         if (el.getBoundingClientRect().top <= probe) current = id
       }
       setActiveId(current)
-      if (location.pathname !== '/') return
+      if (window.location.pathname !== '/') return
       const nextHash = hashForSection(current)
       const currentHash = window.location.hash.replace('#', '')
       if (currentHash !== nextHash) {
         skipHashScroll.current = true
-        navigate(
-          nextHash ? { pathname: '/', hash: `#${nextHash}` } : { pathname: '/' },
-          { replace: true },
-        )
+        const url = nextHash ? `/#${nextHash}` : '/'
+        window.history.replaceState(window.history.state, '', url)
       }
     }
 
@@ -265,7 +263,7 @@ export function PublicSiteHeader({ variant }: PublicSiteHeaderProps) {
       if (frame) window.cancelAnimationFrame(frame)
       ro.disconnect()
     }
-  }, [isLanding, location.hash, location.pathname, navigate])
+  }, [isLanding, location.hash, location.pathname])
 
   const closeMenu = () => setMenuOpen(false)
 

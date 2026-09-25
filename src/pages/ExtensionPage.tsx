@@ -1,19 +1,34 @@
 import { Link } from 'react-router-dom'
-import { Download } from 'lucide-react'
+import { Download, FileText, Inbox, LogIn, MousePointerClick } from 'lucide-react'
 import { PublicSiteFooter, PublicSiteHeader } from '../components/marketing/PublicSiteChrome'
 import { appCtaButtonClasses } from '../components/ui/AppCtaButton'
 import '../styles/landing.css'
 
 const EXTENSION_ZIP_URL = '/downloads/privateprep-extension.zip'
 
+const USE_STEPS = [
+  { step: '1', title: 'Einloggen', desc: 'Bei PrivatePrep im selben Browser angemeldet sein.', Icon: LogIn },
+  { step: '2', title: 'Anzeige öffnen', desc: 'LinkedIn, StepStone oder ein anderes Job-Portal.', Icon: FileText },
+  { step: '3', title: 'Icon klicken', desc: 'PrivatePrep-Icon oben rechts in der Symbolleiste.', Icon: MousePointerClick },
+  { step: '4', title: 'Speichern', desc: 'Die Stelle erscheint danach in deiner Inbox.', Icon: Inbox },
+] as const
+
+const INSTALL_STEPS = [
+  { step: '1', title: 'ZIP laden', desc: 'Oben auf „Erweiterung herunterladen“ klicken.' },
+  { step: '2', title: 'Entpacken', desc: 'Rechtsklick auf die Datei, dann „Alle extrahieren“.' },
+  { step: '3', title: 'Seite öffnen', desc: 'In Chrome chrome://extensions, in Edge edge://extensions.' },
+  { step: '4', title: 'Entwicklermodus', desc: 'Schalter oben rechts einschalten.' },
+  { step: '5', title: 'Ordner laden', desc: '„Entpackte Erweiterung laden“ und den Ordner mit manifest.json wählen.' },
+] as const
+
 export default function ExtensionPage() {
   return (
     <div className="landing-page-root min-h-screen text-stone-100">
       <PublicSiteHeader variant="page" />
-      <main id="main-content" className="mx-auto max-w-[720px] px-5 pb-16 pt-8 text-stone-300 sm:pt-10">
+      <main id="main-content" className="mx-auto max-w-[880px] px-5 pb-16 pt-8 text-stone-300 sm:pt-10">
         <h1 className="mb-3 text-2xl font-bold text-stone-100">Browser-Erweiterung</h1>
-        <p className="text-sm text-stone-500">
-          Speichere Stellenanzeigen mit einem Klick direkt in deine PrivatePrep-Inbox, ohne Copy-Paste.
+        <p className="max-w-[36rem] text-sm leading-relaxed text-stone-400">
+          Stelle offen, Icon klicken, fertig. Titel, Firma und Anzeigentext liegen danach in deiner Inbox.
         </p>
 
         <div className="mt-6 flex flex-wrap items-center gap-3 rounded-2xl border border-[#3a332d] bg-[#232019] p-4">
@@ -26,92 +41,59 @@ export default function ExtensionPage() {
           </p>
         </div>
 
-        <article className="legal-prose mt-8">
-          <h2>Was macht die Erweiterung?</h2>
-          <p>
-            Wenn du eine Stellenanzeige offen hast, speichert dir die Erweiterung Titel, Firma und den
-            vollständigen Text der Anzeige mit einem Klick in deine PrivatePrep-Inbox. Du musst nichts
-            markieren oder kopieren. Von dort aus kannst du die Stelle in Ruhe prüfen und analysieren
-            lassen, wann immer du willst. Auf LinkedIn ist die Erkennung am zuverlässigsten. Auf anderen
-            Job-Portalen (StepStone, Indeed und den meisten anderen) funktioniert es meistens ebenfalls
-            gut, weil dort oft die gleichen standardisierten Auszeichnungen im Seitencode stecken, die
-            die Erweiterung ausliest. Die Qualität kann dort aber schwanken, du kannst Titel, Firma und
-            Text danach jederzeit in deiner Inbox nachbearbeiten.
+        <section className="mt-10">
+          <p className="pp-caps text-[#d97757]">Nutzung</p>
+          <h2 className="mt-2 text-xl font-semibold text-stone-100">Vier Klicks, dann liegt die Stelle in der Inbox</h2>
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            {USE_STEPS.map(({ step, title, desc, Icon }) => (
+              <article key={step} className="pp-card flex gap-3 p-4">
+                <span className="pp-step-num shrink-0">{step}</span>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <Icon className="h-4 w-4 text-[#d97757]" strokeWidth={1.75} aria-hidden />
+                    <h3 className="text-base font-semibold text-stone-100">{title}</h3>
+                  </div>
+                  <p className="mt-1 text-sm leading-relaxed text-[#a89e91]">{desc}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+          <p className="mt-4 text-sm text-[#a89e91]">
+            Danach prüfst du die Stelle in der
+            {' '}
+            <Link to="/inbox" className="text-stone-100 underline underline-offset-2">Inbox</Link>
+            {' '}
+            und startest die Analyse, wann du willst.
           </p>
+        </section>
 
-          <h2>Aktueller Stand: Beta</h2>
-          <p>
-            Die Erweiterung ist fertig nutzbar, steht aber noch nicht im Chrome Web Store. Die Installation
-            läuft deshalb aktuell über den Entwicklermodus deines Browsers, siehe Anleitung unten. Das sieht
-            technischer aus, als es ist, dauert aber nur eine Minute. Sobald die Erweiterung im Web Store
-            gelistet ist, reicht ein einziger Klick, und diese Seite wird entsprechend aktualisiert.
-          </p>
-
-          <h2>Voraussetzungen</h2>
-          <ul>
-            <li>Chrome oder Edge auf dem Desktop (Windows, Mac oder Linux)</li>
-            <li>Ein PrivatePrep-Konto, in das du im selben Browser eingeloggt bist</li>
-          </ul>
-          <p>
-            Auf dem Handy funktioniert die Erweiterung nicht. Weder Android noch iOS unterstützen diese Art
-            von Browser-Erweiterung in einer für echte Nutzer verfügbaren Form. Auf dem Handy nutzt du
-            PrivatePrep einfach direkt über die Webseite und fügst den Anzeigentext manuell in{' '}
-            <Link to="/analyze">Analyse</Link> oder deine <Link to="/inbox">Inbox</Link> ein. Das funktioniert
-            genauso gut, nur eben ohne die automatische Übernahme von der Seite.
-          </p>
-
-          <h2>Installation, Schritt für Schritt</h2>
-          <ol>
-            <li>Oben auf dieser Seite auf "Erweiterung herunterladen" klicken. Die Datei landet als ZIP in deinem Download-Ordner.</li>
-            <li>Die ZIP-Datei entpacken (Rechtsklick darauf, dann "Alle extrahieren" oder "Entpacken", je nach Betriebssystem).</li>
-            <li>
-              In Chrome oder Edge die Adresse <code>chrome://extensions</code> aufrufen (bei Edge:{' '}
-              <code>edge://extensions</code>).
-            </li>
-            <li>Oben rechts den Schalter "Entwicklermodus" aktivieren.</li>
-            <li>Auf "Entpackte Erweiterung laden" klicken.</li>
-            <li>Den entpackten Ordner auswählen (den mit der Datei <code>manifest.json</code> darin).</li>
-            <li>Fertig. Das PrivatePrep-Icon erscheint jetzt oben rechts in der Symbolleiste des Browsers.</li>
+        <section className="mt-10">
+          <p className="pp-caps text-[#d97757]">Installation</p>
+          <h2 className="mt-2 text-xl font-semibold text-stone-100">Einmal einrichten, dauert etwa eine Minute</h2>
+          <ol className="mt-5 space-y-2">
+            {INSTALL_STEPS.map(({ step, title, desc }) => (
+              <li key={step} className="pp-card flex items-start gap-3 px-4 py-3">
+                <span className="pp-step-num mt-0.5 shrink-0">{step}</span>
+                <div>
+                  <p className="font-semibold text-stone-100">{title}</p>
+                  <p className="mt-0.5 text-sm leading-relaxed text-[#a89e91]">{desc}</p>
+                </div>
+              </li>
+            ))}
           </ol>
-          <p>
-            Der Browser zeigt bei so geladenen Erweiterungen manchmal einen Hinweis wie "Erweiterungen im
-            Entwicklermodus". Das ist normal und kein Fehler, es weist nur darauf hin, dass die Erweiterung
-            nicht aus dem offiziellen Store stammt.
+          <p className="mt-3 text-sm text-[#a89e91]">
+            Der Hinweis „Erweiterungen im Entwicklermodus“ ist normal. Die Erweiterung kommt noch nicht aus dem Store.
           </p>
+        </section>
 
-          <h2>So nutzt du sie</h2>
-          <ol>
-            <li>Bei PrivatePrep eingeloggt sein, im selben Browser.</li>
-            <li>Eine Stellenanzeige öffnen, egal ob auf LinkedIn oder einem anderen Job-Portal.</li>
-            <li>Auf das PrivatePrep-Icon in der Symbolleiste klicken.</li>
-            <li>Auf "In PrivatePrep speichern" klicken.</li>
-          </ol>
-          <p>
-            Die Stelle erscheint direkt danach in deiner <Link to="/inbox">Inbox</Link>, mit Status "Neu".
-          </p>
-
-          <h2>Was die Erweiterung liest, und was nicht</h2>
-          <p>
-            Die Erweiterung liest deine bestehende, eingeloggte PrivatePrep-Sitzung, um dich gegenüber
-            dem Server zu authentifizieren. Den Inhalt einer Webseite liest sie ausschließlich in dem
-            Moment, in dem du auf ihr Icon klickst, und nur auf der gerade aktiven Seite in diesem Tab,
-            egal welches Portal das ist. Sie läuft nicht dauerhaft im Hintergrund mit und liest keine
-            anderen Tabs. Auf LinkedIns Job-Seiten ist sie zusätzlich passiv aktiv, damit die Erkennung
-            dort zuverlässiger klappt. Sie liest keine Passwörter, verfolgt dein Surfverhalten nicht und
-            schickt die ausgelesenen Daten ausschließlich an PrivatePrep, nie an Dritte. Mehr dazu in der{' '}
-            <Link to="/datenschutz">Datenschutzerklärung</Link>.
-          </p>
-
-          <h2>Bekannte Einschränkungen</h2>
-          <ul>
-            <li>
-              LinkedIn wird am zuverlässigsten erkannt. Auf anderen Portalen funktioniert eine
-              allgemeinere Erkennung, die Qualität kann dort schwanken.
-            </li>
-            <li>Noch nicht im Chrome Web Store, daher der Umweg über den Entwicklermodus.</li>
-            <li>Kein Mobile-Support (siehe oben).</li>
+        <section className="mt-10">
+          <p className="pp-caps text-[#d97757]">Kurzgefasst</p>
+          <ul className="mt-4 space-y-2 text-sm leading-relaxed text-[#a89e91]">
+            <li className="pp-card px-4 py-3">Chrome oder Edge auf dem Desktop. Auf dem Handy nutzt du die Website und fügst den Text in <Link to="/analyze" className="text-stone-100 underline underline-offset-2">Analyse</Link> oder die <Link to="/inbox" className="text-stone-100 underline underline-offset-2">Inbox</Link> ein.</li>
+            <li className="pp-card px-4 py-3">LinkedIn wird am zuverlässigsten erkannt. Auf anderen Portalen kannst du Titel, Firma und Text danach in der Inbox nachbearbeiten.</li>
+            <li className="pp-card px-4 py-3">Liest nur den aktiven Tab, und nur wenn du auf das Icon klickst. Keine anderen Tabs, kein Tracking. Mehr in der <Link to="/datenschutz" className="text-stone-100 underline underline-offset-2">Datenschutzerklärung</Link>.</li>
           </ul>
-        </article>
+        </section>
       </main>
       <PublicSiteFooter />
     </div>
